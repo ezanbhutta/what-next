@@ -11,8 +11,12 @@ artifact serves — and wraps it for deployment beside CSR Pulse:
 * a password gate that talks to ``site/api/auth.js`` — the same auth code,
   copied verbatim from csr-pulse so the suite has one implementation.
 
-The output is generated on every run. Nothing in ``site/public/`` should ever
-be hand-edited.
+The file lands at ``site/index.html``, not in a subfolder: Vercel's zero-config
+static hosting serves the project root and treats ``api/`` as functions, so a
+page in ``public/`` would be reachable at ``/public/index.html`` rather than at
+``/``.
+
+The output is generated on every run. Never hand-edit ``site/index.html``.
 """
 
 from __future__ import annotations
@@ -141,12 +145,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--root", default=str(ROOT))
     ap.add_argument("--src", help="default reports/dashboard.html")
-    ap.add_argument("--out", help="default site/public/index.html")
+    ap.add_argument("--out", help="default site/index.html")
     args = ap.parse_args()
 
     root = Path(args.root)
     src = Path(args.src) if args.src else root / "reports" / "dashboard.html"
-    out = Path(args.out) if args.out else root / "site" / "public" / "index.html"
+    out = Path(args.out) if args.out else root / "site" / "index.html"
 
     if not src.exists():
         print(f"[error] {src} not found. Run scripts/build_dashboard.py first.",

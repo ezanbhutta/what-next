@@ -73,7 +73,7 @@ Read the `[BLOCK]` lines on stderr and act:
 
 ```bash
 python3 scripts/build_dashboard.py     # reports/dashboard.html
-python3 scripts/publish_site.py        # site/public/index.html (gated, for the team)
+python3 scripts/publish_site.py        # site/index.html (gated, for the team)
 ```
 
 Then republish the artifact to the same URL so the link you and Ezan already
@@ -86,7 +86,7 @@ have stays current:
 Passing `url` is what keeps the URL stable from a fresh session. Do not change
 the `<title>` or the favicon — the page is found by its name and tab icon.
 
-`site/public/index.html` is generated, never hand-edited. Committing it in step 6
+`site/index.html` is generated, never hand-edited. Committing it in step 6
 is what deploys it: Vercel redeploys on push, so the team's page is current by
 07:15 PKT without anyone touching it. If the Vercel project is not linked yet,
 the file is still committed and simply waits — see `site/README.md`.

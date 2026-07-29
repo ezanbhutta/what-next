@@ -3,7 +3,7 @@
 The published copy of `reports/dashboard.html`, gated by the same password
 mechanism CSR Pulse uses.
 
-`public/index.html` is **generated**. Do not edit it by hand — it is overwritten
+`index.html` is **generated**. Do not edit it by hand — it is overwritten
 every morning by `scripts/publish_site.py`, which the daily run calls.
 
 ## One-time setup
@@ -20,7 +20,7 @@ changing the password anyone types. If it is unset the app still works.
 
 ## After that
 
-Nothing. The daily run regenerates `public/index.html`, commits, and pushes;
+Nothing. The daily run regenerates `index.html`, commits, and pushes;
 Vercel redeploys on push, so the page is current by 07:15 PKT with nobody
 touching it.
 
