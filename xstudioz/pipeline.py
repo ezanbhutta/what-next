@@ -18,7 +18,8 @@ import yaml
 
 from . import contracts as C
 from . import (dosing, forecast, ingest, ledger as L, metrics, report,
-               phase as _phase, selfcheck, snapshot, tasks)
+               phase as _phase, roles as _roles, selfcheck, snapshot,
+               tasks)
 
 
 @dataclass
@@ -37,6 +38,8 @@ class RunArtifacts:
     revenue_projection: dict[str, Any] = field(default_factory=dict)
     gap: dict[str, Any] = field(default_factory=dict)
     phase: Any = None
+    boards: Any = None
+    edge: Any = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -49,6 +52,8 @@ class RunArtifacts:
             "resolved": [p.as_dict() for p in self.resolved],
             "selfcheck": self.check.as_dict(),
             "phase": self.phase.as_dict() if self.phase else None,
+            "boards": [b.as_dict() for b in (self.boards or [])],
+            "edge": self.edge,
             "ingest": self.ingest_stats,
             "validation": self.validation,
             "revenue_projection": self.revenue_projection,
@@ -226,7 +231,8 @@ def run_daily(
         predictions=preds, resolved=resolved, check=check,
         brief_markdown=brief, ingest_stats=data.stats(),
         validation=vrep.summary(), emitted=emitted,
-        revenue_projection=proj, gap=gap)
+        revenue_projection=proj, gap=gap,
+        boards=_roles.route(config, task_list), edge=_roles.edge(config))
 
     # ---- persist ---------------------------------------------------------
     if write:

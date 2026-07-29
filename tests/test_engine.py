@@ -1039,3 +1039,111 @@ def test_real_config_puts_us_in_phase_1_with_the_gate_shut():
     assert not s.permits("fiverr_ads")
     assert cfg["dosing"]["max_vvro_share"] == 0.30
     assert cfg["objective"]["maximise"] == ["revenue", "organic_orders"]
+
+
+# =========================================================================
+# Role routing
+# =========================================================================
+
+from xstudioz import roles as R  # noqa: E402
+
+
+def _team_cfg():
+    import yaml
+    return yaml.safe_load((ROOT / "config" / "profile.yml").read_text())
+
+
+def _t(tid, cat, pri="P2", hrs=1.0):
+    return tasks.Task(tid, f"task {tid}", cat, "owner", "why 1", ["a", "b"],
+                      100, 0.5, hrs, priority=pri)
+
+
+def test_shifts_cover_the_whole_clock():
+    """Amrah 09-17, Hasnain 17-01, Nadir 21-09. No hour uncovered."""
+    shifts = R.build_shifts(_team_cfg())
+    for hour in range(24):
+        on = R.on_shift(shifts, dt.time(hour, 30))
+        assert on, f"{hour:02d}:30 PKT has nobody on duty"
+
+
+def test_wrapping_shift_covers_past_midnight():
+    s = R.Shift("Hasnain", R._parse_hm("17:00"), R._parse_hm("01:00"))
+    assert s.covers(R._parse_hm("18:00"))
+    assert s.covers(R._parse_hm("00:30"))
+    assert not s.covers(R._parse_hm("09:00"))
+
+
+def test_us_peak_window_is_single_manned():
+    """03:00 PKT is US peak and the highest-value window on the board."""
+    shifts = R.build_shifts(_team_cfg())
+    assert R.on_shift(shifts, dt.time(3, 0)) == ["Nadir"]
+
+
+def test_ratio_policy_goes_to_the_ceo_not_a_csr():
+    boards = {b.person: b for b in
+              R.route(_team_cfg(), [_t("v", "vvro_dosing", "P0")])}
+    assert boards["CEO"].task_ids if hasattr(boards["CEO"], "task_ids") \
+        else [t.id for t in boards["CEO"].tasks] == ["v"]
+
+
+def test_escalation_work_goes_to_the_lead():
+    boards = {b.person: b for b in
+              R.route(_team_cfg(), [_t("d", "dispute_rescue", "P0")])}
+    assert [t.id for t in boards["Ezan"].tasks] == ["d"]
+
+
+def test_lead_is_not_buried_under_execution():
+    """A supervisor with nine hours of execution is not supervising."""
+    cfg = _team_cfg()
+    heavy = [_t(f"q{i}", "process", "P3", hrs=3.0) for i in range(4)]
+    boards = {b.person: b for b in R.route(cfg, heavy)}
+    assert boards["Ezan"].total_effort <= R.MAX_LEAD_HOURS + 3.0
+    assert sum(len(b.tasks) for b in boards.values()) == len(heavy)
+
+
+def test_no_csr_sits_idle_while_another_is_loaded():
+    cfg = _team_cfg()
+    boards = {b.person: b for b in
+              R.route(cfg, [_t(f"f{i}", "funnel") for i in range(3)])}
+    csrs = [boards[n] for n in ("Amrah", "Hasnain", "Nadir")]
+    assert all(b.tasks for b in csrs)
+
+
+def test_every_task_lands_on_exactly_one_board():
+    cfg = _team_cfg()
+    ts = [_t("a", "funnel"), _t("b", "vvro_dosing"), _t("c", "dispute_rescue"),
+          _t("d", "data_quality"), _t("e", "upsell")]
+    boards = R.route(cfg, ts)
+    landed = [t.id for b in boards for t in b.tasks]
+    assert sorted(landed) == sorted(t.id for t in ts)
+    assert len(landed) == len(set(landed))
+
+
+def test_csrs_carry_standing_duties_even_with_no_tasks():
+    boards = {b.person: b for b in R.route(_team_cfg(), [])}
+    assert boards["Amrah"].standing
+    assert any("30 minutes" in s for s in boards["Amrah"].standing)
+    assert boards["Ezan"].standing != boards["Amrah"].standing
+
+
+def test_no_phantom_owner_named_ash_survives():
+    """"Ash" was the operating model author's name for its reader, not a
+    person on this team."""
+    cfg = _team_cfg()
+    names = {r["name"] for r in cfg["team"]["roster"]}
+    assert "Ash" not in names
+    assert cfg["team"]["lead"] == "Ezan"
+    blob = (ROOT / "config" / "profile.yml").read_text()
+    for line in blob.splitlines():
+        if line.strip().startswith("#"):
+            continue
+        assert "Ash " not in line and "→ Ash" not in line, line
+
+
+def test_edge_names_the_portfolio_control_group():
+    items = R.edge(_team_cfg())
+    ids = {i["id"] for i in items}
+    assert "portfolio_control" in ids
+    assert "trust_asset" in ids
+    detail = next(i for i in items if i["id"] == "portfolio_control")["detail"]
+    assert "Dygram" in detail

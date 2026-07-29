@@ -56,7 +56,7 @@
 - Script: `playbooks/data_hygiene.md`
 
 ### P0 · Work the $5,472 dead pipeline, largest first
-**Owner:** Hasnain · **Est. impact:** $821 · **Effort:** 3.0h · **Confidence:** 55%
+**Owner:** Ezan · **Est. impact:** $821 · **Effort:** 3.0h · **Confidence:** 55%
 
 *Why:* $5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 — more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.
 
@@ -139,6 +139,93 @@
 - Re-run the sync for the backlog.
 - Add a failure alert — 300+ silent failures is the real defect.
 - Script: `playbooks/data_hygiene.md`
+
+
+---
+
+## Who does what
+
+### Ezan · team lead · all hours
+*4 task(s), ~4.0h*
+
+- **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
+- **P2** Route high-value briefs to Amin
+- **P3** Close out approved order #4 — Calum Snell
+- **P3** Close out approved order #6 — bethanyjademck
+
+Standing duties, every shift:
+- QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.
+- Reconcile the inquiry log against the order tracker. On 27 July the tracker showed 5 orders and the inquiry log showed 2 for the whole month; until those agree, no conversion figure is trustworthy.
+- Take the shift handoff at each changeover — five lines, no exceptions.
+- Escalate any cancellation risk before it is filed, never after.
+
+### CEO · ceo · —
+*2 task(s), ~1.5h*
+
+- **P0** VVRO: 2/week (1 today) — CUT
+- **P2** Run the upsell A/B test to de-bias the 54% vs 31% gap
+
+Standing duties, every shift:
+- Post impressions and the 7-day average every morning. It is the single number that says whether the suppression is lifting.
+- Hold the inorganic team to the weekly quota and the price bands. Cheap controlled volume on a premium profile is the worst of both worlds.
+- Any order past day 7, or any cancellation, comes to you the same day.
+
+### Nadir · csr · 21:00-09:00 PKT
+*3 task(s), ~3.0h*
+
+- **P0** Bring the impressions sheet up to date — it stops months ago
+- **P1** Install the mid-order checkpoint — private feedback is the leak
+- **P3** Fix the broken ClickUp sync (334 logged failures)
+
+Standing duties, every shift:
+- Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
+- Report spam as spam within 24 hours — it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.
+- Post the 12-question intake within 15 minutes of any order starting.
+- Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.
+- Log every quoted price into the inquiry sheet the moment it is sent.
+- Never move a pre-order conversation off Fiverr, and never argue.
+
+### Hasnain · csr · 17:00-01:00 PKT
+*2 task(s), ~3.0h*
+
+- **P0** Fill revenue in the daily ledger (111 days blank)
+- **P2** Wire up the 2 promised data sources
+
+Standing duties, every shift:
+- Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
+- Report spam as spam within 24 hours — it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.
+- Post the 12-question intake within 15 minutes of any order starting.
+- Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.
+- Log every quoted price into the inquiry sheet the moment it is sent.
+- Never move a pre-order conversation off Fiverr, and never argue.
+
+### Amrah · csr · 09:00-17:00 PKT
+*1 task(s), ~3.0h*
+
+- **P0** Work the $5,472 dead pipeline, largest first
+
+Standing duties, every shift:
+- Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
+- Report spam as spam within 24 hours — it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.
+- Post the 12-question intake within 15 minutes of any order starting.
+- Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.
+- Log every quoted price into the inquiry sheet the moment it is sent.
+- Never move a pre-order conversation off Fiverr, and never argue.
+
+> The clock is fully covered, with a double-up from 21:00-01:00. The exposure is not a gap, it is a concentration: 01:00-09:00 is the highest-value window on the board — US peak, and the review base is UK, USA, Australia, Canada, UAE and Germany — and it runs single-manned for eight hours. Nadir logged two inquiries in two months in that window. Whether that is volume, tooling or assignment is the first thing to establish; it is the most expensive unknown in the roster.
+
+**Shift handoff — five lines, every changeover:** Open orders and their deadlines; Unanswered first-messages; Orders at risk — past day 5, revision loops, unhappy tone; Escalations needing the lead; Revenue booked this shift.
+
+
+---
+
+## Where the edge is
+
+**Dygram is the experiment already run** — Dygram holds Success Score 9 at 44% inorganic and pulls 8x the impressions of X Studioz (12,700/day against 1,564). Same operator, same team, same category. Copy its ratio policy rather than theorising about the algorithm.
+
+**1,583 reviews is the moat, and it is being spent on cheap orders** — Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds — and it is currently attached to a $77 inorganic average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try.
+
+**Half the revenue is from people who already know you** — 158 of 574 clients have ordered more than once, producing 48.2% of orders and $38,724 of revenue — with the Upsell column at 0.0% filled. Competitors fight for the first order. Nobody is fighting for the second one here, including us.
 
 
 ---

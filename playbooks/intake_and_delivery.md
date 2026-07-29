@@ -10,11 +10,11 @@ decided here, and both are currently dragging at 4.8.
 |---|---|---|
 | First response to inquiry | 30 minutes | Over 2 hours → shift lead |
 | Intake posted after order start | 15 minutes | Over 1 hour → shift lead |
-| First concepts to buyer | 48 hours | Over 72 hours → Ash |
+| First concepts to buyer | 48 hours | Over 72 hours → Ezan |
 | Mid-order checkpoint | 50% elapsed | Missed → logged as a defect |
-| Final delivery | 60% of promised window | Over 100% → Ash, same day |
-| Any order age | 7 days | Hard escalation to Ash |
-| Any cancellation risk | — | Ash **before** it is filed, always |
+| Final delivery | 60% of promised window | Over 100% → Ezan, same day |
+| Any order age | 7 days | Hard escalation to Ezan |
+| Any cancellation risk | — | Ezan **before** it is filed, always |
 
 Observed cycle time is 4–12 days against a 2–3 day category median. Fiverr
 prioritises fast deliverers when it detects buyer urgency, so this is not just a

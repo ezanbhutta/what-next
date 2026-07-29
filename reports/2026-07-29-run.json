@@ -722,7 +722,7 @@
       "id": "dead-pipeline",
       "title": "Work the $5,472 dead pipeline, largest first",
       "category": "funnel",
-      "owner": "Hasnain",
+      "owner": "Ezan",
       "why": "$5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 \u2014 more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.",
       "steps": [
         "Start with: selmaprof ($950), bobzinos ($900), farida_ism ($700), getgwoppa ($700).",
@@ -1187,6 +1187,393 @@
       "queue_growth"
     ]
   },
+  "boards": [
+    {
+      "person": "Ezan",
+      "role": "team_lead",
+      "window": "all hours",
+      "task_ids": [
+        "rescue-5",
+        "designer-routing",
+        "deliver-4",
+        "deliver-6"
+      ],
+      "tasks": [
+        {
+          "id": "rescue-5",
+          "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+          "category": "dispute_rescue",
+          "owner": "Ezan (escalate to CEO if refund is formally requested)",
+          "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.",
+          "steps": [
+            "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+            "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+            "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+            "If they choose (a), name the designer and give a fixed date.",
+            "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+          ],
+          "impact_usd": 400,
+          "confidence": 0.7,
+          "effort_hours": 1.5,
+          "priority": "P0",
+          "urgency": 2,
+          "playbook": "playbooks/dispute_rescue.md",
+          "refs": [
+            "order_tracker/tracker#b0r4"
+          ],
+          "due": "2026-07-29",
+          "score": 186.7
+        },
+        {
+          "id": "designer-routing",
+          "title": "Route high-value briefs to Amin",
+          "category": "delivery",
+          "owner": "CEO",
+          "why": "Amin averages $195 across 21 orders; Abbas averages $70 across 24. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+          "steps": [
+            "Assign every brief above $200 to Amin or the next two by AOV.",
+            "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
+            "Revisit in 30 days with the engine's updated per-designer AOV."
+          ],
+          "impact_usd": 800,
+          "confidence": 0.35,
+          "effort_hours": 0.5,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/staffing.md",
+          "refs": [],
+          "due": null,
+          "score": 560.0
+        },
+        {
+          "id": "deliver-4",
+          "title": "Close out approved order #4 \u2014 Calum Snell",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 115.55,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r3"
+          ],
+          "due": null,
+          "score": 92.4
+        },
+        {
+          "id": "deliver-6",
+          "title": "Close out approved order #6 \u2014 bethanyjademck",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 115.55,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
+          "due": null,
+          "score": 92.4
+        }
+      ],
+      "standing": [
+        "QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.",
+        "Reconcile the inquiry log against the order tracker. On 27 July the tracker showed 5 orders and the inquiry log showed 2 for the whole month; until those agree, no conversion figure is trustworthy.",
+        "Take the shift handoff at each changeover \u2014 five lines, no exceptions.",
+        "Escalate any cancellation risk before it is filed, never after."
+      ],
+      "total_effort_hours": 4.0,
+      "total_impact_usd": 1431.11
+    },
+    {
+      "person": "CEO",
+      "role": "ceo",
+      "window": "\u2014",
+      "task_ids": [
+        "vvro-2026-07-29",
+        "upsell-program"
+      ],
+      "tasks": [
+        {
+          "id": "vvro-2026-07-29",
+          "title": "VVRO: 2/week (1 today) \u2014 CUT",
+          "category": "vvro_dosing",
+          "owner": "CEO / order placement",
+          "why": "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.",
+          "steps": [
+            "Place **1 VVRO order today** (1x $151-$260) \u2014 quota **2/week**.",
+            "Countries to spread across: Other x1",
+            "At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.",
+            "Do not place on a fixed weekday pattern \u2014 the schedule rotates weekly for a reason.",
+            "Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller."
+          ],
+          "impact_usd": 1438.5,
+          "confidence": 0.8,
+          "effort_hours": 0.5,
+          "priority": "P0",
+          "urgency": 1,
+          "playbook": "playbooks/vvro_dosing.md",
+          "refs": [],
+          "due": null,
+          "score": 2301.6
+        },
+        {
+          "id": "upsell-program",
+          "title": "Run the upsell A/B test to de-bias the 54% vs 31% gap",
+          "category": "experiment",
+          "owner": "CEO + Salman",
+          "why": "Leads with an upsell attempt convert 54.3% (n=70) against 30.8% (n=929), z=4.05. That is a +76% relative lift \u2014 but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.",
+          "steps": [
+            "For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.",
+            "Do not let CSRs choose. That choice is exactly the bias being measured.",
+            "Log the assignment in the Upsell column so the engine can score it.",
+            "The engine will report the de-biased effect once n>=100 per arm."
+          ],
+          "impact_usd": 3000,
+          "confidence": 0.4,
+          "effort_hours": 1.0,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [],
+          "due": null,
+          "score": 1200.0
+        }
+      ],
+      "standing": [
+        "Post impressions and the 7-day average every morning. It is the single number that says whether the suppression is lifting.",
+        "Hold the inorganic team to the weekly quota and the price bands. Cheap controlled volume on a premium profile is the worst of both worlds.",
+        "Any order past day 7, or any cancellation, comes to you the same day."
+      ],
+      "total_effort_hours": 1.5,
+      "total_impact_usd": 4438.5
+    },
+    {
+      "person": "Nadir",
+      "role": "csr",
+      "window": "21:00-09:00 PKT",
+      "task_ids": [
+        "impressions-stale",
+        "review-capture",
+        "fix-clickup"
+      ],
+      "tasks": [
+        {
+          "id": "impressions-stale",
+          "title": "Bring the impressions sheet up to date \u2014 it stops months ago",
+          "category": "data_quality",
+          "owner": "Hasnain",
+          "why": "Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately \u2014 the engine already reads it. Impressions are the leading indicator on the whole objective: Success Score drives impressions, impressions drive organic orders, organic orders drive revenue. Without a current series the engine can see that organic fell but not whether reach or conversion caused it, and those need opposite responses.",
+          "steps": [
+            "Append daily rows from Fiverr Analytics from the last logged date to today: Date, Account Name, Impressions, Clicks, Organic Orders.",
+            "Keep the existing column names exactly \u2014 the engine already reads them and a rename is what schema drift is.",
+            "Post impressions and the 7-day average every morning at 09:00 PKT. It is the one number that says whether the suppression is lifting.",
+            "Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically."
+          ],
+          "impact_usd": 2500,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P0",
+          "urgency": 1,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 2000.0
+        },
+        {
+          "id": "review-capture",
+          "title": "Install the mid-order checkpoint \u2014 private feedback is the leak",
+          "category": "reputation",
+          "owner": "All CSRs (compliance owned by Hasnain)",
+          "why": "Only 13.6% of the 597 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.",
+          "steps": [
+            "At 50% of elapsed time on every order, send the direction so far and ask plainly whether anything needs changing. This is the one habit that converts a silent 3-star private rating into a fixed order, while the order is still open.",
+            "Chase any silent buyer within 24 hours of delivery \u2014 orders auto-complete after 3 days and the private window stays open 60 days after that.",
+            "Log every order where the buyer went silent, exceeded the agreed revisions, or accepted without a word. That is your proxy for the feedback you cannot see.",
+            "Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md."
+          ],
+          "impact_usd": 3471.67,
+          "confidence": 0.45,
+          "effort_hours": 1.0,
+          "priority": "P1",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [],
+          "due": null,
+          "score": 1562.3
+        },
+        {
+          "id": "fix-clickup",
+          "title": "Fix the broken ClickUp sync (334 logged failures)",
+          "category": "automation",
+          "owner": "CEO / whoever owns the Apps Script",
+          "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+          "steps": [
+            "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+            "Re-run the sync for the backlog.",
+            "Add a failure alert \u2014 300+ silent failures is the real defect."
+          ],
+          "impact_usd": 600,
+          "confidence": 0.7,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 0,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 420.0
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 3.0,
+      "total_impact_usd": 6571.67
+    },
+    {
+      "person": "Hasnain",
+      "role": "csr",
+      "window": "17:00-01:00 PKT",
+      "task_ids": [
+        "dq-flow-revenue",
+        "wire-missing-sources"
+      ],
+      "tasks": [
+        {
+          "id": "dq-flow-revenue",
+          "title": "Fill revenue in the daily ledger (111 days blank)",
+          "category": "data_quality",
+          "owner": "Whoever owns the daily ledger",
+          "why": "111 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
+          "steps": [
+            "Fill Organic Revenue and VVRO Revenue for every day with orders.",
+            "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
+            "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
+          ],
+          "impact_usd": 2000,
+          "confidence": 0.9,
+          "effort_hours": 2.0,
+          "priority": "P0",
+          "urgency": 1,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 900.0
+        },
+        {
+          "id": "wire-missing-sources",
+          "title": "Wire up the 2 promised data sources",
+          "category": "data_quality",
+          "owner": "CEO",
+          "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+          "steps": [
+            "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
+            "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
+            "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
+          ],
+          "impact_usd": 1500,
+          "confidence": 0.5,
+          "effort_hours": 1.0,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 750.0
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 3.0,
+      "total_impact_usd": 3500
+    },
+    {
+      "person": "Amrah",
+      "role": "csr",
+      "window": "09:00-17:00 PKT",
+      "task_ids": [
+        "dead-pipeline"
+      ],
+      "tasks": [
+        {
+          "id": "dead-pipeline",
+          "title": "Work the $5,472 dead pipeline, largest first",
+          "category": "funnel",
+          "owner": "Ezan",
+          "why": "$5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 \u2014 more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.",
+          "steps": [
+            "Start with: selmaprof ($950), bobzinos ($900), farida_ism ($700), getgwoppa ($700).",
+            "Use the four-line message in playbooks/dead_pipeline.md \u2014 quote still open, ask when to check back, ask for their number if budget was the issue.",
+            "Log every touch in the FollowUp column with a date, same day.",
+            "Anything that reopens goes straight into the normal intake flow."
+          ],
+          "impact_usd": 820.8,
+          "confidence": 0.55,
+          "effort_hours": 3.0,
+          "priority": "P0",
+          "urgency": 1,
+          "playbook": "playbooks/dead_pipeline.md",
+          "refs": [],
+          "due": null,
+          "score": 150.5
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 3.0,
+      "total_impact_usd": 820.8
+    }
+  ],
+  "edge": [
+    {
+      "id": "portfolio_control",
+      "title": "Dygram is the experiment already run",
+      "detail": "Dygram holds Success Score 9 at 44% inorganic and pulls 8x the impressions of X Studioz (12,700/day against 1,564). Same operator, same team, same category. Copy its ratio policy rather than theorising about the algorithm."
+    },
+    {
+      "id": "trust_asset",
+      "title": "1,583 reviews is the moat, and it is being spent on cheap orders",
+      "detail": "Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds \u2014 and it is currently attached to a $77 inorganic average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try."
+    },
+    {
+      "id": "repeat_base",
+      "title": "Half the revenue is from people who already know you",
+      "detail": "158 of 574 clients have ordered more than once, producing 48.2% of orders and $38,724 of revenue \u2014 with the Upsell column at 0.0% filled. Competitors fight for the first order. Nobody is fighting for the second one here, including us."
+    }
+  ],
   "ingest": {
     "orders": 803,
     "leads": 1000,

@@ -16,6 +16,7 @@ from .ledger import Ledger, Prediction
 from .metrics import MetricBundle
 from .selfcheck import SelfCheckReport
 from .tasks import Task
+from . import roles as _roles
 
 _SEP = "\n---\n"
 
@@ -81,6 +82,46 @@ def render_markdown(
         if t.refs:
             out.append(f"- Source rows: {', '.join(f'`{r}`' for r in t.refs)}")
         out.append("")
+
+    # ---------------- who does what ----------------
+    boards = _roles.route(config, tasks)
+    out.append(_SEP)
+    out.append("## Who does what")
+    out.append("")
+    for b in boards:
+        if not b.tasks and not b.standing:
+            continue
+        out.append(f"### {b.person} · {b.role.replace('_', ' ')} · {b.window}")
+        if b.tasks:
+            out.append(f"*{len(b.tasks)} task(s), ~{b.total_effort:.1f}h*")
+            out.append("")
+            for t in b.tasks:
+                out.append(f"- **{t.priority}** {t.title}")
+        else:
+            out.append("*No assigned tasks today — standing duties only.*")
+        if b.standing:
+            out.append("")
+            out.append("Standing duties, every shift:")
+            for sd in b.standing:
+                out.append(f"- {sd}")
+        out.append("")
+    note = _roles.coverage_note(config)
+    if note:
+        out.append(f"> {note}")
+        out.append("")
+    out.append("**Shift handoff — five lines, every changeover:** "
+               + "; ".join(_roles.HANDOFF) + ".")
+    out.append("")
+
+    # ---------------- edge ----------------
+    edges = _roles.edge(config)
+    if edges:
+        out.append(_SEP)
+        out.append("## Where the edge is")
+        out.append("")
+        for item in edges:
+            out.append(f"**{item['title']}** — {item['detail']}")
+            out.append("")
 
     # ---------------- VVRO plan ----------------
     out.append(_SEP)

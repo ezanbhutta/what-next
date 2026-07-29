@@ -401,31 +401,72 @@ slas:
   response_rate_required: 0.90
 
 # ---------------------------------------------------------------------------
-# TEAM — XStudioz roster (operating model 4.1-4.4). This is the profile-level
-# roster, distinct from the multi-profile CRM sheet names.
+# TEAM — the real XStudioz roster.
+#
+# Correction 2026-07-29: the operating model PDF repeatedly assigns actions to
+# "Ash". That is the document author's name for its reader on the cover page,
+# not a person on this team. Every task the engine previously routed to Ash is
+# now routed to Ezan (supervision) or the CEO (policy), whichever the action
+# actually belongs to.
+#
+# Shifts are in PKT and cover the full 24 hours. Ownership follows the clock:
+# a task that must happen at 03:00 PKT belongs to whoever is on shift then,
+# not to whoever the rule was written by.
 # ---------------------------------------------------------------------------
 team:
-  lead: Hasnain
-  ceo: Ash
+  lead: Ezan
+  timezone: Asia/Karachi        # PKT, UTC+5
   roster:
-    - {name: Hasnain, role: operations_lead, inquiries: 13, placed: 3, close_rate: 0.23, revenue: 505,
-       owns: "QA gate · shift handoff · log reconciliation", window: "17:00-01:00 PKT"}
-    - {name: Amrah, role: csr, inquiries: 4, placed: 0, close_rate: 0.0, revenue: 0,
-       owns: "Response rate · UK/Europe window conversion", window: "09:00-17:00 PKT"}
-    - {name: Nadir, role: csr, inquiries: 2, placed: 0, close_rate: 0.0, revenue: 0,
-       owns: "US window booked revenue", window: "01:00-09:00 PKT"}
-    - {name: Zaheen, role: csr, inquiries: 0, placed: 0, close_rate: null, revenue: 0,
-       owns: "Response rate · UK/Europe window", window: "09:00-17:00 PKT"}
-    - {name: Ash, role: ceo, owns: "Success Score · ratio policy · pricing · escalations"}
-  structural_gap: >
-    Two people cover the lowest-value window (09:00-11:00 PKT). One person
-    covers eight hours of peak US and UK-evening demand alone and logged two
-    inquiries in two months. That mismatch is the most expensive structural
-    error in the current setup.
-  note: >
-    Hasnain handled 68% of roster volume and produced 100% of its revenue. This
-    is an ownership failure, not a performance failure — fix assignment before
-    judging anyone's numbers.
+    - name: Ezan
+      role: team_lead
+      supervises_all: true
+      owns: "Everything. QA gate before delivery, shift handoff, log reconciliation, escalation."
+      shift: null               # not shift-bound; oversees all three
+      # From the multi-profile CRM sheet, across all profiles.
+      leads: 125
+      conv: 0.248
+      value_per_lead: 16
+    - name: Amrah
+      role: csr
+      shift: {start: "09:00", end: "17:00"}
+      window_label: "PKT morning / UK early - EU daytime"
+      owns: "First response and conversion in the UK and Europe window."
+    - name: Hasnain
+      role: csr
+      shift: {start: "17:00", end: "01:00"}
+      window_label: "PKT evening / UK afternoon - US morning ramp"
+      owns: "UK afternoon and the US ramp. Highest-value overlap window."
+      inquiries: 13
+      placed: 3
+      close_rate: 0.23
+      revenue: 505
+    - name: Nadir
+      role: csr
+      shift: {start: "21:00", end: "09:00"}
+      window_label: "PKT night / US peak"
+      owns: "The US peak window."
+      inquiries: 2
+      placed: 0
+      close_rate: 0.0
+      revenue: 0
+  ceo:
+    role: ceo
+    owns: "Ratio policy, pricing, inorganic team direction, escalations, final call."
+    note: "Guides the inorganic (VVRO) team directly."
+
+  coverage:
+    - {window: "09:00-17:00", on_duty: [Amrah], demand: "UK/EU daytime", value: medium}
+    - {window: "17:00-21:00", on_duty: [Hasnain], demand: "UK afternoon, US ramp", value: high}
+    - {window: "21:00-01:00", on_duty: [Hasnain, Nadir], demand: "US afternoon", value: high}
+    - {window: "01:00-09:00", on_duty: [Nadir], demand: "US peak into UK morning", value: highest}
+  coverage_note: >
+    The clock is fully covered, with a double-up from 21:00-01:00. The exposure
+    is not a gap, it is a concentration: 01:00-09:00 is the highest-value window
+    on the board — US peak, and the review base is UK, USA, Australia, Canada,
+    UAE and Germany — and it runs single-manned for eight hours. Nadir logged
+    two inquiries in two months in that window. Whether that is volume, tooling
+    or assignment is the first thing to establish; it is the most expensive
+    unknown in the roster.
 
 # ---------------------------------------------------------------------------
 # DEAD PIPELINE — 19 named leads, $5,472, zero follow-ups ever logged.
