@@ -2,7 +2,12 @@
 
 ## Daily (automated)
 
-A Claude Routine fires each morning, follows `CLAUDE.md`, and commits the result.
+A Claude Routine (`trig_012hMr9MJEmXYWyRDakBY1Pv`) fires at 02:13 UTC each morning,
+follows `CLAUDE.md`, and commits the result.
+
+**Before it can refresh data it needs the Google Drive connector attached — see
+`docs/ACCESS.md`.** Without it the run still happens, but on the last snapshot, and the
+self-check flags the staleness.
 Nothing is required from you unless the self-check fails or a task is assigned to you.
 
 ## Running it by hand

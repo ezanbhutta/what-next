@@ -68,3 +68,39 @@ quietly forgotten.
 See "Adding a new data source" in `CLAUDE.md`. Short version: add it to
 `config/sources.yml`, add its header spellings to the alias table in `xstudioz/ingest.py`,
 add a drift test, run the suite.
+
+## The daily Routine and the Google Drive connector
+
+**Routine:** `XStudioz daily growth brief` · `trig_012hMr9MJEmXYWyRDakBY1Pv`
+· fires `13 2 * * *` UTC (07:13 Pakistan, 03:13 UK) · fresh session each morning
+· push notification on completion.
+
+### Known gap — action needed from you
+
+The Routine was created **without a stored Google Drive connector grant**. The API
+returned:
+
+> this trigger stores no MCP connectors, so the sessions it fires will run without
+> connector (`mcp__<server>__*`) tools
+
+Two reasons: this organisation does not permit the `connectors` parameter on
+`create_trigger`, and this session had no passable connector grant to inherit.
+
+**Consequence:** each morning's session can run the engine, but cannot *refresh* the
+sheets. It will fall back to the newest snapshot in `data/raw/` and the self-check will
+raise `data_freshness`, so the brief will say the numbers are stale rather than pretending
+they are current. It degrades honestly, but it does degrade.
+
+**To fix it — one of:**
+
+1. **Attach Google Drive to the Routine in the claude.ai Routines UI.** Open the Routine,
+   add the Google Drive connector, save. This is the whole fix; everything else is already
+   in place.
+2. **Recreate the Routine from a session that already holds the Google Drive grant.**
+   Same prompt, same schedule.
+3. **Push the snapshots yourself.** Any job that drops the two workbook exports into
+   `data/raw/orders/<date>.md` and `data/raw/inquiries/<date>.md` is enough — the engine
+   does not care who put them there. A Google Apps Script export on a timer would do it.
+
+Until one of those is done, run the brief on demand by asking in a session that has Drive
+access, and the fetch step will work normally.
