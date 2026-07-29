@@ -1,0 +1,1225 @@
+{
+  "today": "2026-06-11",
+  "emitted": true,
+  "metrics": {
+    "as_of": "2026-06-11",
+    "profile": "X Studioz",
+    "health": {
+      "verdict": "HEALTHY",
+      "index": 63.3,
+      "ma7_now": 1.0,
+      "ma7_prior": 1.0,
+      "delta_pct": 0.0,
+      "slope_14d": 0.0,
+      "vvro_share_7d": 0.0,
+      "total_per_day_7d": 1.0,
+      "breached": false,
+      "components": {
+        "trend": 0.5,
+        "slope": 0.5,
+        "vvro_dilution": 1.0,
+        "volume": 0.667
+      }
+    },
+    "flow_7d": {
+      "organic": 1.0,
+      "vvro": 0.0,
+      "total_per_day": 0.143,
+      "vvro_share": 0.0
+    },
+    "flow_28d": {
+      "organic": 1.0,
+      "vvro": 0.0,
+      "total_per_day": 0.036,
+      "vvro_share": 0.0
+    },
+    "funnel": {
+      "inquiries": 968,
+      "placed": 324,
+      "conversion": 0.3347,
+      "quoted_mean": 159.63,
+      "quoted_median": 135.0,
+      "pipeline_value": 41345.0,
+      "by_csr": [
+        {
+          "key": "Salman",
+          "n": 40,
+          "placed": 14,
+          "conv": 0.35,
+          "conv_lb": 0.2213,
+          "value": 2110.0,
+          "value_per_lead": 52.75
+        },
+        {
+          "key": "Ezan",
+          "n": 123,
+          "placed": 31,
+          "conv": 0.252,
+          "conv_lb": 0.1836,
+          "value": 1940.0,
+          "value_per_lead": 15.77
+        },
+        {
+          "key": "Tanzeel",
+          "n": 176,
+          "placed": 40,
+          "conv": 0.2273,
+          "conv_lb": 0.1716,
+          "value": 1335.0,
+          "value_per_lead": 7.59
+        },
+        {
+          "key": "Tayyab",
+          "n": 38,
+          "placed": 8,
+          "conv": 0.2105,
+          "conv_lb": 0.1107,
+          "value": 3790.0,
+          "value_per_lead": 99.74
+        }
+      ],
+      "by_shift": [
+        {
+          "key": "Morning",
+          "n": 643,
+          "placed": 250,
+          "conv": 0.3888,
+          "conv_lb": 0.3519,
+          "value": 29648.0,
+          "value_per_lead": 46.11
+        },
+        {
+          "key": "Night",
+          "n": 100,
+          "placed": 28,
+          "conv": 0.28,
+          "conv_lb": 0.2014,
+          "value": 3050.0,
+          "value_per_lead": 30.5
+        },
+        {
+          "key": "Evening",
+          "n": 122,
+          "placed": 28,
+          "conv": 0.2295,
+          "conv_lb": 0.1638,
+          "value": 6820.0,
+          "value_per_lead": 55.9
+        }
+      ],
+      "by_country": [
+        {
+          "key": "Netherlands",
+          "n": 21,
+          "placed": 13,
+          "conv": 0.619,
+          "conv_lb": 0.4088,
+          "value": 1663.0,
+          "value_per_lead": 79.19
+        },
+        {
+          "key": "Australia",
+          "n": 51,
+          "placed": 25,
+          "conv": 0.4902,
+          "conv_lb": 0.3586,
+          "value": 3035.0,
+          "value_per_lead": 59.51
+        },
+        {
+          "key": "United States",
+          "n": 310,
+          "placed": 122,
+          "conv": 0.3935,
+          "conv_lb": 0.3408,
+          "value": 18800.0,
+          "value_per_lead": 60.65
+        },
+        {
+          "key": "United Kingdom",
+          "n": 113,
+          "placed": 38,
+          "conv": 0.3363,
+          "conv_lb": 0.2558,
+          "value": 4260.0,
+          "value_per_lead": 37.7
+        },
+        {
+          "key": "Italy",
+          "n": 17,
+          "placed": 7,
+          "conv": 0.4118,
+          "conv_lb": 0.2161,
+          "value": 1125.0,
+          "value_per_lead": 66.18
+        },
+        {
+          "key": "France",
+          "n": 19,
+          "placed": 7,
+          "conv": 0.3684,
+          "conv_lb": 0.1915,
+          "value": 590.0,
+          "value_per_lead": 31.05
+        },
+        {
+          "key": "Canada",
+          "n": 40,
+          "placed": 11,
+          "conv": 0.275,
+          "conv_lb": 0.1611,
+          "value": 1615.0,
+          "value_per_lead": 40.38
+        },
+        {
+          "key": "Germany",
+          "n": 35,
+          "placed": 8,
+          "conv": 0.2286,
+          "conv_lb": 0.1207,
+          "value": 845.0,
+          "value_per_lead": 24.14
+        },
+        {
+          "key": "United Arab Emirates",
+          "n": 26,
+          "placed": 3,
+          "conv": 0.1154,
+          "conv_lb": 0.04,
+          "value": 95.0,
+          "value_per_lead": 3.65
+        },
+        {
+          "key": "India",
+          "n": 26,
+          "placed": 1,
+          "conv": 0.0385,
+          "conv_lb": 0.0068,
+          "value": 55.0,
+          "value_per_lead": 2.12
+        }
+      ],
+      "by_followup_depth": [
+        {
+          "key": "F0",
+          "n": 611,
+          "placed": 215,
+          "conv": 0.3519,
+          "conv_lb": 0.315,
+          "value": 23315.0,
+          "value_per_lead": 38.16
+        },
+        {
+          "key": "F1",
+          "n": 302,
+          "placed": 104,
+          "conv": 0.3444,
+          "conv_lb": 0.293,
+          "value": 14135.0,
+          "value_per_lead": 46.8
+        },
+        {
+          "key": "F2",
+          "n": 36,
+          "placed": 5,
+          "conv": 0.1389,
+          "conv_lb": 0.0608,
+          "value": 3895.0,
+          "value_per_lead": 108.19
+        },
+        {
+          "key": "F3",
+          "n": 19,
+          "placed": 0,
+          "conv": 0.0,
+          "conv_lb": 0.0,
+          "value": 0.0,
+          "value_per_lead": 0.0
+        }
+      ],
+      "upsell_lift": {
+        "with_upsell": {
+          "n": 70,
+          "placed": 38,
+          "conv": 0.5429
+        },
+        "without_upsell": {
+          "n": 929,
+          "placed": 286,
+          "conv": 0.3079
+        },
+        "relative_lift": 0.7633,
+        "z": 4.05,
+        "significant": true,
+        "caveat": "Observational, not randomised: CSRs likely attempt upsells on warmer leads, so part of this gap is selection, not causation. Run the randomised test in playbooks/upsell.md before trusting the full effect size."
+      }
+    },
+    "economics": {
+      "n_orders": 803,
+      "n_priced": 713,
+      "revenue": 91544.0,
+      "aov": 128.39,
+      "median": 90.0,
+      "q1": 60.0,
+      "q3": 147.5,
+      "tip_rate": 0.0187,
+      "tip_total": 326.38,
+      "upsell_rate": 0.0,
+      "upsell_denominator": 492,
+      "review_capture_rate": 0.1357,
+      "review_denominator": 597,
+      "mean_rating": 4.914,
+      "by_type": {
+        "organic": {
+          "n": 180,
+          "revenue": 27460.0,
+          "aov": 152.56
+        },
+        "vvro": {
+          "n": 112,
+          "revenue": 8295.0,
+          "aov": 74.06
+        },
+        "unknown": {
+          "n": 421,
+          "revenue": 55789.0,
+          "aov": 132.52
+        }
+      },
+      "by_designer": [
+        {
+          "name": "Amin",
+          "n": 21,
+          "aov": 194.76,
+          "revenue": 4090.0
+        },
+        {
+          "name": "Musharaf",
+          "n": 31,
+          "aov": 173.39,
+          "revenue": 5375.0
+        },
+        {
+          "name": "Habib",
+          "n": 21,
+          "aov": 155.71,
+          "revenue": 3270.0
+        },
+        {
+          "name": "Dulal Khan",
+          "n": 24,
+          "aov": 155.62,
+          "revenue": 3735.0
+        },
+        {
+          "name": "Usman",
+          "n": 11,
+          "aov": 152.27,
+          "revenue": 1675.0
+        },
+        {
+          "name": "Hamza",
+          "n": 23,
+          "aov": 148.48,
+          "revenue": 3415.0
+        },
+        {
+          "name": "Hamid",
+          "n": 33,
+          "aov": 147.88,
+          "revenue": 4880.0
+        },
+        {
+          "name": "Bilal",
+          "n": 23,
+          "aov": 143.91,
+          "revenue": 3310.0
+        },
+        {
+          "name": "Bd",
+          "n": 11,
+          "aov": 138.18,
+          "revenue": 1520.0
+        },
+        {
+          "name": "Khubaib",
+          "n": 31,
+          "aov": 133.94,
+          "revenue": 4152.0
+        },
+        {
+          "name": "Aashir",
+          "n": 40,
+          "aov": 122.0,
+          "revenue": 4880.0
+        },
+        {
+          "name": "Khan",
+          "n": 26,
+          "aov": 117.88,
+          "revenue": 3065.0
+        },
+        {
+          "name": "Ezan",
+          "n": 11,
+          "aov": 113.18,
+          "revenue": 1245.0
+        },
+        {
+          "name": "Zohaib",
+          "n": 17,
+          "aov": 105.29,
+          "revenue": 1790.0
+        },
+        {
+          "name": "Belal",
+          "n": 31,
+          "aov": 100.65,
+          "revenue": 3120.0
+        },
+        {
+          "name": "Aiman",
+          "n": 33,
+          "aov": 85.0,
+          "revenue": 2805.0
+        },
+        {
+          "name": "Abbas",
+          "n": 24,
+          "aov": 70.42,
+          "revenue": 1690.0
+        }
+      ],
+      "by_industry": [
+        {
+          "name": "Tech",
+          "n": 11,
+          "aov": 176.36,
+          "revenue": 1940.0
+        },
+        {
+          "name": "Marketing Company",
+          "n": 3,
+          "aov": 350.0,
+          "revenue": 1050.0
+        },
+        {
+          "name": "Business Services & Consulting",
+          "n": 4,
+          "aov": 236.25,
+          "revenue": 945.0
+        },
+        {
+          "name": "Men Saloon",
+          "n": 1,
+          "aov": 945.0,
+          "revenue": 945.0
+        },
+        {
+          "name": "Real Estate",
+          "n": 9,
+          "aov": 93.89,
+          "revenue": 845.0
+        },
+        {
+          "name": "Ai",
+          "n": 3,
+          "aov": 268.33,
+          "revenue": 805.0
+        },
+        {
+          "name": "Technology",
+          "n": 5,
+          "aov": 154.0,
+          "revenue": 770.0
+        },
+        {
+          "name": "Saas",
+          "n": 4,
+          "aov": 170.0,
+          "revenue": 680.0
+        },
+        {
+          "name": "Petroleum Products & Oil",
+          "n": 1,
+          "aov": 650.0,
+          "revenue": 650.0
+        },
+        {
+          "name": "Food",
+          "n": 6,
+          "aov": 105.83,
+          "revenue": 635.0
+        },
+        {
+          "name": "Digital Marketing",
+          "n": 4,
+          "aov": 155.0,
+          "revenue": 620.0
+        },
+        {
+          "name": "Music",
+          "n": 2,
+          "aov": 275.0,
+          "revenue": 550.0
+        },
+        {
+          "name": "E-Commerce Platform",
+          "n": 1,
+          "aov": 550.0,
+          "revenue": 550.0
+        },
+        {
+          "name": "Jewelry",
+          "n": 3,
+          "aov": 173.33,
+          "revenue": 520.0
+        },
+        {
+          "name": "Fintech",
+          "n": 2,
+          "aov": 240.0,
+          "revenue": 480.0
+        },
+        {
+          "name": "Music Label",
+          "n": 2,
+          "aov": 227.5,
+          "revenue": 455.0
+        },
+        {
+          "name": "Clothing",
+          "n": 2,
+          "aov": 207.5,
+          "revenue": 415.0
+        },
+        {
+          "name": "Digital Agency",
+          "n": 1,
+          "aov": 380.0,
+          "revenue": 380.0
+        },
+        {
+          "name": "Youtube Channel",
+          "n": 1,
+          "aov": 350.0,
+          "revenue": 350.0
+        },
+        {
+          "name": "Fitness Gym",
+          "n": 1,
+          "aov": 350.0,
+          "revenue": 350.0
+        }
+      ]
+    },
+    "gig": {
+      "reviews_total": 1582,
+      "stars": {
+        "5": 1420,
+        "4": 106,
+        "3": 29,
+        "2": 14,
+        "1": 13
+      },
+      "rating": 4.837,
+      "orders_in_queue": 20,
+      "level": "Level 2",
+      "avg_response_time_hours": 1
+    }
+  },
+  "dose_plan": {
+    "date": "2026-06-11",
+    "profile": "X Studioz",
+    "dose": 1,
+    "weekly_quota": 5,
+    "target_rate": 0.714,
+    "previous_dose": 0.0,
+    "action": "raise",
+    "binding_constraint": "revenue_gap",
+    "reasons": [
+      "Organic healthy (index 63/100) and $4,648 behind the monthly target, so the dose steps up by 1/day, still inside the 45% share cap."
+    ],
+    "bands": [
+      {
+        "range": "$45-$85",
+        "lo": 45.0,
+        "hi": 85.0,
+        "count": 1
+      },
+      {
+        "range": "$86-$150",
+        "lo": 86.0,
+        "hi": 150.0,
+        "count": 0
+      },
+      {
+        "range": "$151-$260",
+        "lo": 151.0,
+        "hi": 260.0,
+        "count": 0
+      },
+      {
+        "range": "$261-$450",
+        "lo": 261.0,
+        "hi": 450.0,
+        "count": 0
+      }
+    ],
+    "countries": [
+      {
+        "country": "Netherlands",
+        "count": 1
+      }
+    ],
+    "ceiling_from_share": 0.818,
+    "projected_share": 0.4167,
+    "cooldown_until": "2026-06-10",
+    "expected_revenue": 65.0,
+    "week_pattern": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "tasks": [
+    {
+      "id": "rescue-5",
+      "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+      "category": "dispute_rescue",
+      "owner": "Ezan (escalate to CEO if refund is formally requested)",
+      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.837 -> 4.835) across 1,582 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.",
+      "steps": [
+        "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+        "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+        "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+        "If they choose (a), name the designer and give a fixed date.",
+        "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+      ],
+      "impact_usd": 400,
+      "confidence": 0.7,
+      "effort_hours": 1.5,
+      "priority": "P0",
+      "urgency": 2,
+      "playbook": "playbooks/dispute_rescue.md",
+      "refs": [
+        "order_tracker/tracker#b0r4"
+      ],
+      "due": "2026-06-11",
+      "score": 186.7
+    },
+    {
+      "id": "dq-flow-revenue",
+      "title": "Fill revenue in the daily ledger (111 days blank)",
+      "category": "data_quality",
+      "owner": "Whoever owns the daily ledger",
+      "why": "111 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
+      "steps": [
+        "Fill Organic Revenue and VVRO Revenue for every day with orders.",
+        "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
+        "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
+      ],
+      "impact_usd": 2000,
+      "confidence": 0.9,
+      "effort_hours": 2.0,
+      "priority": "P0",
+      "urgency": 1,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 900.0
+    },
+    {
+      "id": "upsell-program",
+      "title": "Run the upsell A/B test to de-bias the 54% vs 31% gap",
+      "category": "experiment",
+      "owner": "CEO + Salman",
+      "why": "Leads with an upsell attempt convert 54.3% (n=70) against 30.8% (n=929), z=4.05. That is a +76% relative lift \u2014 but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.",
+      "steps": [
+        "For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.",
+        "Do not let CSRs choose. That choice is exactly the bias being measured.",
+        "Log the assignment in the Upsell column so the engine can score it.",
+        "The engine will report the de-biased effect once n>=100 per arm."
+      ],
+      "impact_usd": 3000,
+      "confidence": 0.4,
+      "effort_hours": 1.0,
+      "priority": "P0",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [],
+      "due": null,
+      "score": 1200.0
+    },
+    {
+      "id": "wire-missing-sources",
+      "title": "Wire up the 3 promised data sources",
+      "category": "data_quality",
+      "owner": "CEO",
+      "why": "3 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Impression system, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+      "steps": [
+        "Needed for dispute-risk scoring and refund-exposure forecasting.",
+        "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves.",
+        "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
+        "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
+      ],
+      "impact_usd": 1500,
+      "confidence": 0.5,
+      "effort_hours": 1.0,
+      "priority": "P1",
+      "urgency": 0,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 750.0
+    },
+    {
+      "id": "vvro-2026-06-11",
+      "title": "VVRO: 5/week (1 today) \u2014 RAISE",
+      "category": "vvro_dosing",
+      "owner": "CEO / order placement",
+      "why": "Organic healthy (index 63/100) and $4,648 behind the monthly target, so the dose steps up by 1/day, still inside the 45% share cap. Quota 5/week (0.71/day); share cap allows 0.82/day.",
+      "steps": [
+        "Place **1 VVRO order today** (1x $45-$85) \u2014 quota **5/week**.",
+        "Countries to spread across: Netherlands x1",
+        "At this quota the VVRO share settles at 42%, against a cap of 0.82 VVRO/day at the current organic rate.",
+        "Do not place on a fixed weekday pattern \u2014 the schedule rotates weekly for a reason.",
+        "Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller."
+      ],
+      "impact_usd": 455.0,
+      "confidence": 0.6,
+      "effort_hours": 0.5,
+      "priority": "P2",
+      "urgency": 1,
+      "playbook": "playbooks/vvro_dosing.md",
+      "refs": [],
+      "due": null,
+      "score": 546.0
+    },
+    {
+      "id": "designer-routing",
+      "title": "Route high-value briefs to Amin",
+      "category": "delivery",
+      "owner": "CEO",
+      "why": "Amin averages $195 across 21 orders; Abbas averages $70 across 24. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+      "steps": [
+        "Assign every brief above $200 to Amin or the next two by AOV.",
+        "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
+        "Revisit in 30 days with the engine's updated per-designer AOV."
+      ],
+      "impact_usd": 800,
+      "confidence": 0.35,
+      "effort_hours": 0.5,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/staffing.md",
+      "refs": [],
+      "due": null,
+      "score": 560.0
+    },
+    {
+      "id": "stop-f3",
+      "title": "Stop third follow-ups entirely",
+      "category": "funnel",
+      "owner": "All CSRs",
+      "why": "Third follow-ups have converted 0 of 19 leads. That is not a low yield, it is a zero yield. The CSR hours currently spent on F3 are pure loss and are better spent on Tier 1 leads and upsells to existing buyers.",
+      "steps": [
+        "Cap the follow-up ladder at two touches.",
+        "Reassign the freed time to upselling completed orders \u2014 that is where the measured 54.3% vs 30.8% gap lives.",
+        "Note: the follow-up ladder is confounded (only cold leads get chased), so this is a decision about F3 cost, not proof that follow-ups hurt. F1 stays."
+      ],
+      "impact_usd": 380.0,
+      "confidence": 0.7,
+      "effort_hours": 0.5,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/lead_triage.md",
+      "refs": [],
+      "due": null,
+      "score": 532.0
+    },
+    {
+      "id": "fix-clickup",
+      "title": "Fix the broken ClickUp sync (334 logged failures)",
+      "category": "automation",
+      "owner": "CEO / whoever owns the Apps Script",
+      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+      "steps": [
+        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+        "Re-run the sync for the backlog.",
+        "Add a failure alert \u2014 300+ silent failures is the real defect."
+      ],
+      "impact_usd": 600,
+      "confidence": 0.7,
+      "effort_hours": 1.0,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 420.0
+    },
+    {
+      "id": "deliver-4",
+      "title": "Close out approved order #4 \u2014 Calum Snell",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 115.55,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r3"
+      ],
+      "due": null,
+      "score": 92.4
+    },
+    {
+      "id": "deliver-6",
+      "title": "Close out approved order #6 \u2014 bethanyjademck",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 115.55,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r5"
+      ],
+      "due": null,
+      "score": 92.4
+    },
+    {
+      "id": "revive-7",
+      "title": "Revive stalled order #7 \u2014 institutoibt (10d silent)",
+      "category": "order_revival",
+      "owner": "Assigned CSR",
+      "why": "Status 'Rev Sent' with no update for 10 days. In this dataset, orders that go quiet after a revision are the ones that end up Dead \u2014 and a Dead order still occupies a delivery slot and produces no review.",
+      "steps": [
+        "Send a single short message that gives the buyer an easy yes: restate the last thing sent in one line, then ask one closed question.",
+        "Do not send a third follow-up. In the inquiry data, third follow-ups converted 0 of 19 \u2014 they burn CSR time and goodwill.",
+        "If no reply in 48h, move to On Hold and stop chasing."
+      ],
+      "impact_usd": 51.36,
+      "confidence": 0.45,
+      "effort_hours": 0.25,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/order_revival.md",
+      "refs": [
+        "order_tracker/tracker#b0r6"
+      ],
+      "due": null,
+      "score": 92.4
+    },
+    {
+      "id": "revive-8",
+      "title": "Revive stalled order #8 \u2014 adriamartin (12d silent)",
+      "category": "order_revival",
+      "owner": "Assigned CSR",
+      "why": "Status 'Rev Sent' with no update for 12 days. In this dataset, orders that go quiet after a revision are the ones that end up Dead \u2014 and a Dead order still occupies a delivery slot and produces no review.",
+      "steps": [
+        "Send a single short message that gives the buyer an easy yes: restate the last thing sent in one line, then ask one closed question.",
+        "Do not send a third follow-up. In the inquiry data, third follow-ups converted 0 of 19 \u2014 they burn CSR time and goodwill.",
+        "If no reply in 48h, move to On Hold and stop chasing."
+      ],
+      "impact_usd": 51.36,
+      "confidence": 0.45,
+      "effort_hours": 0.25,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/order_revival.md",
+      "refs": [
+        "order_tracker/tracker#b0r7"
+      ],
+      "due": null,
+      "score": 92.4
+    }
+  ],
+  "predictions": [
+    {
+      "id": "dfcaa6f87e22",
+      "created_on": "2026-06-11",
+      "resolve_on": "2026-06-18",
+      "metric": "flow_7d.organic",
+      "statement": "Organic orders over the 7 days to 18 Jun will be 5.6 (80% CI 2.6-8.6).",
+      "point": 5.6000000000000005,
+      "lo": 2.5709671510529972,
+      "hi": 8.629032848947004,
+      "confidence": "medium",
+      "basis": "14d damped organic rate 0.800/day; Poisson spread. Health HEALTHY (index 63.3).",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "b63edf6bc3e0",
+      "created_on": "2026-06-11",
+      "resolve_on": "2026-06-25",
+      "metric": "health.index",
+      "statement": "Organic health index in 14 days will be 63 (80% CI 49-77).",
+      "point": 63.3,
+      "lo": 49.374,
+      "hi": 77.226,
+      "confidence": "medium",
+      "basis": "No breach; index expected to hold near its current level.",
+      "horizon_days": 14,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "66466bd0ed5f",
+      "created_on": "2026-06-11",
+      "resolve_on": "2026-06-18",
+      "metric": "flow_7d.total_per_day",
+      "statement": "Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07).",
+      "point": 3.2065934065934067,
+      "lo": 2.3402643172446735,
+      "hi": 4.07292249594214,
+      "confidence": "medium",
+      "basis": "14d damped total rate; current 7d actual 0.143.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "143df5293480",
+      "created_on": "2026-06-11",
+      "resolve_on": "2026-07-11",
+      "metric": "economics.aov",
+      "statement": "Blended AOV in 30 days will be $128 (80% CI $113-$144).",
+      "point": 128.39,
+      "lo": 112.98319999999998,
+      "hi": 143.7968,
+      "confidence": "high",
+      "basis": "Lifetime AOV across 713 priced orders. Moves only if the upsell programme lands.",
+      "horizon_days": 30,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "a241e70b4aff",
+      "created_on": "2026-06-11",
+      "resolve_on": "2026-06-18",
+      "metric": "funnel.conversion",
+      "statement": "Inquiry->order conversion in 7 days will be 33.5% (80% CI 28.4%-38.5%).",
+      "point": 0.3347,
+      "lo": 0.284495,
+      "hi": 0.38490499999999994,
+      "confidence": "high",
+      "basis": "Lifetime conversion over 968 scored inquiries.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    }
+  ],
+  "resolved": [
+    {
+      "id": "4ea127840f3a",
+      "created_on": "2026-06-03",
+      "resolve_on": "2026-06-10",
+      "metric": "flow_7d.organic",
+      "statement": "Organic orders over the 7 days to 10 Jun will be 5.6 (80% CI 2.6-8.6).",
+      "point": 5.6000000000000005,
+      "lo": 2.5709671510529972,
+      "hi": 8.629032848947004,
+      "confidence": "medium",
+      "basis": "14d damped organic rate 0.800/day; Poisson spread. Health BREACH (index 39.1).",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "resolved",
+      "actual": 1.0,
+      "abs_error": 4.6000000000000005,
+      "pct_error": -0.8214285714285714,
+      "within_interval": false,
+      "resolved_on": "2026-06-11",
+      "note": null
+    },
+    {
+      "id": "90e52dea6a26",
+      "created_on": "2026-06-03",
+      "resolve_on": "2026-06-10",
+      "metric": "flow_7d.total_per_day",
+      "statement": "Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07).",
+      "point": 3.2065934065934067,
+      "lo": 2.3402643172446735,
+      "hi": 4.07292249594214,
+      "confidence": "medium",
+      "basis": "14d damped total rate; current 7d actual 0.0.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "resolved",
+      "actual": 0.143,
+      "abs_error": 3.063593406593407,
+      "pct_error": -0.9554043865661412,
+      "within_interval": false,
+      "resolved_on": "2026-06-11",
+      "note": null
+    },
+    {
+      "id": "e8b359930752",
+      "created_on": "2026-06-03",
+      "resolve_on": "2026-06-10",
+      "metric": "funnel.conversion",
+      "statement": "Inquiry->order conversion in 7 days will be 33.5% (80% CI 28.4%-38.5%).",
+      "point": 0.3347,
+      "lo": 0.284495,
+      "hi": 0.38490499999999994,
+      "confidence": "high",
+      "basis": "Lifetime conversion over 968 scored inquiries.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "resolved",
+      "actual": 0.3347,
+      "abs_error": 0.0,
+      "pct_error": 0.0,
+      "within_interval": true,
+      "resolved_on": "2026-06-11",
+      "note": null
+    }
+  ],
+  "selfcheck": {
+    "score": 95.8,
+    "rubric": {
+      "task_count": 10.0,
+      "ownership": 20.0,
+      "evidence": 20.8,
+      "actionability": 15.0,
+      "falsifiability": 20.0,
+      "priority_spread": 10.0
+    },
+    "blocking": 0,
+    "repairs": [],
+    "results": [
+      {
+        "name": "dose_within_share_cap",
+        "passed": true,
+        "severity": "block",
+        "detail": "projected VVRO share 41.67% vs cap 45%",
+        "repaired": false
+      },
+      {
+        "name": "dose_within_daily_max",
+        "passed": true,
+        "severity": "block",
+        "detail": "dose 1 vs max_per_day 5",
+        "repaired": false
+      },
+      {
+        "name": "weekly_quota_matches_rate",
+        "passed": true,
+        "severity": "block",
+        "detail": "weekly quota 5 vs rate 0.714/day x7 = 5.00",
+        "repaired": false
+      },
+      {
+        "name": "week_pattern_sums_to_quota",
+        "passed": true,
+        "severity": "block",
+        "detail": "pattern [1, 1, 0, 1, 1, 0, 1] sums to 5, quota is 5",
+        "repaired": false
+      },
+      {
+        "name": "bands_sum_to_dose",
+        "passed": true,
+        "severity": "block",
+        "detail": "price bands allocate 1, dose is 1",
+        "repaired": false
+      },
+      {
+        "name": "ledger_vs_crm_orders",
+        "passed": false,
+        "severity": "warn",
+        "detail": "daily ledger says 1 orders in window, CRM sheet says 4 (75% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.",
+        "repaired": false
+      },
+      {
+        "name": "flow_total_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "flow_7d.total_per_day=0.142857 but organic+vvro/7=0.142857",
+        "repaired": false
+      },
+      {
+        "name": "aov_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "aov=128.392707 but revenue/n_priced=128.392707",
+        "repaired": false
+      },
+      {
+        "name": "health_delta_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "delta_pct=0.000000 but recomputed=0.000000",
+        "repaired": false
+      },
+      {
+        "name": "data_freshness",
+        "passed": true,
+        "severity": "warn",
+        "detail": "newest record is 2026-07-28 (-47d old, SLA 3d)",
+        "repaired": false
+      },
+      {
+        "name": "schema_drift",
+        "passed": true,
+        "severity": "warn",
+        "detail": "unmapped column rate 2.2% (limit 15%); unrecognised: ['Order type', 'Public review', 'Service Demand', 'Upsell']",
+        "repaired": false
+      },
+      {
+        "name": "task_count_in_range",
+        "passed": true,
+        "severity": "block",
+        "detail": "12 tasks (allowed 3-12)",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_owned",
+        "passed": true,
+        "severity": "block",
+        "detail": "12/12 tasks have an owner",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_evidenced",
+        "passed": false,
+        "severity": "warn",
+        "detail": "10/12 tasks cite a number in their rationale",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_actionable",
+        "passed": true,
+        "severity": "warn",
+        "detail": "12/12 tasks have >=2 concrete steps",
+        "repaired": false
+      },
+      {
+        "name": "predictions_falsifiable",
+        "passed": true,
+        "severity": "block",
+        "detail": "5/5 predictions have a resolvable metric, a date and a non-degenerate interval",
+        "repaired": false
+      },
+      {
+        "name": "priority_spread_sane",
+        "passed": true,
+        "severity": "warn",
+        "detail": "3 of 12 tasks are P0",
+        "repaired": false
+      }
+    ]
+  },
+  "ingest": {
+    "orders": 803,
+    "leads": 1000,
+    "flow_rows": 326,
+    "flow_aggregate_rows": 46,
+    "active_orders": 8,
+    "automation_errors": 334,
+    "blocks_seen": 23,
+    "blocks_used": 22,
+    "header_cells_seen": 368,
+    "unmapped_columns": {
+      "Upsell": 5,
+      "Order type": 1,
+      "Public review": 1,
+      "Service Demand": 1
+    },
+    "unmapped_rate": 0.0217,
+    "coercion_misses": {
+      "order_date": 4
+    }
+  },
+  "validation": {
+    "checked": 2129,
+    "blocking": 0,
+    "errors": 4,
+    "warnings": 207,
+    "data_issues": 211,
+    "by_code": {
+      "FLOW_REVENUE_MISSING": 111,
+      "LEAD_PLACED_NO_VALUE": 65,
+      "LEAD_FUTURE_DATE": 26,
+      "ORDER_DELIVERY_BEFORE_ORDER": 4,
+      "ORDER_FUTURE_DATE": 2,
+      "LEAD_CONTACT_BEFORE_INQUIRY": 2,
+      "ORDER_DUPLICATE": 1
+    }
+  },
+  "revenue_projection": {
+    "days": 30,
+    "organic_rate": 1.0,
+    "vvro_rate": 0.714,
+    "total_rate": 1.714,
+    "projected_orders": 51.4,
+    "aov": 128.39,
+    "projected_revenue": 6602.91,
+    "note": "Assumes AOV holds. Volume is capped by the organic constraint, so at this dose the only lever that moves this number materially is AOV."
+  },
+  "gap": {
+    "gap": 1897.09,
+    "status": "behind",
+    "route_volume": {
+      "extra_orders": 14.8,
+      "extra_per_day": 0.49,
+      "feasible_organically": true
+    },
+    "route_aov": {
+      "required_aov": 165.31,
+      "uplift_vs_current": 0.2875
+    }
+  }
+}

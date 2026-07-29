@@ -1,0 +1,90 @@
+# Where the engine reads from. All sources are READ-ONLY.
+# The engine never writes to any of these; it emits into reports/ and data/.
+
+sources:
+  - id: orders
+    name: XStudioz Order / CRM Sheet
+    kind: google_sheet
+    file_id: 1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE
+    url: https://docs.google.com/spreadsheets/d/1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE/edit
+    # This workbook holds several distinct table shapes. The ingester detects
+    # them by header fingerprint rather than by tab index, because tab order
+    # and header spelling both drift.
+    tables:
+      - id: order_history
+        detect_any: ["Client Name", "Project Name"]
+        detect_all: ["Client Name"]
+        role: crm_orders
+      - id: daily_ledger
+        detect_all: ["Profile", "Organic Orders", "VVRO Orders"]
+        role: daily_flow
+      - id: script_errors
+        detect_all: ["Timestamp", "Tab", "Row", "Message"]
+        role: automation_health
+      - id: legacy_board
+        detect_all: ["CLIENT NAME", "PROJECT NAME"]
+        role: crm_orders_legacy
+    freshness_sla_days: 2
+
+  - id: inquiries
+    name: XStudioz Inquiry / Lead Sheet
+    kind: google_sheet
+    file_id: 1Pp6RhsR96FzGfB3MV--CYj7Idja2-iyF7BNPhJ9Md_A
+    url: https://docs.google.com/spreadsheets/d/1Pp6RhsR96FzGfB3MV--CYj7Idja2-iyF7BNPhJ9Md_A/edit
+    tables:
+      - id: inquiry_log
+        detect_all: ["Client Name", "Order Status"]
+        role: funnel
+    freshness_sla_days: 2
+
+  - id: order_tracker
+    name: Live Order Tracker (CSR handoff)
+    kind: xlsx_upload
+    # Uploaded manually; the engine reads whatever is in data/raw/order_tracker/.
+    path: data/raw/order_tracker/
+    tables:
+      - id: tracker
+        detect_all: ["Order #", "Current Status"]
+        role: active_orders
+    freshness_sla_days: 1
+
+  - id: csr_pulse
+    name: CSR Pulse dashboard
+    kind: web_app
+    url: https://csr-pulse-vbsz.vercel.app/
+    auth: password
+    status: unreachable          # engine cannot log in; see docs/ACCESS.md
+    role: csr_activity
+    freshness_sla_days: 1
+
+  - id: csr_shift_logger
+    name: CSR Shift Logger / Reports
+    kind: web_app
+    url: https://reports-six-coral.vercel.app/#ceo
+    auth: device_registration
+    device_code: C6AC-6F
+    status: unreachable          # device not registered; see docs/ACCESS.md
+    role: shift_reports
+    freshness_sla_days: 1
+
+  - id: fiverr_gig
+    name: Live Fiverr gig page
+    kind: public_web
+    url: https://www.fiverr.com/x_studioz/design-modern-logo-branding-kit-with-complete-brand-identity
+    role: public_rank_signals
+    # Scraped for: level, review count, star histogram, orders in queue,
+    # avg response time, last delivery.
+    freshness_sla_days: 1
+
+# Sources the user mentioned but has not yet wired up. The engine reports
+# these as MISSING every day until they exist, so gaps stay visible.
+expected_but_missing:
+  - id: disputes
+    name: Disputed / dead / conflicted orders sheet
+    why: "Needed for dispute-risk scoring and refund-exposure forecasting."
+  - id: impressions
+    name: Impression system
+    why: "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves."
+  - id: daily_team_report
+    name: Daily team activity report
+    why: "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm."

@@ -1,0 +1,212 @@
+# XStudioz Growth Engine — objective function and operating constraints.
+# Everything the engine decides is derived from this file. Change the numbers
+# here, not the code.
+
+profile:
+  name: X Studioz
+  fiverr_username: x_studioz
+  member_since: 2023-06
+  level: Level 2
+  primary_gig: design-modern-logo-branding-kit-with-complete-brand-identity
+
+# ---------------------------------------------------------------------------
+# OBJECTIVE
+# Maximise monthly revenue SUBJECT TO organic order flow recovering.
+# Organic health is a hard constraint, not a soft preference: if organic is
+# declining, the engine is not allowed to recommend scaling VVRO volume, no
+# matter how good the revenue math looks.
+# ---------------------------------------------------------------------------
+objective:
+  maximise: monthly_revenue
+  subject_to:
+    - id: organic_non_declining
+      # 7-day moving average of organic orders must not be below the value it
+      # held `lookback_days` ago by more than `tolerance`.
+      metric: organic_orders_7d_ma
+      lookback_days: 14
+      tolerance: -0.05          # allow 5% noise before declaring a breach
+      hard: true                # breach => VVRO dose is clamped, not raised
+    - id: rating_floor
+      metric: gig_rating
+      min: 4.70                 # Fiverr Level 2 retention floor
+      hard: true
+    - id: queue_capacity
+      metric: orders_in_queue
+      max: 32                   # beyond this, delivery quality/on-time degrades
+      hard: false
+
+# ---------------------------------------------------------------------------
+# BASELINE (measured 2026-07-29 from the live gig page + daily ledger).
+# The engine compares against these; update via `scripts/set_baseline.py`.
+# ---------------------------------------------------------------------------
+baseline:
+  measured_on: 2026-07-29
+  gig:
+    reviews_total: 1582
+    stars: {5: 1420, 4: 106, 3: 29, 2: 14, 1: 13}
+    rating: 4.837
+    orders_in_queue: 20
+    level: Level 2
+    avg_response_time_hours: 1
+  flow:
+    window: [2026-06-11, 2026-07-28]
+    organic_orders: 30
+    vvro_orders: 35
+    total_orders: 65
+    organic_per_day_pre_vvro: 0.677     # 2026-06-11 .. 2026-07-12 (31d)
+    organic_per_day_post_vvro: 0.563    # 2026-07-13 .. 2026-07-28 (16d)
+    organic_delta_pct: -0.170           # <-- the breach the engine must close
+    vvro_start_date: 2026-07-13
+  economics:
+    orders_with_amount: 509
+    revenue_total: 69857
+    aov: 137
+    median_order: 100
+    aov_q1: 52
+    aov_q3: 175
+    tip_rate: 0.018
+  funnel:
+    inquiries: 1000
+    placed: 324
+    not_placed: 644
+    conversion: 0.335
+    quoted_mean: 160
+    quoted_median: 135
+
+# ---------------------------------------------------------------------------
+# TARGETS — what "growth" means numerically. The engine reports progress
+# against these every day and works backwards from them.
+# ---------------------------------------------------------------------------
+targets:
+  horizon_days: 90
+  monthly_revenue:
+    current_run_rate: 5900       # ~43 orders/mo x $137 AOV
+    t30: 8500
+    t60: 12000
+    t90: 16000
+  aov:
+    current: 137
+    t30: 155
+    t60: 175
+    t90: 200
+  organic_orders_per_day:
+    current: 0.563
+    t30: 0.90
+    t60: 1.20
+    t90: 1.50
+  upsell_rate:
+    current: 0.002               # essentially untracked today
+    t30: 0.15
+    t60: 0.25
+    t90: 0.35
+  review_capture_rate:
+    current: 0.127
+    t30: 0.35
+    t60: 0.50
+    t90: 0.65
+
+# ---------------------------------------------------------------------------
+# VVRO DOSING CONTROLLER
+# VVRO = self-placed / inorganic orders. This is a closed-loop controller:
+# it raises the dose only when organic health permits, and cuts it when the
+# organic constraint is breached.
+# ---------------------------------------------------------------------------
+dosing:
+  enabled: true
+  min_per_day: 0
+  max_per_day: 5
+  # Hard ceiling on inorganic share of total orders. Above this, Fiverr's
+  # success-score signals (repeat buyers, order value spread, review velocity)
+  # start looking synthetic.
+  max_vvro_share: 0.45
+  current_vvro_share: 0.538      # BREACH at baseline
+  step_up: 1                     # max increase per day when healthy
+  step_down: 2                   # cut faster than you climb
+  # Price bands to spread VVRO across so the order-value distribution keeps
+  # looking organic. Weights must sum to 1.0.
+  price_bands:
+    - {min: 45,  max: 85,   weight: 0.25}
+    - {min: 86,  max: 150,  weight: 0.40}
+    - {min: 151, max: 260,  weight: 0.25}
+    - {min: 261, max: 450,  weight: 0.10}
+  # Countries that convert well organically — VVRO buyer profiles should mirror
+  # the organic mix, not concentrate anywhere.
+  country_mix:
+    United States: 0.32
+    United Kingdom: 0.14
+    Australia: 0.10
+    Canada: 0.07
+    Netherlands: 0.05
+    Germany: 0.05
+    France: 0.04
+    Other: 0.23
+  cooldown_after_breach_days: 3
+
+# ---------------------------------------------------------------------------
+# LEVERS — measured effect sizes the engine uses to rank daily tasks.
+# Each carries the evidence and sample size so the engine can down-weight
+# weak evidence and re-estimate as data accumulates.
+# ---------------------------------------------------------------------------
+levers:
+  - id: upsell_on_inquiry
+    effect: 0.763               # 54.3% conv w/ upsell vs 30.8% without
+    n: 1000
+    confidence: medium
+    caveat: "Likely partly selection bias — CSRs upsell warmer leads. Engine runs an A/B to de-bias."
+    evidence: "inquiry sheet: upsell=TRUE n=70 conv 54.3%; upsell=FALSE n=930 conv 30.8%"
+  - id: morning_shift_staffing
+    effect: 0.750               # 38.5% vs 22.0% evening
+    n: 872
+    confidence: high
+    evidence: "Morning n=650 conv 38.5%; Evening n=127 conv 22.0%; Night n=95 conv 26.3%"
+  - id: lead_triage_by_country
+    effect: 0.450
+    n: 1000
+    confidence: high
+    evidence: "Netherlands 61.9%, Australia 49.0%, Italy 41.2%, US 39.2% vs India 3.8%, UAE 11.5%"
+  - id: review_capture
+    effect: 0.300
+    n: 597
+    confidence: high
+    evidence: "Only 76/597 orders have a recorded review (12.7%). Review velocity drives gig rank."
+  - id: followup_discipline
+    effect: -0.200              # NEGATIVE as currently practised
+    n: 1000
+    confidence: low
+    caveat: "35.2% no-FU vs 30.8% F1 vs 13.9% F1+F2 vs 0% F1+F2+F3. Almost certainly survivorship bias (only cold leads get chased), but the F3 = 0/19 result means F3 is pure wasted CSR time either way."
+    evidence: "inquiry sheet follow-up ladder"
+
+# ---------------------------------------------------------------------------
+# TEAM — who tasks get assigned to.
+# ---------------------------------------------------------------------------
+team:
+  csr:
+    - {name: Ezan,    leads: 125, conv: 0.248, value_per_lead: 16}
+    - {name: Tanzeel, leads: 179, conv: 0.223, value_per_lead: 7}
+    - {name: Salman,  leads: 40,  conv: 0.350, value_per_lead: 53}
+    - {name: Tayyab,  leads: 38,  conv: 0.211, value_per_lead: 100}
+    - {name: Iqra,    leads: 88,  conv: null,  value_per_lead: null}
+  designers:
+    - {name: Amin,     orders: 21, aov: 195}
+    - {name: Musharaf, orders: 26, aov: 180}
+    - {name: Habib,    orders: 21, aov: 156}
+    - {name: "Dulal Khan", orders: 24, aov: 156}
+    - {name: Usman,    orders: 11, aov: 152}
+    - {name: Aashir,   orders: 13, aov: 151}
+    - {name: Hamza,    orders: 23, aov: 148}
+    - {name: Hamid,    orders: 33, aov: 148}
+    - {name: Bilal,    orders: 23, aov: 144}
+    - {name: Zohaib,   orders: 17, aov: 105}
+
+# ---------------------------------------------------------------------------
+# SELF-CHECK GATE — the brief is not emitted unless these all pass.
+# ---------------------------------------------------------------------------
+selfcheck:
+  max_unmapped_column_rate: 0.15
+  max_source_staleness_days: 3
+  min_tasks: 3
+  max_tasks: 12
+  require_evidence_on_every_task: true
+  require_falsifiable_resolution_on_every_prediction: true
+  max_unexplained_metric_swing: 0.40
+  min_rubric_score: 70          # out of 100

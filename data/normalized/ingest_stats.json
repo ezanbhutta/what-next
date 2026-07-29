@@ -1,0 +1,21 @@
+{
+  "orders": 803,
+  "leads": 1000,
+  "flow_rows": 326,
+  "flow_aggregate_rows": 46,
+  "active_orders": 8,
+  "automation_errors": 334,
+  "blocks_seen": 23,
+  "blocks_used": 22,
+  "header_cells_seen": 368,
+  "unmapped_columns": {
+    "Upsell": 5,
+    "Order type": 1,
+    "Public review": 1,
+    "Service Demand": 1
+  },
+  "unmapped_rate": 0.0217,
+  "coercion_misses": {
+    "order_date": 4
+  }
+}

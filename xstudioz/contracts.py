@@ -1,0 +1,499 @@
+"""Canonical data contracts.
+
+The source sheets drift: across tabs the same field appears as ``Order Type``,
+``Order type``, ``Gig``, or nothing at all; ``Date`` becomes ``Date of Order``
+or gets overwritten by a project name. Ten distinct header layouts were
+observed in the inquiry workbook alone and eight in the order workbook.
+
+Rather than pin the engine to any one layout, everything upstream normalises
+into the canonical records defined here, and every record carries the
+provenance needed to trace a number back to the exact source row.
+"""
+
+from __future__ import annotations
+
+import datetime as _dt
+import re
+from dataclasses import dataclass, field, asdict
+from typing import Any, Iterable
+
+# --------------------------------------------------------------------------
+# Canonical vocabularies
+# --------------------------------------------------------------------------
+
+#: Inorganic / self-placed orders. The team writes this as "VVRO".
+ORDER_TYPE_VVRO = "vvro"
+ORDER_TYPE_ORGANIC = "organic"
+ORDER_TYPE_UNKNOWN = "unknown"
+
+_ORDER_TYPE_MAP = {
+    "organic": ORDER_TYPE_ORGANIC,
+    "orgnic": ORDER_TYPE_ORGANIC,
+    "direct": ORDER_TYPE_ORGANIC,
+    "direct order": ORDER_TYPE_ORGANIC,
+    "vvro": ORDER_TYPE_VVRO,
+    "vro": ORDER_TYPE_VVRO,
+    "inorganic": ORDER_TYPE_VVRO,
+}
+
+ORDER_STATUSES = {
+    "new", "in_progress", "rev_sent", "approved", "completed",
+    "delivered", "on_hold", "dead", "cancelled", "revision",
+}
+
+_STATUS_MAP = {
+    "new": "new",
+    "in progress": "in_progress",
+    "inprogress": "in_progress",
+    "rev sent": "rev_sent",
+    "revision": "revision",
+    "approved": "approved",
+    "completed": "completed",
+    "complete": "completed",
+    "auto-complete": "completed",
+    "delivered": "delivered",
+    "on hold": "on_hold",
+    "dead": "dead",
+    "cancel": "cancelled",
+    "cancelled": "cancelled",
+    "canceled": "cancelled",
+}
+
+LEAD_STATUSES = {"placed", "not_placed", "out_of_scope", "cancelled", "unknown"}
+
+_LEAD_STATUS_MAP = {
+    "placed": "placed",
+    "direct order": "placed",
+    "not placed": "not_placed",
+    "notplaced": "not_placed",
+    "out of scope": "out_of_scope",
+    "cancel": "cancelled",
+}
+
+
+# --------------------------------------------------------------------------
+# Coercion helpers — deliberately total. They never raise; they return None
+# and the caller records a coercion miss, because a single malformed cell must
+# never take down a daily run.
+# --------------------------------------------------------------------------
+
+_DATE_FORMATS = (
+    "%Y-%m-%d", "%d-%b-%Y", "%d-%B-%Y", "%d %b %Y", "%d %B %Y",
+    "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%d-%b-%y", "%d/%m/%y",
+    "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S", "%d-%m-%y",
+)
+
+
+def to_date(value: Any) -> _dt.date | None:
+    """Parse the many date spellings found across the workbooks."""
+    if value is None:
+        return None
+    if isinstance(value, _dt.datetime):
+        return value.date()
+    if isinstance(value, _dt.date):
+        return value
+    text = str(value).strip()
+    if not text or text.lower() in {"-", "n/a", "na", "none", "tbd"}:
+        return None
+    for fmt in _DATE_FORMATS:
+        try:
+            return _dt.datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    # "26-01-26" style: ambiguous d-m-y with 2-digit year.
+    m = re.fullmatch(r"(\d{1,2})[-/](\d{1,2})[-/](\d{2})", text)
+    if m:
+        d, mo, y = (int(x) for x in m.groups())
+        if 1 <= mo <= 12 and 1 <= d <= 31:
+            try:
+                return _dt.date(2000 + y, mo, d)
+            except ValueError:
+                return None
+    return None
+
+
+_MONEY_RE = re.compile(r"-?\d+(?:[\d,]*\d)?(?:\.\d+)?")
+
+
+def to_money(value: Any) -> float | None:
+    """Parse ``$1,234.50``, ``1234``, ``$45.00 `` and friends."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return None
+    m = _MONEY_RE.search(text.replace(",", ""))
+    if not m:
+        return None
+    try:
+        return float(m.group(0))
+    except ValueError:
+        return None
+
+
+def to_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if text in {"true", "yes", "y", "1", "done", "checked"}:
+        return True
+    if text in {"false", "no", "n", "0", "unchecked"}:
+        return False
+    return None
+
+
+def to_order_type(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    return _ORDER_TYPE_MAP.get(text, ORDER_TYPE_UNKNOWN if text else ORDER_TYPE_UNKNOWN)
+
+
+def to_order_status(value: Any) -> str | None:
+    text = str(value or "").strip().lower()
+    return _STATUS_MAP.get(text)
+
+
+def to_lead_status(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    return _LEAD_STATUS_MAP.get(text, "unknown")
+
+
+def to_rating(value: Any) -> float | None:
+    """Reviews are recorded as ``5.0``, ``5``, ``no review``, ``no``, ``0.0``."""
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if not text or text.startswith("no"):
+        return None
+    try:
+        r = float(text)
+    except ValueError:
+        return None
+    # 0.0 in this dataset means "not reviewed", not "rated zero" — Fiverr has
+    # no zero-star rating.
+    return r if 1.0 <= r <= 5.0 else None
+
+
+def normalise_country(value: Any) -> str | None:
+    text = re.sub(r"\s+", " ", str(value or "")).strip().title()
+    if not text:
+        return None
+    return {
+        "Us": "United States", "Usa": "United States", "U.S.": "United States",
+        "Uk": "United Kingdom", "U.K.": "United Kingdom",
+        "Uae": "United Arab Emirates",
+        "Ksa": "Saudi Arabia",
+    }.get(text, text)
+
+
+def normalise_person(value: Any) -> str | None:
+    """People are typed inconsistently: ``Salman ``, ``ZUBAIR``, ``Ezan😊``."""
+    text = str(value or "")
+    text = re.sub(r"[^\w\s.'-]", "", text, flags=re.UNICODE).strip()
+    text = re.sub(r"\s+", " ", text)
+    if not text:
+        return None
+    canon = text.title()
+    return {
+        "Ashir": "Aashir",
+        "Musharaf": "Musharaf",
+        "Mushraf": "Musharaf",
+        "Dulal Khan": "Dulal Khan",
+    }.get(canon, canon)
+
+
+# --------------------------------------------------------------------------
+# Provenance
+# --------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class Provenance:
+    """Where a record came from, precisely enough to re-find it by hand."""
+    source_id: str
+    table_id: str
+    block_index: int
+    row_index: int
+
+    def ref(self) -> str:
+        return f"{self.source_id}/{self.table_id}#b{self.block_index}r{self.row_index}"
+
+
+# --------------------------------------------------------------------------
+# Canonical records
+# --------------------------------------------------------------------------
+
+@dataclass
+class Order:
+    client: str
+    provenance: Provenance
+    order_date: _dt.date | None = None
+    delivered_date: _dt.date | None = None
+    project: str | None = None
+    industry: str | None = None
+    country: str | None = None
+    order_type: str = ORDER_TYPE_UNKNOWN
+    status: str | None = None
+    amount: float | None = None
+    tip: float | None = None
+    rating: float | None = None
+    logo_designer: str | None = None
+    branding_designer: str | None = None
+    csr: str | None = None
+    upsell: bool | None = None
+    upsell_detail: str | None = None
+    notes: str | None = None
+    #: Whether the source tab even had a column for these. Rates like "review
+    #: capture" must divide by orders that *could* have been recorded, not by
+    #: every row ever — the legacy board has no review or upsell column at all,
+    #: and counting its rows as un-reviewed understates capture badly.
+    rating_tracked: bool = False
+    upsell_tracked: bool = False
+
+    def revenue(self) -> float:
+        return (self.amount or 0.0) + (self.tip or 0.0)
+
+
+@dataclass
+class Lead:
+    client: str
+    provenance: Provenance
+    date: _dt.date | None = None
+    country: str | None = None
+    member_since: str | None = None
+    completed_orders: float | None = None
+    status: str = "unknown"
+    quoted: float | None = None
+    upsell_attempted: bool | None = None
+    followup_1: bool | None = None
+    followup_2: bool | None = None
+    followup_3: bool | None = None
+    shift: str | None = None
+    csr: str | None = None
+    last_contact: _dt.date | None = None
+    service: str | None = None
+    note: str | None = None
+
+    def followup_depth(self) -> int:
+        return sum(1 for f in (self.followup_1, self.followup_2, self.followup_3) if f)
+
+    def converted(self) -> bool:
+        return self.status == "placed"
+
+
+@dataclass
+class DailyFlow:
+    """One row of the Organic-vs-VVRO daily ledger, per profile per day."""
+    date: _dt.date
+    profile: str
+    provenance: Provenance
+    organic_orders: float = 0.0
+    vvro_orders: float = 0.0
+    organic_revenue: float = 0.0
+    vvro_revenue: float = 0.0
+    total_orders: float = 0.0
+    total_revenue: float = 0.0
+
+    def computed_total_orders(self) -> float:
+        return self.organic_orders + self.vvro_orders
+
+    def vvro_share(self) -> float | None:
+        t = self.computed_total_orders()
+        return (self.vvro_orders / t) if t else None
+
+
+@dataclass
+class ActiveOrder:
+    """A row of the live CSR handoff tracker — the highest-signal source for
+    today's client-handling tasks."""
+    order_no: str
+    client: str
+    provenance: Provenance
+    order_type: str = ORDER_TYPE_UNKNOWN
+    source: str | None = None
+    order_date: _dt.date | None = None
+    first_draft_date: _dt.date | None = None
+    status: str | None = None
+    latest_sent: str | None = None
+    summary: str | None = None
+    buyer_mood: str | None = None
+    last_updated: _dt.date | None = None
+    handoff_notes: str | None = None
+
+    def days_since_update(self, today: _dt.date) -> int | None:
+        if not self.last_updated:
+            return None
+        return (today - self.last_updated).days
+
+
+# --------------------------------------------------------------------------
+# Validation
+# --------------------------------------------------------------------------
+
+@dataclass
+class Violation:
+    """A validation finding.
+
+    ``domain`` is the important field:
+
+    ``engine``
+        The engine itself cannot trust what it read — a schema broke, a
+        contract is violated, arithmetic does not close. These block the run,
+        because acting on them would mean acting on numbers that are wrong.
+
+    ``data``
+        The *source data* has a mistake — a delivery dated before its order,
+        a duplicate row, a placed lead with no value recorded. These must
+        never block the run. Finding them is the product: they become tasks
+        in the daily brief so the team fixes them.
+    """
+    severity: str          # "error" | "warn"
+    domain: str            # "engine" | "data"
+    code: str
+    message: str
+    ref: str | None = None
+
+    def __str__(self) -> str:
+        loc = f" [{self.ref}]" if self.ref else ""
+        return f"{self.severity.upper()}/{self.domain} {self.code}: {self.message}{loc}"
+
+
+@dataclass
+class ValidationReport:
+    violations: list[Violation] = field(default_factory=list)
+    checked: int = 0
+
+    def add(self, severity: str, domain: str, code: str, message: str,
+            ref: str | None = None) -> None:
+        self.violations.append(Violation(severity, domain, code, message, ref))
+
+    @property
+    def errors(self) -> list[Violation]:
+        return [v for v in self.violations if v.severity == "error"]
+
+    @property
+    def warnings(self) -> list[Violation]:
+        return [v for v in self.violations if v.severity == "warn"]
+
+    @property
+    def blocking(self) -> list[Violation]:
+        """Only engine-domain errors stop a run."""
+        return [v for v in self.violations
+                if v.severity == "error" and v.domain == "engine"]
+
+    @property
+    def data_issues(self) -> list[Violation]:
+        return [v for v in self.violations if v.domain == "data"]
+
+    def ok(self) -> bool:
+        return not self.blocking
+
+    def by_code(self) -> dict[str, int]:
+        c: dict[str, int] = {}
+        for v in self.violations:
+            c[v.code] = c.get(v.code, 0) + 1
+        return dict(sorted(c.items(), key=lambda kv: -kv[1]))
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "checked": self.checked,
+            "blocking": len(self.blocking),
+            "errors": len(self.errors),
+            "warnings": len(self.warnings),
+            "data_issues": len(self.data_issues),
+            "by_code": self.by_code(),
+        }
+
+    def merge(self, other: "ValidationReport") -> "ValidationReport":
+        self.violations += other.violations
+        self.checked += other.checked
+        return self
+
+
+def validate_orders(orders: Iterable[Order], today: _dt.date | None = None) -> ValidationReport:
+    today = today or _dt.date.today()
+    rep = ValidationReport()
+    seen: dict[tuple, str] = {}
+    for o in orders:
+        rep.checked += 1
+        ref = o.provenance.ref()
+        if not o.client:
+            rep.add("error", "engine", "ORDER_NO_CLIENT", "order row has no client", ref)
+        if o.amount is not None and o.amount < 0:
+            rep.add("error", "data", "ORDER_NEG_AMOUNT", f"negative amount {o.amount}", ref)
+        if o.amount is not None and o.amount > 5000:
+            rep.add("warn", "data", "ORDER_AMOUNT_OUTLIER", f"amount {o.amount} far above p99", ref)
+        if o.order_date and o.order_date > today:
+            rep.add("warn", "data", "ORDER_FUTURE_DATE", f"order dated {o.order_date} in the future", ref)
+        if o.order_date and o.delivered_date and o.delivered_date < o.order_date:
+            rep.add("error", "data", "ORDER_DELIVERY_BEFORE_ORDER",
+                    f"delivered {o.delivered_date} before ordered {o.order_date}", ref)
+        if o.rating is not None and not (1.0 <= o.rating <= 5.0):
+            rep.add("error", "data", "ORDER_BAD_RATING", f"rating {o.rating} out of range", ref)
+        key = (o.client.lower().strip(), o.order_date, o.amount)
+        if o.client and o.order_date and key in seen:
+            rep.add("warn", "data", "ORDER_DUPLICATE",
+                    f"possible duplicate of {seen[key]}", ref)
+        elif o.client and o.order_date:
+            seen[key] = ref
+    return rep
+
+
+def validate_leads(leads: Iterable[Lead], today: _dt.date | None = None) -> ValidationReport:
+    today = today or _dt.date.today()
+    rep = ValidationReport()
+    for l in leads:
+        rep.checked += 1
+        ref = l.provenance.ref()
+        if not l.client:
+            rep.add("error", "engine", "LEAD_NO_CLIENT", "lead row has no client", ref)
+        if l.status not in LEAD_STATUSES:
+            rep.add("error", "engine", "LEAD_BAD_STATUS", f"unknown status {l.status!r}", ref)
+        if l.status == "placed" and l.quoted is None:
+            rep.add("warn", "data", "LEAD_PLACED_NO_VALUE",
+                    "lead marked placed but no order value recorded", ref)
+        if l.date and l.date > today:
+            rep.add("warn", "data", "LEAD_FUTURE_DATE", f"lead dated {l.date} in the future", ref)
+        if l.last_contact and l.date and l.last_contact < l.date:
+            rep.add("warn", "data", "LEAD_CONTACT_BEFORE_INQUIRY",
+                    f"last contact {l.last_contact} precedes inquiry {l.date}", ref)
+    return rep
+
+
+def validate_flow(rows: Iterable[DailyFlow]) -> ValidationReport:
+    rep = ValidationReport()
+    seen: set[tuple] = set()
+    for r in rows:
+        rep.checked += 1
+        ref = r.provenance.ref()
+        if (r.date, r.profile) in seen:
+            rep.add("error", "data", "FLOW_DUPLICATE_DAY",
+                    f"two ledger rows for {r.profile} on {r.date}", ref)
+        seen.add((r.date, r.profile))
+        for name, val in (("organic", r.organic_orders), ("vvro", r.vvro_orders)):
+            if val < 0:
+                rep.add("error", "data", "FLOW_NEGATIVE", f"{name} orders = {val}", ref)
+        if r.total_orders and abs(r.total_orders - r.computed_total_orders()) > 1e-6:
+            rep.add("error", "data", "FLOW_TOTAL_MISMATCH",
+                    f"total_orders={r.total_orders} but organic+vvro="
+                    f"{r.computed_total_orders()}", ref)
+        if r.computed_total_orders() > 0 and r.total_revenue == 0:
+            rep.add("warn", "data", "FLOW_REVENUE_MISSING",
+                    f"{r.computed_total_orders():.0f} orders logged on {r.date} "
+                    "but revenue is 0 — revenue is not being captured", ref)
+    return rep
+
+
+def as_dict(record: Any) -> dict[str, Any]:
+    """Serialise a canonical record, rendering dates as ISO strings."""
+    def conv(v: Any) -> Any:
+        if isinstance(v, (_dt.date, _dt.datetime)):
+            return v.isoformat()
+        if isinstance(v, dict):
+            return {k: conv(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [conv(x) for x in v]
+        return v
+    return {k: conv(v) for k, v in asdict(record).items()}

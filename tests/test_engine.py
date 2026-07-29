@@ -1,0 +1,668 @@
+"""Engine test suite.
+
+Four layers, deliberately:
+
+1. **Coercion** — the sheets contain a dozen date spellings and money formats.
+   These pin the parsing so a new spelling fails loudly rather than silently
+   becoming ``None``.
+2. **Schema drift** — synthetic tabs with renamed, reordered, duplicated and
+   overwritten headers. This is the failure mode most likely to happen in
+   real life, because the team edits the sheets by hand.
+3. **Controller invariants** — properties that must hold for *every* input,
+   not just the ones we thought of. The share-cap property test is the one
+   that caught the real ``round()``-to-1 bug in the dose quantiser.
+4. **Pipeline** — end to end on a fixture, asserting the self-check gate
+   actually blocks bad output rather than merely reporting on it.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from xstudioz import contracts as C  # noqa: E402
+from xstudioz import dosing, ingest, ledger as L, metrics, selfcheck, tasks  # noqa: E402
+from xstudioz.contracts import Provenance  # noqa: E402
+
+P = Provenance("test", "t", 0, 0)
+
+
+# =========================================================================
+# 1. Coercion
+# =========================================================================
+
+@pytest.mark.parametrize("raw,expected", [
+    ("2026-07-29", dt.date(2026, 7, 29)),
+    ("29-Jul-2026", dt.date(2026, 7, 29)),
+    ("29 Jul 2026", dt.date(2026, 7, 29)),
+    ("29/07/2026", dt.date(2026, 7, 29)),
+    ("01-Dec-2025", dt.date(2025, 12, 1)),
+    ("26-01-26", dt.date(2026, 1, 26)),
+    ("15/06/2026 02:01:02", dt.date(2026, 6, 15)),
+    ("", None), ("-", None), ("n/a", None), ("garbage", None),
+])
+def test_date_parsing(raw, expected):
+    assert C.to_date(raw) == expected
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("$150.00", 150.0), ("$1,234.50", 1234.5), ("175", 175.0),
+    ("$45.00 ", 45.0), ("", None), ("no", None), (200, 200.0),
+])
+def test_money_parsing(raw, expected):
+    assert C.to_money(raw) == expected
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("5.0", 5.0), ("5", 5.0), ("4.0", 4.0),
+    # "no review" / "no" / 0.0 all mean "not reviewed" in this dataset.
+    # Fiverr has no zero-star rating, so 0.0 must not become a real score.
+    ("no review", None), ("no", None), ("0.0", None), ("", None),
+])
+def test_rating_parsing(raw, expected):
+    assert C.to_rating(raw) == expected
+
+
+def test_order_type_vocabulary():
+    assert C.to_order_type("VVRO") == C.ORDER_TYPE_VVRO
+    assert C.to_order_type("Organic") == C.ORDER_TYPE_ORGANIC
+    assert C.to_order_type("Direct Order") == C.ORDER_TYPE_ORGANIC
+    assert C.to_order_type("") == C.ORDER_TYPE_UNKNOWN
+
+
+def test_person_normalisation_strips_emoji_and_case():
+    assert C.normalise_person("ZUBAIR") == "Zubair"
+    assert C.normalise_person("Salman ") == "Salman"
+    assert C.normalise_person("Ezan\U0001F60A") == "Ezan"
+    assert C.normalise_person("") is None
+
+
+def test_country_aliases_collapse():
+    for raw in ("US", "USA", "us"):
+        assert C.normalise_country(raw) == "United States"
+    assert C.normalise_country("UK") == "United Kingdom"
+    assert C.normalise_country("United Kingdom  ") == "United Kingdom"
+
+
+# =========================================================================
+# 2. Schema drift
+# =========================================================================
+
+def test_duplicate_order_type_header_becomes_status():
+    """The live sheet has ``Order Type | Order Type`` where the second is the
+    status. The mapper must not silently drop one of them."""
+    header = ["Date", "Client Name", "Order Type", "Order Type", "Order Amount"]
+    f2c, unmapped = ingest.map_columns(header, ingest.ORDER_ALIASES)
+    assert f2c["order_type"] == 2
+    assert f2c["status"] == 3
+    assert not unmapped
+
+
+def test_header_overwritten_by_data_still_parses():
+    """Two real tabs have a project name where ``Date`` should be."""
+    text = (
+        "| Urban Stroll | Client Name | Order Amount |\n"
+        "| :-: | :-: | :-: |\n"
+        "| 01-Jul-2025 | acme | $200.00 |\n"
+    )
+    res = ingest.ingest_orders_workbook(text)
+    assert len(res.orders) == 1
+    assert res.orders[0].client == "acme"
+    assert res.orders[0].amount == 200.0
+
+
+def test_renamed_headers_across_tabs_normalise_together():
+    text = (
+        "| Date | Client Name | Order Amount |\n| :-: | :-: | :-: |\n"
+        "| 01-Jul-2025 | a | $100.00 |\n"
+        "\n"
+        "| Date of Order | Client Name | Amount |\n| :-: | :-: | :-: |\n"
+        "| 02-Jul-2025 | b | $200.00 |\n"
+    )
+    res = ingest.ingest_orders_workbook(text)
+    assert {o.client for o in res.orders} == {"a", "b"}
+    assert sum(o.amount for o in res.orders) == 300.0
+
+
+def test_unknown_column_is_reported_not_swallowed():
+    header = ["Date", "Client Name", "Quantum Flux Rating"]
+    _, unmapped = ingest.map_columns(header, ingest.ORDER_ALIASES)
+    assert "Quantum Flux Rating" in unmapped
+
+
+def test_known_junk_column_does_not_count_as_drift():
+    header = ["Date", "Client Name", "Add to Clickup", "Column 16"]
+    _, unmapped = ingest.map_columns(header, ingest.ORDER_ALIASES)
+    assert unmapped == []
+
+
+def test_aggregate_row_excluded_from_profiles():
+    """``── TOTAL ──`` is a spreadsheet sum row, not a seller."""
+    text = (
+        "| Date | Profile | Organic Orders | VVRO Orders |\n| :-: | :-: | :-: | :-: |\n"
+        "| 01 Jul 2026 | X Studioz | 2 | 1 |\n"
+        "| 01 Jul 2026 | \\-\\- TOTAL \\-\\- | 0 | 0 |\n"
+    )
+    res = ingest.ingest_orders_workbook(text)
+    assert [f.profile for f in res.flow] == ["X Studioz"]
+    assert len(res.flow_aggregates) == 1
+
+
+def test_error_log_block_is_not_mistaken_for_orders():
+    text = (
+        "| Timestamp | Tab | Row | Client | Message |\n| :-: | :-: | :-: | :-: | :-: |\n"
+        "| 15/06/2026 02:01:02 | - | - | - | CLICKUP_TOKEN missing. |\n"
+    )
+    res = ingest.ingest_orders_workbook(text)
+    assert res.orders == []
+    assert len(res.automation_errors) == 1
+
+
+def test_review_denominator_excludes_tabs_without_a_review_column():
+    """A tab with no REVIEW column cannot contain un-reviewed orders."""
+    text = (
+        "| Date | Client Name | Order Amount | REVIEW |\n| :-: | :-: | :-: | :-: |\n"
+        "| 01-Jul-2025 | a | $100.00 | 5.0 |\n"
+        "| 01-Jul-2025 | b | $100.00 | no review |\n"
+        "\n"
+        "| Date | Client Name | Order Amount |\n| :-: | :-: | :-: |\n"
+        "| 02-Jul-2025 | c | $100.00 |\n"
+    )
+    res = ingest.ingest_orders_workbook(text)
+    e = metrics.economics(res.orders)
+    assert e.review_denominator == 2       # not 3
+    assert e.review_capture_rate == 0.5    # not 1/3
+
+
+# =========================================================================
+# 3. Controller invariants
+# =========================================================================
+
+CONFIG = {
+    "dosing": {
+        "min_per_day": 0, "max_per_day": 5, "max_vvro_share": 0.45,
+        "step_up": 1, "step_down": 2, "cooldown_after_breach_days": 3,
+        "price_bands": [
+            {"min": 45, "max": 85, "weight": 0.25},
+            {"min": 86, "max": 150, "weight": 0.40},
+            {"min": 151, "max": 260, "weight": 0.25},
+            {"min": 261, "max": 450, "weight": 0.10},
+        ],
+        "country_mix": {"United States": 0.5, "Other": 0.5},
+    },
+    "objective": {"subject_to": [{"id": "queue_capacity", "max": 32}]},
+    "selfcheck": {"min_tasks": 1, "max_tasks": 12},
+}
+
+
+def _health(**kw):
+    base = dict(profile="X", as_of=dt.date(2026, 7, 29), ma7_now=0.7, ma7_prior=0.7,
+                delta_pct=0.0, slope_14d=0.0, vvro_share_7d=0.3,
+                total_per_day_7d=1.0, breached=False, tolerance=-0.05)
+    base.update(kw)
+    return metrics.OrganicHealth(**base)
+
+
+def test_share_ceiling_formula():
+    # v/(o+v) = s  =>  v = o*s/(1-s). At o=1.0, s=0.5 the ceiling is 1.0.
+    assert dosing.share_ceiling(1.0, 0.5) == pytest.approx(1.0)
+    assert dosing.share_ceiling(0.7, 0.45) == pytest.approx(0.7 * 0.45 / 0.55)
+    assert dosing.share_ceiling(0.0, 0.45) == 0.0
+
+
+@pytest.mark.parametrize("organic", [0.0, 0.2, 0.56, 0.7, 1.0, 1.5, 2.0, 3.3, 5.0])
+@pytest.mark.parametrize("current", [0.0, 0.5, 2.7, 5.0])
+def test_dose_never_breaches_share_cap(organic, current):
+    """Property: whatever the state, the recommended *rate* respects the cap.
+
+    This is the check that caught the original bug, where a 0.58/day ceiling
+    was rounded to a 1/day dose — a 58% share against a 45% cap.
+    """
+    h = _health(ma7_now=organic, vvro_share_7d=0.5)
+    plan = dosing.decide(date=dt.date(2026, 7, 29), profile="X", health=h,
+                         current_vvro_per_day=current, config=CONFIG,
+                         orders_in_queue=5, revenue_gap=5000)
+    if plan.projected_share is not None:
+        assert plan.projected_share <= CONFIG["dosing"]["max_vvro_share"] + 1e-9
+    # The quota and the stated rate must never drift apart.
+    assert plan.target_rate == pytest.approx(plan.weekly_quota / 7)
+    assert sum(plan.week_pattern) == plan.weekly_quota
+
+
+@pytest.mark.parametrize("current", [0.0, 1.0, 3.0, 5.0])
+def test_breach_never_raises_the_dose(current):
+    """The objective's hard constraint, as an executable assertion."""
+    h = _health(breached=True, delta_pct=-0.30,
+                breach_reasons=["structural: organic -30%"])
+    plan = dosing.decide(date=dt.date(2026, 7, 29), profile="X", health=h,
+                         current_vvro_per_day=current, config=CONFIG,
+                         orders_in_queue=5, revenue_gap=99999)
+    assert plan.action != "raise"
+    assert plan.target_rate <= current + 1e-9
+
+
+def test_queue_capacity_freezes_placement():
+    h = _health(ma7_now=3.0)
+    plan = dosing.decide(date=dt.date(2026, 7, 29), profile="X", health=h,
+                         current_vvro_per_day=2.0, config=CONFIG,
+                         orders_in_queue=40, revenue_gap=5000)
+    assert plan.action == "freeze"
+    assert plan.dose == 0
+
+
+def test_healthy_profile_may_raise_when_behind_on_revenue():
+    h = _health(ma7_now=4.0, delta_pct=0.10, vvro_share_7d=0.10)
+    plan = dosing.decide(date=dt.date(2026, 7, 29), profile="X", health=h,
+                         current_vvro_per_day=1.0, config=CONFIG,
+                         orders_in_queue=5, revenue_gap=5000)
+    assert plan.action == "raise"
+    assert plan.target_rate > 1.0
+
+
+@pytest.mark.parametrize("quota", range(0, 22))
+def test_week_pattern_always_sums_to_quota(quota):
+    pattern = dosing.spread_week(quota, "seed")
+    assert len(pattern) == 7
+    assert sum(pattern) == quota
+    assert all(n >= 0 for n in pattern)
+
+
+def test_week_pattern_rotates_between_weeks():
+    """A fixed weekday cadence is exactly what makes inorganic volume legible."""
+    a = dosing.spread_week(3, "X:2026-W30")
+    b = dosing.spread_week(3, "X:2026-W31")
+    c = dosing.spread_week(3, "X:2026-W32")
+    assert len({tuple(a), tuple(b), tuple(c)}) > 1
+
+
+def test_dosing_is_deterministic():
+    h = _health()
+    args = dict(date=dt.date(2026, 7, 29), profile="X", health=h,
+                current_vvro_per_day=1.0, config=CONFIG, orders_in_queue=5)
+    assert (dosing.decide(**args).as_dict() == dosing.decide(**args).as_dict())
+
+
+@pytest.mark.parametrize("total", range(0, 13))
+def test_largest_remainder_conserves_total(total):
+    counts = dosing.largest_remainder([0.25, 0.40, 0.25, 0.10], total)
+    assert sum(counts) == total
+
+
+# =========================================================================
+# Health detection
+# =========================================================================
+
+def _flow(rows):
+    return [C.DailyFlow(date=d, profile="X", provenance=P, organic_orders=o,
+                        vvro_orders=v) for d, o, v in rows]
+
+
+def test_structural_decline_is_caught_when_rolling_window_reads_flat():
+    """The real failure mode: sparse counts make the 7d-vs-14d test read 0.0%
+    while organic is genuinely eroding since VVRO began."""
+    start = dt.date(2026, 6, 1)
+    rows = []
+    for i in range(30):                       # pre-VVRO: 1/day
+        rows.append((start + dt.timedelta(days=i), 1.0, 0.0))
+    for i in range(30, 46):                   # post-VVRO: 0.5/day organic
+        rows.append((start + dt.timedelta(days=i), float(i % 2), 3.0))
+    h = metrics.organic_health(_flow(rows), "X", start + dt.timedelta(days=45),
+                               vvro_start=start + dt.timedelta(days=30))
+    assert h.structural_delta_pct is not None
+    assert h.structural_delta_pct < -0.4
+    assert h.breached
+    assert any("structural" in r for r in h.breach_reasons)
+
+
+def test_healthy_growth_does_not_breach():
+    start = dt.date(2026, 6, 1)
+    rows = [(start + dt.timedelta(days=i), 1.0 + i * 0.05, 0.0) for i in range(40)]
+    h = metrics.organic_health(_flow(rows), "X", start + dt.timedelta(days=39))
+    assert not h.breached
+    assert h.verdict() == "HEALTHY"
+
+
+def test_flow_series_zero_fills_missing_days():
+    rows = _flow([(dt.date(2026, 6, 1), 1, 0), (dt.date(2026, 6, 5), 2, 0)])
+    dates, org, _ = metrics.flow_series(rows, "X")
+    assert len(dates) == 5
+    assert org == [1, 0, 0, 0, 2]
+
+
+# =========================================================================
+# Statistics
+# =========================================================================
+
+def test_wilson_bound_penalises_small_samples():
+    """A 75%-of-4 CSR must not outrank a 50%-of-120 one."""
+    small = metrics.wilson_lower_bound(3, 4)      # p = 0.75, n = 4
+    large = metrics.wilson_lower_bound(60, 120)   # p = 0.50, n = 120
+    assert small < large
+    # And the bound must always sit below the raw rate.
+    assert metrics.wilson_lower_bound(3, 4) < 0.75
+    # More evidence at the same rate raises the bound.
+    assert (metrics.wilson_lower_bound(300, 400)
+            > metrics.wilson_lower_bound(3, 4))
+
+
+def test_rating_maths_matches_the_live_gig():
+    stars = {5: 1420, 4: 106, 3: 29, 2: 14, 1: 13}
+    assert metrics.rating_from_histogram(stars) == pytest.approx(4.8369, abs=1e-3)
+    assert sum(stars.values()) == 1582
+    # One 1-star barely moves a 1,582-review average — the real cost of a
+    # dispute is the cancellation and success score, not the visible rating.
+    assert metrics.rating_damage(stars, 1, 1) < 0.005
+
+
+def test_reviews_needed_to_move_rating():
+    stars = {5: 1420, 4: 106, 3: 29, 2: 14, 1: 13}
+    assert metrics.reviews_to_move_rating(stars, 4.70) == 0     # already above
+    assert metrics.reviews_to_move_rating(stars, 4.90) > 0
+    assert metrics.reviews_to_move_rating(stars, 5.50) is None  # unreachable
+
+
+# =========================================================================
+# Ledger
+# =========================================================================
+
+def test_prediction_requires_point_inside_interval():
+    with pytest.raises(ValueError):
+        L.new_prediction(created_on=dt.date(2026, 7, 29), horizon_days=7,
+                         metric="m", statement="s", point=10, lo=20, hi=30,
+                         confidence="high", basis="b")
+
+
+def test_resolve_path_walks_dicts_and_lists():
+    b = {"funnel": {"by_csr": [{"conv": 0.35}, {"conv": 0.22}]}, "x": {"y": 3}}
+    assert L.resolve_path(b, "funnel.by_csr.0.conv") == 0.35
+    assert L.resolve_path(b, "x.y") == 3.0
+    assert L.resolve_path(b, "x.missing") is None
+    assert L.resolve_path(b, "nope.at.all") is None
+
+
+def test_ledger_scores_and_calibrates(tmp_path):
+    led = L.Ledger(tmp_path / "p.jsonl")
+    made = dt.date(2026, 7, 1)
+    led.add(L.new_prediction(created_on=made, horizon_days=7, metric="health.index",
+                             statement="s", point=50, lo=40, hi=60,
+                             confidence="medium", basis="b"))
+    resolved = led.resolve_due(made + dt.timedelta(days=7), {"health": {"index": 55}})
+    assert len(resolved) == 1
+    p = resolved[0]
+    assert p.status == "resolved" and p.within_interval and p.actual == 55
+    assert p.abs_error == pytest.approx(5.0)
+    assert led.scorecard()["coverage"] == 1.0
+
+
+def test_unresolvable_prediction_is_flagged_not_dropped(tmp_path):
+    led = L.Ledger(tmp_path / "p.jsonl")
+    made = dt.date(2026, 7, 1)
+    led.add(L.new_prediction(created_on=made, horizon_days=1, metric="gone.away",
+                             statement="s", point=1, lo=0, hi=2,
+                             confidence="low", basis="b"))
+    led.resolve_due(made + dt.timedelta(days=30), {}, grace_days=7)
+    assert led.predictions[0].status == "unresolvable"
+    assert led.scorecard()["unresolvable"] == 1
+
+
+def test_calibration_widens_intervals_after_misses(tmp_path):
+    led = L.Ledger(tmp_path / "p.jsonl")
+    for i in range(8):
+        p = L.new_prediction(created_on=dt.date(2026, 7, 1) + dt.timedelta(days=i),
+                             horizon_days=1, metric="m", statement="s",
+                             point=10, lo=9, hi=11, confidence="high", basis="b")
+        p.status = "resolved"
+        p.actual, p.within_interval = 20.0, False
+        p.pct_error = 1.0
+        led.predictions.append(p)
+    cal = led.calibrate()
+    assert cal.by_metric["m"]["coverage"] == 0.0
+    assert cal.interval_multiplier("m", "high") > 1.0
+
+
+def test_ledger_roundtrips_through_disk(tmp_path):
+    path = tmp_path / "p.jsonl"
+    led = L.Ledger(path)
+    led.add(L.new_prediction(created_on=dt.date(2026, 7, 1), horizon_days=7,
+                             metric="m", statement="s", point=1, lo=0, hi=2,
+                             confidence="low", basis="b"))
+    led.save()
+    assert len(L.Ledger(path).predictions) == 1
+
+
+# =========================================================================
+# 4. Self-check gate
+# =========================================================================
+
+def _plan(**kw):
+    base = dict(date=dt.date(2026, 7, 29), profile="X", dose=1, weekly_quota=7,
+                target_rate=1.0, previous_dose=1.0, action="hold",
+                binding_constraint="none",
+                bands=[dosing.BandPlan(45, 85, 1)], week_pattern=[1] * 7,
+                projected_share=0.3)
+    base.update(kw)
+    return dosing.DosePlan(**base)
+
+
+def test_selfcheck_blocks_dose_over_share_cap():
+    rep = selfcheck.SelfCheckReport()
+    bundle = _bundle()
+    selfcheck.check_invariants(rep, plan=_plan(projected_share=0.90),
+                               bundle=bundle, config=CONFIG)
+    assert any(r.name == "dose_within_share_cap" and not r.passed
+               for r in rep.results)
+    assert rep.blocking_failures
+
+
+def test_selfcheck_blocks_raise_under_breach():
+    rep = selfcheck.SelfCheckReport()
+    bundle = _bundle(breached=True)
+    selfcheck.check_invariants(rep, plan=_plan(action="raise"), bundle=bundle,
+                               config=CONFIG)
+    assert any(r.name == "no_raise_under_breach" and not r.passed for r in rep.results)
+
+
+def test_selfcheck_blocks_pattern_quota_mismatch():
+    rep = selfcheck.SelfCheckReport()
+    selfcheck.check_invariants(rep, plan=_plan(week_pattern=[1, 1, 1, 0, 0, 0, 0]),
+                               bundle=_bundle(), config=CONFIG)
+    assert any(r.name == "week_pattern_sums_to_quota" and not r.passed
+               for r in rep.results)
+
+
+def test_repair_drops_unowned_tasks_without_inventing_an_owner():
+    rep = selfcheck.SelfCheckReport()
+    good = tasks.Task("a", "t", "c", "Ezan", "why 1", ["s1", "s2"], 100, 0.5, 1)
+    bad = tasks.Task("b", "t", "c", "", "why 2", ["s1"], 100, 0.5, 1)
+    kept, _ = selfcheck.repair([good, bad], [], rep, CONFIG)
+    assert [t.id for t in kept] == ["a"]
+    assert any("no owner" in r for r in rep.repairs)
+
+
+def test_repair_clamps_point_into_its_own_interval():
+    rep = selfcheck.SelfCheckReport()
+    p = L.Prediction(id="x", created_on="2026-07-29", resolve_on="2026-08-05",
+                     metric="m", statement="s", point=99.0, lo=0.0, hi=10.0,
+                     confidence="low", basis="b", horizon_days=7)
+    _, preds = selfcheck.repair([], [p], rep, CONFIG)
+    assert preds[0].point == 10.0
+    assert any("clamped" in r for r in rep.repairs)
+
+
+def test_rubric_penalises_unevidenced_tasks():
+    rep = selfcheck.SelfCheckReport()
+    t = [tasks.Task("a", "t", "c", "Ezan", "no numbers here", ["s1", "s2"],
+                    100, 0.5, 1)]
+    p = [L.new_prediction(created_on=dt.date(2026, 7, 29), horizon_days=7,
+                          metric="m", statement="s", point=1, lo=0, hi=2,
+                          confidence="low", basis="b")]
+    selfcheck.score_rubric(rep, tasks=t, predictions=p, config=CONFIG)
+    assert rep.rubric["evidence"] == 0.0
+    assert rep.score < 100
+
+
+def test_rubric_full_marks_on_a_good_brief():
+    rep = selfcheck.SelfCheckReport()
+    t = [tasks.Task(f"t{i}", "t", "c", "Ezan", "conversion is 38.5%",
+                    ["s1", "s2"], 100, 0.5, 1) for i in range(4)]
+    t[0].priority = "P0"
+    p = [L.new_prediction(created_on=dt.date(2026, 7, 29), horizon_days=7,
+                          metric="m", statement="s", point=1, lo=0, hi=2,
+                          confidence="low", basis="b")]
+    selfcheck.score_rubric(rep, tasks=t, predictions=p, config=CONFIG)
+    assert rep.score == pytest.approx(100.0)
+
+
+def _bundle(breached: bool = False) -> metrics.MetricBundle:
+    return metrics.MetricBundle(
+        as_of=dt.date(2026, 7, 29), profile="X",
+        health=_health(breached=breached),
+        flow_7d=metrics.FlowWindow("X", dt.date(2026, 7, 23), dt.date(2026, 7, 29),
+                                   7, 5, 2, 0),
+        flow_28d=metrics.FlowWindow("X", dt.date(2026, 7, 2), dt.date(2026, 7, 29),
+                                    28, 20, 8, 0),
+        funnel=metrics.funnel_metrics([]),
+        econ=metrics.economics([]),
+        gig={"stars": {5: 1420, 4: 106, 3: 29, 2: 14, 1: 13},
+             "rating": 4.837, "reviews_total": 1582})
+
+
+# =========================================================================
+# Task generation
+# =========================================================================
+
+def test_refund_language_produces_a_p0_rescue_task():
+    a = C.ActiveOrder(order_no="5", client="Dr. X", provenance=P,
+                      status="Rev Sent",
+                      buyer_mood="Difficult. Has raised refund more than once.",
+                      last_updated=dt.date(2026, 7, 20))
+    out = tasks._active_order_rules([a], dt.date(2026, 7, 29),
+                                    {"stars": {5: 100}, "rating": 5.0,
+                                     "reviews_total": 100}, 137.0)
+    rescue = [t for t in out if t.category == "dispute_rescue"]
+    assert len(rescue) == 1
+    assert rescue[0].priority == "P0" and rescue[0].urgency == 2
+
+
+def test_long_silent_order_is_closed_not_chased():
+    a = C.ActiveOrder(order_no="2", client="ghost", provenance=P, status="On Hold",
+                      last_updated=dt.date(2026, 3, 1))
+    out = tasks._active_order_rules([a], dt.date(2026, 7, 29), {}, 137.0)
+    cats = {t.category for t in out}
+    assert "pipeline_hygiene" in cats
+    assert "order_revival" not in cats
+
+
+def test_recently_stalled_order_is_revived():
+    a = C.ActiveOrder(order_no="9", client="warm", provenance=P, status="Rev Sent",
+                      last_updated=dt.date(2026, 7, 24))
+    out = tasks._active_order_rules([a], dt.date(2026, 7, 29), {}, 137.0)
+    assert {t.category for t in out} == {"order_revival"}
+
+
+def test_placeholder_designers_are_not_ranked_as_people():
+    orders = [
+        C.Order(client=f"c{i}", provenance=P, amount=300.0,
+                logo_designer="Provided by Client") for i in range(10)
+    ] + [
+        C.Order(client=f"d{i}", provenance=P, amount=100.0, logo_designer="Amin")
+        for i in range(10)
+    ]
+    e = metrics.economics(orders)
+    assert all(d["name"] != "Provided by Client" for d in e.by_designer)
+    assert e.by_designer[0]["name"] == "Amin"
+
+
+def test_every_generated_task_is_owned_evidenced_and_actionable():
+    bundle = _bundle()
+    plan = _plan()
+    out = tasks.generate(bundle=bundle, plan=plan, active=[], orders=[],
+                         violations=[], automation_errors=[], missing_sources=[],
+                         today=dt.date(2026, 7, 29))
+    assert out
+    for t in out:
+        assert t.owner.strip(), f"{t.id} has no owner"
+        assert t.steps, f"{t.id} has no steps"
+        assert any(ch.isdigit() for ch in t.why), f"{t.id} cites no number"
+
+
+# =========================================================================
+# Validation domains
+# =========================================================================
+
+def test_source_data_mistakes_do_not_block_the_run():
+    """Finding bad data is the product; it must never stop the engine."""
+    bad = [C.Order(client="x", provenance=P,
+                   order_date=dt.date(2026, 7, 10),
+                   delivered_date=dt.date(2026, 7, 1))]
+    rep = C.validate_orders(bad, dt.date(2026, 7, 29))
+    assert rep.ok()                      # not blocking
+    assert rep.data_issues               # but reported
+
+
+def test_missing_client_is_an_engine_error():
+    rep = C.validate_orders([C.Order(client="", provenance=P)], dt.date(2026, 7, 29))
+    assert not rep.ok()
+    assert rep.blocking
+
+
+def test_flow_totals_must_reconcile():
+    rows = [C.DailyFlow(date=dt.date(2026, 7, 1), profile="X", provenance=P,
+                        organic_orders=1, vvro_orders=1, total_orders=5)]
+    rep = C.validate_flow(rows)
+    assert any(v.code == "FLOW_TOTAL_MISMATCH" for v in rep.violations)
+
+
+# =========================================================================
+# End to end
+# =========================================================================
+
+def test_pipeline_runs_and_gates_on_real_snapshots():
+    from xstudioz import pipeline
+    orders = ROOT / "data" / "raw" / "orders"
+    inq = ROOT / "data" / "raw" / "inquiries"
+    snaps = sorted(orders.glob("*.md")) if orders.exists() else []
+    if not snaps:
+        pytest.skip("no snapshots checked in")
+    art = pipeline.run_daily(
+        root=ROOT, today=dt.date(2026, 7, 29),
+        orders_text=snaps[-1].read_text(),
+        inquiries_text=sorted(inq.glob("*.md"))[-1].read_text() if inq.exists() else "",
+        write=False)
+    assert art.emitted, [r.detail for r in art.check.blocking_failures]
+    assert art.check.score >= 70
+    assert 3 <= len(art.tasks) <= 12
+    assert art.predictions
+    assert "What Next" in art.brief_markdown
+    # Every number in the brief must be reproducible from the artefacts.
+    assert art.bundle.as_dict()["economics"]["n_priced"] > 0
+
+
+def test_consistency_checks_use_unrounded_values():
+    """Regression: the checker compared a 3-dp rounded ``as_dict()`` value
+    against a full-precision recompute, so 0.714 != 0.714285... blocked ten
+    perfectly valid backfill days. Consistency checks must never read the
+    serialised form."""
+    rep = selfcheck.SelfCheckReport()
+    bundle = metrics.MetricBundle(
+        as_of=dt.date(2026, 7, 29), profile="X", health=_health(),
+        # 5 orders over 7 days = 0.714285..., which rounds to 0.714 in JSON.
+        flow_7d=metrics.FlowWindow("X", dt.date(2026, 7, 23), dt.date(2026, 7, 29),
+                                   7, 5, 0, 0),
+        flow_28d=metrics.FlowWindow("X", dt.date(2026, 7, 2), dt.date(2026, 7, 29),
+                                    28, 20, 0, 0),
+        funnel=metrics.funnel_metrics([]),
+        econ=metrics.economics([
+            C.Order(client=f"c{i}", provenance=P, amount=100.0 / 3) for i in range(3)
+        ]))
+    selfcheck.check_consistency(rep, bundle=bundle, ledger_orders=0, crm_orders=0,
+                                max_swing=0.4)
+    failures = [r.name for r in rep.results if not r.passed and r.severity == "block"]
+    assert not failures, f"repeating decimals must not block: {failures}"
