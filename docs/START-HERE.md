@@ -101,25 +101,70 @@ Done. Your sheets now export themselves every night, before the system wakes up.
 
 # Job 2 — Tell the system where to look
 
-**Time: 2 minutes.**
+**Time: 1 minute.**
 
-You have two things from Job 1: a **URL** and a **token**.
+You have two things from Job 1: a **URL** and a **token**. The system needs both.
 
-1. Go to your Claude settings → **Environments**
-2. Find the environment this project runs in
-3. Add two environment variables:
+There are three ways to hand them over. **Pick one.** Option A is easiest and
+needs no menu hunting.
+
+---
+
+## Option A — Just send them to me (recommended)
+
+Paste the URL and the token into our chat and say "put these in the routine".
+
+I store them in the daily Routine's own configuration, which lives in your
+Claude account. The morning run reads them from there before it starts.
+
+**Why this works:** the container the system runs in is wiped and rebuilt every
+day, so anything not saved somewhere permanent is lost. The Routine config is
+permanent.
+
+**Is that safe?** The token only lets someone read a copy of your sheets — it
+cannot write to them, cannot touch Fiverr, and cannot spend money. It sits in
+your own Claude account. If you ever want to invalidate it, re-run
+`generateToken` in Apps Script and the old one stops working instantly.
+
+If you would rather not paste it in chat, use Option B or C.
+
+---
+
+## Option B — Environment variables
+
+If your Claude Code environment has a settings page with environment variables,
+add these two there:
 
 | Name | Value |
 |---|---|
-| `XSTUDIOZ_SNAPSHOT_URL` | the `/exec` URL from Step 5 |
-| `XSTUDIOZ_SNAPSHOT_TOKEN` | the long code from Step 3 |
+| `XSTUDIOZ_SNAPSHOT_URL` | the `/exec` URL from Job 1 step 5 |
+| `XSTUDIOZ_SNAPSHOT_TOKEN` | the long code from Job 1 step 3 |
 
-That's it. Tomorrow morning the system fetches its own data.
+Look under the environment settings for this project at **claude.ai/code**.
+Environments are created and configured there, and the docs are at
+<https://code.claude.com/docs/en/claude-code-on-the-web>.
 
-**How you'll know it worked:** tomorrow's brief will say
-`[snapshot] fetched live` instead of `using disk`.
+If you cannot find it, do not hunt for it. Use Option A instead — the result is
+identical.
 
 ---
+
+## Option C — Skip it entirely
+
+**The system already works without this.**
+
+Job 1's daily trigger writes a fresh snapshot into a Google Drive folder called
+**XStudioz Engine Snapshots** every night. If you skip Job 2, the daily brief
+still runs — it just uses the most recent snapshot it already has, and it tells
+you plainly at the top how old that data is instead of pretending it is current.
+
+Job 2 is what turns "reads yesterday's copy" into "fetches this morning's".
+Worth doing, but not urgent, and nothing breaks while it waits.
+
+---
+
+**How you will know it worked:** tomorrow's brief says `[snapshot] fetched live`
+instead of `[snapshot] using disk`.
 
 # Job 3 — Put the dashboard where your team can see it
 
