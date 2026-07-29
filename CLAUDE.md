@@ -69,21 +69,27 @@ Read the `[BLOCK]` lines on stderr and act:
   your message; do not present stale numbers as current.
 - `predictions_falsifiable`, `all_tasks_owned` — a generation bug. Fix, do not paper over.
 
-### 4. Rebuild the dashboard
+### 4. Rebuild and publish the dashboard
 
 ```bash
-python3 scripts/build_dashboard.py
+python3 scripts/build_dashboard.py     # reports/dashboard.html
+python3 scripts/publish_site.py        # site/public/index.html (gated, for the team)
 ```
 
-Then republish it to the same artifact URL so the link the team already has
-stays current:
+Then republish the artifact to the same URL so the link you and Ezan already
+have stays current:
 
     Artifact(file_path="reports/dashboard.html",
              url="https://claude.ai/code/artifact/efdf1312-b4e7-4974-960d-4a035031cdaf",
              favicon="📉")
 
 Passing `url` is what keeps the URL stable from a fresh session. Do not change
-the `<title>` or the favicon — the team finds this page by its name and tab icon.
+the `<title>` or the favicon — the page is found by its name and tab icon.
+
+`site/public/index.html` is generated, never hand-edited. Committing it in step 6
+is what deploys it: Vercel redeploys on push, so the team's page is current by
+07:15 PKT without anyone touching it. If the Vercel project is not linked yet,
+the file is still committed and simply waits — see `site/README.md`.
 
 ### 5. Report to the user
 
