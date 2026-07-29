@@ -54,6 +54,11 @@ The organic decline is *correlated* with the VVRO ramp, not proven caused by it 
 is a short window. The engine logs a falsifiable prediction about the corrective cut so
 the question resolves on evidence rather than opinion.
 
+## New here? Read `docs/START-HERE.md`
+
+Three jobs, about 25 minutes, done once. No code required — copy, paste, click.
+Everything below is for whoever maintains the engine.
+
 ## Quick start
 
 ```bash
