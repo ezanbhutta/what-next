@@ -1,23 +1,24 @@
 {
-  "orders": 803,
-  "leads": 1000,
-  "flow_rows": 326,
-  "flow_aggregate_rows": 46,
+  "orders": 2353,
+  "leads": 986,
+  "flow_rows": 329,
+  "flow_aggregate_rows": 47,
   "active_orders": 8,
-  "impressions": 94,
+  "impressions": 148,
   "disputes": 0,
   "automation_errors": 334,
-  "blocks_seen": 24,
-  "blocks_used": 23,
-  "header_cells_seen": 375,
+  "blocks_seen": 27,
+  "blocks_used": 25,
+  "header_cells_seen": 406,
   "unmapped_columns": {
     "Upsell": 5,
     "Order type": 1,
     "Public review": 1,
-    "Service Demand": 1
+    "Service Demand": 1,
+    "<unclassified tab: Daily Data Sheet Profiles>": 1
   },
-  "unmapped_rate": 0.0213,
+  "unmapped_rate": 0.0222,
   "coercion_misses": {
-    "order_date": 4
+    "order_date": 7
   }
 }

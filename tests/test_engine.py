@@ -1147,3 +1147,77 @@ def test_edge_names_the_portfolio_control_group():
     assert "trust_asset" in ids
     detail = next(i for i in items if i["id"] == "portfolio_control")["detail"]
     assert "Dygram" in detail
+
+
+# =========================================================================
+# Per-profile scoping and sheet repair — found against the live endpoint
+# =========================================================================
+
+def test_tab_name_scopes_records_to_their_profile():
+    """Both workbooks keep one TAB per seller. Ignoring the tab name pooled
+    all eleven profiles and reported portfolio AOV as X Studioz's."""
+    snap = S.parse(_snap_payload(tables=[
+        {"name": "X Studioz", "role": "crm_orders", "source_id": "orders",
+         "header": ["Date of Order", "Client Name", "Order Amount"],
+         "rows": [["01-Nov-2025", "a", "$200.00"]]},
+        {"name": "Grid Designs", "role": "crm_orders", "source_id": "orders",
+         "header": ["Date of Order", "Client Name", "Order Amount"],
+         "rows": [["01-Nov-2025", "b", "$50.00"]]},
+    ]))
+    res = ingest.ingest_snapshot(snap)
+    by = {o.client: o.profile for o in res.orders}
+    assert by == {"a": "X Studioz", "b": "Grid Designs"}
+    xs = [o for o in res.orders if o.profile == "X Studioz"]
+    assert metrics.economics(xs).aov == 200.0     # not the 125 blended average
+
+
+def test_unrecognised_tab_is_left_unattributed_not_assumed():
+    """An unknown tab must not silently become the main profile."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Scratch Copy 2", "role": "crm_orders", "source_id": "orders",
+        "header": ["Date of Order", "Client Name", "Order Amount"],
+        "rows": [["01-Nov-2025", "a", "$200.00"]]}]))
+    assert ingest.ingest_snapshot(snap).orders[0].profile is None
+
+
+def test_merged_date_cells_are_forward_filled():
+    """Google returns a merged range's value only in its top-left cell. The
+    impressions sheet merges the date across seven profile rows, so 134 of
+    162 rows arrived dateless and were dropped."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Impressions", "role": "impressions", "source_id": "impressions",
+        "header": ["Date", "Account Name", "Impressions", "Clicks",
+                   "Organic Orders"],
+        "rows": [["30-Nov-2025", "Carpicon", "1015", "11", "0"],
+                 ["", "Grid Designs", "21841", "312", "4"],
+                 ["", "XStudioz", "3858", "65", "2"]]}]))
+    res = ingest.ingest_snapshot(snap)
+    assert len(res.impressions) == 3
+    assert all(i.date == dt.date(2025, 11, 30) for i in res.impressions)
+    assert {i.profile for i in res.impressions} == {
+        "Carpicon", "Grid Designs", "X Studioz"}
+
+
+def test_repeated_header_rows_are_not_read_as_data():
+    """The impressions sheet re-prints its header every seventh row."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Impressions", "role": "impressions", "source_id": "impressions",
+        "header": ["Date", "Account Name", "Impressions", "Clicks",
+                   "Organic Orders"],
+        "rows": [["30-Nov-2025", "XStudioz", "3858", "65", "2"],
+                 ["Date", "Account Name", "Impressions", "Clicks",
+                  "Organic Orders"],
+                 ["1-Dec-2025", "XStudioz", "5397", "88", "2"]]}]))
+    res = ingest.ingest_snapshot(snap)
+    assert len(res.impressions) == 2
+    assert all(i.profile == "X Studioz" for i in res.impressions)
+
+
+def test_forward_fill_never_invents_a_measurement():
+    """Only the leading key columns carry down. Filling a blank value column
+    would fabricate a number that was genuinely missing."""
+    rows = ingest._clean_rows(
+        ["Date", "Account Name", "Impressions"],
+        [["30-Nov-2025", "XStudioz", "3858"], ["", "Carpicon", ""]])
+    assert rows[1][0] == "30-Nov-2025"     # date carried down
+    assert rows[1][2] == ""                # impressions did NOT

@@ -12,7 +12,7 @@
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
 **Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
 
-*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$112; the rating damage is worth far more.
 
 - Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
 - Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
@@ -45,10 +45,10 @@
 - Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically.
 - Script: `playbooks/data_hygiene.md`
 
-### P0 · Fill revenue in the daily ledger (111 days blank)
+### P0 · Fill revenue in the daily ledger (112 days blank)
 **Owner:** Whoever owns the daily ledger · **Est. impact:** $2,000 · **Effort:** 2.0h · **Confidence:** 90%
 
-*Why:* 111 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.
+*Why:* 112 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.
 
 - Fill Organic Revenue and VVRO Revenue for every day with orders.
 - Backfill from 2026-06-11 forward — that is where the ledger starts.
@@ -67,9 +67,9 @@
 - Script: `playbooks/dead_pipeline.md`
 
 ### P1 · Install the mid-order checkpoint — private feedback is the leak
-**Owner:** All CSRs (compliance owned by Hasnain) · **Est. impact:** $3,472 · **Effort:** 1.0h · **Confidence:** 45%
+**Owner:** All CSRs (compliance owned by Hasnain) · **Est. impact:** $3,851 · **Effort:** 1.0h · **Confidence:** 45%
 
-*Why:* Only 13.6% of the 597 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.
+*Why:* Only 7.9% of the 2353 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.
 
 - At 50% of elapsed time on every order, send the direction so far and ask plainly whether anything needs changing. This is the one habit that converts a silent 3-star private rating into a fixed order, while the order is still open.
 - Chase any silent buyer within 24 hours of delivery — orders auto-complete after 3 days and the private window stays open 60 days after that.
@@ -80,7 +80,7 @@
 ### P2 · Run the upsell A/B test to de-bias the 54% vs 31% gap
 **Owner:** CEO + Salman · **Est. impact:** $3,000 · **Effort:** 1.0h · **Confidence:** 40%
 
-*Why:* Leads with an upsell attempt convert 54.3% (n=70) against 30.8% (n=929), z=4.05. That is a +76% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
+*Why:* Leads with an upsell attempt convert 50.0% (n=38) against 5.3% (n=947), z=10.59. That is a +847% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
 
 - For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.
 - Do not let CSRs choose. That choice is exactly the bias being measured.
@@ -98,18 +98,18 @@
 - Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.
 - Script: `playbooks/data_hygiene.md`
 
-### P2 · Route high-value briefs to Amin
+### P2 · Route high-value briefs to Raylain
 **Owner:** CEO · **Est. impact:** $800 · **Effort:** 0.5h · **Confidence:** 35%
 
-*Why:* Amin averages $195 across 21 orders; Abbas averages $70 across 24. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.
+*Why:* Raylain averages $154 across 7 orders; Abdullah averages $61 across 6. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.
 
-- Assign every brief above $200 to Amin or the next two by AOV.
+- Assign every brief above $200 to Raylain or the next two by AOV.
 - Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.
 - Revisit in 30 days with the engine's updated per-designer AOV.
 - Script: `playbooks/staffing.md`
 
 ### P3 · Close out approved order #4 — Calum Snell
-**Owner:** Delivery lead · **Est. impact:** $116 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $101 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -120,7 +120,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #6 — bethanyjademck
-**Owner:** Delivery lead · **Est. impact:** $116 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $101 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -149,7 +149,7 @@
 *4 task(s), ~4.0h*
 
 - **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
-- **P2** Route high-value briefs to Amin
+- **P2** Route high-value briefs to Raylain
 - **P3** Close out approved order #4 — Calum Snell
 - **P3** Close out approved order #6 — bethanyjademck
 
@@ -188,7 +188,7 @@ Standing duties, every shift:
 ### Hasnain · csr · 17:00-01:00 PKT
 *2 task(s), ~3.0h*
 
-- **P0** Fill revenue in the daily ledger (111 days blank)
+- **P0** Fill revenue in the daily ledger (112 days blank)
 - **P2** Wire up the 2 promised data sources
 
 Standing duties, every shift:
@@ -262,8 +262,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | 2026-08-05 | Organic orders over the 7 days to 05 Aug will be 5.6 (80% CI 2.6-8.6). | 2.57 – 8.63 | medium |
 | 2026-08-12 | Organic health index in 14 days will be 49 (80% CI 35-71). | 34.69 – 70.75 | low |
 | 2026-08-05 | Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07). | 2.34 – 4.07 | medium |
-| 2026-08-28 | Blended AOV in 30 days will be $128 (80% CI $115-$141). | 115.29 – 141.49 | high |
-| 2026-08-05 | Inquiry->order conversion in 7 days will be 33.5% (80% CI 29.2%-37.7%). | 0.29 – 0.38 | high |
+| 2026-08-28 | Blended AOV in 30 days will be $112 (80% CI $101-$124). | 100.66 – 123.52 | high |
+| 2026-08-05 | Inquiry->order conversion in 7 days will be 22.6% (80% CI 19.7%-25.5%). | 0.20 – 0.26 | high |
 
 **Track record:** 57 resolved, coverage 61% 
 (target 80%), median absolute error 11%.
@@ -278,17 +278,17 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic orders/day (7d MA) | 0.71 | vs 0.71 14d ago |
 | Organic since VVRO began | 0.56/day | was 0.66/day (-14.3%) |
 | Total orders/day (7d) | 3.00 | 5 organic + 16 VVRO |
-| AOV | $128 | median $90, n=713 priced orders |
-| Lifetime tracked revenue | $91,544 | across 803 order rows |
-| Inquiry conversion | 33.5% | 324/968 |
+| AOV | $112 | median $100, n=1035 priced orders |
+| Lifetime tracked revenue | $116,017 | across 2353 order rows |
+| Inquiry conversion | 22.6% | 69/305 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 13.6% | biggest free growth lever |
+| Review capture | 7.9% | biggest free growth lever |
 | Gig rating | 4.834 | 1,583 reviews, Level 2 |
 | Orders in queue | 20 | live from the gig page |
 
 ### Revenue path
 
-At 1.00 orders/day and $128 AOV, the next 30 days project **$3,852** (30 orders).
+At 1.00 orders/day and $112 AOV, the next 30 days project **$3,363** (30 orders).
 
 On track against the 30-day target.
 
@@ -296,15 +296,12 @@ On track against the 30-day target.
 
 | Segment | n | Conversion | Lower bound |
 |---|---|---|---|
-| Shift: Morning | 643 | 38.9% | 35.2% |
-| Shift: Night | 100 | 28.0% | 20.1% |
-| Shift: Evening | 122 | 23.0% | 16.4% |
-| Netherlands | 21 | 61.9% | 40.9% |
-| Australia | 51 | 49.0% | 35.9% |
-| United States | 310 | 39.4% | 34.1% |
-| United Kingdom | 113 | 33.6% | 25.6% |
-| Italy | 17 | 41.2% | 21.6% |
-| France | 19 | 36.8% | 19.1% |
+| Shift: Evening | 99 | 24.2% | 16.9% |
+| Shift: Night | 32 | 28.1% | 15.6% |
+| Shift: Morning | 161 | 21.1% | 15.5% |
+| United Kingdom | 71 | 26.8% | 17.9% |
+| United States | 54 | 18.5% | 10.4% |
+| India | 15 | 6.7% | 1.2% |
 
 Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank large ones.
 
@@ -323,6 +320,7 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - priority_spread: 0
 
 **Checks not passing**
+- `warn` **ledger_vs_crm_orders** — daily ledger says 51 orders in window, CRM sheet says 1364 (96% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 - `warn` **priority_spread_sane** — 5 of 12 tasks are P0
 

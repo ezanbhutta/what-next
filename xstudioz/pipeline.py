@@ -99,6 +99,19 @@ def run_daily(
         parts.append(ingest.ingest_tracker_rows(list(tracker_rows)))
     data = ingest.merge(*parts) if parts else ingest.IngestResult()
 
+    # ---- scope to this profile -------------------------------------------
+    # Both workbooks keep one TAB per seller profile. Without this filter the
+    # engine pools all eleven and reports portfolio AOV, conversion and review
+    # capture as if they were X Studioz's.
+    scoped_orders = [o for o in data.orders if o.profile == profile_name]
+    scoped_leads = [l for l in data.leads if l.profile == profile_name]
+    unattributed = sum(1 for o in data.orders if o.profile is None)
+    if scoped_orders:
+        data.orders = scoped_orders
+        data.leads = scoped_leads
+    # If nothing matched, the tab names changed shape. Keep everything rather
+    # than emitting an empty brief, and let schema_drift say so.
+
     # ---- validate --------------------------------------------------------
     vrep = C.ValidationReport()
     vrep.merge(C.validate_orders(data.orders, today))

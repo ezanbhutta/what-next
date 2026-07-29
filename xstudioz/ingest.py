@@ -178,6 +178,14 @@ IGNORED_HEADERS: frozenset[str] = frozenset({
 _AGGREGATE_PROFILE = re.compile(r"^[\s\-—–─_=*]*(total|sum|grand total)[\s\-—–─_=*]*$", re.I)
 
 
+#: Tabs named after a seller profile. Anything else is not a profile tab.
+KNOWN_PROFILES = frozenset({
+    "X Studioz", "Carpicon", "Grid Designs", "Eikon Designs", "Alee Studioz",
+    "Abdul Haseeb", "Tariq Mahmood", "BIC", "Dygram", "Storm", "Skyblew",
+    "WeDesignz", "Dygram Designs", "Storm Design", "Abdul Haseeb Upwork",
+})
+
+
 def is_aggregate_profile(name: str) -> bool:
     return bool(_AGGREGATE_PROFILE.match(str(name or "").strip()))
 
@@ -518,6 +526,36 @@ def _rows_as(mb: MappedBlock, build) -> list:
     return out
 
 
+def _clean_rows(header: list[str], rows: list[list[str]]) -> list[list[str]]:
+    """Repair two things every hand-maintained sheet does.
+
+    *merged cells* — Google returns a merged range's value only in its
+    top-left cell; every other row comes back blank. The impressions sheet
+    merges the date across its seven profile rows, so 134 of 162 rows arrived
+    dateless and were silently dropped. Blank leading cells are carried down
+    from the last non-blank value.
+
+    *repeated header rows* — the same sheet re-prints its header every seventh
+    row. Left alone those parse as data and become a client called
+    "Client Name".
+    """
+    hdr_sig = [h.strip().lower() for h in header]
+    out: list[list[str]] = []
+    carry: list[str] = []
+    for row in rows:
+        if [c.strip().lower() for c in row][:len(hdr_sig)] == hdr_sig:
+            continue
+        fixed = list(row)
+        # Only forward-fill the leading key columns (date, profile). Filling
+        # value columns would invent numbers that were genuinely blank.
+        for i in range(min(2, len(fixed))):
+            if not fixed[i].strip() and i < len(carry) and carry[i].strip():
+                fixed[i] = carry[i]
+        carry = [fixed[i] if i < len(fixed) else "" for i in range(2)]
+        out.append(fixed)
+    return out
+
+
 def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
     """Ingest a :class:`xstudioz.snapshot.Snapshot`.
 
@@ -556,8 +594,15 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
         res.blocks_used += 1
         res.header_cells_seen += len([h for h in table.header if h.strip()])
         res.unmapped_columns.update(unmapped)
-        mb = MappedBlock(t_i, f2c, unmapped, table.header, table.rows)
+        mb = MappedBlock(t_i, f2c, unmapped, table.header,
+                         _clean_rows(table.header, table.rows))
         src = table.source_id or source_id
+        # The tab name IS the profile in both workbooks. Fall back to None
+        # rather than guessing, so an unrecognised tab is visibly unattributed
+        # instead of quietly counted as the main profile.
+        tab_profile = C.normalise_profile(table.name)
+        if tab_profile not in KNOWN_PROFILES:
+            tab_profile = None
 
         def prov(r_i: int, tid: str = table.role) -> Provenance:
             return Provenance(src, table.name, t_i, r_i)
@@ -572,7 +617,8 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                 if raw_date and od is None:
                     res.coercion_misses["order_date"] += 1
                 res.orders.append(C.Order(
-                    client=client.strip(), provenance=prov(r_i), order_date=od,
+                    client=client.strip(), provenance=prov(r_i),
+                    profile=tab_profile, order_date=od,
                     delivered_date=C.to_date(mb.get(row, "delivered_date")),
                     project=mb.get(row, "project"),
                     industry=(mb.get(row, "industry") or "").strip().title() or None,
@@ -598,6 +644,7 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                     continue
                 res.leads.append(C.Lead(
                     client=client.strip(), provenance=prov(r_i),
+                    profile=tab_profile,
                     date=C.to_date(mb.get(row, "date")),
                     country=C.normalise_country(mb.get(row, "country")),
                     member_since=mb.get(row, "member_since"),

@@ -262,6 +262,10 @@ class Provenance:
 class Order:
     client: str
     provenance: Provenance
+    #: Which seller profile this order belongs to. The workbooks put every
+    #: profile in its own TAB, so without this the engine pools all eleven
+    #: into one and reports portfolio AOV as if it were X Studioz.
+    profile: str | None = None
     order_date: _dt.date | None = None
     delivered_date: _dt.date | None = None
     project: str | None = None
@@ -293,6 +297,7 @@ class Order:
 class Lead:
     client: str
     provenance: Provenance
+    profile: str | None = None
     date: _dt.date | None = None
     country: str | None = None
     member_since: str | None = None
