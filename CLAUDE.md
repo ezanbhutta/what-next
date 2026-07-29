@@ -111,8 +111,18 @@ detail is in `reports/latest.md`. Always state:
 ### 6. Commit
 
 ```bash
+git config user.email "ezanmujahid@gmail.com"
+git config user.name  "XStudioz Growth Engine"
 git add -A && git commit -m "daily: <date> brief" && git push -u origin claude/xstudioz-growth-automation-dj8u2z
 ```
+
+**Set the email every run — it is not optional.** The container is fresh each
+morning and defaults to `haseeb53810@gmail.com`, which is not attached to the
+GitHub account. Vercel refuses to build a commit whose author it cannot match to
+a GitHub user, and the deployment comes back `BLOCKED` with no build log at all.
+The site then silently keeps serving yesterday's page, so a run can look
+successful while nothing reached the team. If a push does not produce a new
+READY deployment, check the commit author before anything else.
 
 The container is ephemeral. Uncommitted state is lost. Commit every run.
 
