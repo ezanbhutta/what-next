@@ -6,7 +6,7 @@
     "profile": "X Studioz",
     "health": {
       "verdict": "BREACH",
-      "index": 39.1,
+      "index": 36.7,
       "ma7_now": 0.714,
       "ma7_prior": 0.714,
       "delta_pct": 0.0,
@@ -17,7 +17,7 @@
       "components": {
         "trend": 0.214,
         "slope": 0.929,
-        "vvro_dilution": 0.12,
+        "vvro_dilution": 0.0,
         "volume": 0.476
       }
     },
@@ -517,19 +517,29 @@
       "captured_on": "2026-07-29",
       "url": "https://www.fiverr.com/x_studioz/design-modern-logo-branding-kit-with-complete-brand-identity",
       "level": "Level 2",
-      "reviews_total": 1582,
+      "success_score": 8,
+      "reviews_total": 1583,
       "stars": {
         "5": 1420,
         "4": 106,
         "3": 29,
         "2": 14,
-        "1": 13
+        "1": 14
+      },
+      "sub_ratings": {
+        "communication": 4.9,
+        "quality_of_delivery": 4.8,
+        "value_of_delivery": 4.8
       },
       "orders_in_queue": 20,
       "avg_response_time_hours": 1,
+      "impressions_7d_ma": 1564,
+      "live_gigs": 3,
+      "gig_slots": 10,
       "member_since": "2023-06",
       "starting_price": 45,
-      "rating": 4.836915297092288
+      "source": "operating model 27 Jul 2026 + live gig scrape 29 Jul 2026",
+      "rating": 4.834491471888819
     },
     "decomposition": {
       "have_data": false,
@@ -581,13 +591,13 @@
         "range": "$86-$150",
         "lo": 86.0,
         "hi": 150.0,
-        "count": 1
+        "count": 0
       },
       {
         "range": "$151-$260",
         "lo": 151.0,
         "hi": 260.0,
-        "count": 0
+        "count": 1
       },
       {
         "range": "$261-$450",
@@ -602,10 +612,10 @@
         "count": 1
       }
     ],
-    "ceiling_from_share": 0.584,
+    "ceiling_from_share": 0.306,
     "projected_share": 0.2857,
     "cooldown_until": "2026-08-01",
-    "expected_revenue": 118.0,
+    "expected_revenue": 205.5,
     "week_pattern": [
       0,
       0,
@@ -622,7 +632,7 @@
       "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
       "category": "dispute_rescue",
       "owner": "Ezan (escalate to CEO if refund is formally requested)",
-      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.837 -> 4.834) across 1,582 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.",
+      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.",
       "steps": [
         "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
         "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
@@ -647,15 +657,15 @@
       "title": "VVRO: 2/week (1 today) \u2014 CUT",
       "category": "vvro_dosing",
       "owner": "CEO / order placement",
-      "why": "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.58/day.",
+      "why": "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.",
       "steps": [
-        "Place **1 VVRO order today** (1x $86-$150) \u2014 quota **2/week**.",
+        "Place **1 VVRO order today** (1x $151-$260) \u2014 quota **2/week**.",
         "Countries to spread across: Other x1",
-        "At this quota the VVRO share settles at 29%, against a cap of 0.58 VVRO/day at the current organic rate.",
+        "At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.",
         "Do not place on a fixed weekday pattern \u2014 the schedule rotates weekly for a reason.",
         "Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller."
       ],
-      "impact_usd": 826.0,
+      "impact_usd": 1438.5,
       "confidence": 0.8,
       "effort_hours": 0.5,
       "priority": "P0",
@@ -663,7 +673,7 @@
       "playbook": "playbooks/vvro_dosing.md",
       "refs": [],
       "due": null,
-      "score": 1321.6
+      "score": 2301.6
     },
     {
       "id": "dq-flow-revenue",
@@ -687,22 +697,44 @@
       "score": 900.0
     },
     {
-      "id": "review-capture",
-      "title": "Request a review on every delivery (~+139 reviews in 90d)",
-      "category": "reputation",
-      "owner": "Delivery lead + all CSRs",
-      "why": "Only 13.6% of the 597 orders on tabs that track reviews have one recorded. At the current 3.00 orders/day, lifting capture to 65% yields about 139 extra reviews over 90 days. Review velocity is a direct gig-ranking input and the only growth lever here that costs nothing and carries no platform risk.",
+      "id": "dead-pipeline",
+      "title": "Work the $5,472 dead pipeline, largest first",
+      "category": "funnel",
+      "owner": "Hasnain",
+      "why": "$5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 \u2014 more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.",
       "steps": [
-        "Add the review request to the delivery message template so it is sent automatically, not remembered.",
-        "Ask at the moment of approval, not days later.",
-        "Record the outcome in the REVIEW column every time \u2014 'no review' is data, blank is not.",
-        "Never ask for 5 stars explicitly; that violates Fiverr ToS and risks the account."
+        "Start with: selmaprof ($950), bobzinos ($900), farida_ism ($700), getgwoppa ($700).",
+        "Use the four-line message in playbooks/dead_pipeline.md \u2014 quote still open, ask when to check back, ask for their number if budget was the issue.",
+        "Log every touch in the FollowUp column with a date, same day.",
+        "Anything that reopens goes straight into the normal intake flow."
+      ],
+      "impact_usd": 820.8,
+      "confidence": 0.55,
+      "effort_hours": 3.0,
+      "priority": "P0",
+      "urgency": 1,
+      "playbook": "playbooks/dead_pipeline.md",
+      "refs": [],
+      "due": null,
+      "score": 150.5
+    },
+    {
+      "id": "review-capture",
+      "title": "Install the mid-order checkpoint \u2014 private feedback is the leak",
+      "category": "reputation",
+      "owner": "All CSRs (compliance owned by Hasnain)",
+      "why": "Only 13.6% of the 597 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.",
+      "steps": [
+        "At 50% of elapsed time on every order, send the direction so far and ask plainly whether anything needs changing. This is the one habit that converts a silent 3-star private rating into a fixed order, while the order is still open.",
+        "Chase any silent buyer within 24 hours of delivery \u2014 orders auto-complete after 3 days and the private window stays open 60 days after that.",
+        "Log every order where the buyer went silent, exceeded the agreed revisions, or accepted without a word. That is your proxy for the feedback you cannot see.",
+        "Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md."
       ],
       "impact_usd": 3471.67,
       "confidence": 0.45,
       "effort_hours": 1.0,
-      "priority": "P0",
-      "urgency": 0,
+      "priority": "P1",
+      "urgency": 1,
       "playbook": "playbooks/review_capture.md",
       "refs": [],
       "due": null,
@@ -774,25 +806,25 @@
       "score": 560.0
     },
     {
-      "id": "stop-f3",
-      "title": "Stop third follow-ups entirely",
-      "category": "funnel",
-      "owner": "All CSRs",
-      "why": "Third follow-ups have converted 0 of 19 leads. That is not a low yield, it is a zero yield. The CSR hours currently spent on F3 are pure loss and are better spent on Tier 1 leads and upsells to existing buyers.",
+      "id": "fix-clickup",
+      "title": "Fix the broken ClickUp sync (334 logged failures)",
+      "category": "automation",
+      "owner": "CEO / whoever owns the Apps Script",
+      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
       "steps": [
-        "Cap the follow-up ladder at two touches.",
-        "Reassign the freed time to upselling completed orders \u2014 that is where the measured 54.3% vs 30.8% gap lives.",
-        "Note: the follow-up ladder is confounded (only cold leads get chased), so this is a decision about F3 cost, not proof that follow-ups hurt. F1 stays."
+        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+        "Re-run the sync for the backlog.",
+        "Add a failure alert \u2014 300+ silent failures is the real defect."
       ],
-      "impact_usd": 380.0,
+      "impact_usd": 600,
       "confidence": 0.7,
-      "effort_hours": 0.5,
+      "effort_hours": 1.0,
       "priority": "P2",
       "urgency": 0,
-      "playbook": "playbooks/lead_triage.md",
+      "playbook": "playbooks/data_hygiene.md",
       "refs": [],
       "due": null,
-      "score": 532.0
+      "score": 420.0
     },
     {
       "id": "deliver-4",
@@ -841,27 +873,6 @@
       "score": 92.4
     },
     {
-      "id": "fix-clickup",
-      "title": "Fix the broken ClickUp sync (334 logged failures)",
-      "category": "automation",
-      "owner": "CEO / whoever owns the Apps Script",
-      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
-      "steps": [
-        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
-        "Re-run the sync for the backlog.",
-        "Add a failure alert \u2014 300+ silent failures is the real defect."
-      ],
-      "impact_usd": 600,
-      "confidence": 0.7,
-      "effort_hours": 1.0,
-      "priority": "P3",
-      "urgency": 0,
-      "playbook": "playbooks/data_hygiene.md",
-      "refs": [],
-      "due": null,
-      "score": 420.0
-    },
-    {
       "id": "lead-triage",
       "title": "Triage inbound leads by country before spending CSR time",
       "category": "funnel",
@@ -895,7 +906,7 @@
       "lo": 2.5709671510529972,
       "hi": 8.629032848947004,
       "confidence": "medium",
-      "basis": "14d damped organic rate 0.800/day; Poisson spread. Health BREACH (index 39.1).",
+      "basis": "14d damped organic rate 0.800/day; Poisson spread. Health BREACH (index 36.7).",
       "horizon_days": 7,
       "profile": "X Studioz",
       "status": "open",
@@ -911,10 +922,10 @@
       "created_on": "2026-07-29",
       "resolve_on": "2026-08-12",
       "metric": "health.index",
-      "statement": "Organic health index in 14 days will be 51 (80% CI 36-74).",
-      "point": 51.1,
-      "lo": 36.397099711,
-      "hi": 74.234400289,
+      "statement": "Organic health index in 14 days will be 49 (80% CI 35-71).",
+      "point": 48.7,
+      "lo": 34.687646887,
+      "hi": 70.747853113,
       "confidence": "low",
       "basis": "VVRO dose cut to the share cap today; if the dilution hypothesis is right the index should recover ~12 points in 14 days. If it does not, the organic decline is not VVRO-driven and the cut should be reverted.",
       "horizon_days": 14,
@@ -1009,7 +1020,7 @@
         "name": "dose_within_share_cap",
         "passed": true,
         "severity": "block",
-        "detail": "projected VVRO share 28.57% vs cap 45%",
+        "detail": "projected VVRO share 28.57% vs cap 30%",
         "repaired": false
       },
       {
@@ -1066,6 +1077,13 @@
         "passed": true,
         "severity": "block",
         "detail": "delta_pct=0.000000 but recomputed=0.000000",
+        "repaired": false
+      },
+      {
+        "name": "phase_gate_respected",
+        "passed": true,
+        "severity": "block",
+        "detail": "Phase 1 \u00b7 Signal repair: no task violates the 4 forbidden action(s)",
         "repaired": false
       },
       {
@@ -1126,6 +1144,50 @@
       }
     ]
   },
+  "phase": {
+    "id": "signal_repair",
+    "label": "Phase 1 \u00b7 Signal repair",
+    "objective": "Stop the damage. Do not grow the queue. Do not spend on ads.",
+    "window": [
+      "2026-07-28",
+      "2026-08-10"
+    ],
+    "days_remaining": 12,
+    "gate_open": false,
+    "gate": [
+      {
+        "id": "success_score_9",
+        "label": "Success Score",
+        "required": 9.0,
+        "actual": 8,
+        "met": false,
+        "source": "Level Overview page"
+      },
+      {
+        "id": "impressions_4000",
+        "label": "Impressions, 7-day average",
+        "required": 4000.0,
+        "actual": 1564,
+        "met": false,
+        "source": ""
+      },
+      {
+        "id": "completion_ratio_5d",
+        "label": "Consecutive days with completion ratio >= 1.0",
+        "required": 5.0,
+        "actual": null,
+        "met": false,
+        "source": ""
+      }
+    ],
+    "kills_fired": [],
+    "forbidden": [
+      "fiverr_ads",
+      "new_gig_launch",
+      "price_increase",
+      "queue_growth"
+    ]
+  },
   "ingest": {
     "orders": 803,
     "leads": 1000,
@@ -1175,16 +1237,7 @@
     "note": "Assumes AOV holds. Volume is capped by the organic constraint, so at this dose the only lever that moves this number materially is AOV."
   },
   "gap": {
-    "gap": 4648.3,
-    "status": "behind",
-    "route_volume": {
-      "extra_orders": 36.2,
-      "extra_per_day": 1.21,
-      "feasible_organically": false
-    },
-    "route_aov": {
-      "required_aov": 283.33,
-      "uplift_vs_current": 1.2068
-    }
+    "gap": 0.0,
+    "status": "on_track"
   }
 }

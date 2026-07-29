@@ -1,6 +1,20 @@
 # XStudioz Growth Engine — objective function and operating constraints.
-# Everything the engine decides is derived from this file. Change the numbers
-# here, not the code.
+#
+# Realigned 2026-07-29 to the XStudioz Operating Model (27 July 2026) and the
+# Fiverr monitoring team briefing. Those documents carry impressions data the
+# sheets do not, and they overturn the objective this file previously encoded.
+#
+# What changed and why:
+#   - The OBJECTIVE is unchanged and permanent: revenue and organic order
+#     growth. Success Score and impressions are not competing goals, they are
+#     the mechanism that produces organic orders, and the operating model
+#     found the mechanism is broken at its first link.
+#   - Queue depth is removed as a target entirely. "WIP is inventory, not
+#     revenue. It is the one number that lies to you."
+#   - max_vvro_share drops 0.45 -> 0.30, per the ratio policy in 3.6.
+#
+# Everything the engine decides derives from this file. Change numbers here,
+# never in code.
 
 profile:
   name: X Studioz
@@ -8,198 +22,527 @@ profile:
   member_since: 2023-06
   level: Level 2
   primary_gig: design-modern-logo-branding-kit-with-complete-brand-identity
+  operating_model:
+    document: docs/source/XStudioz_Operating_Model.pdf
+    dated: 2026-07-27
+    horizon: 2026-08-30
+    review_on: 2026-08-10        # Phase 1 gate; re-run the diagnosis here
 
 # ---------------------------------------------------------------------------
-# OBJECTIVE
-# Maximise monthly revenue SUBJECT TO organic order flow recovering.
-# Organic health is a hard constraint, not a soft preference: if organic is
-# declining, the engine is not allowed to recommend scaling VVRO volume, no
-# matter how good the revenue math looks.
+# OBJECTIVE — permanent, and it does not move.
+#
+#   Maximise REVENUE and ORGANIC ORDER GROWTH.
+#
+# Everything else in this file is mechanism, not goal. The causal chain the
+# operating model establishes is:
+#
+#     Success Score  ->  impressions  ->  organic orders  ->  revenue
+#
+# Buyers who see XStudioz still buy at 12.05%; conversion never broke. Fiverr
+# has largely stopped showing XStudioz — impressions fell 86% from 11,092/day
+# in April to 1,564/day in July. So the chain is severed at its first link,
+# and that is where effort goes right now. Success Score and impressions are
+# the current binding constraint on the objective, not a replacement for it.
+#
+# When the chain is repaired, the same objective will point the work somewhere
+# else. The objective never changes; the binding constraint does.
+#
+# Two things this rules out, permanently:
+#   - Optimising order COUNT at the expense of order VALUE. Fiverr weights
+#     higher-value and more recent orders more heavily, and weights private
+#     ratings from new buyers most heavily of all.
+#   - Buying volume that suppresses distribution. Inorganic orders that cost
+#     impressions cost organic orders, which costs revenue. That is the
+#     objective arguing against them, not a separate rule.
 # ---------------------------------------------------------------------------
 objective:
-  maximise: monthly_revenue
+  maximise: [revenue, organic_orders]
+  # The mechanism through which the objective is currently reachable. Reassess
+  # at the 2026-08-10 gate: if impressions recover and revenue does not, the
+  # binding constraint has moved and this block should be rewritten.
+  binding_constraint_now: success_score
+  leading_indicator: impressions
+  causal_chain: [success_score, impressions, organic_orders, revenue]
+  explicitly_not_a_target:
+    - id: queue_depth
+      why: >
+        Work in progress is inventory. At 2 orders/day a 65-order queue implies
+        a 32-day cycle time, which reproduces the conditions that generated the
+        worst review on the profile. The engine must never recommend growing
+        the queue.
+    - id: total_order_count_via_inorganic
+      why: >
+        Organic order growth IS the objective. Total order count bought with
+        inorganic volume is not the same thing and can move opposite to it:
+        Fiverr weights higher-value and more recent orders more heavily, and
+        weights private ratings from new buyers most heavily of all, so cheap
+        controlled volume dilutes the signals that produce distribution. The
+        engine counts organic orders toward the objective and treats inorganic
+        orders as a cost against it.
+
   subject_to:
     - id: organic_non_declining
-      # 7-day moving average of organic orders must not be below the value it
-      # held `lookback_days` ago by more than `tolerance`.
       metric: organic_orders_7d_ma
       lookback_days: 14
-      tolerance: -0.05          # allow 5% noise before declaring a breach
-      hard: true                # breach => VVRO dose is clamped, not raised
+      tolerance: -0.05
+      hard: true
+    - id: success_score_floor
+      metric: success_score
+      min: 7                    # below 7 Fiverr brief routing cuts off entirely
+      hard: true
+      why: "Losing Success Score 7 removes inbound brief demand completely."
     - id: rating_floor
       metric: gig_rating
-      min: 4.70                 # Fiverr Level 2 retention floor
+      min: 4.70
       hard: true
-    - id: queue_capacity
-      metric: orders_in_queue
-      max: 32                   # beyond this, delivery quality/on-time degrades
+    - id: cancellations
+      metric: cancellations_30d
+      max: 0
+      hard: true
+      why: "A directly scored Success Score area. Six in 19 days sat in the exact window the impression collapse began."
+    - id: completion_ratio
+      metric: completion_ratio_5d
+      min: 1.0
       hard: false
+      why: "Completed / received. Below 1.0 for five straight days means stop accepting new orders on the branding kit gig."
 
 # ---------------------------------------------------------------------------
-# BASELINE (measured 2026-07-29 from the live gig page + daily ledger).
-# The engine compares against these; update via `scripts/set_baseline.py`.
+# PHASE STATE MACHINE
+# The operating model runs two phases with a hard gate between them. The engine
+# refuses to recommend a Phase 2 action while Phase 1 is active — that is the
+# whole point of a gate.
+# ---------------------------------------------------------------------------
+phases:
+  current: signal_repair
+  definitions:
+    - id: signal_repair
+      label: "Phase 1 · Signal repair"
+      window: [2026-07-28, 2026-08-10]
+      objective: "Stop the damage. Do not grow the queue. Do not spend on ads."
+      allowed:
+        - cancellation_prevention
+        - inorganic_reduction
+        - intake_script
+        - delivery_speed
+        - qa_gate
+        - dead_pipeline_recovery
+        - followup_discipline
+        - log_reconciliation
+        - request_to_order
+        - shift_coverage
+      forbidden:
+        - fiverr_ads
+        - new_gig_launch
+        - queue_growth
+        - price_increase
+      forbidden_why:
+        fiverr_ads: >
+          Paying for clicks on a profile with suppressed organic distribution
+          buys past a penalty instead of clearing it. The ROI maths works at
+          7-14% of net; the timing does not. Gate it behind Phase 2.
+        new_gig_launch: >
+          The gig launched 20 July received 139, 17, 18, 9, 10, 6, 3, 8
+          impressions. A new gig on a healthy profile gets a 48-72h visibility
+          window; this one got nothing. The suppression is at profile level,
+          so launching more gigs cannot fix it yet.
+
+    - id: controlled_scale
+      label: "Phase 2 · Controlled scale"
+      window: [2026-08-10, 2026-08-30]
+      objective: "Scale on a repaired signal, measured on cost-per-order."
+      allowed:
+        - fiverr_ads
+        - new_gig_launch
+        - brief_response_ownership
+        - aov_expansion
+        - unique_client_growth
+
+  # ALL THREE must be true to advance. Checked every run.
+  gate:
+    - id: success_score_9
+      metric: success_score
+      min: 9
+      source: "Level Overview page"
+    - id: impressions_4000
+      metric: impressions_7d_ma
+      min: 4000
+    - id: completion_ratio_5d
+      metric: completion_ratio_consecutive_days_at_or_above_1
+      min: 5
+
+  # Conditions that stop the plan rather than continue it.
+  kill_criteria:
+    - id: impressions_flat_at_gate
+      when: "impressions_7d_ma < 2000 on 2026-08-20 with Phase 1 actions at 100%"
+      response: >
+        The cause is outside the control set. Stop spending effort here, shift
+        volume weighting to Dygram and Storm, treat XStudioz as a rebuild.
+    - id: success_score_7
+      when: "success_score <= 7"
+      response: "Stop all inorganic immediately. Below 7 you lose brief routing entirely."
+    - id: any_cancellation
+      when: "cancellations_since_phase_start > 0"
+      response: "Full post-mortem the same day, before the next order is accepted."
+    - id: completion_below_1
+      when: "completion_ratio below 1.0 for 5 consecutive days"
+      response: "Stop accepting new orders on the branding kit gig until the queue drains."
+
+# ---------------------------------------------------------------------------
+# BASELINE — operating model, data through 2026-07-27, plus the live gig scrape
+# on 2026-07-29.
 # ---------------------------------------------------------------------------
 baseline:
   measured_on: 2026-07-29
   gig:
-    reviews_total: 1582
-    stars: {5: 1420, 4: 106, 3: 29, 2: 14, 1: 13}
-    rating: 4.837
+    reviews_total: 1583
+    stars: {5: 1420, 4: 106, 3: 29, 2: 14, 1: 14}
+    rating: 4.8
     orders_in_queue: 20
     level: Level 2
+    success_score: 8
     avg_response_time_hours: 1
+    live_gigs: 3
+    gig_slots: 10
+    sub_ratings:
+      communication: 4.9        # team strength
+      quality_of_delivery: 4.8  # drag — maps to Success Score
+      value_of_delivery: 4.8    # drag — maps to Success Score
+    reviews_at_3_or_below: 57   # 3.6%
+
+  impressions:
+    apr_2026_daily_avg: 11092
+    may_2026_daily_avg: 6104
+    jun_2026_daily_avg: 2153
+    jul_2026_daily_avg: 1564
+    change_apr_to_jul: -0.86    # THE finding
+    peak: 17842                 # 2026-04-28
+    floor: 636                  # 2026-06-26
+
+  # What did NOT break. Recorded so no one wastes a day fixing it.
+  intact:
+    click_through_ratio: [0.0076, 0.0241]   # trending up
+    order_conversion_rate: [0.05, 0.24]     # trending up
+    conversion_on_27_jul: 0.1205            # 40 clicks -> 5 orders
+    response_time_hours: 1
+    note: >
+      Nothing downstream of the impression is broken. Fixing gig copy,
+      retraining closers or lowering prices would all solve the wrong problem.
+
   flow:
     window: [2026-06-11, 2026-07-28]
     organic_orders: 30
     vvro_orders: 35
-    total_orders: 65
-    organic_per_day_pre_vvro: 0.677     # 2026-06-11 .. 2026-07-12 (31d)
-    organic_per_day_post_vvro: 0.563    # 2026-07-13 .. 2026-07-28 (16d)
-    organic_delta_pct: -0.170           # <-- the breach the engine must close
+    inorganic_share_july: 0.74
+    organic_per_day_pre_vvro: 0.677
+    organic_per_day_post_vvro: 0.563
+    organic_delta_pct: -0.170
     vvro_start_date: 2026-07-13
+    cancellations: 6            # 2026-04-20 .. 2026-05-08, $1,064
+    cancellation_window: [2026-04-20, 2026-05-08]
+    cancellation_value: 1064
+
   economics:
-    orders_with_amount: 509
-    revenue_total: 69857
-    aov: 137
-    median_order: 100
-    aov_q1: 52
-    aov_q3: 175
-    tip_rate: 0.018
+    aov_organic: 147
+    aov_inorganic: 77
+    aov_blended: 128
+    sept_2025_aov: 138.61       # when the profile ran 100% organic
+    cycle_time_days: [4, 12]    # vs a 2-3 day category median
+    dead_pipeline: 5472
+
   funnel:
-    inquiries: 1000
-    placed: 324
-    not_placed: 644
-    conversion: 0.335
-    quoted_mean: 160
-    quoted_median: 135
+    inquiries_jan_to_jul: 330
+    followups_logged: 0         # all three columns empty in every row
+    close_rate_by_month:
+      "2026-02": 0.27
+      "2026-03": 0.31
+      "2026-04": 0.27
+      "2026-05": 0.11
+      "2026-06": 0.25
+      "2026-07": 0.09
 
 # ---------------------------------------------------------------------------
-# TARGETS — what "growth" means numerically. The engine reports progress
-# against these every day and works backwards from them.
+# PORTFOLIO CONTROL GROUP
+# The strongest evidence available: profiles inside the same account family,
+# same operator, different ratio policy, different outcome.
+# ---------------------------------------------------------------------------
+control_group:
+  profiles:
+    - profile: Dygram
+      jul_impressions_daily: 12700
+      inorganic_share: 0.44
+      success_score: 9
+      trajectory: recovered
+    - profile: X Studioz
+      jul_impressions_daily: 1564
+      inorganic_share: 0.74
+      success_score: 8
+      trajectory: flat_at_bottom
+  note: >
+    The June decline was portfolio-wide, not profile-specific. The diagnostic
+    event is July: Dygram and Storm recovered; XStudioz, Grid and Eikon did
+    not. That divergence is far more defensible than a single-profile penalty
+    theory.
+
+# ---------------------------------------------------------------------------
+# TARGETS — 30 August 2026
 # ---------------------------------------------------------------------------
 targets:
-  horizon_days: 90
-  monthly_revenue:
-    current_run_rate: 5900       # ~43 orders/mo x $137 AOV
-    t30: 8500
-    t60: 12000
-    t90: 16000
-  aov:
-    current: 137
-    t30: 155
-    t60: 175
-    t90: 200
-  organic_orders_per_day:
-    current: 0.563
-    t30: 0.90
-    t60: 1.20
-    t90: 1.50
-  upsell_rate:
-    current: 0.002               # essentially untracked today
-    t30: 0.15
-    t60: 0.25
-    t90: 0.35
-  review_capture_rate:
-    current: 0.127
-    t30: 0.35
-    t60: 0.50
-    t90: 0.65
+  horizon_days: 33
+  as_of: 2026-08-30
+  impressions_daily: [6000, 8000]
+  impressions_7d_ma_gate: 4000
+  success_score: 9
+  cycle_time_days_max: 5
+  inorganic_share_max: 0.30
+  cancellations: 0
+  aov_blended: 150
+  queue_depth: [40, 45]         # an OUTPUT band, not a target to chase
+  top_rated: submitted_for_review
 
 # ---------------------------------------------------------------------------
 # VVRO DOSING CONTROLLER
-# VVRO = self-placed / inorganic orders. This is a closed-loop controller:
-# it raises the dose only when organic health permits, and cuts it when the
-# organic constraint is breached.
 # ---------------------------------------------------------------------------
 dosing:
   enabled: true
   min_per_day: 0
   max_per_day: 5
-  # Hard ceiling on inorganic share of total orders. Above this, Fiverr's
-  # success-score signals (repeat buyers, order value spread, review velocity)
-  # start looking synthetic.
-  max_vvro_share: 0.45
-  current_vvro_share: 0.538      # BREACH at baseline
-  step_up: 1                     # max increase per day when healthy
-  step_down: 2                   # cut faster than you climb
-  # Price bands to spread VVRO across so the order-value distribution keeps
-  # looking organic. Weights must sum to 1.0.
+  # 0.45 -> 0.30 per operating model 3.6. Dygram holds Success Score 9 at 44%,
+  # but XStudioz is the premium-AOV profile sitting one point from Top Rated,
+  # and low-value controlled volume dilutes the highest-weighted signal in the
+  # scoring model on exactly the profile that can least afford it.
+  max_vvro_share: 0.30
+  current_vvro_share: 0.74
+  step_up: 1
+  step_down: 2
   price_bands:
-    - {min: 45,  max: 85,   weight: 0.25}
-    - {min: 86,  max: 150,  weight: 0.40}
-    - {min: 151, max: 260,  weight: 0.25}
-    - {min: 261, max: 450,  weight: 0.10}
-  # Countries that convert well organically — VVRO buyer profiles should mirror
-  # the organic mix, not concentrate anywhere.
+    - {min: 45,  max: 85,   weight: 0.10}
+    - {min: 86,  max: 150,  weight: 0.30}
+    - {min: 151, max: 260,  weight: 0.40}
+    - {min: 261, max: 450,  weight: 0.20}
+  price_band_note: >
+    Weighted upward from the previous distribution. Inorganic AOV is $77
+    against $147 organic; Fiverr weights higher-value orders more heavily,
+    so cheap controlled volume is the worst of both worlds.
   country_mix:
     United States: 0.32
-    United Kingdom: 0.14
+    United Kingdom: 0.18
     Australia: 0.10
     Canada: 0.07
-    Netherlands: 0.05
-    Germany: 0.05
-    France: 0.04
-    Other: 0.23
+    Germany: 0.06
+    United Arab Emirates: 0.05
+    Netherlands: 0.04
+    Other: 0.18
   cooldown_after_breach_days: 3
 
 # ---------------------------------------------------------------------------
-# LEVERS — measured effect sizes the engine uses to rank daily tasks.
-# Each carries the evidence and sample size so the engine can down-weight
-# weak evidence and re-estimate as data accumulates.
+# SUCCESS SCORE — the six scored areas and current exposure.
 # ---------------------------------------------------------------------------
-levers:
-  - id: upsell_on_inquiry
-    effect: 0.763               # 54.3% conv w/ upsell vs 30.8% without
-    n: 1000
-    confidence: medium
-    caveat: "Likely partly selection bias — CSRs upsell warmer leads. Engine runs an A/B to de-bias."
-    evidence: "inquiry sheet: upsell=TRUE n=70 conv 54.3%; upsell=FALSE n=930 conv 30.8%"
-  - id: morning_shift_staffing
-    effect: 0.750               # 38.5% vs 22.0% evening
-    n: 872
-    confidence: high
-    evidence: "Morning n=650 conv 38.5%; Evening n=127 conv 22.0%; Night n=95 conv 26.3%"
-  - id: lead_triage_by_country
-    effect: 0.450
-    n: 1000
-    confidence: high
-    evidence: "Netherlands 61.9%, Australia 49.0%, Italy 41.2%, US 39.2% vs India 3.8%, UAE 11.5%"
-  - id: review_capture
-    effect: 0.300
-    n: 597
-    confidence: high
-    evidence: "Only 76/597 orders have a recorded review (12.7%). Review velocity drives gig rank."
-  - id: followup_discipline
-    effect: -0.200              # NEGATIVE as currently practised
-    n: 1000
-    confidence: low
-    caveat: "35.2% no-FU vs 30.8% F1 vs 13.9% F1+F2 vs 0% F1+F2+F3. Almost certainly survivorship bias (only cold leads get chased), but the F3 = 0/19 result means F3 is pure wasted CSR time either way."
-    evidence: "inquiry sheet follow-up ladder"
+success_score:
+  current: 8
+  target: 9
+  brief_routing_floor: 7
+  areas:
+    - id: client_satisfaction
+      label: Client satisfaction
+      measures: "Reviews plus hidden private ratings"
+      exposure: "Quality sub-rating 4.8"
+      status: drag
+    - id: effective_communication
+      label: Effective communication
+      measures: "Responsiveness, helpfulness, clear expectations"
+      exposure: "4.9"
+      status: strength
+    - id: conflict_free_orders
+      label: Conflict-free orders
+      measures: "How often disputes arise"
+      exposure: "Font-file dispute logged"
+      status: watch
+    - id: cancellations
+      label: Cancellations
+      measures: "Effect of cancellations on the order process"
+      exposure: "6 in 19 days"
+      status: critical
+    - id: on_time_delivery
+      label: On-time delivery
+      measures: "Frequency of on-time and early delivery"
+      exposure: "4-12 day range vs 2-3 day category median"
+      status: critical
+    - id: value_for_money
+      label: Value for money
+      measures: "Whether clients felt they got what they paid for"
+      exposure: "Value sub-rating 4.8"
+      status: drag
+  mechanics:
+    peer_relative: true
+    benchmark: "Other freelancers in the same subcategory AND price range"
+    weighting: "Gigs with more orders weigh more. Within a gig, higher-value and more recent orders weigh more."
+    private_ratings: >
+      Anonymous questionnaire 24h after the public review, open for 60 days.
+      First-time buyers' private ratings are weighted more heavily than repeat
+      customers'. Invisible to the seller. This is why a wall of 5-star public
+      reviews can sit alongside a falling Success Score.
+    does_not_hurt: [unresponsive_clients, revisions, delivery_extensions, partial_refunds, inactivity]
 
 # ---------------------------------------------------------------------------
-# TEAM — who tasks get assigned to.
+# SERVICE LEVELS — operating model 3.4
+# ---------------------------------------------------------------------------
+slas:
+  first_response_minutes: 30
+  first_response_escalate_hours: 2
+  intake_posted_minutes: 15
+  intake_escalate_hours: 1
+  first_concepts_hours: 48
+  first_concepts_escalate_hours: 72
+  mid_order_checkpoint_at_elapsed: 0.50
+  delivery_at_promised_fraction: 0.60
+  order_age_hard_escalation_days: 7
+  response_rate_window_hours: 24
+  response_rate_rolling_days: 90
+  response_rate_required: 0.90
+
+# ---------------------------------------------------------------------------
+# TEAM — XStudioz roster (operating model 4.1-4.4). This is the profile-level
+# roster, distinct from the multi-profile CRM sheet names.
 # ---------------------------------------------------------------------------
 team:
-  csr:
-    - {name: Ezan,    leads: 125, conv: 0.248, value_per_lead: 16}
-    - {name: Tanzeel, leads: 179, conv: 0.223, value_per_lead: 7}
-    - {name: Salman,  leads: 40,  conv: 0.350, value_per_lead: 53}
-    - {name: Tayyab,  leads: 38,  conv: 0.211, value_per_lead: 100}
-    - {name: Iqra,    leads: 88,  conv: null,  value_per_lead: null}
-  designers:
-    - {name: Amin,     orders: 21, aov: 195}
-    - {name: Musharaf, orders: 26, aov: 180}
-    - {name: Habib,    orders: 21, aov: 156}
-    - {name: "Dulal Khan", orders: 24, aov: 156}
-    - {name: Usman,    orders: 11, aov: 152}
-    - {name: Aashir,   orders: 13, aov: 151}
-    - {name: Hamza,    orders: 23, aov: 148}
-    - {name: Hamid,    orders: 33, aov: 148}
-    - {name: Bilal,    orders: 23, aov: 144}
-    - {name: Zohaib,   orders: 17, aov: 105}
+  lead: Hasnain
+  ceo: Ash
+  roster:
+    - {name: Hasnain, role: operations_lead, inquiries: 13, placed: 3, close_rate: 0.23, revenue: 505,
+       owns: "QA gate · shift handoff · log reconciliation", window: "17:00-01:00 PKT"}
+    - {name: Amrah, role: csr, inquiries: 4, placed: 0, close_rate: 0.0, revenue: 0,
+       owns: "Response rate · UK/Europe window conversion", window: "09:00-17:00 PKT"}
+    - {name: Nadir, role: csr, inquiries: 2, placed: 0, close_rate: 0.0, revenue: 0,
+       owns: "US window booked revenue", window: "01:00-09:00 PKT"}
+    - {name: Zaheen, role: csr, inquiries: 0, placed: 0, close_rate: null, revenue: 0,
+       owns: "Response rate · UK/Europe window", window: "09:00-17:00 PKT"}
+    - {name: Ash, role: ceo, owns: "Success Score · ratio policy · pricing · escalations"}
+  structural_gap: >
+    Two people cover the lowest-value window (09:00-11:00 PKT). One person
+    covers eight hours of peak US and UK-evening demand alone and logged two
+    inquiries in two months. That mismatch is the most expensive structural
+    error in the current setup.
+  note: >
+    Hasnain handled 68% of roster volume and produced 100% of its revenue. This
+    is an ownership failure, not a performance failure — fix assignment before
+    judging anyone's numbers.
 
 # ---------------------------------------------------------------------------
-# SELF-CHECK GATE — the brief is not emitted unless these all pass.
+# DEAD PIPELINE — 19 named leads, $5,472, zero follow-ups ever logged.
+# Top Rated requires $10,000 earned; more than half that figure has been
+# sitting untouched in a spreadsheet column.
+# ---------------------------------------------------------------------------
+dead_pipeline:
+  total: 5472
+  leads_logged: 19
+  followups_logged: 0
+  recovery_assumption: 0.15     # 15% of $5,472 = $820
+  named:
+    - {client: selmaprof,     country: UK,          quoted: 950}
+    - {client: bobzinos,      country: Qatar,       quoted: 900}
+    - {client: farida_ism,    country: Azerbaijan,  quoted: 700}
+    - {client: getgwoppa,     country: UK,          quoted: 700}
+    - {client: ryan_wonders,  country: UK,          quoted: 350}
+    - {client: chupetes,      country: Costa Rica,  quoted: 200}
+    - {client: alisa_kruhle1, country: Netherlands, quoted: 180}
+
+# ---------------------------------------------------------------------------
+# IDLE LEVERS — paid for, not switched on.
+# ---------------------------------------------------------------------------
+idle_levers:
+  - {id: request_to_order, status: paid_not_enabled, phase: 1,
+     action: "Turn on today. Forces buyers to message first, so a bad-fit order never touches the metrics."}
+  - {id: seller_plus_keywords, status: paid_unused, phase: 2,
+     action: "Use for Phase 2 subcategory selection."}
+  - {id: fiverr_ads, status: eligible_not_running, phase: 2,
+     action: "$30/day on the branding kit gig, scaled on measured cost-per-order only."}
+  - {id: gig_slots, status: "3 of 10 used", phase: 2,
+     action: "Thinner subcategories: brand style guides, stationery, packaging and label design."}
+
+# ---------------------------------------------------------------------------
+# COMPLIANCE — from the team briefing. These are account-safety rules, and
+# they outrank every growth consideration in this file.
+# ---------------------------------------------------------------------------
+compliance:
+  never:
+    - "Move a pre-order conversation off Fiverr. Before an order exists, everything stays in the inbox."
+    - "Accept or propose payment outside Fiverr. There is no window where this is acceptable."
+    - "Pressure a buyer for a review or a rating. Integrity and Authenticity violation."
+    - "Argue with a buyer. The metrics read negative sentiment from either side; matching their energy is what hurts."
+    - "Deliver drafts through the Delivery button. Drafts go in the order message thread."
+  enforcement_ladder:
+    warning: "Emailed. Expires after 90 days. Freezes level progression."
+    second_same: suspension
+    three_different: suspension
+    restriction: "60 days limited access, then permanent suspension"
+    appeal_window_months: 6
+  standing_risks:
+    - id: multi_account_pattern
+      source: "Team briefing §4 enforcement triggers; operating model 7.1"
+      detail: >
+        Both of the source documents flag this. The briefing lists "multiple
+        accounts operated by one person" as an enforcement trigger, and the
+        operating model notes that four people sharing one password across four
+        devices is the exact pattern platform integrity systems look for. A
+        Team Account is the legitimate mechanism and is currently unavailable.
+        Recorded so the exposure is deliberate rather than forgotten.
+  unresolved_conflict:
+    - id: review_request
+      between: ["Team briefing Rule 7", "Operating model step 12"]
+      briefing_says: "Never ask for a review or a rating."
+      operating_model_says: "Deliver at 60% of promised time, then request the review."
+      engine_position: >
+        The engine follows the stricter reading where they diverge, because the
+        downside is asymmetric: a soft review request wins a few reviews, and an
+        Integrity violation costs the account. Fiverr's published prohibition is
+        on PRESSURING or incentivising, not on a single neutral mention, so the
+        synthesis the engine recommends is: one neutral line at delivery, never
+        repeated, never specifying a rating, never tied to anything of value.
+        Resolve this properly and record the decision in docs/DECISIONS.md.
+
+# ---------------------------------------------------------------------------
+# LEVERS — measured effect sizes used to rank daily tasks.
+# ---------------------------------------------------------------------------
+levers:
+  - id: cancellation_prevention
+    effect: 1.0
+    confidence: high
+    evidence: "6 cancellations worth $1,064 in 19 days, inside the exact window the impression collapse began. A directly scored area."
+  - id: inorganic_reduction
+    effect: 0.90
+    confidence: medium
+    caveat: "Correlation, not causation. The cancellation cluster occupies the same window and this dataset cannot separate them. The remedy sets overlap, so act on both."
+    evidence: "XStudioz 74% inorganic, Success Score 8, 1,564 impressions. Dygram 44%, Success Score 9, 12,700 impressions."
+  - id: delivery_speed
+    effect: 0.75
+    confidence: high
+    evidence: "Observed 4-12 days against a 2-3 day category median. On-time delivery is one of six scored areas, and Fiverr prioritises fast deliverers when it detects buyer urgency."
+  - id: intake_script
+    effect: 0.70
+    confidence: medium
+    evidence: "A visible 4.7 review cites missing files and a watermark. A cancellation is annotated as a client not knowing an editable file needs the font installed. Both hit quality and value sub-ratings simultaneously."
+  - id: dead_pipeline_recovery
+    effect: 0.60
+    confidence: medium
+    evidence: "$5,472 quoted and never followed up across 19 named leads. 15% recovery is $820, for zero ad spend and no new traffic."
+  - id: mid_order_checkpoint
+    effect: 0.55
+    confidence: medium
+    evidence: "Private ratings are invisible and heavily weighted. A 50%-elapsed check converts a silent 3-star private rating into a fixed order."
+  - id: upsell_on_inquiry
+    effect: 0.763
+    n: 1000
+    confidence: medium
+    caveat: "Observational. CSRs upsell warmer leads, so part of this is selection."
+    evidence: "Inquiry sheet: upsell=TRUE n=70 conv 54.3%; upsell=FALSE n=930 conv 30.8%; z=4.05"
+  - id: repeat_client_focus
+    effect: 0.70
+    confidence: high
+    evidence: "158 of 574 clients are repeat (27.5%), producing 48.2% of orders and $38,724 of $91,544 revenue, while the Upsell column sits at 0.0% filled."
+    caveat: "Repeat orders do NOT count toward the Top Rated unique-client gate — this lever serves revenue, not the level gate."
+
+# ---------------------------------------------------------------------------
+# SELF-CHECK GATE
 # ---------------------------------------------------------------------------
 selfcheck:
   max_unmapped_column_rate: 0.15
@@ -209,4 +552,7 @@ selfcheck:
   require_evidence_on_every_task: true
   require_falsifiable_resolution_on_every_prediction: true
   max_unexplained_metric_swing: 0.40
-  min_rubric_score: 70          # out of 100
+  min_rubric_score: 70
+  # A Phase 2 action recommended during Phase 1 is a gate violation, not a
+  # judgement call. It blocks.
+  enforce_phase_gate: true

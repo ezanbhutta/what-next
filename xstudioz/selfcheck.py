@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from typing import Any, Sequence
 
 from .dosing import DosePlan
+from . import phase as _phase
 from .ledger import Prediction
 from .metrics import MetricBundle
 from .tasks import Task
@@ -159,6 +160,27 @@ def check_consistency(rep: SelfCheckReport, *, bundle: MetricBundle,
         rep.add("health_delta_recompute", abs(implied - h.delta_pct) < 1e-9,
                 "block",
                 f"delta_pct={h.delta_pct:.6f} but recomputed={implied:.6f}")
+
+
+def check_phase_gate(rep: SelfCheckReport, *, state, tasks, config) -> None:
+    """A Phase 2 action recommended during Phase 1 is a gate violation.
+
+    This blocks rather than warns. The operating model's gate exists precisely
+    because these actions are individually reasonable and collectively fatal
+    while distribution is suppressed — buying ads on a suppressed profile is
+    paying past a penalty instead of clearing it.
+    """
+    if not config.get("selfcheck", {}).get("enforce_phase_gate", True):
+        return
+    bad = _phase.violations(state, tasks)
+    rep.add("phase_gate_respected", not bad, "block",
+            f"{state.label}: "
+            + ("; ".join(f"task {t.id!r} — {why}" for t, why in bad)
+               if bad else f"no task violates the {len(state.forbidden)} "
+                           f"forbidden action(s)"))
+    for k in state.fired_kills:
+        rep.add(f"kill_{k.id}", False, "warn",
+                f"KILL CRITERION FIRED — {k.detail} {k.response}".strip())
 
 
 def check_freshness(rep: SelfCheckReport, *, latest_data: _dt.date | None,
@@ -306,6 +328,7 @@ def run(
     unmapped: dict[str, int],
     ledger_orders: float = 0.0,
     crm_orders: float = 0.0,
+    state=None,
 ) -> tuple[SelfCheckReport, list[Task], list[Prediction]]:
     scfg = config.get("selfcheck", {})
     rep = SelfCheckReport()
@@ -316,6 +339,8 @@ def run(
     check_consistency(rep, bundle=bundle, ledger_orders=ledger_orders,
                       crm_orders=crm_orders,
                       max_swing=float(scfg.get("max_unexplained_metric_swing", 0.4)))
+    if state is not None:
+        check_phase_gate(rep, state=state, tasks=tasks, config=config)
     check_freshness(rep, latest_data=latest_data, today=today,
                     max_staleness_days=int(scfg.get("max_source_staleness_days", 3)))
     check_ingest(rep, unmapped_rate=unmapped_rate,

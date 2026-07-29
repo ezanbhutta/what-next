@@ -1,0 +1,627 @@
+HASEEBMADEIT  ·  PROFILE OPERATING MODEL
+XStudiozRecovery Model
+Diagnosis, operating system, and the 33-day plan
+to restore visibility and reach Top Rated
+XStudioz is not a demand problem and not a conversion problem. Its click-through
+and order-conversion mechanics are intact and in places improving. What broke is
+distribution — impressions fell 86% between mid-April and late July while the rest
+of the portfolio partially recovered. This document isolates why, and speciﬁes the
+system that ﬁxes it.
+PREPARED FOR
+Abdul (Ash) — CEO
+PROFILE
+fiverr.com/x_studioz
+DATA THROUGH
+27 July 2026
+HORIZON
+30 August 2026
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 1
+PART 00
+The One Page
+If you read nothing else, read this.
+IMPRESSIONS ▾
+−86%
+11,092/day (Apr) to 1,564/day
+(Jul)
+CONVERSION
+12.05%
+Intact. Never broke. Strongest
+asset.
+SUCCESS SCORE
+8
+Lowest of 11 proﬁles in portfolio
+DEAD PIPELINE
+$5,472
+Quoted, never followed up, zero
+touches
+The single sentence
+Buyers who see XStudioz still buy at a high rate. Fiverr has largely stopped showing XStudioz to buyers. Every action in this document
+is therefore aimed at restoring distribution and lifting Success Score from 8 to 9 — not at chasing order count.
+The target is wrong, and here is the replacement
+  STATED TARGET CORRECTED TARGET
+Metric Queue depth of 60–70 by 30 Aug Impressions and Success Score
+Why it
+fails
+At 2 orders/day, a 65-queue implies a 32-day cycle time. Your last
+12-day order scored 4.7 with a written complaint.
+Queue rebuilt itself to 67–80 in April with zero eﬀort,
+purely because impressions were at 11,000.
+30 Aug
+goal
+65 in queue Impressions 6,000–8,000 · Success Score 9 · Queue 40–
+45 · Cycle under 5 days
+Queue depth is work-in-progress. WIP is inventory, not revenue. It is the one number that lies to you.
+The five moves
+1 Cancellations to zero
+Six cancellations worth $1,064 landed between 20 April and 8 May — the exact window the collapse began. Cancellations
+are one of six scored Success Score areas.
+2 Cut inorganic share to 30% or below
+XStudioz ran 74% in July. Dygram runs 44%, holds Success Score 9, and pulls 8× the impressions. Match the proﬁle in your
+own portfolio that works.
+3 Deliver at 60% of promised time, every order
+Category median is 2–3 days. Your observed range is 4–12 days. On-time delivery and value-for-money are two of the six
+scored areas, and both of your weak public sub-ratings map to them.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 2
+4 Run the 12-question intake on every order
+Delivered in order chat within 15 minutes of start, since gig requirements cannot be edited. Question 11 alone prevents the
+failure mode already visible in your reviews.
+5 Work the $5,472 dead pipeline and turn the follow-up engine on
+Three follow-up columns exist in your sheet and have never once been ﬁlled. Nineteen named leads with quoted prices are
+sitting there marked "waiting response."
+DO NOT DO THIS YET
+No Fiverr Ads until Success Score reaches 9. Paying for clicks on a proﬁle with suppressed organic distribution means buying
+your way past a penalty instead of clearing it. The ROI maths works (7–14% of net at your conversion rate) — but only once
+the underlying signal is repaired. Gate it.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 3
+PART 01
+Diagnosis
+What the data says, including where my earlier read was wrong.
+1.1  Profile state, 27 July 2026
+DIMENSION VALUE READ
+Level Level 2 Two tiers of gates already cleared
+Rating 4.8 across 1,583 reviews Above the 4.7 Top Rated threshold
+Success Score 8 Needs 9 for Top Rated. Lowest in portfolio.
+Response time 1 hour Strong. Shift model is working here.
+Live gigs 2 + 1 new (from 20 Jul) Level 2 permits 10. Seven slots idle.
+Sub-rating — communication 4.9 Team strength
+Sub-rating — quality of delivery 4.8 Drag. Maps to Success Score.
+Sub-rating — value of delivery 4.8 Drag. Maps to Success Score.
+Star spread 1420 / 106 / 29 / 14 / 14 57 reviews at 3 ★  or below (3.6%)
+Observed delivery durations 4, 5, 5, 6, 12 days Slow versus a 2–3 day category median
+THE GATE
+Top Rated requires Success Score 9, rating 4.7+, 40 orders, 20 unique clients, $10,000 earned, plus a manual review. You
+clear rating, orders, clients and earnings comfortably. The only binding constraint is Success Score. That is the entire
+strategic problem, stated in one line.
+1.2  The distribution collapse
+PERIOD AVG DAILY IMPRESSIONS CHANGE NOTE
+15–30 April 2026 11,092 baseline Peak 17,842 on 28 Apr
+May 2026 6,104 −45% Declined every week
+June 2026 2,153 −81% Floor 636 on 26 Jun
+1–27 July 2026 1,564 −86% Flat at the bottom
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 4
+1.3  What did not break
+MECHANIC APRIL RANGE JULY RANGE VERDICT
+Click-through ratio 0.94 – 1.72% 0.76 – 2.41% Intact, trending up
+Order conversion rate 2.5 – 13.5% 5.0 – 24.0% Intact, trending up
+Response time 1 hour 1 hour Held
+Gig images, pricing, copy and CSR closing ability are all performing. On 27 July the proﬁle converted 40 clicks into 5 orders — a
+12.05% conversion rate that would be strong in any logo category. Nothing downstream of the impression is broken. Fixing gig copy,
+retraining closers, or lowering prices would all be solving the wrong problem.
+1.4  Correction to my earlier reading
+REVISED FINDING
+In our conversation I framed this as an XStudioz-speciﬁc algorithmic penalty. Running the same impression series across all
+eleven proﬁles shows that is only partly true. Grid Designs fell from roughly 30,000/day in January to around 800/day in late
+July. Eikon Designs collapsed on a similar curve. The decline through June is portfolio-wide, not proﬁle-speciﬁc.
+The real signal is what happened in July: Dygram and Storm recovered. XStudioz, Grid and Eikon did not. That divergence is
+the diagnostic event, and it is far more defensible than a single-proﬁle penalty theory.
+1.5  The control group inside your own portfolio
+PROFILE JUL AVG IMPRESSIONS JUL INORGANIC SHARE SUCCESS SCORE JULY TRAJECTORY
+Dygram ~12,700 44% 9 Recovered
+Storm ~6,500 — 10 Partial recovery
+AH2 Branding ~900 — 9 Stable
+Carpicon ~600 — 8 Stable
+Grid Designs ~850 — 9 No recovery
+Eikon Designs ~430 — 9 No recovery
+XStudioz 1,564 74% 8 No recovery
+Same operator, same market, same period, eleven proﬁles. XStudioz carries the highest inorganic ratio and the lowest Success
+Score of the set. Dygram runs the same play at roughly half the ratio, holds a 9, and pulls eight times the impressions.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 5
+1.6  The inorganic ratio, month by month
+MONTH ORGANIC INORGANIC INORGANIC SHARE AVG IMPRESSIONS
+Sept 2025 (baseline) 18 0 0% not tracked
+15–30 April 2026 73 44 38% 11,092
+May 2026 32 68 68% 6,104
+June 2026 16 1 6% 2,153
+1–27 July 2026 12 34 74% 1,564
+In September 2025 XStudioz ran zero inorganic, every single day, while Grid and Eikon had already begun. It did 18 orders in 13 days
+at $138.61 average order value, entirely organic. That is the proﬁle's natural state and its highest average order value in the
+portfolio.
+1.7  The cancellation cluster
+DATE CANCELLATIONS VALUE
+20 April 2026 1 $245
+30 April 2026 1 $180
+1 May 2026 1 $350
+2 May 2026 1 $108
+6 May 2026 1 $85
+8 May 2026 1 $96
+19-day total 6 $1,064
+Six cancellations in nineteen days, opening exactly as impressions peaked and immediately preceding the collapse. Your own sheet
+annotations attribute one to a suspected fake order, one to a client who did not understand that an editable ﬁle requires the font
+installed locally, and one to a mistake order. Two of those three are preventable by the intake script in Part 3.
+HONEST LIMITATION
+Correlation is not causation. Two candidate causes — the cancellation cluster and the inorganic ratio — sit in the same
+window, and this dataset cannot separate them. That matters less than it appears: the remedy set for both is identical, and
+both are within your control. Act on both, measure impressions weekly, and the data will tell you which mattered.
+1.8  The pipeline hole
+Across roughly 330 logged inquiries from January to July, the columns FollowUp, FollowUp 2 and FollowUp 3 are empty in
+every single row. "Waiting response" is the most common note in the entire log. In your process, "waiting response" means the
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 6
+conversation ended there.
+LEAD COUNTRY QUOTED STATUS
+selmaprof UK $950 Waiting response
+bobzinos Qatar $900 Waiting response
+farida_ism Azerbaijan $700 Waiting response
+getgwoppa UK $700 Waiting response
+ryan_wonders UK $350 Waiting response
+chupetes Costa Rica $200 Waiting response
+alisa_kruhle1 Netherlands $180 Waiting response
+dgtl_depot · paulmesaric · abdulla336699 USA · AU · UAE $525 Waiting response
+akhilkpfxx · architpatel497 · thbs92 India · UK · UK $442 Waiting response
+jeﬀ_wilf · takes_jonny · jojolily2 NL · UK · Qatar $305 Waiting response
+kai_utzinger · zain_qw · Mohamed L DE · UK · UAE $220 Waiting response
+Total recoverable pipeline $5,472 Zero follow-ups logged
+Top Rated requires $10,000 in earnings. More than half of that ﬁgure has been sitting untouched in a spreadsheet column.
+1.9  Inquiry volume and close rate
+MONTH INQUIRIES LOGGED PLACED CLOSE RATE
+February 63 17 27%
+March 39 12 31%
+April 91 25 27%
+May 62 7 11%
+June 20 5 25%
+July 22 2 9%
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 7
+DATA INTEGRITY FAILURE
+On 27 July the tracker records 5 orders placed. The inquiry log records 2 placed in the entire month of July. Those cannot
+both be true. Either most orders arrive as direct orders with no logged conversation, or the inquiry log has been quietly
+abandoned.
+Until those two numbers reconcile daily, every conversion ﬁgure in this section is unreliable and no decision should rest on it
+alone.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 8
+PART 02
+The Algorithm Model
+How Fiverr actually ranks in 2026, veriﬁed against platform documentation.
+2.1  What Fiverr states directly
+Search results only show freelancers currently available to take orders.
+Ranking combines textual relevance with popularity and buyer-satisfaction signals, driven by machine-learning models, review
+scores, pricing, availability and responsiveness.
+Fiverr prioritises fast deliverers when it detects buyer urgency.
+Pricing is itself a ranking input — Fiverr deliberately mixes price points to give buyers a comparison range.
+Positions rotate continuously. There is no ﬁxed rank to hold.
+The Fiverr's Choice badge is assigned, not applied for, and rotates. It is a downstream eﬀect of quality signals, never a target.
+2.2  Success Score — the six scored areas
+# AREA WHAT IT MEASURES YOUR EXPOSURE
+1 Client satisfaction Reviews plus hidden private ratings Quality sub-rating 4.8
+2 Eﬀective communication Responsiveness, helpfulness, clear expectations 4.9 — strength
+3 Conﬂict-free orders How often disputes arise Font-ﬁle dispute logged
+4 Cancellations Eﬀect of cancellations on the order process 6 in 19 days
+5 On-time delivery Frequency of on-time and early delivery 4–12 day range
+6 Value for money Whether clients felt they got what they paid for Value sub-rating 4.8
+2.3  The three mechanics most sellers miss
+A The score is peer-relative, not absolute
+Fiverr benchmarks you against other freelancers in your subcategory and your price range. You can improve in absolute
+terms and still fall, if the ﬁeld improves faster. Logo design is one of the most saturated subcategories on the platform —
+which is precisely why Fiverr's own success managers recommend opening gigs in thinner subcategories to lift scores across
+the board.
+B Weighting is not even
+Gigs with more orders carry more weight in the overall score. Within a gig, higher-value and more recent orders hit harder.
+A $400 branding kit moves your score substantially more than a $45 order.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 9
+C Private ratings are invisible and heavily weighted
+Twenty-four hours after the public review, buyers get an optional anonymous questionnaire: overall quality of the delivery,
+how closely it met expectations, whether it was useful. It can be submitted up to 60 days after completion. First-time
+buyers' private ratings are weighted more heavily than repeat customers', and higher-priced, higher-volume orders carry
+more weight. This is why a wall of 5-star public reviews can sit alongside a falling Success Score.
+THE STRATEGIC IMPLICATION
+Order volume is no longer a ranking currency. The system rewards new buyers, at higher prices, delivered fast, with no
+disputes and no cancellations — and it measures satisfaction through a channel you cannot see. Any strategy that
+maximises transaction count while diluting per-order value and new-buyer satisfaction is pushing against the highest-
+weighted signals in the model.
+2.4  Level gates
+REQUIREMENT LEVEL 1 LEVEL 2 TOP RATED XSTUDIOZ
+Success Score 5+ 7+ 9+ 8
+Rating 4.4+ 4.6+ 4.7+ 4.8
+Response rate 80% 90% 90% Met
+Orders 5 20 40 1,583 reviews
+Unique clients 3 10 20 Met
+Earnings $400 $2,000 $10,000 Met
+Gig slots unlocked 10 10 30 3 of 10 used
+Evaluation runs daily since the 2024 overhaul, with a 30-day grace period before demotion. Promotion to Level 1 and 2 is automatic
+within 24 hours of qualifying; Top Rated adds a manual review. There is also a hard gate most sellers never learn about: Fiverr's brief
+system only routes client briefs to services with a Success Score of 7 or higher. At 8 you are inside that ﬂow — losing the 8 would
+cut oﬀ inbound demand entirely.
+2.5  Response rate mechanics
+Counts only the ﬁrst message in each new thread. Follow-up messages inside a thread do not count.
+The window is 24 hours. The measurement is a rolling 90 days.
+Every ﬁrst message counts — including spam, wrong-language messages, and requests for services you do not oﬀer.
+Spam does not count against you if reported as spam within 24 hours. Most agencies bleed response rate on messages they
+could have ﬂagged in three seconds.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 10
+2.6  What is myth — stop teaching these
+CLAIM REALITY
+Staying online 24/7 raises ranking Not a conﬁrmed ranking factor. It aﬀects the "online now" buyer ﬁlter and perceived responsiveness
+only. Auto-refresher tools violate Terms of Service.
+Edit your gig weekly to look active Editing restarts the evaluation window before stable data accumulates. Two edit cycles per quarter is
+the practical ceiling.
+You can apply for Fiverr's Choice It is assigned to selected services and rotates. Chase Success Score; the badge is a by-product.
+More gigs of the same service
+means more coverage
+Duplicate gigs oﬀering the same service are removed. Diﬀerent subcategories are the legitimate
+route.
+Public 5-star reviews mean you are
+safe
+Private ratings run underneath and are weighted more heavily for new buyers and large orders.
+2.7  Why the old playbook stopped working
+Fiverr's trajectory is a steady migration from gameable volume signals to unobservable satisfaction signals. Early Fiverr ranked
+largely on conversion rate and order volume. The 2024 overhaul replaced monthly evaluation with daily evaluation, introduced the
+Success Score, added a 30-day grace period, made scoring peer-relative, and moved the heaviest weight onto private feedback that
+sellers never see. The 2025–26 layer added AI-assisted matching and brief routing gated on Success Score.
+The practical consequence: tactics built on producing transaction volume have declining and eventually negative returns, because
+they dilute the exact signals that now carry the most weight — new-buyer satisfaction, order value, and dispute-free delivery.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 11
+PART 03
+The Operating Model
+The system that produces the score. Five layers, one order lifecycle.
+3.1  Architecture
+LAYER OWNER FUNCTION PRIMARY METRIC
+Strategy Ash Ratio policy, pricing, gig portfolio, escalation authority Success Score
+Operations Hasnain (Lead) Shift handoﬀ, SLA enforcement, QA gate before delivery Impressions, cycle time
+Execution Shift CSRs Inquiry response, intake, mid-order checkpoint, delivery Close rate, on-time %
+Monitoring Hasnain Daily board, log reconciliation, cancellation watch Completion ratio
+Optimisation Ash, weekly Ratio tuning, follow-up recovery, gig launches Impressions trend
+3.2  The order lifecycle — twelve controlled steps
+1 First response · within 30 minutes
+Qualify before quoting. Never quote a price before understanding scope. Report spam as spam within 24 hours to protect
+response rate.
+2 Qualiﬁcation
+Budget range, deadline, and decision-maker conﬁrmed before any custom oﬀer is sent.
+3 Oﬀer sent · logged with price
+Every quoted price is written into the inquiry sheet the moment it is sent. No exceptions.
+4 Follow-up 1 · day 1
+Logged in the FollowUp column with a date. An inquiry cannot be closed without three logged touches.
+5 Follow-up 2 · day 3
+Diﬀerent angle: address the likely objection, not a repeat of the oﬀer.
+6 Follow-up 3 · day 7
+Final touch. Only now may the lead be marked closed, with a reason code.
+7 Order start · intake within 15 minutes
+The 12-question script from 3.3, posted in order chat as a single numbered block.
+8 Scope lock conﬁrmed in writing
+Client conﬁrms the deliverable list before design work begins. This is question 11 and it is non-negotiable.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 12
+9 First concepts · within 48 hours
+Regardless of package deadline. Category median is 2–3 days; the urgency signal rewards speed.
+10 Mid-order checkpoint · at 50% elapsed
+Send direction and ask plainly whether anything needs changing. This is where a silent 3-star private rating becomes a ﬁxed
+order.
+11 QA gate before delivery
+Every ﬁle checked against the question-11 list. Watermarks removed. Fonts noted. Owned by the Ops Lead, not the
+designer.
+12 Delivery at 60% of promised time
+If the gig says 5 days, deliver on day 3. Then request the review and explain that both a public and a private review will be
+requested.
+3.3  The intake script
+Gig requirements cannot currently be edited, so this runs in order chat within 15 minutes of order start. Functionally equivalent for
+scoring purposes: Success Score measures the order experience, not the requirements form. Post as one numbered block and ask
+the client to reply inline.
+BRAND BASICS
+DIRECTION
+CONSTRAINTS
+SCOPE LOCK — THE ONE THAT PROTECTS THE SCORE
+Exact brand name as it should appear, including capitalisation. Any tagline?1
+What does your business actually do, in one or two sentences?2
+Who is your customer? Age, market, price level.3
+Send 3 logos you like — any industry — and one line on what you like about each.1
+Send 1 logo you actively dislike, and why.2
+Icon plus text, text only, or open to both?3
+Any colours that must be used, or must be avoided?4
+Where will this be used most? Website, packaging, signage, app icon, print?1
+Anything that must appear in the mark — a speciﬁc object, letter or symbol?2
+Is there an existing logo we are replacing? Send it.3
+Conﬁrming your package includes: [list every ﬁle and asset by name]. Is anything you expected missing from that list?1
+Your delivery date is [date]. Does that work, or do you need it sooner?2
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 13
+WHY QUESTION 11 EXISTS
+One of your visible 4.7 reviews cites missing ﬁles and a watermark left on a social media cover. A sheet annotation records a
+cancellation caused by a client who did not know an editable ﬁle requires the font installed locally. Both failures hit quality
+of delivery and value of delivery simultaneously — the exact two sub-ratings holding you at 4.8. Conﬁrming the deliverable
+list in writing before work starts kills the complaint and hands the QA gate a checklist.
+3.4  Delivery service levels
+CHECKPOINT STANDARD ESCALATION TRIGGER
+First response to inquiry 30 minutes Over 2 hours → shift lead
+Intake posted after order start 15 minutes Over 1 hour → shift lead
+First concepts to buyer 48 hours Over 72 hours → Ash
+Mid-order checkpoint 50% elapsed Missed → logged as defect
+Final delivery 60% of promised window Over 100% → Ash, same day
+Any order age 7 days Hard escalation to Ash
+Any cancellation risk — Ash before it is ﬁled, always
+3.5  The follow-up engine
+No inquiry may be closed as "Not Placed" until FollowUp 1, 2 and 3 carry dates. A CSR who marks a lead dead without three logged
+touches has it reopened and reassigned.
+Hi [name], following up on the [service] we discussed on [date].
+The quote we shared was [price] and that is still open.
+If the timing was wrong, tell me when to check back.
+If the budget was the issue, tell me your number and I will
+see what I can put together.
+Start with the four largest dead leads: selmaprof at $950, bobzinos at $900, getgwoppa at $700, and farida_ism at $700. A 15%
+recovery across the full $5,472 is $820 — more than a full day of current revenue, for zero ad spend and no new traﬃc.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 14
+3.6  Ratio policy
+METRIC NOW TARGET BY 10
+AUG RATIONALE
+Inorganic share of
+orders
+74% ≤ 30% Matches Dygram, the proﬁle in your portfolio that
+recovered
+Cancellations per
+month
+6 in 19 days (peak) 0 A directly scored Success Score area
+Average order value $147 organic / $77
+inorganic
+$150+ blended Higher-value orders carry more scoring weight
+Cycle time 4–12 days under 5 days Peer-relative delivery speed feeds the score
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 15
+PART 04
+Team Model
+Roster, leader, coverage, ownership and the training system.
+4.1  Attributed performance, June–July 2026
+CSR INQUIRIES PLACED CLOSE RATE REVENUE READ
+Hasnain 13 3 23% $505 Only performer with volume and conversion
+Amrah 4 0 0% $0 Almost no volume touched
+Nadir 2 0 0% $0 Owns the highest-value window, touched two leads
+Zaheen 0 0 — $0 No record on this proﬁle at all
+Roster total 19 3 16% $505 —
+THIS IS AN OWNERSHIP FAILURE, NOT A PERFORMANCE FAILURE
+Hasnain handled 68% of the roster's XStudioz volume and produced 100% of its revenue. Amrah, Nadir and Zaheen logged
+six inquiries between them in two months. That is not three underperforming people — that is a proﬁle nobody was
+assigned to properly, absorbed by whoever happened to be online. Fix assignment before you judge anyone's numbers.
+4.2  Leader designation
+Hasnain becomes Operations Lead for XStudioz, eﬀective immediately, provisionally. He is the only roster member with
+meaningful volume and the highest close rate at that volume, and he handled the client who left a ﬁve-star review praising quality
+and delivery in the most recent period.
+Conﬁrm or reverse after 14 days against the scorecard in 4.5. Two things the scoreboard will not show you, and which matter more
+than any number on it:
+Who ﬂags their own mistakes before you ﬁnd them.
+Who ﬁxes another person's order without being asked.
+His owned deliverable: the QA gate. Nothing ships to a client without a check against the question-11 deliverable list. That is a real
+job with a real number attached, not a title.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 16
+4.3  Coverage map and the structural gap
+PKT WINDOW ON DUTY UK TIME US EASTERN DEMAND VALUE
+09:00 – 11:00 Amrah + Zaheen 05:00 – 07:00 00:00 – 02:00 Low
+11:00 – 17:00 Amrah + Zaheen + Ash 07:00 – 13:00 02:00 – 08:00 UK morning — good
+17:00 – 21:00 Hasnain + Ash 13:00 – 17:00 08:00 – 12:00 UK afternoon, US ramp
+21:00 – 01:00 Hasnain + Nadir + Ash 17:00 – 21:00 12:00 – 16:00 Strong
+01:00 – 09:00 Nadir alone 21:00 – 05:00 16:00 – 00:00 Peak US — highest value
+Your review base is UK, USA, Australia, Canada, UAE and Germany. Two people cover the lowest-value window; one person covers
+eight hours of peak US and UK-evening demand alone — and logged two inquiries in two months. That mismatch is the most
+expensive structural error in the current setup.
+ON COVERING NIGHTS YOURSELF
+Adding night presence on top of a 12-hour shift makes you the redundancy layer for a four-person team. That holds for
+roughly three weeks before something breaks, and what usually breaks ﬁrst is delivery quality — the exact metric you can
+least aﬀord to drop right now. Treat it as a two-week bridge while Hasnain is stood up, not as the ﬁx.
+4.4  Ownership matrix
+PERSON OWNS OUTRIGHT REPORTS DAILY
+Ash Success Score · ratio policy · pricing · escalations Nothing. Reviews everything.
+Hasnain (Lead) QA gate · shift handoﬀ · log reconciliation Completion ratio, impressions
+Amrah + Zaheen Response rate · UK/Europe window conversion First-response time, close rate
+Nadir US window booked revenue Revenue booked in shift
+4.5  The scorecard — published daily, everyone sees everyone
+METRIC DEFINITION STANDARD
+First-response speed Minutes to ﬁrst reply on a new inquiry Under 30 minutes
+Intake completeness % of orders where all 12 questions were answered before work began 100%
+Checkpoint compliance % of orders where the 50% check message was sent 100%
+Follow-up compliance % of closed leads with 3 logged touches 100%
+Revenue booked Value of orders closed in that shift Tracked, ranked
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 17
+4.6  Training curriculum — four competencies
+1 Inbox conversion
+Reply within 30 minutes. Qualify before quoting. Never quote before understanding scope. Teach the response-rate rule
+explicitly — ﬁrst message only, 24-hour window, rolling 90 days, spam reportable within 24 hours. Most agencies bleed this
+metric on messages they could have ﬂagged instantly.
+2 Requirement extraction
+The CSR who asks the best questions produces the highest Success Score. Score on brief completeness, never on message
+volume.
+3 Mid-order checkpoint discipline
+Binary weekly check: was a draft sent and feedback requested before ﬁnal delivery? This single habit converts silent private-
+rating damage into ﬁxed orders.
+4 Dispute avoidance
+Conﬂict-free orders is a scored area. Every dispute gets a written post-mortem, ﬁled and reviewed weekly. Patterns get
+turned into intake questions.
+DECLINE POLICY — CURRENTLY MISSING
+Your inquiry log contains CSRs declining clients with notes such as "low budget", "do not want to work" and "order nhi lena".
+Some of that is correct qualiﬁcation. Some of it is a CSR setting your pricing strategy at 2am with no rule to follow. Write the
+rule: below what number do you decline, and who is permitted to. Until then, that decision is being made inconsistently by
+four people.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 18
+PART 05
+The 33-Day Plan
+28 July to 30 August 2026. Two phases, one hard gate between them.
+Phase 1  ·  28 July – 10 August  ·  Signal repair
+Objective: stop the damage. Do not attempt to grow the queue. Do not spend on ads.
+# ACTION OWNER STANDARD
+1 Cancellations to zero — every risk escalated to Ash before ﬁling Ash Zero, no exceptions
+2 Inorganic share cut to 30% or below Ash Measured weekly
+3 12-question intake live on every order All CSRs 100% compliance
+4 First concepts within 48 hours; delivery at 60% of window Hasnain 100%
+5 QA gate against deliverable list before every delivery Hasnain 100%
+6 Work the $5,472 dead pipeline, largest ﬁrst Hasnain 19 leads touched
+7 Follow-up columns mandatory before any lead is closed All CSRs 3 touches logged
+8 Reconcile inquiry log against tracker every day Hasnain Numbers must match
+9 Turn on Request to Order (already included in Seller Plus Premium) Ash Day 1
+10 Move a second person into the 01:00–09:00 PKT window Ash Week 1
+GATE — DO NOT PROCEED TO PHASE 2 UNTIL ALL THREE ARE TRUE
+Success Score reads 9 on the Level Overview page.
+Seven-day average impressions above 4,000.
+Five consecutive days where orders completed ÷ orders received is at or above 1.0.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 19
+Phase 2  ·  10 – 30 August  ·  Controlled scale
+# ACTION DETAIL
+11 Fiverr Ads at $30/day on the
+branding kit gig
+At 12% conversion and $118 net per organic order, cost-per-order lands at 7–14% of net —
+comfortably inside the 20% viability threshold. Scale weekly on measured cost-per-order only.
+12 Launch gigs in thinner
+subcategories
+Brand style guides, business cards and stationery, packaging and label design. Fiverr's own
+guidance names logo design as saturated and recommends this exact move.
+13 Assign brief response
+ownership per shift
+Success Score 7+ keeps you inside the brief routing ﬂow. Thirty-minute SLA, named owner.
+14 Push average order value
+through tiers and extras
+Source ﬁles, brand guidelines, social kits. Higher-value orders carry more scoring weight.
+15 Track unique clients as a
+weekly KPI
+Repeat orders do not count toward the unique-client gate.
+Where this lands on 30 August
+METRIC 27 JULY 30 AUGUST TARGET
+Daily impressions 1,564 6,000 – 8,000
+Success Score 8 9
+Queue depth 25 – 30 40 – 45
+Cycle time 4 – 12 days under 5 days
+Inorganic share 74% ≤ 30%
+Cancellations 6 in peak 19 days 0
+Top Rated status Blocked on Success Score Submitted for review
+Not queue 65. That target implies a 32-day cycle time at current visibility and would reproduce, on every order, the conditions that generated your worst review.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 20
+PART 06
+Metrics and Cadence
+What gets measured, by whom, how often.
+6.1  The one number
+POST THIS EVERY MORNING AT 09:00 PKT
+Impressions — today, and the seven-day rolling average.
+Not orders. Not queue. Impressions is the only metric that tells you whether the suppression is lifting. Everything
+downstream follows it. When the seven-day average crosses 4,000, the recovery is real and Phase 2 opens.
+6.2  The daily board
+METRIC SOURCE OWNER ALARM
+Impressions + 7-day average Fiverr analytics Hasnain 7-day avg falling
+Completion ratio — completed ÷ received Tracker Hasnain Below 1.0
+Success Score per gig Level Overview Ash Any drop
+Cancellations Tracker Ash Any at all
+Orders past day 7 Order list Hasnain Any at all
+Inorganic share, rolling 7 days Tracker Ash Above 30%
+Log reconciliation — tracker vs inquiry sheet Both Hasnain Any mismatch
+6.3  Shift handoff — five lines, every changeover
+1. Open orders and their deadlines
+2. Unanswered first-messages
+3. Orders at risk (past day 5, revision loops, unhappy tone)
+4. Escalations needing Ash
+5. Revenue booked this shift
+6.4  Weekly review — Ash, 30 minutes
+Impressions trend versus the previous week. This is the verdict on everything else.
+Success Score per gig, expanded to see which of the six areas moved.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 21
+Scorecard ranking across the four CSRs.
+Dead pipeline recovered, in dollars.
+Every dispute post-mortem from the week, and what intake question would have prevented it.
+6.5  Kill criteria — when to stop and rethink
+CONDITION RESPONSE
+Impressions still under 2,000 on 20 August with
+all Phase 1 actions at 100%
+The cause is not in your control set. Stop spending eﬀort here; shift volume weighting
+to Dygram and Storm and treat XStudioz as a rebuild.
+Success Score falls to 7 Stop all inorganic immediately. Below 7 you lose brief routing entirely.
+Any cancellation during Phase 1 Full post-mortem the same day, before the next order is accepted.
+Completion ratio below 1.0 for ﬁve straight days Stop accepting new orders on the branding kit gig until the queue drains.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 22
+PART 07
+Constraints and Idle Levers
+What you have said you cannot do, what that costs, and what is sitting unused.
+7.1  Stated constraints and the workaround
+CONSTRAINT WHAT IT BLOCKS WORKAROUND IN THIS MODEL
+Cannot edit existing
+gigs
+Order requirements, delivery times, copy, pricing
+tiers
+Intake moves to order chat. Delivery time becomes an
+internal SLA rather than an advertised one.
+Cannot change shift
+structure
+Fixing the 01:00–09:00 solo window Ash bridges for two weeks. Second person moved in as soon
+as possible. Treated as temporary.
+Cannot create a Team
+Account
+Legitimate multi-person access under one login No workaround. Note that four people on one password
+across four devices is the exact pattern platform integrity
+systems look for.
+Will not use the AI
+Personal Assistant
+Response-rate credit and the buyer-side ﬁlter
+that gives gigs with active assistants prioritised
+visibility
+None. Accepted cost, recorded here so the decision is
+deliberate.
+7.2  Idle levers — the largest is gig slots
+SEVEN EMPTY GIG SLOTS
+Level 2 permits ten gigs. XStudioz runs three. The appearance of X_Studioz new gig in the tracker from 20 July proves you
+can create gigs even though you cannot edit existing ones.
+But note its impressions: 139, 17, 18, 9, 10, 6, 3, 8. A new gig on a healthy proﬁle receives a visibility window in its ﬁrst 48 to
+72 hours. This one received almost nothing — further evidence the suppression sits at proﬁle level, not gig level. Launching
+more gigs will not ﬁx it until the proﬁle signal recovers. Hold new launches until Phase 2.
+LEVER STATUS ACTION
+Request to Order Paid for, not switched
+on
+Turn on today. Forces buyers to message ﬁrst, letting you qualify before a bad-ﬁt order
+touches your metrics.
+Seller Plus keyword
+research
+Paid for, unused Use it to select subcategories for Phase 2 gig launches.
+Fiverr Ads Eligible, not running Gate behind Phase 2. Maths is favourable; timing is not.
+Seven gig slots Idle Phase 2 only, in thinner subcategories.
+1,583-review trust
+asset
+Underexploited Highest-converting proﬁle in the portfolio by rating. Deserves the highest-value order
+mix, not the lowest.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 23
+7.3  The strategic note on order mix
+In September 2025, XStudioz ran 100% organic at $138.61 average order value — the highest in the portfolio at that time, above
+Grid Designs at $67–98. It is your premium-average-order-value proﬁle. In July 2026 it carried 74% inorganic at $77 per order.
+Set aside every other consideration and the mechanics alone argue against this: Fiverr weights higher-value and more recent orders
+more heavily in Success Score, and weights private ratings from new buyers most heavily of all. Loading a premium proﬁle with low-
+value controlled volume dilutes the highest-weighted signal in the model, on the one proﬁle that is a single point away from Top
+Rated. That is the leverage argument, independent of any other.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 24
+APPENDIX
+Sources and Method
+Where each class of claim comes from.
+Platform mechanics
+Fiverr Help Center — Success score (six scored areas, weighting, peer-relative scoring, edge cases)
+Fiverr Help Center — Fiverr's level system (thresholds, daily evaluation, 30-day grace, gig slots)
+Fiverr Help Center — Fiverr's search and recommendation system (ranking inputs, availability, urgency, pricing)
+Fiverr Help Center — Response time and rate (ﬁrst-message rule, 24-hour window, 90-day roll, spam handling)
+Fiverr Help Center — Repeat business score (subcategory-relative, 90-day, badge threshold)
+Fiverr Help Center — Personalized oﬀers / Briefs (Success Score 7+ routing gate)
+Fiverr Help Center — Reviews and ratings, Team Account, Community Standards
+Fiverr Community blog — private ratings mechanics and weighting; Success Score peer-relativity; delivery-time and order-
+requirement guidance from Fiverr customer success managers
+Profile and portfolio data
+Public proﬁle ﬁverr.com/x_studioz as at 27 July 2026 — level, rating, review count, sub-ratings, star distribution, gig set, observed
+order durations and values
+Daily Data Sheet — Proﬁles, 9 September 2025 to 27 July 2026 — impressions, clicks, organic and inorganic order counts and
+values, completions, queue, click ratio, conversion rate, cancellations, Success Score, proﬁle rating, across all eleven proﬁles
+Client Daily Inquiries — X Studioz, January to July 2026 — approximately 330 rows covering client, country, status, quoted price,
+shift, CSR and note
+Method notes and known limitations
+Monthly averages exclude days with no logged entry rather than treating them as zero.
+Inorganic share is calculated as inorganic orders divided by total orders for the period.
+CSR attribution exists only from June 2026; no earlier attribution is possible from this data.
+Two CSR names appearing in the log have been excluded at your instruction as their proﬁle assignments are changing.
+Causation is not established. The cancellation cluster and the inorganic ratio spike occupy the same window and cannot be
+separated with this dataset. Both are treated as candidate causes with an overlapping remedy set.
+The inquiry log and the order tracker disagree materially for July. Conversion ﬁgures drawn from the inquiry log should be
+treated as indicative until the two are reconciled.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 25
+REVIEW DATE
+This model assumes conditions as at 27 July 2026. Re-run the impressions series and the Success Score reading on 10 August
+at the Phase 1 gate, and again on 30 August. If the seven-day impression average has not moved by 10 August with Phase 1
+actions at full compliance, the diagnosis in Part 1 is wrong and the kill criteria in 6.5 apply.
+XStudioz Operating Model · HaseebMadeIt · 27 July 2026 26

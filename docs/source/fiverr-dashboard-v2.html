@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Command Center</title>
+<style>
+:root{
+  --plane:#0d0d0d;--surface:#1a1a19;--ink:#fff;--ink2:#c3c2b7;--muted:#898781;
+  --grid:#2c2c2a;--axis:#383835;--ring:rgba(255,255,255,.10);
+  --mine:#3987e5;--c1:#d95926;--c2:#199e70;--c3:#c98500;
+  --good:#0ca30c;--warn:#fab219;--crit:#d03b3b;color-scheme:dark}
+:root[data-theme="light"]{
+  --plane:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
+  --grid:#e1e0d9;--axis:#c3c2b7;--ring:rgba(11,11,11,.10);
+  --mine:#2a78d6;--c1:#eb6834;--c2:#1baf7a;--c3:#eda100;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+
+/* gate */
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.gbox{width:100%;max-width:360px;text-align:center}
+.gbox h1{font-size:19px;margin:0 0 6px;letter-spacing:-.02em}
+.gbox p{color:var(--muted);font-size:12.5px;margin:0 0 22px}
+.gbox form{display:flex;flex-direction:column;gap:10px}
+.gbox input{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:13px 15px;font:inherit;font-size:15px;color:var(--ink);text-align:center;letter-spacing:.02em}
+.gbox input:focus{outline:none;border-color:var(--mine)}
+.gbox button{background:var(--mine);border:none;border-radius:10px;padding:13px;font:inherit;font-size:14.5px;font-weight:600;color:#fff;cursor:pointer}
+.gbox button:disabled{opacity:.55;cursor:default}
+.gerr{color:var(--crit);font-size:12.5px;min-height:17px;margin-top:2px}
+.glock{font-size:26px;margin-bottom:12px;opacity:.5}
+
+#app{display:none}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 22px 70px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+h1{font-size:22px;letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);font-size:12px;margin:3px 0 0}
+.hbtns{display:flex;gap:8px}
+.toggle{background:none;border:1px solid var(--ring);color:var(--ink2);border-radius:999px;padding:6px 13px;font:inherit;font-size:12px;cursor:pointer}
+h2{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:34px 0 12px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:20px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:16px 18px;cursor:pointer;transition:border-color .12s,transform .12s;position:relative}
+.kpi:hover{border-color:var(--mine);transform:translateY(-1px)}
+.kpi.on{border-color:var(--mine);box-shadow:inset 0 0 0 1px var(--mine)}
+.kpi .k{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.kpi .v{font-size:29px;font-weight:650;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:11.5px;color:var(--muted);margin-top:6px}
+.kpi .chev{position:absolute;right:14px;top:14px;color:var(--muted);font-size:11px}
+.kpi .v.pos{color:var(--good)}.kpi .v.neg{color:var(--crit)}
+.drawer{display:none;background:var(--surface);border:1px solid var(--mine);border-radius:14px;padding:20px 22px;margin-top:12px;font-size:13.5px;color:var(--ink2)}
+.drawer.open{display:block}
+.drawer h4{margin:0 0 9px;font-size:14.5px;color:var(--ink)}
+.drawer p{margin:0 0 10px}.drawer p:last-child{margin:0}
+.drawer strong{color:var(--ink)}
+.seg{display:inline-flex;background:var(--plane);border:1px solid var(--ring);border-radius:9px;padding:3px;gap:2px;margin-bottom:16px;flex-wrap:wrap}
+.seg button{background:none;border:none;color:var(--muted);font:inherit;font-size:12.5px;padding:6px 14px;border-radius:6px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);font-weight:600}
+.bars{display:flex;flex-direction:column;gap:11px}
+.brow{display:grid;grid-template-columns:132px 1fr;align-items:center;gap:13px}
+.blab{font-size:12.5px;color:var(--ink2);text-align:right;white-space:nowrap}
+.blab b{color:var(--ink)}
+.btrack{position:relative;height:23px;display:flex;align-items:center}
+.bfill{height:18px;border-radius:0 4px 4px 0;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.bval{position:absolute;left:calc(100% + 9px);top:50%;transform:translateY(-50%);font-size:12.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.axl{height:1px;background:var(--axis);margin:4px 0 0 145px}
+.axc{font-size:11px;color:var(--muted);margin:6px 0 0 145px}
+.predbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:4px}
+select{background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:9px;padding:9px 13px;font:inherit;font-size:13.5px;cursor:pointer;min-width:290px}
+.verdict{background:var(--plane);border:1px solid var(--ring);border-left:3px solid var(--mine);border-radius:0 10px 10px 0;padding:14px 17px;margin:16px 0 4px;font-size:13.5px;color:var(--ink2)}
+.verdict b{color:var(--ink)}
+.big{font-size:25px;font-weight:650;letter-spacing:-.02em;color:var(--ink);display:block;margin-bottom:5px;font-variant-numeric:tabular-nums}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.lg{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink2);margin-top:12px}
+.lg span{display:flex;align-items:center}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px}
+.row{background:var(--surface);border:1px solid var(--ring);border-radius:12px;margin-bottom:9px;overflow:hidden}
+.rhead{display:grid;grid-template-columns:1fr auto auto auto auto 26px;gap:16px;align-items:center;padding:14px 18px;cursor:pointer}
+.rhead:hover{background:var(--plane)}
+.rname{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.rname .src{font-size:11.5px;color:var(--muted);font-weight:400}
+.rstat{text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.rstat .l{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+.rbody{display:none;padding:2px 18px 18px;font-size:13.5px;color:var(--ink2);border-top:1px solid var(--grid)}
+.rbody.open{display:block}
+.rbody p{margin:12px 0 0}.rbody strong{color:var(--ink)}
+.chev2{color:var(--muted);font-size:12px;text-align:right}
+.tag{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--mine);color:#fff}
+a{color:var(--mine)}
+.src{font-size:11.5px;color:var(--muted)}
+.foot{color:var(--muted);font-size:11.5px;margin-top:40px;padding-top:18px;border-top:1px solid var(--grid)}
+.pill{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--ring);color:var(--muted);margin-left:7px;font-weight:600;vertical-align:2px}
+.pill.inf{color:var(--warn);border-color:var(--warn)}
+.pill.obs{color:var(--good);border-color:var(--good)}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}
+ .rhead{grid-template-columns:1fr auto 26px}.rhead .hide{display:none}
+ .brow{grid-template-columns:96px 1fr}.axl,.axc{margin-left:109px}}
+.empty{color:var(--muted);font-size:13px;margin:0}
+.krow{display:grid;grid-template-columns:1fr auto 270px;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid var(--grid)}
+.krow:last-child{border-bottom:none}
+.kname{font-size:13.5px;color:var(--ink)}
+.kpos{font-size:13.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.clrow{display:grid;grid-template-columns:1fr auto;gap:14px;padding:11px 0;border-bottom:1px solid var(--grid);font-size:13.5px}
+.clrow:last-child{border-bottom:none}
+.fired{margin-bottom:14px}
+.frow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--grid);font-size:13.5px}
+.frow:last-child{border-bottom:none}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--crit);margin-top:6px;flex:none}
+.rules{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.rule{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--ring);color:var(--muted)}
+.rule.on{border-color:var(--good);color:var(--good)}
+@media(max-width:900px){.krow{grid-template-columns:1fr auto}.krow svg{display:none}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gbox">
+    <div class="glock">&#128274;</div>
+    <h1>Command Center</h1>
+    <p>This dashboard is encrypted. Enter the passphrase to decrypt it in your browser.</p>
+    <form id="gf" autocomplete="off">
+      <input id="gp" type="password" placeholder="passphrase" autocomplete="current-password" spellcheck="false">
+      <button id="gb" type="submit">Unlock</button>
+    </form>
+    <div class="gerr" id="ge"></div>
+  </div>
+</div>
+
+<div id="app">
+<div class="wrap">
+<header>
+  <div>
+    <h1>Fiverr Command Center</h1>
+    <p class="sub"><span style="color:var(--mine);font-weight:600" id="ownr">—</span> vs <span id="ncomp">—</span> competitors · <span id="gdate">—</span> · click anything for detail</p>
+  </div>
+  <div class="hbtns">
+    <button class="toggle" id="tg">Light</button>
+    <button class="toggle" id="lo">Lock</button>
+  </div>
+</header>
+
+<div class="kpis" id="kpis"></div>
+<div id="drawers"></div>
+
+<h2>Field position <span class="pill obs">observed</span></h2>
+<div class="card">
+  <div class="seg" id="seg">
+    <button class="on" data-m="queue">Queue</button>
+    <button data-m="rev">Reviews</button>
+    <button data-m="comp">Completions/day</button>
+    <button data-m="fail">Failure rate</button>
+    <button data-m="rev30">Revenue/mo</button>
+  </div>
+  <div class="bars" id="bars"></div>
+  <div class="axl"></div>
+  <div class="axc" id="axc"></div>
+</div>
+
+<h2>Predictions <span class="pill inf">modelled</span></h2>
+<div class="card">
+  <div class="predbar">
+    <select id="pred">
+      <option value="p1">Review trajectory — next 90 days</option>
+      <option value="p2">Will the fastest rival catch you?</option>
+      <option value="p3">Your path to Top Rated</option>
+      <option value="p4">Revenue run-rate</option>
+      <option value="p6">Your next milestones</option>
+    </select>
+    <span class="src">Projections extrapolate current inferred rates and assume nothing changes — which never holds. Direction, not destiny.</span>
+  </div>
+  <div class="verdict" id="pv"></div>
+  <div id="pchart"></div>
+  <div class="lg" id="plg"></div>
+</div>
+
+<h2>The field <span class="pill obs">observed</span></h2>
+<div id="rows"></div>
+
+<h2>New-entrant radar <span class="pill obs">observed</span></h2>
+<div class="card"><div class="row" style="margin:0">
+  <div class="rhead" data-r="serp">
+    <div class="rname" id="serpt">—</div>
+    <div class="rstat hide"><span class="l">You rank</span><strong id="serpy">—</strong></div>
+    <div class="chev2">▾</div>
+  </div>
+  <div class="rbody" id="r-serp"></div>
+</div></div>
+
+<h2>Keyword rank over time <span class="pill obs">observed</span></h2><div class="card" id="rankbody"></div><h2>Change log &amp; attribution <span class="pill obs">your edits</span></h2><div class="card" id="clbody"></div><h2>Alerts <span class="pill obs">daily</span></h2><div class="card" id="albody"></div><h2>Your real numbers <span class="pill inf">vs inferred</span></h2><div class="card" id="msbody"></div><p class="foot" id="foot"></p>
+</div>
+</div>
+
+<script>var BLOB="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";
+
+
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function unlock(pass){
+  const raw=b64d(BLOB), salt=raw.slice(0,16), iv=raw.slice(16,28), ct=raw.slice(28);
+  const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},km,
+    {name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv},key,ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+const gf=document.getElementById('gf'),gp=document.getElementById('gp'),
+      gb=document.getElementById('gb'),ge=document.getElementById('ge');
+gf.onsubmit=async e=>{
+  e.preventDefault();ge.textContent='';gb.disabled=true;gb.textContent='Decrypting…';
+  try{
+    const d=await unlock(gp.value);
+    try{sessionStorage.setItem('k',gp.value)}catch(_){}
+    boot(d);
+  }catch(err){
+    ge.textContent='Wrong passphrase.';gb.disabled=false;gb.textContent='Unlock';
+    gp.value='';gp.focus();
+  }
+};
+(async()=>{let k=null;try{k=sessionStorage.getItem('k')}catch(_){}
+ if(k){try{boot(await unlock(k))}catch(_){}}})();
+
+function boot(D){
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  const S=D.sellers.map(s=>Object.assign({},s));
+  S.forEach(s=>{s.comp=s.q/7;s.rday=s.comp*0.55;s.rev30=Math.round(s.q*(30/7)*95);});
+  const me=S.find(s=>s.you)||S[0];
+  const others=S.filter(s=>!s.you);
+  const rival=others.slice().sort((a,b)=>b.q-a.q)[0];
+  const worst=S.slice().sort((a,b)=>b.fail-a.fail)[0];
+
+  document.getElementById('ownr').textContent=D.owner;
+  document.getElementById('ncomp').textContent=others.length;
+  document.getElementById('gdate').textContent=D.generated;
+  document.getElementById('foot').textContent=
+   'Reviews, star splits, queue depth, levels, prices and search rankings observed from public Fiverr pages on '+D.generated+
+   '. Completions, orders and revenue are inferred from queue depth (7-day median turnover, 55% review rate, $95 blended order value) and are labelled as models. Encrypted at rest; decrypted only in your browser.';
+
+  /* KPIs */
+  const K=[
+   {id:'d1',k:'Your queue',v:me.q,cls:'pos',d:'#1 of '+S.length+' · +'+Math.round((me.q/rival.q-1)*100)+'% vs next',
+    h:'Queue depth — '+me.q+' concurrent orders',
+    b:'<p>The only real-time throughput number Fiverr publishes. You lead the field at <strong>'+me.q+'</strong> against '+others.map(o=>o.n+' '+o.q).join(', ')+'. At a 7-day median turnover that implies ~'+me.comp.toFixed(0)+' completions a day and ~'+Math.round(me.q*30/7)+' orders a month.</p><p>Queue is also your fastest early-warning signal. A sustained drop means impressions or conversion fell before it ever shows in review counts.</p>'},
+   {id:'d2',k:'Your reviews',v:me.acct.toLocaleString(),cls:'',d:'+'+me.rday.toFixed(1)+'/day inferred',
+    h:me.acct.toLocaleString()+' account reviews · '+me.rev.toLocaleString()+' on the main gig',
+    b:'<p>Weighted average <strong>'+me.star+'</strong>, the highest in the set. Your accumulation rate is also the fastest here.</p>'},
+   {id:'d3',k:'Failure rate',v:me.fail+'%',cls:me.fail<0.3?'pos':'',d:'best · '+ (worst.fail/me.fail).toFixed(0)+'× cleaner than worst',
+    h:me.fail+'% at 1–2 stars',
+    b:'<p>Against '+others.map(o=>o.n+' '+o.fail+'%').join(', ')+'. You are '+(worst.fail/me.fail).toFixed(0)+'× cleaner than the worst operator tracked.</p><p>This matters more than average rating, because Fiverr Success Score weights order outcomes and disputes. Protect it above everything else as you scale.</p>'},
+   {id:'d4',k:'Threats',v:2,cls:'neg',d:'copy risk · keyword blind spot',
+    h:'Two active threats',
+    b:'<p><strong>1 · Storm Designs is copying you.</strong> Operator identified via an exact tagline match with zero other web occurrences. His LinkedIn has no original posts — the entire activity feed is likes, and the account he likes most is <strong>yours</strong>. Gig overlap: identical FAQ order, the same paid Copyright Document add-on, same $40 entry, byte-identical portfolio disclaimer. Launched 8 months after you, Top Rated in 14.</p><p><strong>2 · You do not rank for "'+D.serp.term+'".</strong> Not in the top 8. Windson does. You carry the keyword and earn no placement from it.</p>'}
+  ];
+  document.getElementById('kpis').innerHTML=K.map((x,i)=>
+   '<div class="kpi'+(i===0?' on':'')+'" data-d="'+x.id+'"><span class="chev">▾</span><div class="k">'+x.k+
+   '</div><div class="v '+x.cls+'">'+x.v+'</div><div class="d">'+x.d+'</div></div>').join('');
+  document.getElementById('drawers').innerHTML=K.map((x,i)=>
+   '<div class="drawer'+(i===0?' open':'')+'" id="'+x.id+'"><h4>'+x.h+'</h4>'+x.b+'</div>').join('');
+  document.querySelectorAll('.kpi').forEach(kk=>kk.onclick=()=>{
+   const id=kk.dataset.d,open=document.getElementById(id).classList.contains('open');
+   document.querySelectorAll('.drawer').forEach(d=>d.classList.remove('open'));
+   document.querySelectorAll('.kpi').forEach(x=>x.classList.remove('on'));
+   if(!open){document.getElementById(id).classList.add('open');kk.classList.add('on');}});
+
+  /* bars */
+  const M={
+   queue:{f:s=>s.q,u:'',cap:'concurrent orders',dec:0},
+   rev:{f:s=>s.rev,u:'',cap:'gig reviews',dec:0},
+   comp:{f:s=>s.comp,u:'/day',cap:'completions per day (inferred)',dec:1},
+   fail:{f:s=>s.fail,u:'%',cap:'of reviews at 1–2★ (lower is better)',dec:2},
+   rev30:{f:s=>s.rev30/1000,u:'k',cap:'$ thousand gross order volume per month (inferred)',dec:1}};
+  function drawBars(m){
+   const c=M[m],el=document.getElementById('bars');el.innerHTML='';
+   const mx=Math.max.apply(null,S.map(c.f))*1.08;
+   S.slice().sort((a,b)=>c.f(b)-c.f(a)).forEach(s=>{
+    const v=c.f(s),r=document.createElement('div');r.className='brow';
+    r.innerHTML='<div class="blab">'+(s.you?'<b>'+s.n+' (you)</b>':s.n)+'</div>'+
+     '<div class="btrack"><div class="bfill" style="width:'+Math.max(v/mx*100,1.5)+'%;background:'+s.c+'">'+
+     '<span class="bval">'+(m==='rev30'?'$':'')+v.toFixed(c.dec)+c.u+'</span></div></div>';
+    el.appendChild(r);});
+   document.getElementById('axc').textContent='0 → '+(m==='rev30'?'$':'')+mx.toFixed(c.dec)+c.u+' '+c.cap;}
+  document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
+   document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));
+   b.classList.add('on');drawBars(b.dataset.m);});
+  drawBars('queue');
+
+  /* rows */
+  document.getElementById('rows').innerHTML=S.map(s=>
+   '<div class="row"><div class="rhead" data-r="'+s.k+'">'+
+   '<div class="rname">'+s.n+(s.you?' <span class="tag">You</span>':'')+' <span class="src">'+s.lvl+'</span></div>'+
+   '<div class="rstat hide"><span class="l">Reviews</span>'+s.rev.toLocaleString()+'</div>'+
+   '<div class="rstat hide"><span class="l">Queue</span>'+s.q+'</div>'+
+   '<div class="rstat hide"><span class="l">Avg ★</span>'+s.star+'</div>'+
+   '<div class="rstat"><span class="l">≤2★</span><span style="color:'+(s.fail>1?'var(--crit)':s.fail<0.3?'var(--good)':'inherit')+'">'+s.fail+'%</span></div>'+
+   '<div class="chev2">▾</div></div><div class="rbody" id="r-'+s.k+'">'+s.doss+'</div></div>').join('');
+
+  /* serp */
+  document.getElementById('serpt').innerHTML='"'+D.serp.term+'" — top '+D.serp.rows.length+' <span class="src">baseline for tomorrow’s diff</span>';
+  document.getElementById('serpy').textContent=D.serp.youRank?('#'+D.serp.youRank):'Not ranked';
+  document.getElementById('serpy').style.color=D.serp.youRank?'inherit':'var(--crit)';
+  document.getElementById('r-serp').innerHTML='<p>'+D.serp.rows.map(r=>'<strong>'+r[0]+'</strong> '+r[1]+(r[2]?' <span class="src">· '+r[2]+'</span>':'')).join(' &nbsp; ')+
+   '</p><p>From tomorrow, any username appearing here that was not here today is flagged with level, price, reviews and queue.</p>';
+
+  document.addEventListener('click',e=>{const h=e.target.closest('.rhead');if(!h)return;
+   const b=document.getElementById('r-'+h.dataset.r);if(!b)return;b.classList.toggle('open');
+   h.querySelector('.chev2').textContent=b.classList.contains('open')?'▴':'▾';});
+
+  /* predictions */
+  const DAY0=new Date(D.generated+'T00:00:00');
+  const dstr=n=>{const d=new Date(DAY0);d.setDate(d.getDate()+Math.round(n));
+   return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});};
+  function lineChart(series,days,ylab){
+   const W=880,H=282,P={l:56,r:16,t:28,b:30};
+   let lo=Infinity,hi=-Infinity;
+   series.forEach(s=>{lo=Math.min(lo,s.v0);hi=Math.max(hi,s.v0+s.rate*days);});
+   const pad=(hi-lo)*0.10||1;lo=Math.max(0,lo-pad);hi=hi+pad;
+   const X=d=>P.l+(d/days)*(W-P.l-P.r),Y=v=>H-P.b-((v-lo)/(hi-lo))*(H-P.t-P.b);
+   let g='';
+   for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);
+    g+='<line x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>'+
+       '<text x="'+(P.l-9)+'" y="'+(y+4)+'" fill="var(--muted)" font-size="11" text-anchor="end">'+Math.round(v).toLocaleString()+'</text>';}
+   for(let i=0;i<=3;i++){const d=days*i/3;
+    g+='<text x="'+X(d)+'" y="'+(H-8)+'" fill="var(--muted)" font-size="11" text-anchor="middle">'+dstr(d)+'</text>';}
+   series.forEach(s=>{const pts=[];
+    for(let d=0;d<=days;d+=Math.max(1,days/60))pts.push(X(d)+','+Y(s.v0+s.rate*d));
+    pts.push(X(days)+','+Y(s.v0+s.rate*days));
+    g+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+s.c+'" stroke-width="2" stroke-linejoin="round"/>'+
+       '<circle cx="'+X(days)+'" cy="'+Y(s.v0+s.rate*days)+'" r="4" fill="'+s.c+'" stroke="var(--surface)" stroke-width="2"/>';});
+   g+='<text x="0" y="10" fill="var(--muted)" font-size="10.5">'+ylab+'</text>';
+   return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+ylab+'">'+g+'</svg>';}
+  const legend=i=>i.map(x=>'<span><span class="sw" style="background:'+x.c+'"></span>'+x.n+'</span>').join('');
+  const near=others.slice().sort((a,b)=>b.rday-a.rday)[0];
+  const days=n=>Math.round(n);
+  const PR={
+   p1:()=>{const ser=S.map(s=>({n:s.n,c:s.c,v0:s.rev,rate:s.rday}));
+    return{v:'<span class="big">'+Math.round(me.rev+me.rday*90).toLocaleString()+' reviews by '+dstr(90)+'</span>At your inferred '+me.rday.toFixed(1)+' reviews/day you add <b>~'+Math.round(me.rday*90)+' in 90 days</b>. Nobody in this field closes the gap — you extend your lead over '+near.n+' by roughly <b>'+(me.rday-near.rday).toFixed(1)+' reviews every day</b>. The race you are actually in is with your own level, not with them.',
+     c:lineChart(ser,90,'gig reviews'),l:legend(ser)};},
+   p2:()=>{const ser=[{n:me.n+' (you)',c:me.c,v0:me.rev,rate:me.rday},{n:near.n,c:near.c,v0:near.rev,rate:near.rday}];
+    const gap=me.rev-near.rev;
+    return{v:'<span class="big">No — not on current rates</span>You hold a <b>'+gap.toLocaleString()+' review lead</b> over '+near.n+' and you are pulling away at '+(me.rday-near.rday).toFixed(1)+'/day, not shrinking. <b>But review count is not the race.</b> They already beat you to Top Rated with a fraction of your reviews — which tells you Fiverr’s level system does not reward volume, and neither should your attention.',
+     c:lineChart(ser,180,'gig reviews · 180-day view'),l:legend(ser)};},
+   p3:()=>({v:'<span class="big">Volume is not your blocker</span>Fiverr’s official Top Rated bar: Success Score <b>9+</b>, rating 4.7+, response rate 90%, <b>40 orders</b>, <b>20 unique clients</b>, <b>$10,000 earnings</b>, plus manual evaluation.<br><br>You clear orders, clients, earnings and rating by orders of magnitude — thousands of orders against a threshold of 40. The binding constraint is <b>Success Score</b> or the manual review. That is a quality-of-process metric; no amount of extra volume moves it. Check Growth &amp; Marketing → Level Overview for your per-gig Success Score.',c:'',l:''}),
+   p4:()=>({v:'<span class="big">~$'+(me.rev30/1000).toFixed(1)+'k / month gross</span>From '+me.q+' in queue at 7-day turnover and a $95 blended order value: ~'+Math.round(me.q*30/7)+' orders/month. That is '+others.map(o=>(me.rev30/o.rev30).toFixed(1)+'× '+o.n).join(', ')+'. Annualised, roughly <b>$'+Math.round(me.rev30*12/1000)+'k</b> of gross order volume.<br><br>Every input is an assumption — turnover, order value, review rate. Feed real Fiverr analytics in and this becomes measured instead of modelled.',c:'',l:''}),
+   p6:()=>{const ms=[3000,3500,4000].filter(m=>m>me.rev);
+    return{v:'<span class="big">'+ms[0].toLocaleString()+' gig reviews ≈ '+dstr((ms[0]-me.rev)/me.rday)+'</span>At '+me.rday.toFixed(1)+'/day: '+
+     ms.map(m=>'<b>'+m.toLocaleString()+'</b> in '+days((m-me.rev)/me.rday)+' days ('+dstr((m-me.rev)/me.rday)+')').join(', ')+
+     '.<br><br>These are the cleanest checkpoints for testing whether anything you change actually moves throughput. If a new gig or keyword shift works, these dates pull forward and the daily sweep shows it inside a fortnight.',c:'',l:''};}
+  };
+  function renderPred(){const r=PR[document.getElementById('pred').value]();
+   document.getElementById('pv').innerHTML=r.v;
+   document.getElementById('pchart').innerHTML=r.c;
+   document.getElementById('plg').innerHTML=r.l;}
+  document.getElementById('pred').onchange=renderPred;renderPred();
+
+  const rt=document.documentElement;
+  document.getElementById('tg').onclick=function(){const d=rt.getAttribute('data-theme')==='dark';
+   rt.setAttribute('data-theme',d?'light':'dark');this.textContent=d?'Dark':'Light';
+   drawBars(document.querySelector('#seg button.on').dataset.m);renderPred();};
+  document.getElementById('lo').onclick=()=>{try{sessionStorage.removeItem('k')}catch(_){}
+   location.reload();};
+  renderModules(D);
+}
+
+/* ---------- v2 modules: rank history, change log, alerts, my stats ---------- */
+function renderModules(D){
+ const E='<p class="empty">Collecting. First data appears after tomorrow’s 09:00 sweep.</p>';
+
+ /* keyword rank over time */
+ const rh=D.rankHistory||{};const kws=Object.keys(rh);
+ let rhtml='';
+ if(!kws.length){rhtml=E;}
+ else{
+  rhtml=kws.map(k=>{
+   const pts=rh[k]||[];
+   const mine=pts.filter(p=>p.pos!=null);
+   const cur=pts.length?pts[pts.length-1].pos:null;
+   let spark='';
+   if(mine.length>1){
+    const W=260,H=44,mx=Math.max.apply(null,mine.map(p=>p.pos)),mn=Math.min.apply(null,mine.map(p=>p.pos));
+    const rng=(mx-mn)||1;
+    const pp=mine.map((p,i)=>((i/(mine.length-1))*W).toFixed(1)+','+(((p.pos-mn)/rng)*(H-8)+4).toFixed(1));
+    spark='<svg viewBox="0 0 '+W+' '+H+'" style="max-width:260px"><polyline points="'+pp.join(' ')+'" fill="none" stroke="var(--mine)" stroke-width="2"/></svg>';
+   }
+   const first=mine.length?mine[0].pos:null,last=mine.length?mine[mine.length-1].pos:null;
+   let mv='';
+   if(first!=null&&last!=null&&first!==last){
+    const d=first-last;mv='<span style="color:'+(d>0?'var(--good)':'var(--crit)')+';font-weight:600">'+(d>0?'▴ up ':'▾ down ')+Math.abs(d)+'</span>';}
+   return '<div class="krow"><div class="kname">'+k+'</div><div class="kpos">'+
+    (cur==null?'<span style="color:var(--crit)">not ranked</span>':'#'+cur)+' '+mv+'</div><div>'+spark+'</div></div>';
+  }).join('');
+ }
+ document.getElementById('rankbody').innerHTML=rhtml;
+
+ /* change log with attribution */
+ const cl=D.changelog||[];
+ document.getElementById('clbody').innerHTML=cl.length?cl.map(c=>{
+  const v=c.verdict||'too early';
+  const col=v==='improved'?'var(--good)':v==='worsened'?'var(--crit)':'var(--muted)';
+  return '<div class="clrow"><div><strong>'+c.date+'</strong> · '+c.what+
+   '<div class="src">'+(c.detail||'')+'</div></div>'+
+   '<div style="text-align:right"><span style="color:'+col+';font-weight:600;font-size:12.5px">'+v+'</span>'+
+   (c.effect?'<div class="src">'+c.effect+'</div>':'')+'</div></div>';
+ }).join(''):'<p class="empty">No changes logged yet. Every gig edit you record in the Control doc gets measured here — queue and review velocity for the 14 days after, versus the 14 before. Without it the system tracks but cannot learn.</p>';
+
+ /* alerts */
+ const al=D.alerts||{};const fired=al.fired||[];const rules=al.rules||{};
+ document.getElementById('albody').innerHTML=
+  (fired.length?'<div class="fired">'+fired.map(f=>'<div class="frow"><span class="dot"></span><div><strong>'+f.title+'</strong><div class="src">'+f.detail+'</div></div></div>').join('')+'</div>'
+   :'<p class="empty">Nothing fired today.</p>')+
+  '<div class="rules">'+Object.keys(rules).map(r=>'<span class="rule'+(String(rules[r])!=='off'?' on':'')+'">'+r.replace(/_/g,' ')+'</span>').join('')+'</div>';
+
+ /* my stats */
+ const ms=D.mystats||[];
+ document.getElementById('msbody').innerHTML=ms.length?
+  '<table><thead><tr><th>Date</th><th>Metric</th><th class="n">Value</th></tr></thead><tbody>'+
+  ms.map(m=>'<tr><td>'+m.date+'</td><td>'+m.metric.replace(/_/g,' ')+'</td><td class="n"><strong>'+m.value+'</strong></td></tr>').join('')+
+  '</tbody></table>'+(D.calibration?'<p style="margin-top:12px">'+D.calibration+'</p>':'')
+  :'<p class="empty">Nothing entered yet. Everything about your own gig here is <strong>inferred</strong> from public queue depth. Paste your real Fiverr numbers into the MYSTATS block of the Control doc — success score, orders completed, earnings, impressions, conversion — and your row becomes measured. It also recalibrates every competitor estimate, because it reveals your true turnover and review rate.</p>';
+}
+</script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 # XStudioz — What Next · Wednesday 29 July 2026
 
-**Organic health: 🔴 BREACH** · index 39/100 · VVRO share 79% (cap 45%)
+**Organic health: 🔴 BREACH** · index 37/100 · VVRO share 79% (cap 30%)
 
-> Place **1 VVRO order today** (1x $86-$150) — quota **2/week**.
+> Place **1 VVRO order today** (1x $151-$260) — quota **2/week**.
 
 **Why the constraint is breached**
 - structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day)
@@ -12,7 +12,7 @@
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
 **Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
 
-*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.837 -> 4.834) across 1,582 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$128; the rating damage is worth far more.
 
 - Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
 - Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
@@ -23,13 +23,13 @@
 - Source rows: `order_tracker/tracker#b0r4`
 
 ### P0 · VVRO: 2/week (1 today) — CUT
-**Owner:** CEO / order placement · **Est. impact:** $826 · **Effort:** 0.5h · **Confidence:** 80%
+**Owner:** CEO / order placement · **Est. impact:** $1,438 · **Effort:** 0.5h · **Confidence:** 80%
 
-*Why:* Organic constraint breached — structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.58/day.
+*Why:* Organic constraint breached — structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.
 
-- Place **1 VVRO order today** (1x $86-$150) — quota **2/week**.
+- Place **1 VVRO order today** (1x $151-$260) — quota **2/week**.
 - Countries to spread across: Other x1
-- At this quota the VVRO share settles at 29%, against a cap of 0.58 VVRO/day at the current organic rate.
+- At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.
 - Do not place on a fixed weekday pattern — the schedule rotates weekly for a reason.
 - Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller.
 - Script: `playbooks/vvro_dosing.md`
@@ -44,15 +44,26 @@
 - This is the single highest-value data fix available: it unblocks revenue forecasting entirely.
 - Script: `playbooks/data_hygiene.md`
 
-### P0 · Request a review on every delivery (~+139 reviews in 90d)
-**Owner:** Delivery lead + all CSRs · **Est. impact:** $3,472 · **Effort:** 1.0h · **Confidence:** 45%
+### P0 · Work the $5,472 dead pipeline, largest first
+**Owner:** Hasnain · **Est. impact:** $821 · **Effort:** 3.0h · **Confidence:** 55%
 
-*Why:* Only 13.6% of the 597 orders on tabs that track reviews have one recorded. At the current 3.00 orders/day, lifting capture to 65% yields about 139 extra reviews over 90 days. Review velocity is a direct gig-ranking input and the only growth lever here that costs nothing and carries no platform risk.
+*Why:* $5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 — more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.
 
-- Add the review request to the delivery message template so it is sent automatically, not remembered.
-- Ask at the moment of approval, not days later.
-- Record the outcome in the REVIEW column every time — 'no review' is data, blank is not.
-- Never ask for 5 stars explicitly; that violates Fiverr ToS and risks the account.
+- Start with: selmaprof ($950), bobzinos ($900), farida_ism ($700), getgwoppa ($700).
+- Use the four-line message in playbooks/dead_pipeline.md — quote still open, ask when to check back, ask for their number if budget was the issue.
+- Log every touch in the FollowUp column with a date, same day.
+- Anything that reopens goes straight into the normal intake flow.
+- Script: `playbooks/dead_pipeline.md`
+
+### P1 · Install the mid-order checkpoint — private feedback is the leak
+**Owner:** All CSRs (compliance owned by Hasnain) · **Est. impact:** $3,472 · **Effort:** 1.0h · **Confidence:** 45%
+
+*Why:* Only 13.6% of the 597 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.
+
+- At 50% of elapsed time on every order, send the direction so far and ask plainly whether anything needs changing. This is the one habit that converts a silent 3-star private rating into a fixed order, while the order is still open.
+- Chase any silent buyer within 24 hours of delivery — orders auto-complete after 3 days and the private window stays open 60 days after that.
+- Log every order where the buyer went silent, exceeded the agreed revisions, or accepted without a word. That is your proxy for the feedback you cannot see.
+- Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md.
 - Script: `playbooks/review_capture.md`
 
 ### P1 · Run the upsell A/B test to de-bias the 54% vs 31% gap
@@ -87,15 +98,15 @@
 - Revisit in 30 days with the engine's updated per-designer AOV.
 - Script: `playbooks/staffing.md`
 
-### P2 · Stop third follow-ups entirely
-**Owner:** All CSRs · **Est. impact:** $380 · **Effort:** 0.5h · **Confidence:** 70%
+### P2 · Fix the broken ClickUp sync (334 logged failures)
+**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
 
-*Why:* Third follow-ups have converted 0 of 19 leads. That is not a low yield, it is a zero yield. The CSR hours currently spent on F3 are pure loss and are better spent on Tier 1 leads and upsells to existing buyers.
+*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
 
-- Cap the follow-up ladder at two touches.
-- Reassign the freed time to upselling completed orders — that is where the measured 54.3% vs 30.8% gap lives.
-- Note: the follow-up ladder is confounded (only cold leads get chased), so this is a decision about F3 cost, not proof that follow-ups hurt. F1 stays.
-- Script: `playbooks/lead_triage.md`
+- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
+- Re-run the sync for the backlog.
+- Add a failure alert — 300+ silent failures is the real defect.
+- Script: `playbooks/data_hygiene.md`
 
 ### P3 · Close out approved order #4 — Calum Snell
 **Owner:** Delivery lead · **Est. impact:** $116 · **Effort:** 1.0h · **Confidence:** 80%
@@ -119,16 +130,6 @@
 - Script: `playbooks/review_capture.md`
 - Source rows: `order_tracker/tracker#b0r5`
 
-### P3 · Fix the broken ClickUp sync (334 logged failures)
-**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
-
-*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
-
-- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
-- Re-run the sync for the backlog.
-- Add a failure alert — 300+ silent failures is the real defect.
-- Script: `playbooks/data_hygiene.md`
-
 ### P3 · Triage inbound leads by country before spending CSR time
 **Owner:** All CSRs · **Est. impact:** $668 · **Effort:** 1.0h · **Confidence:** 60%
 
@@ -147,18 +148,18 @@
 
 - **Action:** CUT · binding constraint: `organic_health_breach`
 - **Quota:** 2/week (0.29/day) · today: **1**
-- **Ceiling from share cap:** 0.58/day at the current organic rate of 0.71/day
+- **Ceiling from share cap:** 0.31/day at the current organic rate of 0.71/day
 - **Projected VVRO share at this rate:** 29%
 - **Cooldown until:** 2026-08-01
 
 | Date | Day | Place | Price bands |
 |---|---|---|---|
-| 2026-07-29 | Wed | 1 | 1x $86-$150 |
+| 2026-07-29 | Wed | 1 | 1x $151-$260 |
 | 2026-07-30 | Thu | 0 | — |
 | 2026-07-31 | Fri | 0 | — |
-| 2026-08-01 | Sat | 1 | 1x $45-$85 |
+| 2026-08-01 | Sat | 1 | 1x $86-$150 |
 | 2026-08-02 | Sun | 0 | — |
-| 2026-08-03 | Mon | 1 | 1x $261-$450 |
+| 2026-08-03 | Mon | 1 | 1x $45-$85 |
 | 2026-08-04 | Tue | 0 | — |
 
 Per ISO week: **2026-W31** = 2, **2026-W32** = 1 (quota is 2/week; a 7-day window straddles two weeks, so these will not both equal the quota).
@@ -173,7 +174,7 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Resolve on | Prediction | 80% interval | Confidence |
 |---|---|---|---|
 | 2026-08-05 | Organic orders over the 7 days to 05 Aug will be 5.6 (80% CI 2.6-8.6). | 2.57 – 8.63 | medium |
-| 2026-08-12 | Organic health index in 14 days will be 51 (80% CI 36-74). | 36.40 – 74.23 | low |
+| 2026-08-12 | Organic health index in 14 days will be 49 (80% CI 35-71). | 34.69 – 70.75 | low |
 | 2026-08-05 | Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07). | 2.34 – 4.07 | medium |
 | 2026-08-28 | Blended AOV in 30 days will be $128 (80% CI $115-$141). | 115.29 – 141.49 | high |
 | 2026-08-05 | Inquiry->order conversion in 7 days will be 33.5% (80% CI 29.2%-37.7%). | 0.29 – 0.38 | high |
@@ -196,17 +197,14 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Inquiry conversion | 33.5% | 324/968 |
 | Upsell recorded | 0.0% | column is effectively unused |
 | Review capture | 13.6% | biggest free growth lever |
-| Gig rating | 4.837 | 1,582 reviews, Level 2 |
+| Gig rating | 4.834 | 1,583 reviews, Level 2 |
 | Orders in queue | 20 | live from the gig page |
 
 ### Revenue path
 
 At 1.00 orders/day and $128 AOV, the next 30 days project **$3,852** (30 orders).
 
-That is **$4,648 behind** the 30-day target. Two routes close it:
-
-- **Volume:** +36 orders (+1.21/day). **Not feasible** — the organic constraint caps volume, and VVRO is already at its ceiling.
-- **AOV:** raise AOV to $283 (+121%). This is the route the constraint leaves open.
+On track against the 30-day target.
 
 ### Funnel leverage
 

@@ -871,3 +871,116 @@ def test_scattered_root_causes_do_not_trigger_a_process_task():
                                      "scope_creep", "buyer_changed_mind"])]
     out = tasks._dispute_rules(ds, dt.date(2026, 7, 29), 137.0)
     assert not [t for t in out if t.category == "process"]
+
+
+# =========================================================================
+# Phase gate
+# =========================================================================
+
+from xstudioz import phase as PH  # noqa: E402
+
+PHASE_CFG = {
+    "phases": {
+        "current": "signal_repair",
+        "definitions": [
+            {"id": "signal_repair", "label": "Phase 1 · Signal repair",
+             "objective": "Stop the damage.",
+             "window": ["2026-07-28", "2026-08-10"],
+             "allowed": ["cancellation_prevention"],
+             "forbidden": ["fiverr_ads", "new_gig_launch", "queue_growth",
+                           "price_increase"],
+             "forbidden_why": {"fiverr_ads": "Buying past a penalty."}},
+            {"id": "controlled_scale", "label": "Phase 2",
+             "allowed": ["fiverr_ads"], "forbidden": []},
+        ],
+        "gate": [
+            {"id": "success_score_9", "metric": "success_score", "min": 9},
+            {"id": "impressions_4000", "metric": "impressions_7d_ma", "min": 4000},
+            {"id": "completion_ratio_5d",
+             "metric": "completion_ratio_consecutive_days_at_or_above_1", "min": 5},
+        ],
+        "kill_criteria": [
+            {"id": "success_score_7", "when": "score <= 7", "response": "Stop inorganic."},
+            {"id": "any_cancellation", "when": "any", "response": "Post-mortem."},
+        ],
+    },
+    "selfcheck": {"enforce_phase_gate": True},
+}
+
+TODAY = dt.date(2026, 7, 29)
+
+
+def test_phase_gate_stays_shut_until_every_condition_is_met():
+    """All three, not two. A gate that opens on a majority is not a gate."""
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=9, impressions_7d_ma=5000,
+                    completion_ratio_streak=4)
+    assert not s.gate_open
+    s2 = PH.evaluate(PHASE_CFG, TODAY, success_score=9, impressions_7d_ma=5000,
+                     completion_ratio_streak=5)
+    assert s2.gate_open
+
+
+def test_unmeasured_condition_never_counts_as_met():
+    """"We do not know" must not read as "passed"."""
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=9, impressions_7d_ma=5000)
+    assert not s.gate_open
+    unmeasured = [g for g in s.gate if g.actual is None]
+    assert unmeasured and all(not g.met for g in unmeasured)
+
+
+def test_phase_1_forbids_ads_and_gig_launches():
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=8, impressions_7d_ma=1564)
+    assert not s.permits("fiverr_ads")
+    assert not s.permits("new_gig_launch")
+    # Phase-neutral work is always allowed.
+    assert s.permits("dispute_rescue")
+    assert "penalty" in s.why_forbidden("fiverr_ads")
+
+
+def test_kill_criterion_fires_when_success_score_hits_the_floor():
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=7)
+    fired = [k.id for k in s.fired_kills]
+    assert "success_score_7" in fired
+    assert "Stop inorganic" in [k.response for k in s.fired_kills][0]
+
+
+def test_any_cancellation_fires_its_kill_criterion():
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=8,
+                    cancellations_since_phase_start=1)
+    assert "any_cancellation" in [k.id for k in s.fired_kills]
+    s0 = PH.evaluate(PHASE_CFG, TODAY, success_score=8,
+                     cancellations_since_phase_start=0)
+    assert not [k for k in s0.fired_kills if k.id == "any_cancellation"]
+
+
+def test_selfcheck_blocks_a_phase_2_action_during_phase_1():
+    """The gate is mechanical, not advisory."""
+    rep = selfcheck.SelfCheckReport()
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=8, impressions_7d_ma=1564)
+    ads = tasks.Task("ads", "Start Fiverr Ads at $30/day", "advertising", "Ash",
+                     "ROI is 7-14% of net", ["s1", "s2"], 1000, 0.5, 1)
+    selfcheck.check_phase_gate(rep, state=s, tasks=[ads], config=PHASE_CFG)
+    assert any(r.name == "phase_gate_respected" and not r.passed
+               for r in rep.results)
+    assert rep.blocking_failures
+
+
+def test_selfcheck_passes_phase_neutral_tasks():
+    rep = selfcheck.SelfCheckReport()
+    s = PH.evaluate(PHASE_CFG, TODAY, success_score=8, impressions_7d_ma=1564)
+    t = tasks.Task("x", "Rescue order", "dispute_rescue", "Ezan", "1 at risk",
+                   ["s1", "s2"], 400, 0.7, 1)
+    selfcheck.check_phase_gate(rep, state=s, tasks=[t], config=PHASE_CFG)
+    assert not rep.blocking_failures
+
+
+def test_real_config_puts_us_in_phase_1_with_the_gate_shut():
+    """Against the live config: Success Score 8, impressions 1,564."""
+    import yaml
+    cfg = yaml.safe_load((ROOT / "config" / "profile.yml").read_text())
+    s = PH.evaluate(cfg, TODAY, success_score=8, impressions_7d_ma=1564)
+    assert s.id == "signal_repair"
+    assert not s.gate_open
+    assert not s.permits("fiverr_ads")
+    assert cfg["dosing"]["max_vvro_share"] == 0.30
+    assert cfg["objective"]["maximise"] == ["revenue", "organic_orders"]

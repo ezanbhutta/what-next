@@ -18,7 +18,7 @@ import yaml
 
 from . import contracts as C
 from . import (dosing, forecast, ingest, ledger as L, metrics, report,
-               selfcheck, snapshot, tasks)
+               phase as _phase, selfcheck, snapshot, tasks)
 
 
 @dataclass
@@ -36,6 +36,7 @@ class RunArtifacts:
     emitted: bool
     revenue_projection: dict[str, Any] = field(default_factory=dict)
     gap: dict[str, Any] = field(default_factory=dict)
+    phase: Any = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -47,6 +48,7 @@ class RunArtifacts:
             "predictions": [p.as_dict() for p in self.predictions],
             "resolved": [p.as_dict() for p in self.resolved],
             "selfcheck": self.check.as_dict(),
+            "phase": self.phase.as_dict() if self.phase else None,
             "ingest": self.ingest_stats,
             "validation": self.validation,
             "revenue_projection": self.revenue_projection,
@@ -168,8 +170,29 @@ def run_daily(
         bundle=bundle, plan=plan, active=data.active, orders=data.orders,
         disputes=data.disputes,
         violations=vrep.data_issues, automation_errors=data.automation_errors,
-        missing_sources=missing, today=today,
+        missing_sources=missing, today=today, config=config,
         max_tasks=int(config["selfcheck"].get("max_tasks", 12)))
+
+    # ---- phase gate ------------------------------------------------------
+    imp_ma = None
+    if data.impressions:
+        recent = [i for i in data.impressions
+                  if today - _dt.timedelta(days=6) <= i.date <= today]
+        if recent:
+            imp_ma = sum(i.impressions for i in recent) / 7
+    if imp_ma is None:
+        # No impressions sheet yet. Fall back to whatever the gig capture
+        # carries, so the gate reports a real reading rather than "unmeasured"
+        # when the number is in fact known.
+        imp_ma = gig.get("impressions_7d_ma")
+    cancels = sum(1 for d in data.disputes
+                  if d.dispute_type == "cancelled"
+                  and d.date and (today - d.date).days <= 30)
+    state = _phase.evaluate(
+        config, today,
+        success_score=gig.get("success_score"),
+        impressions_7d_ma=imp_ma,
+        cancellations_since_phase_start=cancels)
 
     # ---- self-check ------------------------------------------------------
     dated = [d for d in
@@ -186,7 +209,8 @@ def run_daily(
         bundle=bundle, plan=plan, tasks=task_list, predictions=preds,
         config=config, today=today, latest_data=latest,
         unmapped_rate=data.unmapped_rate, unmapped=dict(data.unmapped_columns),
-        ledger_orders=bundle.flow_28d.total, crm_orders=crm_window)
+        ledger_orders=bundle.flow_28d.total, crm_orders=crm_window,
+        state=state)
 
     min_score = float(config["selfcheck"].get("min_rubric_score", 70))
     emitted = check.passed(min_score)
@@ -197,6 +221,7 @@ def run_daily(
         config=config, revenue_projection=proj, gap=gap, missing_sources=missing)
 
     art = RunArtifacts(
+        phase=state,
         today=today, bundle=bundle, plan=plan, tasks=task_list,
         predictions=preds, resolved=resolved, check=check,
         brief_markdown=brief, ingest_stats=data.stats(),

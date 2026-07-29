@@ -355,29 +355,38 @@ def _funnel_rules(bundle: MetricBundle) -> list[Task]:
             playbook="playbooks/lead_triage.md"))
 
     # -- Follow-up discipline ----------------------------------------------
+    # The inquiry sheet shows third follow-ups converting 0 of 19, and an
+    # earlier version of this rule told the team to stop doing them. The
+    # operating model then established that the FollowUp columns were never
+    # filled in any row — so those 19 are a record-keeping artifact, not a
+    # measured cohort. The rule now says the opposite: run the ladder properly,
+    # then let the engine measure it for real.
     depths = {s.key: s for s in f.by_followup_depth}
-    f3 = depths.get("F3")
-    if f3 and f3.n >= 10 and f3.placed == 0:
+    logged = sum(s.n for k, s in depths.items() if k != "F0")
+    total = sum(s.n for s in depths.values())
+    if total and logged / total < 0.10:
         tasks.append(Task(
-            id="stop-f3",
-            title="Stop third follow-ups entirely",
+            id="followup-engine",
+            title="Turn the follow-up engine on — the columns have never been used",
             category="funnel",
-            owner="All CSRs",
-            why=(f"Third follow-ups have converted {f3.placed} of {f3.n} leads. "
-                 f"That is not a low yield, it is a zero yield. The CSR hours "
-                 f"currently spent on F3 are pure loss and are better spent on "
-                 f"Tier 1 leads and upsells to existing buyers."),
+            owner="All CSRs (compliance owned by Hasnain)",
+            why=(f"Only {logged} of {total} logged inquiries carry any follow-up at "
+                 f"all ({logged / total:.1%}). 'Waiting response' is the most common "
+                 f"note in the log, which in the current process means the "
+                 f"conversation ended there. $5,472 of quoted work sits behind it."),
             steps=[
-                "Cap the follow-up ladder at two touches.",
-                "Reassign the freed time to upselling completed orders — that is "
-                "where the measured 54.3% vs 30.8% gap lives.",
-                "Note: the follow-up ladder is confounded (only cold leads get "
-                "chased), so this is a decision about F3 cost, not proof that "
-                "follow-ups hurt. F1 stays.",
+                "No inquiry may be closed as Not Placed until FollowUp 1, 2 and 3 "
+                "carry dates. A lead closed without three touches gets reopened "
+                "and reassigned.",
+                "Follow-up 2 uses a different angle — address the likely objection, "
+                "do not repeat the offer.",
+                "Follow-up 3 is the final touch; only then may the lead be closed, "
+                "with a reason code.",
+                "Do not act on the old '0 of 19 third follow-ups' figure. It "
+                "measured empty columns, not failed follow-ups.",
             ],
-            impact_usd=f3.n * 0.5 * 40,
-            confidence=0.7, effort_hours=0.5,
-            playbook="playbooks/lead_triage.md"))
+            impact_usd=820, confidence=0.6, effort_hours=1.0, urgency=1,
+            playbook="playbooks/dead_pipeline.md"))
 
     # -- Upsell programme --------------------------------------------------
     up = f.upsell_lift
@@ -419,29 +428,32 @@ def _economics_rules(bundle: MetricBundle, orders: Sequence[C.Order]) -> list[Ta
         gain = forward_orders * (0.65 - e.review_capture_rate)
         tasks.append(Task(
             id="review-capture",
-            title=f"Request a review on every delivery (~+{gain:.0f} reviews in 90d)",
+            title="Install the mid-order checkpoint — private feedback is the leak",
             category="reputation",
-            owner="Delivery lead + all CSRs",
+            owner="All CSRs (compliance owned by Hasnain)",
             why=(f"Only {e.review_capture_rate:.1%} of the {e.review_denominator} "
-                 f"orders on tabs that track reviews have one recorded. At the "
-                 f"current {bundle.flow_7d.total_per_day:.2f} orders/day, lifting "
-                 f"capture to 65% yields about {gain:.0f} extra reviews over 90 days. "
-                 f"Review velocity is a direct gig-ranking input and the only growth "
-                 f"lever here that costs nothing and carries no platform risk."),
+                 f"orders on tabs that track reviews have one recorded, but public "
+                 f"reviews are not where the damage is. Private ratings run "
+                 f"underneath, stay open 60 days, are weighted most heavily for "
+                 f"first-time buyers, and are invisible. That is why 1,583 reviews "
+                 f"at 4.8 sit alongside Success Score 8. Asking for reviews does "
+                 f"nothing about it; catching the problem mid-order does."),
             steps=[
-                "Add the review request to the delivery message template so it is "
-                "sent automatically, not remembered.",
-                "Ask at the moment of approval, not days later.",
-                "Record the outcome in the REVIEW column every time — 'no review' is "
-                "data, blank is not.",
-                "Never ask for 5 stars explicitly; that violates Fiverr ToS and risks "
-                "the account.",
+                "At 50% of elapsed time on every order, send the direction so far "
+                "and ask plainly whether anything needs changing. This is the one "
+                "habit that converts a silent 3-star private rating into a fixed "
+                "order, while the order is still open.",
+                "Chase any silent buyer within 24 hours of delivery — orders "
+                "auto-complete after 3 days and the private window stays open 60 "
+                "days after that.",
+                "Log every order where the buyer went silent, exceeded the agreed "
+                "revisions, or accepted without a word. That is your proxy for the "
+                "feedback you cannot see.",
+                "Do NOT ask for a review beyond one neutral line at delivery, and "
+                "never name a rating. Team briefing Rule 7 treats soliciting as an "
+                "Integrity violation; see playbooks/review_capture.md.",
             ],
-            # $25/review is an assumption, not a measurement: it prices a review
-            # at roughly a fifth of an order's ranking value. Tune it in
-            # config/profile.yml once the impression data lands and the real
-            # rank-to-order elasticity is observable.
-            impact_usd=gain * 25, confidence=0.45, effort_hours=1.0,
+            impact_usd=gain * 25, confidence=0.45, effort_hours=1.0, urgency=1,
             playbook="playbooks/review_capture.md"))
 
     if e.upsell_rate < 0.05 and e.upsell_denominator >= 50:
@@ -686,6 +698,43 @@ def _dispute_rules(disputes: Sequence[C.Dispute], today: _dt.date,
     return tasks
 
 
+def _dead_pipeline_rule(config: dict[str, Any]) -> list[Task]:
+    """Quoted work that was never followed up.
+
+    The clearest money in the whole dataset: named leads, known prices, zero
+    touches, no new traffic required.
+    """
+    dp = config.get("dead_pipeline") or {}
+    total = float(dp.get("total") or 0)
+    if total <= 0:
+        return []
+    named = dp.get("named") or []
+    rate = float(dp.get("recovery_assumption", 0.15))
+    top = sorted(named, key=lambda x: -float(x.get("quoted", 0)))[:4]
+    return [Task(
+        id="dead-pipeline",
+        title=f"Work the ${total:,.0f} dead pipeline, largest first",
+        category="funnel",
+        owner=config.get("team", {}).get("lead", "Operations lead"),
+        why=(f"${total:,.0f} quoted across {dp.get('leads_logged', 0)} named leads "
+             f"with {dp.get('followups_logged', 0)} follow-ups ever logged. At a "
+             f"{rate:.0%} recovery that is ${total * rate:,.0f} — more than a full "
+             f"day of current revenue, for zero ad spend and no new traffic. Top "
+             f"Rated needs $10,000 earned and over half of it is sitting in a "
+             f"spreadsheet column."),
+        steps=[
+            "Start with: " + ", ".join(
+                f"{l['client']} (${l['quoted']:,.0f})" for l in top) + ".",
+            "Use the four-line message in playbooks/dead_pipeline.md — quote still "
+            "open, ask when to check back, ask for their number if budget was the "
+            "issue.",
+            "Log every touch in the FollowUp column with a date, same day.",
+            "Anything that reopens goes straight into the normal intake flow.",
+        ],
+        impact_usd=total * rate, confidence=0.55, effort_hours=3.0,
+        priority="P0", urgency=1, playbook="playbooks/dead_pipeline.md")]
+
+
 def _missing_source_rules(missing: Sequence[dict]) -> list[Task]:
     if not missing:
         return []
@@ -724,15 +773,18 @@ def generate(
     automation_errors: Sequence[dict],
     missing_sources: Sequence[dict],
     today: _dt.date,
+    config: dict[str, Any] | None = None,
     max_tasks: int = 12,
 ) -> list[Task]:
     tasks: list[Task] = []
+    config = config or {}
     aov = bundle.econ.aov or 137.0
     tasks.append(_dosing_rule(plan, bundle.health.verdict()))
     tasks += _decomposition_rules(bundle)
     tasks += _dispute_rules(disputes, today, aov)
     tasks += _active_order_rules(active, today, bundle.gig, aov)
     tasks += _funnel_rules(bundle)
+    tasks += _dead_pipeline_rule(config)
     tasks += _economics_rules(bundle, orders)
     tasks += _data_quality_rules(violations, automation_errors)
     tasks += _missing_source_rules(missing_sources)
