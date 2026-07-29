@@ -128,6 +128,29 @@ FLOW_ALIASES: dict[str, tuple[str, ...]] = {
     "total_revenue": ("total revenue",),
 }
 
+IMPRESSION_ALIASES: dict[str, tuple[str, ...]] = {
+    "date": ("date", "day"),
+    "profile": ("profile", "seller", "account"),
+    "gig": ("gig", "gig name", "gig title"),
+    "impressions": ("impressions", "impression"),
+    "clicks": ("clicks", "click"),
+    "orders": ("orders", "orders placed"),
+    "notes": ("notes", "note"),
+}
+
+DISPUTE_ALIASES: dict[str, tuple[str, ...]] = {
+    "date": ("date", "date of order", "order date"),
+    "client": ("client name", "client", "buyer"),
+    "amount": ("order amount", "amount", "order price"),
+    "dispute_type": ("dispute type", "type", "issue type"),
+    "status": ("status",),
+    "opened_on": ("opened on", "opened", "raised on"),
+    "resolved_on": ("resolved on", "resolved", "closed on"),
+    "refunded": ("amount refunded", "refunded", "refund amount"),
+    "root_cause": ("root cause", "cause", "reason"),
+    "notes": ("notes", "note", "remarks"),
+}
+
 #: Columns that exist in the sheets but carry no signal for the engine.
 #: Listing them explicitly keeps ``unmapped_rate`` meaningful — it should
 #: measure *unrecognised* columns, not *deliberately ignored* ones.
@@ -264,6 +287,8 @@ class IngestResult:
     leads: list[C.Lead] = field(default_factory=list)
     flow: list[C.DailyFlow] = field(default_factory=list)
     active: list[C.ActiveOrder] = field(default_factory=list)
+    impressions: list[C.Impression] = field(default_factory=list)
+    disputes: list[C.Dispute] = field(default_factory=list)
     automation_errors: list[dict[str, str]] = field(default_factory=list)
     #: Spreadsheet aggregate rows, kept aside so they can cross-check the
     #: per-profile sums instead of polluting them.
@@ -291,6 +316,8 @@ class IngestResult:
             "flow_rows": len(self.flow),
             "flow_aggregate_rows": len(self.flow_aggregates),
             "active_orders": len(self.active),
+            "impressions": len(self.impressions),
+            "disputes": len(self.disputes),
             "automation_errors": len(self.automation_errors),
             "blocks_seen": self.blocks_seen,
             "blocks_used": self.blocks_used,
@@ -470,6 +497,183 @@ def ingest_tracker_rows(rows: list[dict[str, Any]], source_id: str = "order_trac
     return res
 
 
+# --------------------------------------------------------------------------
+# Snapshot ingestion — the clean path
+# --------------------------------------------------------------------------
+
+def _rows_as(mb: MappedBlock, build) -> list:
+    out = []
+    for r_i, row in enumerate(mb.rows):
+        rec = build(mb, row, r_i)
+        if rec is not None:
+            out.append(rec)
+    return out
+
+
+def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
+    """Ingest a :class:`xstudioz.snapshot.Snapshot`.
+
+    Preferred over the markdown-export path: tabs arrive already labelled with
+    a role and a real name, so the ingester maps columns rather than also
+    having to guess what each block of text is. Header aliasing is unchanged —
+    the same alias tables run, so a renamed column is still caught and
+    reported rather than silently dropped.
+    """
+    res = IngestResult()
+    res.blocks_seen = len(snap.tables)
+
+    for t_i, table in enumerate(snap.tables):
+        aliases = {
+            "crm_orders": ORDER_ALIASES,
+            "funnel": LEAD_ALIASES,
+            "daily_flow": FLOW_ALIASES,
+            "active_orders": TRACKER_ALIASES,
+            "impressions": IMPRESSION_ALIASES,
+            "disputes": DISPUTE_ALIASES,
+        }.get(table.role)
+        if aliases is None:
+            if table.role == "automation_health":
+                hdr = [_tok(h) for h in table.header]
+                for row in table.rows:
+                    d = dict(zip(hdr, row))
+                    if d.get("message"):
+                        res.automation_errors.append(
+                            {"timestamp": d.get("timestamp", ""),
+                             "message": d["message"]})
+            elif table.role == "unknown":
+                res.unmapped_columns[f"<unclassified tab: {table.name}>"] += 1
+            continue
+
+        f2c, unmapped = map_columns(table.header, aliases)
+        res.blocks_used += 1
+        res.header_cells_seen += len([h for h in table.header if h.strip()])
+        res.unmapped_columns.update(unmapped)
+        mb = MappedBlock(t_i, f2c, unmapped, table.header, table.rows)
+        src = table.source_id or source_id
+
+        def prov(r_i: int, tid: str = table.role) -> Provenance:
+            return Provenance(src, table.name, t_i, r_i)
+
+        if table.role == "crm_orders":
+            for r_i, row in enumerate(mb.rows):
+                client = mb.get(row, "client")
+                if not client:
+                    continue
+                raw_date = mb.get(row, "order_date")
+                od = C.to_date(raw_date)
+                if raw_date and od is None:
+                    res.coercion_misses["order_date"] += 1
+                res.orders.append(C.Order(
+                    client=client.strip(), provenance=prov(r_i), order_date=od,
+                    delivered_date=C.to_date(mb.get(row, "delivered_date")),
+                    project=mb.get(row, "project"),
+                    industry=(mb.get(row, "industry") or "").strip().title() or None,
+                    country=C.normalise_country(mb.get(row, "country")),
+                    order_type=C.to_order_type(mb.get(row, "order_type")),
+                    status=C.to_order_status(mb.get(row, "status")),
+                    amount=C.to_money(mb.get(row, "amount")),
+                    tip=C.to_money(mb.get(row, "tip")),
+                    rating=C.to_rating(mb.get(row, "rating")),
+                    logo_designer=C.normalise_person(mb.get(row, "logo_designer")),
+                    branding_designer=C.normalise_person(mb.get(row, "branding_designer")),
+                    csr=C.normalise_person(mb.get(row, "csr")),
+                    upsell=C.to_bool(mb.get(row, "upsell")),
+                    upsell_detail=mb.get(row, "upsell_detail"),
+                    notes=mb.get(row, "notes"),
+                    rating_tracked="rating" in f2c,
+                    upsell_tracked="upsell" in f2c))
+
+        elif table.role == "funnel":
+            for r_i, row in enumerate(mb.rows):
+                client = mb.get(row, "client")
+                if not client:
+                    continue
+                res.leads.append(C.Lead(
+                    client=client.strip(), provenance=prov(r_i),
+                    date=C.to_date(mb.get(row, "date")),
+                    country=C.normalise_country(mb.get(row, "country")),
+                    member_since=mb.get(row, "member_since"),
+                    completed_orders=C.to_money(mb.get(row, "completed_orders")),
+                    status=C.to_lead_status(mb.get(row, "status")),
+                    quoted=C.to_money(mb.get(row, "quoted")),
+                    upsell_attempted=C.to_bool(mb.get(row, "upsell_attempted")),
+                    followup_1=C.to_bool(mb.get(row, "followup_1")),
+                    followup_2=C.to_bool(mb.get(row, "followup_2")),
+                    followup_3=C.to_bool(mb.get(row, "followup_3")),
+                    shift=(mb.get(row, "shift") or "").strip().title() or None,
+                    csr=C.normalise_person(mb.get(row, "csr")),
+                    last_contact=C.to_date(mb.get(row, "last_contact")),
+                    service=mb.get(row, "service"), note=mb.get(row, "note")))
+
+        elif table.role == "daily_flow":
+            for r_i, row in enumerate(mb.rows):
+                d = C.to_date(mb.get(row, "date"))
+                profile = mb.get(row, "profile")
+                if not d or not profile:
+                    continue
+                bucket = (res.flow_aggregates if is_aggregate_profile(profile)
+                          else res.flow)
+                bucket.append(C.DailyFlow(
+                    date=d, profile=profile.strip(), provenance=prov(r_i),
+                    organic_orders=C.to_money(mb.get(row, "organic_orders")) or 0.0,
+                    vvro_orders=C.to_money(mb.get(row, "vvro_orders")) or 0.0,
+                    organic_revenue=C.to_money(mb.get(row, "organic_revenue")) or 0.0,
+                    vvro_revenue=C.to_money(mb.get(row, "vvro_revenue")) or 0.0,
+                    total_orders=C.to_money(mb.get(row, "total_orders")) or 0.0,
+                    total_revenue=C.to_money(mb.get(row, "total_revenue")) or 0.0))
+
+        elif table.role == "active_orders":
+            for r_i, row in enumerate(mb.rows):
+                client = mb.get(row, "client")
+                if not client:
+                    continue
+                res.active.append(C.ActiveOrder(
+                    order_no=str(mb.get(row, "order_no") or r_i + 1),
+                    client=client.strip(), provenance=prov(r_i),
+                    order_type=C.to_order_type(mb.get(row, "order_type")),
+                    source=mb.get(row, "source"),
+                    order_date=C.to_date(mb.get(row, "order_date")),
+                    first_draft_date=C.to_date(mb.get(row, "first_draft_date")),
+                    status=mb.get(row, "status"),
+                    latest_sent=mb.get(row, "latest_sent"),
+                    summary=mb.get(row, "summary"),
+                    buyer_mood=mb.get(row, "buyer_mood"),
+                    last_updated=C.to_date(mb.get(row, "last_updated")),
+                    handoff_notes=mb.get(row, "handoff_notes")))
+
+        elif table.role == "impressions":
+            for r_i, row in enumerate(mb.rows):
+                d = C.to_date(mb.get(row, "date"))
+                if not d:
+                    continue
+                res.impressions.append(C.Impression(
+                    date=d, provenance=prov(r_i),
+                    profile=mb.get(row, "profile"), gig=mb.get(row, "gig"),
+                    impressions=C.to_money(mb.get(row, "impressions")) or 0.0,
+                    clicks=C.to_money(mb.get(row, "clicks")) or 0.0,
+                    orders=C.to_money(mb.get(row, "orders")) or 0.0,
+                    notes=mb.get(row, "notes")))
+
+        elif table.role == "disputes":
+            for r_i, row in enumerate(mb.rows):
+                client = mb.get(row, "client")
+                if not client:
+                    continue
+                res.disputes.append(C.Dispute(
+                    client=client.strip(), provenance=prov(r_i),
+                    date=C.to_date(mb.get(row, "date")),
+                    amount=C.to_money(mb.get(row, "amount")),
+                    dispute_type=C.to_dispute_type(mb.get(row, "dispute_type")),
+                    status=mb.get(row, "status"),
+                    opened_on=C.to_date(mb.get(row, "opened_on")),
+                    resolved_on=C.to_date(mb.get(row, "resolved_on")),
+                    refunded=C.to_money(mb.get(row, "refunded")),
+                    root_cause=C.to_root_cause(mb.get(row, "root_cause")),
+                    notes=mb.get(row, "notes")))
+
+    return res
+
+
 def merge(*results: IngestResult) -> IngestResult:
     out = IngestResult()
     for r in results:
@@ -478,6 +682,8 @@ def merge(*results: IngestResult) -> IngestResult:
         out.flow += r.flow
         out.flow_aggregates += r.flow_aggregates
         out.active += r.active
+        out.impressions += r.impressions
+        out.disputes += r.disputes
         out.automation_errors += r.automation_errors
         out.unmapped_columns.update(r.unmapped_columns)
         out.coercion_misses.update(r.coercion_misses)
@@ -492,7 +698,9 @@ def write_normalized(res: IngestResult, out_dir: Path) -> dict[str, int]:
     out_dir.mkdir(parents=True, exist_ok=True)
     counts: dict[str, int] = {}
     for name, records in (("orders", res.orders), ("leads", res.leads),
-                          ("flow", res.flow), ("active", res.active)):
+                          ("flow", res.flow), ("active", res.active),
+                          ("impressions", res.impressions),
+                          ("disputes", res.disputes)):
         path = out_dir / f"{name}.jsonl"
         with path.open("w", encoding="utf-8") as fh:
             for rec in records:

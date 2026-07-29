@@ -333,6 +333,82 @@ class ActiveOrder:
 # --------------------------------------------------------------------------
 
 @dataclass
+class Impression:
+    """One gig's reach for one day.
+
+    The analytically decisive source. Without it, a fall in organic orders is
+    ambiguous: fewer people saw the gig (reach), or the same people saw it and
+    did not buy (conversion). Those have opposite fixes — reach problems are
+    ranking problems, conversion problems are gig-page problems — so guessing
+    is worse than useless.
+    """
+    date: _dt.date
+    provenance: Provenance
+    profile: str | None = None
+    gig: str | None = None
+    impressions: float = 0.0
+    clicks: float = 0.0
+    orders: float = 0.0
+    notes: str | None = None
+
+    def ctr(self) -> float | None:
+        return (self.clicks / self.impressions) if self.impressions else None
+
+    def order_rate(self) -> float | None:
+        """Orders per click — the gig page's closing rate."""
+        return (self.orders / self.clicks) if self.clicks else None
+
+
+DISPUTE_TYPES = {
+    "refund_requested", "refund_given", "cancelled", "dead", "chargeback",
+    "quality_complaint", "late_delivery", "unknown",
+}
+
+ROOT_CAUSES = {
+    "brief_mismatch", "quality", "communication", "late", "scope_creep",
+    "buyer_changed_mind", "scammer", "unknown",
+}
+
+
+@dataclass
+class Dispute:
+    """A disputed, refunded, cancelled or dead order."""
+    client: str
+    provenance: Provenance
+    date: _dt.date | None = None
+    amount: float | None = None
+    dispute_type: str = "unknown"
+    status: str | None = None
+    opened_on: _dt.date | None = None
+    resolved_on: _dt.date | None = None
+    refunded: float | None = None
+    root_cause: str = "unknown"
+    notes: str | None = None
+
+    def is_open(self) -> bool:
+        return self.resolved_on is None
+
+    def days_open(self, today: _dt.date) -> int | None:
+        if not self.opened_on:
+            return None
+        return ((self.resolved_on or today) - self.opened_on).days
+
+    def exposure(self) -> float:
+        """Money still at risk on an unresolved dispute."""
+        return (self.amount or 0.0) if self.is_open() else 0.0
+
+
+def to_dispute_type(value: Any) -> str:
+    t = re.sub(r"[^a-z]+", "_", str(value or "").strip().lower()).strip("_")
+    return t if t in DISPUTE_TYPES else "unknown"
+
+
+def to_root_cause(value: Any) -> str:
+    t = re.sub(r"[^a-z]+", "_", str(value or "").strip().lower()).strip("_")
+    return t if t in ROOT_CAUSES else "unknown"
+
+
+@dataclass
 class Violation:
     """A validation finding.
 

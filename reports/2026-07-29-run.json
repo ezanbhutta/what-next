@@ -530,6 +530,32 @@
       "member_since": "2023-06",
       "starting_price": 45,
       "rating": 4.836915297092288
+    },
+    "decomposition": {
+      "have_data": false,
+      "days": 0,
+      "impressions_now": 0.0,
+      "impressions_prior": 0.0,
+      "ctr_now": null,
+      "ctr_prior": null,
+      "order_rate_now": null,
+      "order_rate_prior": null,
+      "orders_now": 0.0,
+      "orders_prior": 0.0,
+      "attribution": {},
+      "verdict": "no_data",
+      "explanation": "No impression data. A fall in organic orders cannot be attributed to reach, click-through or closing rate \u2014 and those three need opposite responses. This is the single most valuable missing input."
+    },
+    "disputes": {
+      "have_data": false,
+      "total": 0,
+      "open_count": 0,
+      "open_exposure": 0.0,
+      "refunded_total": 0.0,
+      "refund_rate": null,
+      "mean_days_to_resolve": null,
+      "by_cause": [],
+      "by_type": {}
     }
   },
   "dose_plan": {
@@ -711,8 +737,8 @@
       "owner": "CEO",
       "why": "3 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Impression system, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
       "steps": [
-        "Needed for dispute-risk scoring and refund-exposure forecasting.",
-        "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves.",
+        "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
+        "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
         "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
         "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
       ],
@@ -1046,7 +1072,7 @@
         "name": "data_freshness",
         "passed": true,
         "severity": "warn",
-        "detail": "newest record is 2026-07-28 (1d old, SLA 3d)",
+        "detail": "newest record is 2026-07-29 (0d old, SLA 3d)",
         "repaired": false
       },
       {
@@ -1106,6 +1132,8 @@
     "flow_rows": 326,
     "flow_aggregate_rows": 46,
     "active_orders": 8,
+    "impressions": 0,
+    "disputes": 0,
     "automation_errors": 334,
     "blocks_seen": 23,
     "blocks_used": 22,

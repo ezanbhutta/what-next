@@ -35,7 +35,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from xstudioz import pipeline  # noqa: E402
+from xstudioz import pipeline, snapshot  # noqa: E402
 
 
 def latest_snapshot(directory: Path, on_or_before: _dt.date,
@@ -94,25 +94,65 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="compute but write nothing")
     ap.add_argument("--quiet", action="store_true", help="suppress the brief on stdout")
     ap.add_argument("--json", action="store_true", help="emit the run JSON on stdout")
+    ap.add_argument("--no-fetch", action="store_true",
+                    help="skip the live snapshot endpoint; use on-disk only")
     args = ap.parse_args()
 
     root = Path(args.root)
     today = _dt.date.fromisoformat(args.date) if args.date else _dt.date.today()
 
     raw = root / "data" / "raw"
-    orders_p = latest_snapshot(raw / "orders", today)
-    inq_p = latest_snapshot(raw / "inquiries", today)
+    snap_dir = raw / "snapshots"
+
+    # ---- belt and braces -------------------------------------------------
+    # Two independent producers: the Apps Script timer writing into
+    # data/raw/snapshots/, and a live fetch of the web-app endpoint. Either
+    # can be missing on any morning; take whichever is newer so one path
+    # failing costs freshness rather than the whole run.
+    live = disk = None
+    if not args.no_fetch:
+        try:
+            live = snapshot.fetch_from_env()
+            if live:
+                print(f"[snapshot] fetched live, generated {live.generated_at}",
+                      file=sys.stderr)
+        except snapshot.SnapshotError as exc:
+            print(f"[warn] live snapshot fetch failed: {exc}", file=sys.stderr)
+    try:
+        disk = snapshot.latest_on_disk(snap_dir, on_or_before=today)
+    except snapshot.SnapshotError as exc:
+        print(f"[warn] on-disk snapshot unreadable: {exc}", file=sys.stderr)
+
+    snap = snapshot.pick_freshest(live, disk)
+    if snap:
+        src = "live endpoint" if snap is live else "disk"
+        print(f"[snapshot] using {src}, {snap.age_hours():.1f}h old, "
+              f"{len(snap.tables)} tables", file=sys.stderr)
+        for w in snap.warnings:
+            print(f"[snapshot warn] {w}", file=sys.stderr)
+        # Persist a freshly fetched snapshot so the next run has a fallback.
+        if snap is live and not args.dry_run:
+            snapshot.dump(snap, snap_dir / f"{today.isoformat()}.json")
+
+    # ---- legacy markdown fallback ----------------------------------------
+    orders_p = inq_p = None
+    if snap is None:
+        orders_p = latest_snapshot(raw / "orders", today)
+        inq_p = latest_snapshot(raw / "inquiries", today)
+        if not orders_p and not inq_p:
+            print(f"[error] no snapshot and no markdown exports under {raw}. "
+                  f"Deploy automation/Snapshot.gs or fetch the sheets — see "
+                  f"docs/RUNBOOK.md.", file=sys.stderr)
+            return 2
+        print("[snapshot] none available; falling back to markdown exports",
+              file=sys.stderr)
+
     gig_p = latest_snapshot(raw / "gig", today, suffixes=(".json",))
-
-    if not orders_p and not inq_p:
-        print(f"[error] no snapshots found in {raw}. Fetch sources first — see "
-              f"docs/RUNBOOK.md.", file=sys.stderr)
-        return 2
-
     gig = json.loads(gig_p.read_text()) if gig_p else None
 
     art = pipeline.run_daily(
         root=root, today=today,
+        snap=snap,
         orders_text=orders_p.read_text(encoding="utf-8") if orders_p else "",
         inquiries_text=inq_p.read_text(encoding="utf-8") if inq_p else "",
         tracker_rows=read_tracker(raw / "order_tracker"),

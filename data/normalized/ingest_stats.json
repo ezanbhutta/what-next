@@ -4,6 +4,8 @@
   "flow_rows": 326,
   "flow_aggregate_rows": 46,
   "active_orders": 8,
+  "impressions": 0,
+  "disputes": 0,
   "automation_errors": 334,
   "blocks_seen": 23,
   "blocks_used": 22,

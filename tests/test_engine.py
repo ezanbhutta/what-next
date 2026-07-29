@@ -666,3 +666,208 @@ def test_consistency_checks_use_unrounded_values():
                                 max_swing=0.4)
     failures = [r.name for r in rep.results if not r.passed and r.severity == "block"]
     assert not failures, f"repeating decimals must not block: {failures}"
+
+
+# =========================================================================
+# Snapshot intake — the clean path
+# =========================================================================
+
+from xstudioz import snapshot as S  # noqa: E402
+
+
+def _snap_payload(**over):
+    base = {
+        "schema_version": S.SCHEMA_VERSION,
+        "generated_at": "2026-07-29T02:00:00Z",
+        "generated_by": "apps_script",
+        "warnings": [],
+        "gig": {"reviews_total": 1582},
+        "tables": [{
+            "name": "Nov 2025", "role": "crm_orders", "source_id": "orders",
+            "header": ["Date of Order", "Client Name", "Order Amount", "REVIEW"],
+            "rows": [["01-Nov-2025", "acme", "$200.00", "5.0"]],
+        }],
+    }
+    base.update(over)
+    return base
+
+
+def test_snapshot_rejects_an_unknown_schema_version():
+    """Refusing beats guessing: a version bump means the shape changed."""
+    with pytest.raises(S.SnapshotError, match="schema_version"):
+        S.parse(_snap_payload(schema_version=99))
+
+
+def test_snapshot_surfaces_an_endpoint_error_rather_than_parsing_past_it():
+    with pytest.raises(S.SnapshotError, match="unauthorized"):
+        S.parse({"schema_version": S.SCHEMA_VERSION, "error": "unauthorized"})
+
+
+def test_snapshot_rejects_html_error_pages():
+    with pytest.raises(S.SnapshotError, match="not valid JSON"):
+        S.parse("<html><body>Sign in to continue</body></html>")
+
+
+def test_snapshot_demotes_an_unrecognised_role_and_warns():
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Mystery", "role": "quantum_flux",
+        "header": ["a"], "rows": [["1"]]}]))
+    assert snap.tables[0].role == "unknown"
+    assert any("quantum_flux" in w for w in snap.warnings)
+
+
+def test_snapshot_roundtrips_through_disk(tmp_path):
+    snap = S.parse(_snap_payload())
+    S.dump(snap, tmp_path / "s.json")
+    back = S.load(tmp_path / "s.json")
+    assert back.generated_at == snap.generated_at
+    assert back.tables[0].header == snap.tables[0].header
+    assert back.gig == snap.gig
+
+
+def test_pick_freshest_prefers_the_newer_producer():
+    """Belt and braces: two independent producers, take whichever is newer."""
+    old = S.parse(_snap_payload(generated_at="2026-07-28T02:00:00Z",
+                                generated_by="apps_script"))
+    new = S.parse(_snap_payload(generated_at="2026-07-29T06:00:00Z",
+                                generated_by="routine"))
+    assert S.pick_freshest(old, new).generated_by == "routine"
+    assert S.pick_freshest(new, old).generated_by == "routine"
+    assert S.pick_freshest(None, old).generated_by == "apps_script"
+    assert S.pick_freshest(None, None) is None
+
+
+def test_latest_on_disk_never_looks_ahead_of_a_backfill_date(tmp_path):
+    S.dump(S.parse(_snap_payload(generated_at="2026-07-20T02:00:00Z")),
+           tmp_path / "a.json")
+    S.dump(S.parse(_snap_payload(generated_at="2026-07-29T02:00:00Z")),
+           tmp_path / "b.json")
+    picked = S.latest_on_disk(tmp_path, on_or_before=dt.date(2026, 7, 22))
+    assert picked.generated_at.date() == dt.date(2026, 7, 20)
+
+
+def test_snapshot_ingest_matches_the_markdown_path():
+    """The two intake routes must agree exactly, or one of them is lying."""
+    md = ("| Date of Order | Client Name | Order Amount | REVIEW |\n"
+          "| :-: | :-: | :-: | :-: |\n"
+          "| 01-Nov-2025 | acme | $200.00 | 5.0 |\n"
+          "| 02-Nov-2025 | beta | $100.00 | no review |\n")
+    from_md = ingest.ingest_orders_workbook(md)
+    from_snap = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[{
+        "name": "Nov", "role": "crm_orders", "source_id": "orders",
+        "header": ["Date of Order", "Client Name", "Order Amount", "REVIEW"],
+        "rows": [["01-Nov-2025", "acme", "$200.00", "5.0"],
+                 ["02-Nov-2025", "beta", "$100.00", "no review"]]}])))
+    a, b = metrics.economics(from_md.orders), metrics.economics(from_snap.orders)
+    assert a.as_dict() == b.as_dict()
+
+
+def test_snapshot_ingest_still_reports_schema_drift():
+    """Structured transport must not disable drift detection."""
+    res = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[{
+        "name": "Nov", "role": "crm_orders",
+        "header": ["Client Name", "Warp Core Temperature"],
+        "rows": [["acme", "9000"]]}])))
+    assert "Warp Core Temperature" in res.unmapped_columns
+
+
+def test_unclassified_tab_is_reported_not_silently_dropped():
+    res = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[{
+        "name": "Scratch", "role": "unknown", "header": ["x"], "rows": [["1"]]}])))
+    assert any("Scratch" in k for k in res.unmapped_columns)
+
+
+# =========================================================================
+# Reach vs conversion
+# =========================================================================
+
+def _imps(n, impr, ctr, rate, start=dt.date(2026, 7, 2)):
+    return [C.Impression(date=start + dt.timedelta(days=i), provenance=P,
+                         impressions=impr(i), clicks=impr(i) * ctr(i),
+                         orders=impr(i) * ctr(i) * rate(i)) for i in range(n)]
+
+
+def test_decomposition_blames_reach_when_impressions_halve():
+    imps = _imps(28, lambda i: 1000 if i < 14 else 500,
+                 lambda i: 0.05, lambda i: 0.20)
+    d = metrics.decompose_funnel(imps, dt.date(2026, 7, 29), window=14)
+    assert d.verdict == "impressions"
+    assert d.attribution["impressions"] < -0.9
+    assert "ranking problem" in d.explanation
+
+
+def test_decomposition_blames_close_rate_when_reach_is_flat():
+    imps = _imps(28, lambda i: 1000, lambda i: 0.05,
+                 lambda i: 0.20 if i < 14 else 0.10)
+    d = metrics.decompose_funnel(imps, dt.date(2026, 7, 29), window=14)
+    assert d.verdict == "order_rate"
+    assert "gig page and handling" in d.explanation
+
+
+def test_decomposition_blames_ctr_when_only_clicks_fall():
+    imps = _imps(28, lambda i: 1000, lambda i: 0.05 if i < 14 else 0.025,
+                 lambda i: 0.20)
+    d = metrics.decompose_funnel(imps, dt.date(2026, 7, 29), window=14)
+    assert d.verdict == "ctr"
+    assert "listing problem" in d.explanation
+
+
+def test_decomposition_says_so_when_it_has_no_data():
+    d = metrics.decompose_funnel([], dt.date(2026, 7, 29))
+    assert not d.have_data
+    assert d.verdict == "no_data"
+    assert "most valuable missing input" in d.explanation
+
+
+def test_decomposition_refuses_to_attribute_on_partial_windows():
+    d = metrics.decompose_funnel(_imps(5, lambda i: 1000, lambda i: .05,
+                                       lambda i: .2),
+                                 dt.date(2026, 7, 29), window=14)
+    assert d.verdict == "insufficient"
+
+
+def test_diagnosis_task_only_fires_on_a_real_decline():
+    """A dominant factor that moved orders UP must not raise an alarm."""
+    up = _imps(28, lambda i: 500 if i < 14 else 1000, lambda i: .05, lambda i: .2)
+    bundle = _bundle()
+    bundle.decomposition = metrics.decompose_funnel(up, dt.date(2026, 7, 29), 14)
+    assert tasks._decomposition_rules(bundle) == []
+
+
+# =========================================================================
+# Disputes
+# =========================================================================
+
+def test_open_dispute_exposure_and_p0_task():
+    ds = [C.Dispute(client="a", provenance=P, amount=300.0,
+                    dispute_type="refund_requested",
+                    opened_on=dt.date(2026, 7, 10)),
+          C.Dispute(client="b", provenance=P, amount=150.0,
+                    dispute_type="cancelled",
+                    opened_on=dt.date(2026, 7, 1),
+                    resolved_on=dt.date(2026, 7, 5), refunded=150.0)]
+    m = metrics.dispute_metrics(ds, total_orders=100, today=dt.date(2026, 7, 29))
+    assert m.open_count == 1 and m.open_exposure == 300.0
+    assert m.refunded_total == 150.0
+    out = tasks._dispute_rules(ds, dt.date(2026, 7, 29), 137.0)
+    p0 = [t for t in out if t.priority == "P0"]
+    assert p0 and p0[0].urgency == 2
+
+
+def test_concentrated_root_cause_becomes_a_process_task():
+    ds = [C.Dispute(client=f"c{i}", provenance=P, amount=100.0,
+                    root_cause="brief_mismatch", opened_on=dt.date(2026, 7, 1),
+                    resolved_on=dt.date(2026, 7, 2)) for i in range(4)]
+    out = tasks._dispute_rules(ds, dt.date(2026, 7, 29), 137.0)
+    proc = [t for t in out if t.category == "process"]
+    assert proc and "brief mismatch" in proc[0].title
+
+
+def test_scattered_root_causes_do_not_trigger_a_process_task():
+    ds = [C.Dispute(client=f"c{i}", provenance=P, amount=100.0,
+                    root_cause=cause, opened_on=dt.date(2026, 7, 1),
+                    resolved_on=dt.date(2026, 7, 2))
+          for i, cause in enumerate(["quality", "late", "communication",
+                                     "scope_creep", "buyer_changed_mind"])]
+    out = tasks._dispute_rules(ds, dt.date(2026, 7, 29), 137.0)
+    assert not [t for t in out if t.category == "process"]

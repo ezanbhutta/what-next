@@ -67,6 +67,17 @@ sources:
     role: shift_reports
     freshness_sla_days: 1
 
+  - id: snapshot_endpoint
+    name: Apps Script snapshot web app
+    kind: https_json
+    url_env: XSTUDIOZ_SNAPSHOT_URL
+    token_env: XSTUDIOZ_SNAPSHOT_TOKEN
+    role: primary_intake
+    # Serves every workbook as one structured JSON document, so the engine
+    # needs no Google connector grant. Produced by automation/Snapshot.gs.
+    # See automation/README.md for deployment.
+    freshness_sla_days: 1
+
   - id: fiverr_gig
     name: Live Fiverr gig page
     kind: public_web
@@ -81,10 +92,10 @@ sources:
 expected_but_missing:
   - id: disputes
     name: Disputed / dead / conflicted orders sheet
-    why: "Needed for dispute-risk scoring and refund-exposure forecasting."
+    why: "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers."
   - id: impressions
     name: Impression system
-    why: "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves."
+    why: "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers."
   - id: daily_team_report
     name: Daily team activity report
     why: "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm."

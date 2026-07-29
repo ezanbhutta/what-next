@@ -496,6 +496,205 @@ def economics(orders: Sequence[C.Order], min_designer_n: int = 5) -> Economics:
 
 
 # --------------------------------------------------------------------------
+# Reach vs conversion
+# --------------------------------------------------------------------------
+
+@dataclass
+class FunnelDecomposition:
+    """Why organic order flow moved.
+
+    Orders decompose multiplicatively:
+
+        orders = impressions x CTR x order_rate
+
+    So a fall in orders has exactly three possible sources, and they need
+    opposite responses:
+
+    *impressions down* — a **ranking** problem. The gig is being shown less.
+        Fixes are review velocity, on-time delivery, response time, and
+        cutting whatever is suppressing the success score.
+    *CTR down* — a **listing** problem. People see it and do not click.
+        Fixes are thumbnail, title, price point, badge.
+    *order_rate down* — a **page or handling** problem. People click and do
+        not buy. Fixes are gig copy, packages, response speed, CSR quality.
+
+    Without impressions data all three are indistinguishable, which is why
+    the engine nags for this source every single day until it exists.
+    """
+    have_data: bool
+    days: int = 0
+    impressions_now: float = 0.0
+    impressions_prior: float = 0.0
+    ctr_now: float | None = None
+    ctr_prior: float | None = None
+    order_rate_now: float | None = None
+    order_rate_prior: float | None = None
+    orders_now: float = 0.0
+    orders_prior: float = 0.0
+    #: Share of the total log-change in orders attributable to each factor.
+    attribution: dict[str, float] = field(default_factory=dict)
+    verdict: str = "no_data"
+    explanation: str = ""
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "have_data": self.have_data, "days": self.days,
+            "impressions_now": self.impressions_now,
+            "impressions_prior": self.impressions_prior,
+            "ctr_now": self.ctr_now, "ctr_prior": self.ctr_prior,
+            "order_rate_now": self.order_rate_now,
+            "order_rate_prior": self.order_rate_prior,
+            "orders_now": self.orders_now, "orders_prior": self.orders_prior,
+            "attribution": self.attribution,
+            "verdict": self.verdict, "explanation": self.explanation,
+        }
+
+
+def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
+                     window: int = 14) -> FunnelDecomposition:
+    """Attribute a change in orders to reach, CTR or closing rate.
+
+    Uses a log decomposition, which is exact for a product: since
+    ``log(orders) = log(impr) + log(ctr) + log(rate)``, the change in each
+    log term is that factor's additive contribution. Shares are then reported
+    against the total absolute movement, so they read as "X% of the swing".
+    """
+    if not impressions:
+        return FunnelDecomposition(
+            have_data=False,
+            explanation=("No impression data. A fall in organic orders cannot be "
+                         "attributed to reach, click-through or closing rate — "
+                         "and those three need opposite responses. This is the "
+                         "single most valuable missing input."))
+
+    cur_lo = as_of - _dt.timedelta(days=window - 1)
+    pri_hi = cur_lo - _dt.timedelta(days=1)
+    pri_lo = pri_hi - _dt.timedelta(days=window - 1)
+
+    def agg(lo: _dt.date, hi: _dt.date) -> tuple[float, float, float]:
+        sel = [i for i in impressions if lo <= i.date <= hi]
+        return (sum(i.impressions for i in sel),
+                sum(i.clicks for i in sel),
+                sum(i.orders for i in sel))
+
+    i_now, c_now, o_now = agg(cur_lo, as_of)
+    i_pri, c_pri, o_pri = agg(pri_lo, pri_hi)
+
+    if not (i_now and i_pri and o_now and o_pri and c_now and c_pri):
+        return FunnelDecomposition(
+            have_data=True, days=window,
+            impressions_now=i_now, impressions_prior=i_pri,
+            orders_now=o_now, orders_prior=o_pri,
+            verdict="insufficient",
+            explanation=(f"Impression data exists but the two {window}-day windows "
+                         f"are not both complete (impressions {i_pri:.0f} -> "
+                         f"{i_now:.0f}, orders {o_pri:.0f} -> {o_now:.0f}). "
+                         f"Need {window * 2} consecutive days to attribute a change."))
+
+    ctr_now, ctr_pri = c_now / i_now, c_pri / i_pri
+    rate_now, rate_pri = o_now / c_now, o_pri / c_pri
+
+    d_impr = math.log(i_now / i_pri)
+    d_ctr = math.log(ctr_now / ctr_pri)
+    d_rate = math.log(rate_now / rate_pri)
+    total_abs = abs(d_impr) + abs(d_ctr) + abs(d_rate)
+    attribution = {
+        "impressions": round(d_impr / total_abs, 4) if total_abs else 0.0,
+        "ctr": round(d_ctr / total_abs, 4) if total_abs else 0.0,
+        "order_rate": round(d_rate / total_abs, 4) if total_abs else 0.0,
+    }
+
+    dominant = max(attribution, key=lambda k: abs(attribution[k]))
+    labels = {
+        "impressions": ("reach", "ranking",
+                        "review velocity, on-time delivery, response time"),
+        "ctr": ("click-through", "listing",
+                "thumbnail, title, price point, badge"),
+        "order_rate": ("closing rate", "gig page and handling",
+                       "gig copy, packages, response speed, CSR quality"),
+    }
+    what, kind, fixes = labels[dominant]
+    direction = "fell" if attribution[dominant] < 0 else "rose"
+    orders_change = (o_now - o_pri) / o_pri
+
+    return FunnelDecomposition(
+        have_data=True, days=window,
+        impressions_now=i_now, impressions_prior=i_pri,
+        ctr_now=ctr_now, ctr_prior=ctr_pri,
+        order_rate_now=rate_now, order_rate_prior=rate_pri,
+        orders_now=o_now, orders_prior=o_pri,
+        attribution=attribution, verdict=dominant,
+        explanation=(
+            f"Orders moved {orders_change:+.1%} over {window} days "
+            f"({o_pri:.0f} -> {o_now:.0f}). "
+            f"{abs(attribution[dominant]):.0%} of that swing is {what}, which "
+            f"{direction}: impressions {i_pri:,.0f} -> {i_now:,.0f}, "
+            f"CTR {ctr_pri:.2%} -> {ctr_now:.2%}, "
+            f"close rate {rate_pri:.1%} -> {rate_now:.1%}. "
+            f"That makes this a {kind} problem — work on {fixes}."))
+
+
+# --------------------------------------------------------------------------
+# Disputes
+# --------------------------------------------------------------------------
+
+@dataclass
+class DisputeMetrics:
+    have_data: bool
+    total: int = 0
+    open_count: int = 0
+    open_exposure: float = 0.0
+    refunded_total: float = 0.0
+    refund_rate: float | None = None
+    mean_days_to_resolve: float | None = None
+    by_cause: list[dict[str, Any]] = field(default_factory=list)
+    by_type: dict[str, int] = field(default_factory=dict)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "have_data": self.have_data, "total": self.total,
+            "open_count": self.open_count,
+            "open_exposure": round(self.open_exposure, 2),
+            "refunded_total": round(self.refunded_total, 2),
+            "refund_rate": round(self.refund_rate, 4)
+            if self.refund_rate is not None else None,
+            "mean_days_to_resolve": round(self.mean_days_to_resolve, 1)
+            if self.mean_days_to_resolve is not None else None,
+            "by_cause": self.by_cause, "by_type": self.by_type,
+        }
+
+
+def dispute_metrics(disputes: Sequence[C.Dispute], total_orders: int,
+                    today: _dt.date) -> DisputeMetrics:
+    if not disputes:
+        return DisputeMetrics(have_data=False)
+    open_ = [d for d in disputes if d.is_open()]
+    resolved = [d for d in disputes if not d.is_open()]
+    durations = [d.days_open(today) for d in resolved]
+    durations = [x for x in durations if x is not None]
+
+    causes: dict[str, list[float]] = defaultdict(list)
+    for d in disputes:
+        causes[d.root_cause].append(d.amount or 0.0)
+    by_cause = sorted(
+        ({"cause": k, "n": len(v), "value": round(sum(v), 2)}
+         for k, v in causes.items()),
+        key=lambda x: -x["n"])
+
+    return DisputeMetrics(
+        have_data=True,
+        total=len(disputes),
+        open_count=len(open_),
+        open_exposure=sum(d.exposure() for d in open_),
+        refunded_total=sum(d.refunded or 0.0 for d in disputes),
+        refund_rate=(len(disputes) / total_orders) if total_orders else None,
+        mean_days_to_resolve=mean(durations) if durations else None,
+        by_cause=by_cause,
+        by_type=dict(Counter(d.dispute_type for d in disputes)),
+    )
+
+
+# --------------------------------------------------------------------------
 # Gig / public rank signals
 # --------------------------------------------------------------------------
 
@@ -553,6 +752,8 @@ class MetricBundle:
     funnel: FunnelMetrics
     econ: Economics
     gig: dict[str, Any] = field(default_factory=dict)
+    decomposition: FunnelDecomposition | None = None
+    disputes: DisputeMetrics | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -583,6 +784,10 @@ class MetricBundle:
             "funnel": self.funnel.as_dict(),
             "economics": self.econ.as_dict(),
             "gig": self.gig,
+            "decomposition": (self.decomposition.as_dict()
+                              if self.decomposition else {"have_data": False}),
+            "disputes": (self.disputes.as_dict()
+                         if self.disputes else {"have_data": False}),
         }
 
 

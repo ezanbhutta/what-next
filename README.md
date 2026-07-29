@@ -8,12 +8,19 @@ task list for the team, makes falsifiable predictions, scores yesterday's predic
 and refuses to publish any of it if its own checks fail.
 
 ```
-sources ──▶ ingest ──▶ validate ──▶ metrics ──▶ dose controller ──▶ tasks
-                                        │              │              │
-                                        └──▶ forecast ─┴──▶ ledger ───┤
-                                                                      ▼
-                                                          self-check gate ──▶ brief
+        ┌─ Apps Script timer ──▶ snapshot file ──┐
+Sheets ─┤                                        ├─▶ ingest ─▶ validate ─▶ metrics
+        └─ Apps Script web app ◀── HTTPS ────────┘                            │
+                                                                              ▼
+   brief + dashboard ◀── self-check gate ◀── tasks ◀── dose controller ◀───────┤
+                                 ▲                                            │
+                                 └────────── ledger ◀── forecast ◀────────────┘
 ```
+
+Intake is **belt and braces**: two independent producers of the same snapshot, and
+the engine takes whichever is newer. Neither needs a Google connector grant — the
+Apps Script lives in your own account and serves JSON over plain HTTPS. Setup is in
+[`automation/README.md`](automation/README.md) and takes about fifteen minutes, once.
 
 ## The objective
 
@@ -52,10 +59,15 @@ the question resolves on evidence rather than opinion.
 ```bash
 pip install pyyaml openpyxl pytest
 
-python3 -m pytest tests/ -q          # 144 tests
-python3 scripts/daily_run.py --date 2026-07-29
-cat reports/latest.md
+python3 -m pytest tests/ -q                 # 164 tests
+python3 scripts/daily_run.py                # brief -> reports/latest.md
+python3 scripts/build_dashboard.py          # page  -> reports/dashboard.html
 ```
+
+Once the snapshot endpoint is deployed, set `XSTUDIOZ_SNAPSHOT_URL` and
+`XSTUDIOZ_SNAPSHOT_TOKEN` and the fetch happens automatically. Without them the
+engine falls back to on-disk snapshots, then to markdown exports — "not configured
+yet" is not treated as an error.
 
 Exit codes: `0` passed the gate · `1` produced but failed its own gate · `2` no snapshots.
 
@@ -65,6 +77,8 @@ Exit codes: `0` passed the gate · `1` produced but failed its own gate · `2` n
 |---|---|
 | `config/profile.yml` | The objective, constraints, targets, measured levers. **All policy lives here, not in code.** |
 | `config/sources.yml` | Where to read from, and what is still missing |
+| `automation/Snapshot.gs` | Apps Script: serves the snapshot, runs the daily timer, scaffolds the missing sheets |
+| `xstudioz/snapshot.py` | The snapshot contract, fetching, freshest-wins selection |
 | `xstudioz/contracts.py` | Canonical records, coercion, validation |
 | `xstudioz/ingest.py` | Schema-drift-tolerant parsing (handles 10 header layouts) |
 | `xstudioz/metrics.py` | KPIs, organic health index, Wilson bounds, rating maths |
@@ -75,9 +89,27 @@ Exit codes: `0` passed the gate · `1` produced but failed its own gate · `2` n
 | `xstudioz/selfcheck.py` | Invariants, consistency, rubric, auto-repair |
 | `xstudioz/report.py` | Brief rendering |
 | `xstudioz/pipeline.py` | End-to-end run |
+| `scripts/build_dashboard.py` | Renders the self-contained HTML control panel |
 | `playbooks/` | The "handle this case like this" scripts |
 | `reports/` | Generated briefs, one per day |
 | `data/state/` | Prediction ledger, calibration, controller state |
+
+## Why organic flow moved
+
+Orders decompose multiplicatively — `orders = impressions × CTR × close-rate` — so a
+decline has exactly three possible sources, and they need **opposite** responses:
+
+| Factor fell | Kind of problem | What to work on |
+|---|---|---|
+| Impressions | Ranking | Review velocity, on-time delivery, response time |
+| CTR | Listing | Thumbnail, title, price point, badge |
+| Close rate | Gig page and handling | Copy, packages, response speed, CSR quality |
+
+`metrics.decompose_funnel` attributes the movement using a log decomposition (exact
+for a product), names the dominant factor, and emits a task pointing at the right
+kind of work. It refuses to attribute when no single factor reaches 45% of the swing,
+and says "unknown" loudly when the impression sheet does not exist yet — which today
+it does not. That sheet is worth more than the other two missing sources combined.
 
 ## How it self-improves
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime as _dt
 import re
 from dataclasses import dataclass, field
+from collections import Counter
 from typing import Any, Iterable, Sequence
 
 from . import contracts as C
@@ -558,6 +559,133 @@ def _data_quality_rules(violations: Sequence[C.Violation],
     return tasks
 
 
+def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
+    """Turn the reach-vs-conversion diagnosis into the right kind of work.
+
+    This rule exists because the three causes need opposite responses. Telling
+    the team to "improve conversion" when reach halved is worse than saying
+    nothing — it sends them to rewrite a gig page that was never the problem.
+    """
+    d = bundle.decomposition
+    if not d or not d.have_data or d.verdict in ("no_data", "insufficient"):
+        return []
+    share = abs(d.attribution.get(d.verdict, 0.0))
+    if share < 0.45:
+        return []          # no single factor dominates; do not over-claim
+    orders_moved = (d.orders_now - d.orders_prior) / d.orders_prior if d.orders_prior else 0
+    if orders_moved > -0.05:
+        return []          # only act on a real decline
+
+    playbooks = {
+        "impressions": ("ranking", "playbooks/review_capture.md", [
+            "Treat this as a ranking problem, not a gig-page problem — the "
+            "page is converting exactly as well as before.",
+            "Push review capture on every delivery; review velocity is the "
+            "strongest ranking input you control.",
+            "Audit on-time delivery and response time over the same window — "
+            "both feed the success score that drives impressions.",
+            "Check whether the VVRO ramp coincides with the impression drop. "
+            "If it does, that is the dilution hypothesis showing up in the "
+            "one metric that can actually confirm it.",
+        ]),
+        "ctr": ("listing", "playbooks/lead_triage.md", [
+            "Treat this as a listing problem — people are seeing the gig and "
+            "not clicking. Reach is fine.",
+            "Change one thing at a time: thumbnail first, then title, then "
+            "starting price. Changing three at once tells you nothing.",
+            "Give each change 7 days before judging it; daily CTR on this "
+            "volume is mostly noise.",
+        ]),
+        "order_rate": ("gig page and handling", "playbooks/upsell.md", [
+            "Treat this as a page-and-handling problem — reach and clicks are "
+            "holding, buyers are arriving and not ordering.",
+            "Check first-response time on inbound inquiries over this window. "
+            "Slow first replies show up here before anywhere else.",
+            "Re-read the gig packages against the last 10 lost inquiries: are "
+            "buyers asking for something the packages do not describe?",
+        ]),
+    }
+    kind, playbook, steps = playbooks[d.verdict]
+    return [Task(
+        id=f"diagnose-{d.verdict}",
+        title=f"Organic decline is a {kind} problem — act accordingly",
+        category="diagnosis",
+        owner="CEO",
+        why=d.explanation,
+        steps=steps,
+        impact_usd=(bundle.econ.aov or 137.0) * abs(d.orders_prior - d.orders_now),
+        confidence=0.75, effort_hours=2.0, priority="P0", urgency=1,
+        playbook=playbook)]
+
+
+def _dispute_rules(disputes: Sequence[C.Dispute], today: _dt.date,
+                   aov: float) -> list[Task]:
+    if not disputes:
+        return []
+    tasks: list[Task] = []
+    open_ = [d for d in disputes if d.is_open()]
+
+    if open_:
+        exposure = sum(d.exposure() for d in open_)
+        oldest = max((d.days_open(today) or 0) for d in open_)
+        tasks.append(Task(
+            id="disputes-open",
+            title=f"Clear {len(open_)} open dispute(s) — ${exposure:,.0f} at risk",
+            category="dispute_rescue",
+            owner="Ezan (escalate to CEO above $300)",
+            why=(f"{len(open_)} disputes are unresolved with ${exposure:,.0f} of "
+                 f"order value exposed; the oldest has been open {oldest} days. "
+                 f"Open disputes do not age well — Fiverr's resolution centre "
+                 f"favours the party who engaged first and most clearly."),
+            steps=[
+                "Work them oldest-first; time open is the strongest predictor "
+                "of a bad outcome.",
+                "For each, decide today: rescue with a fresh senior direction, "
+                "or exit cleanly with a partial refund and mutual cancellation.",
+                "Record the root cause on every one. Without it you cannot tell "
+                "a quality problem from a brief-taking problem.",
+            ],
+            impact_usd=exposure, confidence=0.7, effort_hours=2.0,
+            priority="P0", urgency=2, playbook="playbooks/dispute_rescue.md"))
+
+    # Concentrated root cause = a fixable process, not bad luck.
+    causes = Counter(d.root_cause for d in disputes if d.root_cause != "unknown")
+    if causes:
+        top, n = causes.most_common(1)[0]
+        if n >= 3 and n / max(len(disputes), 1) >= 0.35:
+            fixes = {
+                "brief_mismatch": "Tighten the requirements form and confirm the "
+                                  "brief back to the buyer in writing before design starts.",
+                "quality": "Add a senior review gate before first delivery.",
+                "communication": "Set a first-response SLA and measure it per CSR.",
+                "late": "Stop accepting orders above queue capacity.",
+                "scope_creep": "Write the revision limit into the first message, "
+                               "and quote paid extras the moment scope moves.",
+                "buyer_changed_mind": "Take a deposit-style partial before concept work.",
+                "scammer": "Never deliver before an order is placed; never move "
+                           "off-platform before payment.",
+            }
+            tasks.append(Task(
+                id=f"dispute-cause-{top}",
+                title=f"Fix the root cause behind {n} disputes: {top.replace('_', ' ')}",
+                category="process",
+                owner="CEO",
+                why=(f"{n} of {len(disputes)} recorded disputes "
+                     f"({n / len(disputes):.0%}) share the root cause "
+                     f"'{top.replace('_', ' ')}'. A concentration that high is a "
+                     f"process defect, not bad luck, and it will keep producing "
+                     f"disputes until the process changes."),
+                steps=[
+                    fixes.get(top, "Review the process that produces this cause."),
+                    "Apply it to every new order from today, not retroactively.",
+                    "The engine will report whether the share of this cause falls "
+                    "over the next 30 days.",
+                ],
+                impact_usd=n * aov * 0.8, confidence=0.6, effort_hours=2.0,
+                playbook="playbooks/dispute_rescue.md"))
+    return tasks
+
+
 def _missing_source_rules(missing: Sequence[dict]) -> list[Task]:
     if not missing:
         return []
@@ -591,15 +719,19 @@ def generate(
     plan: DosePlan,
     active: Sequence[C.ActiveOrder],
     orders: Sequence[C.Order],
-    violations: Sequence[C.Violation],
+    disputes: Sequence[C.Dispute] = (),
+    violations: Sequence[C.Violation] = (),
     automation_errors: Sequence[dict],
     missing_sources: Sequence[dict],
     today: _dt.date,
     max_tasks: int = 12,
 ) -> list[Task]:
     tasks: list[Task] = []
+    aov = bundle.econ.aov or 137.0
     tasks.append(_dosing_rule(plan, bundle.health.verdict()))
-    tasks += _active_order_rules(active, today, bundle.gig, bundle.econ.aov or 137.0)
+    tasks += _decomposition_rules(bundle)
+    tasks += _dispute_rules(disputes, today, aov)
+    tasks += _active_order_rules(active, today, bundle.gig, aov)
     tasks += _funnel_rules(bundle)
     tasks += _economics_rules(bundle, orders)
     tasks += _data_quality_rules(violations, automation_errors)

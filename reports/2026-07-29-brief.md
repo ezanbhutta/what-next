@@ -71,8 +71,8 @@
 
 *Why:* 3 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Impression system, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.
 
-- Needed for dispute-risk scoring and refund-exposure forecasting.
-- Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves.
+- Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
+- Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
 - Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 - Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.
 - Script: `playbooks/data_hygiene.md`
@@ -242,8 +242,8 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 
 **Data sources still missing**
-- Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting.
-- Impression system — Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves.
+- Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
+- Impression system — Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
 - Daily team activity report — Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 
 

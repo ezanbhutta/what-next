@@ -14,26 +14,36 @@ violates it. Do not talk around it in prose either.
 
 ## Daily sequence
 
-### 1. Fetch the sources (read-only, always)
+### 1. Get the data
 
-Never write to any source sheet. Pull each into a dated snapshot:
+**Preferred — the snapshot endpoint.** If `XSTUDIOZ_SNAPSHOT_URL` is set, the
+runner fetches it automatically and you do nothing. It also reads any snapshot
+the Apps Script timer left in `data/raw/snapshots/` and uses whichever is newer.
+Check the `[snapshot]` lines on stderr to see which path won and how old it is.
 
-| Source | How | Snapshot path |
+**Fallback — manual fetch.** Only if the runner reports no snapshot at all.
+Never write to any source sheet. Pull each into a dated file:
+
+| Source | How | Path |
 |---|---|---|
-| Order / CRM workbook | `mcp__Google_Drive__read_file_content` with `fileId` `1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE` | `data/raw/orders/<YYYY-MM-DD>.md` |
+| Order / CRM workbook | `mcp__Google_Drive__read_file_content`, `fileId` `1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE` | `data/raw/orders/<YYYY-MM-DD>.md` |
 | Inquiry workbook | same tool, `fileId` `1Pp6RhsR96FzGfB3MV--CYj7Idja2-iyF7BNPhJ9Md_A` | `data/raw/inquiries/<YYYY-MM-DD>.md` |
 | Live gig page | fetch the gig URL in `config/sources.yml` | `data/raw/gig/<YYYY-MM-DD>.json` |
 | CSR handoff tracker | whatever the user uploads | `data/raw/order_tracker/*.xlsx` |
 
-The Drive tool returns oversized results to a file on disk. That is expected — write
-the `fileContent` value straight to the snapshot path with a short script rather than
-reading it into context. **You do not need to read the sheet contents yourself.** The
-engine parses them; pulling 200k characters into context wastes the budget you need
-for judgement.
+The Drive tool returns oversized results to a file on disk. That is expected —
+write the `fileContent` value straight to the path with a short script rather
+than reading it into context. **You do not need to read the sheet contents
+yourself.** The engine parses them; pulling 200k characters into context wastes
+the budget you need for judgement.
 
 From the gig page capture: `level`, `reviews_total`, the `stars` histogram,
-`orders_in_queue`, `avg_response_time_hours`. The star histogram is what makes the
-rating maths work, so do not skip it.
+`orders_in_queue`, `avg_response_time_hours`. The star histogram is what makes
+the rating maths work, so do not skip it.
+
+If the snapshot endpoint is configured but failing, say so at the top of your
+report and fix it — see `automation/README.md` troubleshooting. A silently
+degraded intake that nobody notices is how a system stops being trustworthy.
 
 ### 2. Run the engine
 
@@ -59,7 +69,23 @@ Read the `[BLOCK]` lines on stderr and act:
   your message; do not present stale numbers as current.
 - `predictions_falsifiable`, `all_tasks_owned` — a generation bug. Fix, do not paper over.
 
-### 4. Report to the user
+### 4. Rebuild the dashboard
+
+```bash
+python3 scripts/build_dashboard.py
+```
+
+Then republish it to the same artifact URL so the link the team already has
+stays current:
+
+    Artifact(file_path="reports/dashboard.html",
+             url="https://claude.ai/code/artifact/efdf1312-b4e7-4974-960d-4a035031cdaf",
+             favicon="📉")
+
+Passing `url` is what keeps the URL stable from a fresh session. Do not change
+the `<title>` or the favicon — the team finds this page by its name and tab icon.
+
+### 5. Report to the user
 
 Lead with the single most important thing, then the task list. Keep it short — the full
 detail is in `reports/latest.md`. Always state:
@@ -69,7 +95,7 @@ detail is in `reports/latest.md`. Always state:
 - the top 3 tasks with owners,
 - anything the self-check flagged.
 
-### 5. Commit
+### 6. Commit
 
 ```bash
 git add -A && git commit -m "daily: <date> brief" && git push -u origin claude/xstudioz-growth-automation-dj8u2z

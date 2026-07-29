@@ -17,7 +17,8 @@ from typing import Any, Sequence
 import yaml
 
 from . import contracts as C
-from . import dosing, forecast, ingest, ledger as L, metrics, report, selfcheck, tasks
+from . import (dosing, forecast, ingest, ledger as L, metrics, report,
+               selfcheck, snapshot, tasks)
 
 
 @dataclass
@@ -67,17 +68,26 @@ def run_daily(
     inquiries_text: str = "",
     tracker_rows: Sequence[dict[str, Any]] | None = None,
     gig: dict[str, Any] | None = None,
+    snap: "snapshot.Snapshot | None" = None,
     write: bool = True,
 ) -> RunArtifacts:
     config, sources = load_config(root)
     profile_name = config["profile"]["name"]
 
     # ---- ingest ----------------------------------------------------------
+    # A snapshot is the clean path: real tab names, real headers, no markdown
+    # parsing, no connector dependency. The markdown-export path is kept as a
+    # fallback so a morning where the endpoint is down still produces a brief.
     parts = []
-    if orders_text:
-        parts.append(ingest.ingest_orders_workbook(orders_text))
-    if inquiries_text:
-        parts.append(ingest.ingest_inquiries_workbook(inquiries_text))
+    if snap is not None:
+        parts.append(ingest.ingest_snapshot(snap))
+        if snap.gig and not gig:
+            gig = dict(snap.gig)
+    else:
+        if orders_text:
+            parts.append(ingest.ingest_orders_workbook(orders_text))
+        if inquiries_text:
+            parts.append(ingest.ingest_inquiries_workbook(inquiries_text))
     if tracker_rows:
         parts.append(ingest.ingest_tracker_rows(list(tracker_rows)))
     data = ingest.merge(*parts) if parts else ingest.IngestResult()
@@ -117,6 +127,8 @@ def run_daily(
         funnel=metrics.funnel_metrics(data.leads),
         econ=metrics.economics(data.orders),
         gig=gig,
+        decomposition=metrics.decompose_funnel(data.impressions, today),
+        disputes=metrics.dispute_metrics(data.disputes, len(data.orders), today),
     )
 
     # ---- dosing ----------------------------------------------------------
@@ -154,6 +166,7 @@ def run_daily(
     missing = sources.get("expected_but_missing", [])
     task_list = tasks.generate(
         bundle=bundle, plan=plan, active=data.active, orders=data.orders,
+        disputes=data.disputes,
         violations=vrep.data_issues, automation_errors=data.automation_errors,
         missing_sources=missing, today=today,
         max_tasks=int(config["selfcheck"].get("max_tasks", 12)))
@@ -163,6 +176,8 @@ def run_daily(
              [max((f.date for f in data.flow), default=None),
               max((o.order_date for o in data.orders if o.order_date), default=None)]
              if d]
+    if snap is not None:
+        dated.append(snap.generated_at.date())
     latest = max(dated) if dated else None
     crm_window = sum(1 for o in data.orders
                      if o.order_date and today - _dt.timedelta(days=27) <= o.order_date <= today)
