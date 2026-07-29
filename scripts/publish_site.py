@@ -8,8 +8,14 @@ artifact serves — and wraps it for deployment beside CSR Pulse:
   skeleton; Vercel does not),
 * the Google Fonts links csr-pulse uses, so here the page is typographically
   identical rather than falling back to system faces,
-* a password gate that talks to ``site/api/auth.js`` — the same auth code,
-  copied verbatim from csr-pulse so the suite has one implementation.
+* optionally a password gate (``--gate``) that talks to ``site/api/auth.js``,
+  the same auth code copied verbatim from csr-pulse.
+
+The gate is **off by default**. For a single viewer, Vercel's own Deployment
+Protection is better: the owner is already signed in to Vercel, so the page
+just opens, and there is no shared password to leak or rotate. Turn the gate
+on with ``--gate`` when the team needs access — the auth function stays in the
+repo either way.
 
 The file lands at ``site/index.html``, not in a subfolder: Vercel's zero-config
 static hosting serves the project root and treats ``api/`` as functions, so a
@@ -109,14 +115,15 @@ GATE_JS = """
 """
 
 
-def build(fragment: str, generated: str) -> str:
+def build(fragment: str, generated: str, gate: bool = False) -> str:
     title_m = re.search(r"<title>(.*?)</title>", fragment, re.S)
     title = title_m.group(1) if title_m else "XStudioz — Daily brief"
     body = re.sub(r"<title>.*?</title>", "", fragment, count=1, flags=re.S)
 
     # Fold the gate's styles into the page's own <style> so both share the
     # design tokens rather than duplicating them.
-    body = body.replace("</style>", GATE_CSS + "</style>", 1)
+    if gate:
+        body = body.replace("</style>", GATE_CSS + "</style>", 1)
 
     return (
         "<!doctype html>\n"
@@ -133,10 +140,12 @@ def build(fragment: str, generated: str) -> str:
         "fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E"
         "%3C/svg%3E\">"
         "</head><body>"
-        + GATE_HTML
-        + '<div id="brief" hidden>' + body + "</div>"
-        + GATE_JS
-        + f"<!-- generated {generated} by scripts/publish_site.py -->"
+        + (GATE_HTML if gate else "")
+        + (f'<div id="brief"{" hidden" if gate else ""}>' + body + "</div>")
+        + (GATE_JS if gate else "")
+        + f"<!-- generated {generated} by scripts/publish_site.py"
+        + (" (password gate on)" if gate else " (protected by Vercel, no gate)")
+        + " -->"
         "</body></html>\n"
     )
 
@@ -146,6 +155,10 @@ def main() -> int:
     ap.add_argument("--root", default=str(ROOT))
     ap.add_argument("--src", help="default reports/dashboard.html")
     ap.add_argument("--out", help="default site/index.html")
+    ap.add_argument("--gate", action="store_true",
+                    help="add the password gate. Off by default — for a single "
+                         "viewer, Vercel Deployment Protection is simpler and "
+                         "has no shared password to leak.")
     args = ap.parse_args()
 
     root = Path(args.root)
@@ -159,7 +172,8 @@ def main() -> int:
 
     out.parent.mkdir(parents=True, exist_ok=True)
     html = build(src.read_text(encoding="utf-8"),
-                 _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"))
+                 _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+                 gate=args.gate)
     out.write_text(html, encoding="utf-8")
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
     return 0

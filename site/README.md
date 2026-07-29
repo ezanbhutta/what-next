@@ -8,21 +8,43 @@ every morning by `scripts/publish_site.py`, which the daily run calls.
 
 ## One-time setup
 
-```bash
-cd site
-vercel link          # or: vercel --prod, then link
-vercel env add APP_PASSWORD production      # what the team types
-vercel env add SESSION_SECRET production    # any long random string
+In the Vercel web UI:
+
+1. **vercel.com/new** → import `ezanbhutta/what-next`
+2. **Root Directory** → `site`   ← the step people miss
+3. **Framework Preset** → Other. Leave build command and output directory empty.
+4. Deploy
+5. **Settings → Git → Production Branch** → `claude/xstudioz-growth-automation-dj8u2z`
+   Without this the page never updates, because the daily run pushes to that
+   branch and not to main.
+
+## Access
+
+Two options. Pick by who actually needs to see it.
+
+### Single viewer — Vercel Deployment Protection (default)
+
+**Settings → Deployment Protection → Vercel Authentication → All Deployments.**
+
+Only people signed in to the Vercel account can open the page. The owner is
+already signed in, so it just opens — no password to type, none to leak, none
+to rotate. This is what `publish_site.py` assumes.
+
+### Team access — the password gate
+
+Run `python3 scripts/publish_site.py --gate` instead, and set two environment
+variables in Vercel:
+
+```
+APP_PASSWORD     what the team types
+SESSION_SECRET   any long random string; rotating it logs everyone out
 ```
 
-`SESSION_SECRET` lets you revoke every session at once by rotating it, without
-changing the password anyone types. If it is unset the app still works.
+`SESSION_SECRET` can be changed to revoke every session at once without
+changing the password anyone types. If unset the app still works.
 
-## After that
-
-Nothing. The daily run regenerates `index.html`, commits, and pushes;
-Vercel redeploys on push, so the page is current by 07:15 PKT with nobody
-touching it.
+To make the gate permanent, add `--gate` to the `publish_site.py` line in
+`CLAUDE.md` step 4 so the daily run keeps it.
 
 ## Fonts
 
@@ -37,3 +59,6 @@ suite.
 `api/auth.js` is copied verbatim from `ezanbhutta/csr-pulse` so the suite has one
 auth implementation rather than two that drift. The only change is the cookie
 name, so a CSR Pulse session is not a session here.
+
+It stays in the repo even when the gate is off — switching the team on later is
+one flag, not a rebuild.
