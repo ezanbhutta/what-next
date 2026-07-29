@@ -189,6 +189,39 @@ def normalise_country(value: Any) -> str | None:
     }.get(text, text)
 
 
+#: The same seller is written "XStudioz" in the impressions sheet and
+#: "X Studioz" in the orders ledger. Left unnormalised, every impressions row
+#: silently belongs to a profile that has no orders, and the decomposition
+#: quietly reports "no data" forever.
+_PROFILE_CANON = {
+    "xstudioz": "X Studioz",
+    "x studioz": "X Studioz",
+    "x_studioz": "X Studioz",
+    "carpicon": "Carpicon",
+    "grid designs": "Grid Designs",
+    "griddesigns": "Grid Designs",
+    "eikon designs": "Eikon Designs",
+    "eikondesigns": "Eikon Designs",
+    "alee": "Alee Studioz",
+    "alee studioz": "Alee Studioz",
+    "ah2": "Abdul Haseeb",
+    "ah2 branding": "Abdul Haseeb",
+    "abdul haseeb": "Abdul Haseeb",
+    "bic": "BIC",
+    "dygram": "Dygram",
+    "storm": "Storm",
+    "tariq mahmood": "Tariq Mahmood",
+}
+
+
+def normalise_profile(value: Any) -> str | None:
+    """Collapse the spellings of a seller profile to one canonical name."""
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if not text:
+        return None
+    return _PROFILE_CANON.get(text.lower(), text)
+
+
 def normalise_person(value: Any) -> str | None:
     """People are typed inconsistently: ``Salman ``, ``ZUBAIR``, ``Ezan😊``."""
     text = str(value or "")

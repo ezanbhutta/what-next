@@ -579,6 +579,30 @@ def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
     nothing — it sends them to rewrite a gig page that was never the problem.
     """
     d = bundle.decomposition
+    if d and d.verdict == "stale":
+        return [Task(
+            id="impressions-stale",
+            title="Bring the impressions sheet up to date — it stops months ago",
+            category="data_quality",
+            owner="Hasnain",
+            why=d.explanation + (
+                " Impressions are the leading indicator on the whole objective: "
+                "Success Score drives impressions, impressions drive organic "
+                "orders, organic orders drive revenue. Without a current series "
+                "the engine can see that organic fell but not whether reach or "
+                "conversion caused it, and those need opposite responses."),
+            steps=[
+                "Append daily rows from Fiverr Analytics from the last logged date "
+                "to today: Date, Account Name, Impressions, Clicks, Organic Orders.",
+                "Keep the existing column names exactly — the engine already reads "
+                "them and a rename is what schema drift is.",
+                "Post impressions and the 7-day average every morning at 09:00 PKT. "
+                "It is the one number that says whether the suppression is lifting.",
+                "Once 28 consecutive days exist, the engine attributes any decline "
+                "to reach, click-through or close rate automatically.",
+            ],
+            impact_usd=2500, confidence=0.8, effort_hours=1.0,
+            priority="P0", urgency=1, playbook="playbooks/data_hygiene.md")]
     if not d or not d.have_data or d.verdict in ("no_data", "insufficient"):
         return []
     share = abs(d.attribution.get(d.verdict, 0.0))

@@ -581,6 +581,24 @@ def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
     i_pri, c_pri, o_pri = agg(pri_lo, pri_hi)
 
     if not (i_now and i_pri and o_now and o_pri and c_now and c_pri):
+        # Distinguish "the sheet has no rows" from "the sheet stops months
+        # ago". Both leave the windows empty, but only one is fixed by
+        # creating a sheet — the other is fixed by updating it, and saying
+        # "no impression data" when 43,000 impressions are sitting in the file
+        # would send someone to solve the wrong problem.
+        latest = max(i.date for i in impressions)
+        gap = (as_of - latest).days
+        if gap > window:
+            return FunnelDecomposition(
+                have_data=True, days=window,
+                verdict="stale",
+                explanation=(
+                    f"Impression data exists but stops at {latest}, {gap} days "
+                    f"before today. The last {window * 2} days carry no rows, so "
+                    f"the current decline cannot be attributed to reach, "
+                    f"click-through or closing rate. Update the impressions sheet "
+                    f"to the present and this becomes answerable immediately — "
+                    f"the engine already reads it."))
         return FunnelDecomposition(
             have_data=True, days=window,
             impressions_now=i_now, impressions_prior=i_pri,

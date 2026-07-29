@@ -542,8 +542,8 @@
       "rating": 4.834491471888819
     },
     "decomposition": {
-      "have_data": false,
-      "days": 0,
+      "have_data": true,
+      "days": 14,
       "impressions_now": 0.0,
       "impressions_prior": 0.0,
       "ctr_now": null,
@@ -553,8 +553,8 @@
       "orders_now": 0.0,
       "orders_prior": 0.0,
       "attribution": {},
-      "verdict": "no_data",
-      "explanation": "No impression data. A fall in organic orders cannot be attributed to reach, click-through or closing rate \u2014 and those three need opposite responses. This is the single most valuable missing input."
+      "verdict": "stale",
+      "explanation": "Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately \u2014 the engine already reads it."
     },
     "disputes": {
       "have_data": false,
@@ -676,6 +676,28 @@
       "score": 2301.6
     },
     {
+      "id": "impressions-stale",
+      "title": "Bring the impressions sheet up to date \u2014 it stops months ago",
+      "category": "data_quality",
+      "owner": "Hasnain",
+      "why": "Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately \u2014 the engine already reads it. Impressions are the leading indicator on the whole objective: Success Score drives impressions, impressions drive organic orders, organic orders drive revenue. Without a current series the engine can see that organic fell but not whether reach or conversion caused it, and those need opposite responses.",
+      "steps": [
+        "Append daily rows from Fiverr Analytics from the last logged date to today: Date, Account Name, Impressions, Clicks, Organic Orders.",
+        "Keep the existing column names exactly \u2014 the engine already reads them and a rename is what schema drift is.",
+        "Post impressions and the 7-day average every morning at 09:00 PKT. It is the one number that says whether the suppression is lifting.",
+        "Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically."
+      ],
+      "impact_usd": 2500,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P0",
+      "urgency": 1,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 2000.0
+    },
+    {
       "id": "dq-flow-revenue",
       "title": "Fill revenue in the daily ledger (111 days blank)",
       "category": "data_quality",
@@ -755,7 +777,7 @@
       "impact_usd": 3000,
       "confidence": 0.4,
       "effort_hours": 1.0,
-      "priority": "P1",
+      "priority": "P2",
       "urgency": 0,
       "playbook": "playbooks/upsell.md",
       "refs": [],
@@ -764,13 +786,12 @@
     },
     {
       "id": "wire-missing-sources",
-      "title": "Wire up the 3 promised data sources",
+      "title": "Wire up the 2 promised data sources",
       "category": "data_quality",
       "owner": "CEO",
-      "why": "3 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Impression system, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+      "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
       "steps": [
         "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
-        "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
         "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
         "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
       ],
@@ -804,27 +825,6 @@
       "refs": [],
       "due": null,
       "score": 560.0
-    },
-    {
-      "id": "fix-clickup",
-      "title": "Fix the broken ClickUp sync (334 logged failures)",
-      "category": "automation",
-      "owner": "CEO / whoever owns the Apps Script",
-      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
-      "steps": [
-        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
-        "Re-run the sync for the backlog.",
-        "Add a failure alert \u2014 300+ silent failures is the real defect."
-      ],
-      "impact_usd": 600,
-      "confidence": 0.7,
-      "effort_hours": 1.0,
-      "priority": "P2",
-      "urgency": 0,
-      "playbook": "playbooks/data_hygiene.md",
-      "refs": [],
-      "due": null,
-      "score": 420.0
     },
     {
       "id": "deliver-4",
@@ -873,26 +873,25 @@
       "score": 92.4
     },
     {
-      "id": "lead-triage",
-      "title": "Triage inbound leads by country before spending CSR time",
-      "category": "funnel",
-      "owner": "All CSRs",
-      "why": "Netherlands, Australia, United States convert at 62%, 49%, 39%. United Arab Emirates, India convert at 12%, 4% across 52 leads. Equal effort on both is the single largest misallocation of CSR hours in the data.",
+      "id": "fix-clickup",
+      "title": "Fix the broken ClickUp sync (334 logged failures)",
+      "category": "automation",
+      "owner": "CEO / whoever owns the Apps Script",
+      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
       "steps": [
-        "Tier 1 (full custom quote + meeting offer): Netherlands, Australia, United States",
-        "Tier 2 (standard reply, one follow-up max): everyone else.",
-        "Tier 3 (template reply, no follow-up): United Arab Emirates, India",
-        "Never spend a meeting slot on a Tier 3 lead."
+        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+        "Re-run the sync for the backlog.",
+        "Add a failure alert \u2014 300+ silent failures is the real defect."
       ],
-      "impact_usd": 667.64,
-      "confidence": 0.6,
+      "impact_usd": 600,
+      "confidence": 0.7,
       "effort_hours": 1.0,
       "priority": "P3",
       "urgency": 0,
-      "playbook": "playbooks/lead_triage.md",
+      "playbook": "playbooks/data_hygiene.md",
       "refs": [],
       "due": null,
-      "score": 400.6
+      "score": 420.0
     }
   ],
   "predictions": [
@@ -1004,14 +1003,14 @@
   ],
   "resolved": [],
   "selfcheck": {
-    "score": 95.8,
+    "score": 85.8,
     "rubric": {
       "task_count": 10.0,
       "ownership": 20.0,
       "evidence": 20.8,
       "actionability": 15.0,
       "falsifiability": 20.0,
-      "priority_spread": 10.0
+      "priority_spread": 0.0
     },
     "blocking": 0,
     "repairs": [],
@@ -1097,7 +1096,7 @@
         "name": "schema_drift",
         "passed": true,
         "severity": "warn",
-        "detail": "unmapped column rate 2.2% (limit 15%); unrecognised: ['Order type', 'Public review', 'Service Demand', 'Upsell']",
+        "detail": "unmapped column rate 2.1% (limit 15%); unrecognised: ['Order type', 'Public review', 'Service Demand', 'Upsell']",
         "repaired": false
       },
       {
@@ -1137,9 +1136,9 @@
       },
       {
         "name": "priority_spread_sane",
-        "passed": true,
+        "passed": false,
         "severity": "warn",
-        "detail": "4 of 12 tasks are P0",
+        "detail": "5 of 12 tasks are P0",
         "repaired": false
       }
     ]
@@ -1194,19 +1193,19 @@
     "flow_rows": 326,
     "flow_aggregate_rows": 46,
     "active_orders": 8,
-    "impressions": 0,
+    "impressions": 94,
     "disputes": 0,
     "automation_errors": 334,
-    "blocks_seen": 23,
-    "blocks_used": 22,
-    "header_cells_seen": 368,
+    "blocks_seen": 24,
+    "blocks_used": 23,
+    "header_cells_seen": 375,
     "unmapped_columns": {
       "Upsell": 5,
       "Order type": 1,
       "Public review": 1,
       "Service Demand": 1
     },
-    "unmapped_rate": 0.0217,
+    "unmapped_rate": 0.0213,
     "coercion_misses": {
       "order_date": 4
     }

@@ -34,6 +34,17 @@
 - Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller.
 - Script: `playbooks/vvro_dosing.md`
 
+### P0 · Bring the impressions sheet up to date — it stops months ago
+**Owner:** Hasnain · **Est. impact:** $2,500 · **Effort:** 1.0h · **Confidence:** 80%
+
+*Why:* Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately — the engine already reads it. Impressions are the leading indicator on the whole objective: Success Score drives impressions, impressions drive organic orders, organic orders drive revenue. Without a current series the engine can see that organic fell but not whether reach or conversion caused it, and those need opposite responses.
+
+- Append daily rows from Fiverr Analytics from the last logged date to today: Date, Account Name, Impressions, Clicks, Organic Orders.
+- Keep the existing column names exactly — the engine already reads them and a rename is what schema drift is.
+- Post impressions and the 7-day average every morning at 09:00 PKT. It is the one number that says whether the suppression is lifting.
+- Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically.
+- Script: `playbooks/data_hygiene.md`
+
 ### P0 · Fill revenue in the daily ledger (111 days blank)
 **Owner:** Whoever owns the daily ledger · **Est. impact:** $2,000 · **Effort:** 2.0h · **Confidence:** 90%
 
@@ -66,7 +77,7 @@
 - Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md.
 - Script: `playbooks/review_capture.md`
 
-### P1 · Run the upsell A/B test to de-bias the 54% vs 31% gap
+### P2 · Run the upsell A/B test to de-bias the 54% vs 31% gap
 **Owner:** CEO + Salman · **Est. impact:** $3,000 · **Effort:** 1.0h · **Confidence:** 40%
 
 *Why:* Leads with an upsell attempt convert 54.3% (n=70) against 30.8% (n=929), z=4.05. That is a +76% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
@@ -77,13 +88,12 @@
 - The engine will report the de-biased effect once n>=100 per arm.
 - Script: `playbooks/upsell.md`
 
-### P2 · Wire up the 3 promised data sources
+### P2 · Wire up the 2 promised data sources
 **Owner:** CEO · **Est. impact:** $1,500 · **Effort:** 1.0h · **Confidence:** 50%
 
-*Why:* 3 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Impression system, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.
+*Why:* 2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.
 
 - Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
-- Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
 - Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 - Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.
 - Script: `playbooks/data_hygiene.md`
@@ -97,16 +107,6 @@
 - Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.
 - Revisit in 30 days with the engine's updated per-designer AOV.
 - Script: `playbooks/staffing.md`
-
-### P2 · Fix the broken ClickUp sync (334 logged failures)
-**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
-
-*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
-
-- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
-- Re-run the sync for the backlog.
-- Add a failure alert — 300+ silent failures is the real defect.
-- Script: `playbooks/data_hygiene.md`
 
 ### P3 · Close out approved order #4 — Calum Snell
 **Owner:** Delivery lead · **Est. impact:** $116 · **Effort:** 1.0h · **Confidence:** 80%
@@ -130,16 +130,15 @@
 - Script: `playbooks/review_capture.md`
 - Source rows: `order_tracker/tracker#b0r5`
 
-### P3 · Triage inbound leads by country before spending CSR time
-**Owner:** All CSRs · **Est. impact:** $668 · **Effort:** 1.0h · **Confidence:** 60%
+### P3 · Fix the broken ClickUp sync (334 logged failures)
+**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
 
-*Why:* Netherlands, Australia, United States convert at 62%, 49%, 39%. United Arab Emirates, India convert at 12%, 4% across 52 leads. Equal effort on both is the single largest misallocation of CSR hours in the data.
+*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
 
-- Tier 1 (full custom quote + meeting offer): Netherlands, Australia, United States
-- Tier 2 (standard reply, one follow-up max): everyone else.
-- Tier 3 (template reply, no follow-up): United Arab Emirates, India
-- Never spend a meeting slot on a Tier 3 lead.
-- Script: `playbooks/lead_triage.md`
+- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
+- Re-run the sync for the backlog.
+- Add a failure alert — 300+ silent failures is the real defect.
+- Script: `playbooks/data_hygiene.md`
 
 
 ---
@@ -227,21 +226,21 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 
 ## System integrity
 
-**Self-check score: 96/100** · 0 blocking failure(s)
+**Self-check score: 86/100** · 0 blocking failure(s)
 
 - task_count: 10
 - ownership: 20
 - evidence: 21
 - actionability: 15
 - falsifiability: 20
-- priority_spread: 10
+- priority_spread: 0
 
 **Checks not passing**
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
+- `warn` **priority_spread_sane** — 5 of 12 tasks are P0
 
 **Data sources still missing**
 - Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
-- Impression system — Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
 - Daily team activity report — Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 
 

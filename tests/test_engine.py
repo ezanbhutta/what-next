@@ -820,10 +820,65 @@ def test_decomposition_says_so_when_it_has_no_data():
 
 
 def test_decomposition_refuses_to_attribute_on_partial_windows():
-    d = metrics.decompose_funnel(_imps(5, lambda i: 1000, lambda i: .05,
-                                       lambda i: .2),
-                                 dt.date(2026, 7, 29), window=14)
+    """Recent data, but not enough of it — distinct from stale data."""
+    d = metrics.decompose_funnel(
+        _imps(5, lambda i: 1000, lambda i: .05, lambda i: .2,
+              start=dt.date(2026, 7, 25)),
+        dt.date(2026, 7, 29), window=14)
     assert d.verdict == "insufficient"
+
+
+def test_decomposition_calls_out_stale_data_rather_than_missing_data():
+    """43,000 impressions sitting in a file that stops in December is not
+    "no impression data" — saying so would send someone to build a sheet that
+    already exists instead of updating it."""
+    d = metrics.decompose_funnel(
+        _imps(28, lambda i: 1000, lambda i: .05, lambda i: .2,
+              start=dt.date(2025, 11, 30)),
+        dt.date(2026, 7, 29), window=14)
+    assert d.verdict == "stale"
+    assert d.have_data
+    assert "stops at" in d.explanation
+
+
+def test_stale_impressions_produce_a_p0_task():
+    bundle = _bundle()
+    bundle.decomposition = metrics.decompose_funnel(
+        _imps(28, lambda i: 1000, lambda i: .05, lambda i: .2,
+              start=dt.date(2025, 11, 30)),
+        dt.date(2026, 7, 29), window=14)
+    out = tasks._decomposition_rules(bundle)
+    assert len(out) == 1 and out[0].priority == "P0"
+    assert out[0].id == "impressions-stale"
+
+
+def test_profile_names_collapse_across_sheets():
+    """The impressions sheet says XStudioz; the orders ledger says X Studioz.
+    Unnormalised, every impressions row belongs to a profile with no orders."""
+    for raw in ("XStudioz", "X Studioz", "x_studioz", "  xstudioz "):
+        assert C.normalise_profile(raw) == "X Studioz"
+    assert C.normalise_profile("AH2") == "Abdul Haseeb"
+    assert C.normalise_profile("Alee") == "Alee Studioz"
+    assert C.normalise_profile("") is None
+    # An unknown profile passes through rather than being dropped.
+    assert C.normalise_profile("Brand New Profile") == "Brand New Profile"
+
+
+def test_impressions_table_does_not_double_count_as_flow():
+    """The impressions sheet also carries Organic/VVRO order columns. If it
+    were classified as daily_flow it would double every order in the ledger."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Impressions", "role": "impressions", "source_id": "impressions",
+        "header": ["Date", "Account Name", "Impressions", "Clicks",
+                   "Organic Orders", "VVRO Orders", "Totol Order"],
+        "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2", "5", "7"]]}]))
+    res = ingest.ingest_snapshot(snap)
+    assert len(res.impressions) == 1
+    assert res.flow == []                      # not counted as flow
+    imp = res.impressions[0]
+    assert imp.profile == "X Studioz"          # normalised
+    assert imp.impressions == 5397
+    assert imp.orders == 2                     # ORGANIC only, not the total of 7
 
 
 def test_diagnosis_task_only_fires_on_a_real_decline():

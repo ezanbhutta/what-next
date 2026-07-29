@@ -130,11 +130,14 @@ FLOW_ALIASES: dict[str, tuple[str, ...]] = {
 
 IMPRESSION_ALIASES: dict[str, tuple[str, ...]] = {
     "date": ("date", "day"),
-    "profile": ("profile", "seller", "account"),
+    "profile": ("profile", "seller", "account", "account name", "profiles"),
     "gig": ("gig", "gig name", "gig title"),
     "impressions": ("impressions", "impression"),
     "clicks": ("clicks", "click"),
-    "orders": ("orders", "orders placed"),
+    # ORGANIC orders, deliberately. VVRO orders are self-placed and never came
+    # from an impression, so counting them would inflate the close rate and
+    # make a reach problem look like a conversion win.
+    "orders": ("organic orders", "orders", "orders placed"),
     "notes": ("notes", "note"),
 }
 
@@ -164,6 +167,11 @@ IGNORED_HEADERS: frozenset[str] = frozenset({
     "follow up with clients", "followup", "followup 2", "followup 3",
     "private review", "gig", "meeting", "shift",
     "urban stroll", "headstrong software",   # data leaked into a header cell
+    # Impressions-sheet columns the decomposition does not consume.
+    "totol order", "total order", "vvro orders", "vvro", "organic price",
+    "vvro price", "order completed", "completed price", "order queue",
+    "click ratio", "conversion rate", "total reviews", "msg ratio",
+    "cancellation", "cancel price", "profile rating", "update", "success score",
 })
 
 #: A profile name matching this is a spreadsheet aggregate row, not a seller.
@@ -352,7 +360,7 @@ def ingest_orders_workbook(text: str, source_id: str = "orders") -> IngestResult
             prov = Provenance(source_id, "daily_ledger", mb.index, r_i)
             bucket = res.flow_aggregates if is_aggregate_profile(profile) else res.flow
             bucket.append(C.DailyFlow(
-                date=d, profile=profile.strip(), provenance=prov,
+                date=d, profile=C.normalise_profile(profile), provenance=prov,
                 organic_orders=C.to_money(mb.get(row, "organic_orders")) or 0.0,
                 vvro_orders=C.to_money(mb.get(row, "vvro_orders")) or 0.0,
                 organic_revenue=C.to_money(mb.get(row, "organic_revenue")) or 0.0,
@@ -648,7 +656,8 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                     continue
                 res.impressions.append(C.Impression(
                     date=d, provenance=prov(r_i),
-                    profile=mb.get(row, "profile"), gig=mb.get(row, "gig"),
+                    profile=C.normalise_profile(mb.get(row, "profile")),
+                    gig=mb.get(row, "gig"),
                     impressions=C.to_money(mb.get(row, "impressions")) or 0.0,
                     clicks=C.to_money(mb.get(row, "clicks")) or 0.0,
                     orders=C.to_money(mb.get(row, "orders")) or 0.0,

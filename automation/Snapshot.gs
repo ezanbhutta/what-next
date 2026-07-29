@@ -34,7 +34,7 @@ var SOURCES = [
   { id: 'orders',      fileId: '1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE' },
   { id: 'inquiries',   fileId: '1Pp6RhsR96FzGfB3MV--CYj7Idja2-iyF7BNPhJ9Md_A' },
   // Added by createMissingSourceSheets(); paste the ids it logs.
-  { id: 'impressions', fileId: '' },
+  { id: 'impressions', fileId: '1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA' },
   { id: 'disputes',    fileId: '' }
 ];
 
@@ -48,9 +48,12 @@ var SOURCES = [
  * most specific fingerprints are listed first.
  */
 var ROLE_RULES = [
+  // Impressions FIRST. The impressions sheet also carries organic and VVRO
+  // order columns, so a daily_flow rule placed above this would claim it and
+  // double-count every order against the real ledger.
+  { role: 'impressions',       all: ['impressions'] },
   { role: 'daily_flow',        all: ['organic orders', 'vvro orders'] },
   { role: 'automation_health', all: ['timestamp', 'message'] },
-  { role: 'impressions',       all: ['impressions'] },
   { role: 'disputes',          all: ['dispute type'] },
   { role: 'active_orders',     all: ['current status', 'csr handoff notes'] },
   { role: 'funnel',            all: ['client name', 'order status'] },

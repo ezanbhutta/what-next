@@ -67,6 +67,23 @@ sources:
     role: shift_reports
     freshness_sla_days: 1
 
+  - id: impressions
+    name: Impressions / Daily Data Sheet
+    kind: google_sheet
+    file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
+    url: https://docs.google.com/spreadsheets/d/1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA/edit
+    tables:
+      - id: impressions
+        detect_all: ["Impressions"]
+        role: impressions
+    # NOTE: the profile column reads "XStudioz" here and "X Studioz" in the
+    # orders ledger. contracts.normalise_profile collapses them; without that
+    # every impressions row belongs to a profile with no orders.
+    # NOTE: this table also carries Organic/VVRO order columns. It must classify
+    # as `impressions`, never `daily_flow`, or every order is counted twice.
+    coverage_as_of_2026_07_29: "2025-11-30 .. 2025-12-12 — 228 days stale"
+    freshness_sla_days: 1
+
   - id: snapshot_endpoint
     name: Apps Script snapshot web app
     kind: https_json
@@ -93,9 +110,6 @@ expected_but_missing:
   - id: disputes
     name: Disputed / dead / conflicted orders sheet
     why: "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers."
-  - id: impressions
-    name: Impression system
-    why: "Needed to separate demand-side (impressions) from conversion-side (CTR/order rate) causes when organic flow moves. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers."
   - id: daily_team_report
     name: Daily team activity report
     why: "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm."
