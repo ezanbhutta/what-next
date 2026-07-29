@@ -1,8 +1,13 @@
 // Server-side auth for the XStudioz daily brief.
 //
-// Copied verbatim from ezanbhutta/csr-pulse api/auth.js so the suite has ONE
-// auth implementation rather than two that drift. Only the cookie name is
-// namespaced, so a session on CSR Pulse is not a session here.
+// Copied from ezanbhutta/csr-pulse api/auth.js so the suite has ONE auth
+// implementation rather than two that drift. Two deviations, both deliberate:
+//   1. the cookie name is namespaced, so a session on CSR Pulse is not a
+//      session here;
+//   2. verifyToken/cookieFrom/COOKIE are re-exported at the bottom, so
+//      api/brief.js can check a session without a second copy of the crypto.
+//      Re-implementing this in the page renderer is how the two ends of an
+//      auth system stop agreeing.
 //
 // The password is read from the APP_PASSWORD environment variable (set in the
 // Vercel dashboard) and is NEVER shipped to the browser. On a correct password
@@ -162,3 +167,6 @@ export default async function handler(req, res) {
 
   res.status(400).json({ ok: false });
 }
+
+// Used by api/brief.js to decide whether to render the brief or the login page.
+export { verifyToken, cookieFrom, COOKIE };

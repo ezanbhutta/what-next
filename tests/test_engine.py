@@ -1221,3 +1221,198 @@ def test_forward_fill_never_invents_a_measurement():
         [["30-Nov-2025", "XStudioz", "3858"], ["", "Carpicon", ""]])
     assert rows[1][0] == "30-Nov-2025"     # date carried down
     assert rows[1][2] == ""                # impressions did NOT
+
+
+# =========================================================================
+# The dosing controller is switched off — nothing about it may reach a human
+# =========================================================================
+
+#: Words the CEO asked never to see in engine output again. The engine still
+#: *parses* the ledger's VVRO columns — that is the sheet's own header and we
+#: do not control it — but nothing it renders may name the subject.
+_FORBIDDEN = ("vvro", "inorganic")
+
+
+def _scan(text: str, where: str) -> None:
+    """Minified HTML is one enormous line, so report a window around the hit
+    rather than dumping 30 KB into the failure output."""
+    for line in text.splitlines():
+        low = line.lower()
+        for word in _FORBIDDEN:
+            at = low.find(word)
+            assert at < 0, f"{where}: {word!r} in ...{line[max(0, at-90):at+90]}..."
+
+
+def test_disabled_controller_emits_an_empty_plan_not_a_missing_one():
+    """Downstream code takes a DosePlan unconditionally. Returning None here
+    would turn a policy change into an AttributeError at render time."""
+    plan = dosing.disabled_plan(dt.date(2026, 7, 29), "X Studioz")
+    assert plan.action == "disabled"
+    assert plan.dose == 0 and plan.weekly_quota == 0
+    assert plan.bands == [] and plan.countries == []
+    assert plan.week_pattern == [0] * 7
+
+
+def test_disabled_controller_produces_no_dosing_task():
+    """The dosing task is the one place the quota reached a person's board."""
+    plan = dosing.disabled_plan(dt.date(2026, 7, 29), "X Studioz")
+    out = tasks.generate(
+        bundle=_bundle(breached=True), plan=plan, active=[], orders=[],
+        automation_errors=[], missing_sources=[], today=dt.date(2026, 7, 29),
+        config=_team_cfg())
+    assert out, "the engine must still produce work with the controller off"
+    assert not any(t.category == "vvro_dosing" for t in out)
+    for t in out:
+        _scan(t.title + " " + t.why + " " + " ".join(t.steps), f"task:{t.id}")
+
+
+def test_no_engine_output_mentions_the_disabled_subject():
+    """The whole point of the switch. Renderers, standing duties, insights and
+    task prose all pass through here, so a reintroduction fails the suite
+    rather than reaching the CEO's morning brief."""
+    for name in ("latest.md", "dashboard.html"):
+        path = ROOT / "reports" / name
+        if path.exists():
+            _scan(path.read_text(), name)
+    for site in (ROOT / "site" / "index.html", ROOT / "site" / "api" / "brief.js"):
+        if site.exists():
+            _scan(site.read_text(), str(site.relative_to(ROOT)))
+    for item in R.edge(_team_cfg()):
+        _scan(item["title"] + " " + item["detail"], f"edge:{item['id']}")
+    for duty in R.STANDING_CEO + R.STANDING_LEAD + R.STANDING_CSR:
+        _scan(duty, "standing duty")
+
+
+# =========================================================================
+# The password gate — a server boundary, not a hidden div
+# =========================================================================
+#
+# The first version of the gate shipped the whole brief inside
+# `<div id="brief" hidden>` and revealed it in JavaScript after /api/auth
+# answered. `curl` returned every client name and revenue figure without a
+# password, and the live site was in that state when it was found. These tests
+# exist so that specific mistake cannot come back.
+
+import shutil            # noqa: E402
+import subprocess        # noqa: E402
+
+sys.path.insert(0, str(ROOT / "scripts"))
+import publish_site as PS  # noqa: E402
+
+#: Strings that must never appear in a response served without a session.
+_CONFIDENTIAL = ("Albalawi", "selmaprof", "5,472", "Hasnain", "AOV")
+
+
+def test_login_page_carries_no_business_data():
+    page = PS.login_page()
+    for s in _CONFIDENTIAL:
+        assert s not in page, s
+    assert "Access password" in page
+    assert len(page) < 8000, "the login page should be a form, not a document"
+
+
+def test_gated_publish_deletes_the_static_page(tmp_path):
+    """Vercel checks the filesystem before it applies rewrites, so a leftover
+    site/index.html would be served in front of the gate — the exact shape of
+    the original leak."""
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "site" / "api").mkdir(parents=True)
+    (tmp_path / "reports" / "dashboard.html").write_text(
+        "<title>T</title><p>Albalawi</p>")
+    stale = tmp_path / "site" / "index.html"
+    stale.write_text("<html>Albalawi</html>")
+
+    argv = sys.argv
+    sys.argv = ["publish_site", "--root", str(tmp_path), "--gate"]
+    try:
+        assert PS.main() == 0
+    finally:
+        sys.argv = argv
+
+    assert not stale.exists()
+    fn = tmp_path / "site" / "api" / "brief.js"
+    assert fn.exists()
+    body = fn.read_text()
+    assert "APP_PASSWORD" in body and "verifyToken" in body
+
+
+def test_ungated_publish_removes_the_function(tmp_path):
+    """The inverse: leaving brief.js behind would keep the rewrite live and
+    serve a stale brief from a URL nobody is regenerating."""
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "site" / "api").mkdir(parents=True)
+    (tmp_path / "reports" / "dashboard.html").write_text("<title>T</title><p>x</p>")
+    fn = tmp_path / "site" / "api" / "brief.js"
+    fn.write_text("// stale")
+
+    argv = sys.argv
+    sys.argv = ["publish_site", "--root", str(tmp_path)]
+    try:
+        assert PS.main() == 0
+    finally:
+        sys.argv = argv
+
+    assert not fn.exists()
+    assert (tmp_path / "site" / "index.html").exists()
+
+
+def test_repo_never_ships_both_a_static_page_and_the_gate():
+    site = ROOT / "site"
+    assert not ((site / "index.html").exists()
+                and (site / "api" / "brief.js").exists()), \
+        "index.html shadows /api/brief — the gate would be bypassed"
+
+
+def test_vercel_rewrites_the_root_to_the_gated_function():
+    cfg = json.loads((ROOT / "site" / "vercel.json").read_text())
+    assert {"source": "/", "destination": "/api/brief"} in cfg["rewrites"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
+def test_gate_refuses_an_unauthenticated_request(tmp_path):
+    """End to end against the real function: no cookie, forged cookie and
+    missing APP_PASSWORD must all return the login page and nothing else."""
+    api = ROOT / "site" / "api"
+    if not (api / "brief.js").exists():
+        pytest.skip("run scripts/publish_site.py --gate first")
+    shutil.copytree(api, tmp_path / "api")
+    (tmp_path / "run.mjs").write_text(r"""
+import handler from './api/brief.js';
+import auth from './api/auth.js';
+process.env.APP_PASSWORD = 'pw';
+const mkRes = () => { const r = {code:0, body:'', cookies:[]};
+  r.setHeader=(k,v)=>{ if(k.toLowerCase()==='set-cookie') r.cookies.push(v); };
+  r.status=(c)=>{r.code=c;return r}; r.send=(b)=>{r.body=b;return r};
+  r.json=(b)=>{r.body=JSON.stringify(b);return r}; r.end=()=>r; return r; };
+const out = {};
+let res = mkRes(); await handler({method:'GET', headers:{}}, res);
+out.anon = {code: res.code, body: res.body};
+res = mkRes();
+await handler({method:'GET', headers:{cookie:'__Host-xsbrief_session=aa.bb'}}, res);
+out.forged = {code: res.code, body: res.body};
+let a = mkRes();
+await auth({method:'POST', headers:{'content-type':'application/json'},
+            body:{action:'login', password:'pw'}}, a);
+const cookie = a.cookies[0].split(';')[0];
+res = mkRes(); await handler({method:'GET', headers:{cookie}}, res);
+out.authed = {code: res.code, body: res.body};
+delete process.env.APP_PASSWORD;
+res = mkRes(); await handler({method:'GET', headers:{cookie}}, res);
+out.nopw = {code: res.code, body: res.body};
+console.log(JSON.stringify({anon:{code:out.anon.code,len:out.anon.body.length,
+  leak:CONF.filter(s=>out.anon.body.includes(s))},
+  forged:{code:out.forged.code, leak:CONF.filter(s=>out.forged.body.includes(s))},
+  authed:{code:out.authed.code, len:out.authed.body.length},
+  nopw:{code:out.nopw.code, leak:CONF.filter(s=>out.nopw.body.includes(s))}}));
+""".replace("CONF", json.dumps(list(_CONFIDENTIAL))))
+    proc = subprocess.run(["node", "run.mjs"], cwd=tmp_path,
+                          capture_output=True, text=True, timeout=60)
+    assert proc.returncode == 0, proc.stderr
+    r = json.loads(proc.stdout.strip().splitlines()[-1])
+
+    assert r["anon"]["code"] == 401 and r["anon"]["leak"] == []
+    assert r["forged"]["code"] == 401 and r["forged"]["leak"] == []
+    # Fail CLOSED: a missing password is a misconfiguration, not an open door.
+    assert r["nopw"]["code"] == 503 and r["nopw"]["leak"] == []
+    assert r["authed"]["code"] == 200
+    assert r["authed"]["len"] > 5 * r["anon"]["len"]

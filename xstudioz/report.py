@@ -11,7 +11,7 @@ from __future__ import annotations
 import datetime as _dt
 from typing import Any, Sequence
 
-from .dosing import DosePlan, weekly_schedule, week_totals
+from .dosing import DosePlan
 from .ledger import Ledger, Prediction
 from .metrics import MetricBundle
 from .selfcheck import SelfCheckReport
@@ -51,12 +51,11 @@ def render_markdown(
     # ---------------- headline ----------------
     verdict = h.verdict()
     badge = {"BREACH": "🔴", "SOFTENING": "🟠", "HEALTHY": "🟢"}[verdict]
-    out.append(f"**Organic health: {badge} {verdict}** · index {h.index:.0f}/100 · "
-               f"VVRO share {h.vvro_share_7d:.0%} (cap "
-               f"{config['dosing']['max_vvro_share']:.0%})")
+    out.append(f"**Organic health: {badge} {verdict}** · index {h.index:.0f}/100")
     out.append("")
-    out.append(f"> {plan.summary_line()}")
-    out.append("")
+    if plan.action != "disabled":
+        out.append(f"> {plan.summary_line()}")
+        out.append("")
 
     if h.breach_reasons:
         out.append("**Why the constraint is breached**")
@@ -123,34 +122,6 @@ def render_markdown(
             out.append(f"**{item['title']}** — {item['detail']}")
             out.append("")
 
-    # ---------------- VVRO plan ----------------
-    out.append(_SEP)
-    out.append("## Inorganic (VVRO) plan")
-    out.append("")
-    out.append(f"- **Action:** {plan.action.upper()} · binding constraint: "
-               f"`{plan.binding_constraint}`")
-    out.append(f"- **Quota:** {plan.weekly_quota}/week "
-               f"({plan.target_rate:.2f}/day) · today: **{plan.dose}**")
-    out.append(f"- **Ceiling from share cap:** {plan.ceiling_from_share:.2f}/day at the "
-               f"current organic rate of {h.ma7_now:.2f}/day")
-    if plan.projected_share is not None:
-        out.append(f"- **Projected VVRO share at this rate:** {plan.projected_share:.0%}")
-    if plan.cooldown_until:
-        out.append(f"- **Cooldown until:** {plan.cooldown_until}")
-    out.append("")
-    sched = weekly_schedule(plan, config)
-    totals = week_totals(sched)
-    out.append("| Date | Day | Place | Price bands |")
-    out.append("|---|---|---|---|")
-    for s in sched:
-        bands = ", ".join(f"{b['count']}x {b['range']}" for b in s["bands"]) or "—"
-        out.append(f"| {s['date']} | {s['weekday']} | {s['dose']} | {bands} |")
-    out.append("")
-    out.append("Per ISO week: " + ", ".join(f"**{w}** = {n}" for w, n in totals.items())
-               + f" (quota is {plan.weekly_quota}/week; a 7-day window straddles two "
-                 f"weeks, so these will not both equal the quota).")
-    out.append("")
-
     # ---------------- predictions ----------------
     out.append(_SEP)
     out.append("## Predictions")
@@ -195,10 +166,10 @@ def render_markdown(
     out.append(f"| Organic orders/day (7d MA) | {h.ma7_now:.2f} | vs {h.ma7_prior:.2f} "
                f"14d ago |")
     if h.structural_delta_pct is not None:
-        out.append(f"| Organic since VVRO began | {h.structural_post:.2f}/day | "
+        out.append(f"| Organic, recent vs earlier | {h.structural_post:.2f}/day | "
                    f"was {h.structural_pre:.2f}/day ({h.structural_delta_pct:+.1%}) |")
-    out.append(f"| Total orders/day (7d) | {bundle.flow_7d.total_per_day:.2f} | "
-               f"{bundle.flow_7d.organic:.0f} organic + {bundle.flow_7d.vvro:.0f} VVRO |")
+    out.append(f"| Organic orders, last 7d | {bundle.flow_7d.organic:.0f} | "
+               f"{bundle.flow_7d.organic / 7:.2f}/day |")
     out.append(f"| AOV | {_fmt_money(e.aov)} | median {_fmt_money(e.median)}, "
                f"n={e.n_priced} priced orders |")
     out.append(f"| Lifetime tracked revenue | {_fmt_money(e.revenue)} | "
@@ -231,8 +202,8 @@ def render_markdown(
         out.append(f"- **Volume:** +{rv['extra_orders']:.0f} orders "
                    f"(+{rv['extra_per_day']:.2f}/day). "
                    + ("Feasible organically." if rv["feasible_organically"]
-                      else "**Not feasible** — the organic constraint caps volume, and "
-                           "VVRO is already at its ceiling."))
+                      else "**Not feasible** — organic flow cannot supply this "
+                           "many orders inside the window."))
         out.append(f"- **AOV:** raise AOV to {_fmt_money(ra['required_aov'])} "
                    f"({ra['uplift_vs_current']:+.0%}). This is the route the "
                    f"constraint leaves open.")

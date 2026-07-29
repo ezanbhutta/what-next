@@ -63,14 +63,17 @@ def make_predictions(bundle: MetricBundle, flow: Sequence[C.DailyFlow],
 
     # --- 14-day organic health index -------------------------------------
     idx_point = bundle.health.index
-    # A breach under an active dose cut should recover; encode that as the
-    # forecast so the cut itself becomes falsifiable.
+    # Under a breach the only lever the engine still recommends is signal
+    # repair — review capture, response time, on-time delivery. Forecasting a
+    # recovery is therefore a forecast *about those tasks*, and it is stated
+    # that way so a miss indicts the tasks rather than a vague "the algorithm".
     if bundle.health.breached:
-        idx_point = min(100.0, bundle.health.index + 12)
-        basis = ("VVRO dose cut to the share cap today; if the dilution "
-                 "hypothesis is right the index should recover ~12 points in "
-                 "14 days. If it does not, the organic decline is not "
-                 "VVRO-driven and the cut should be reverted.")
+        idx_point = min(100.0, bundle.health.index + 8)
+        basis = ("Breach with the signal-repair tasks in force; if review "
+                 "capture, response time and on-time delivery are the binding "
+                 "inputs, the index should recover ~8 points in 14 days. If it "
+                 "does not, those tasks are not the constraint and the "
+                 "diagnosis needs to change.")
         conf = "low"
     else:
         basis = "No breach; index expected to hold near its current level."
@@ -137,14 +140,14 @@ def revenue_projection(bundle: MetricBundle, dose_rate: float,
     return {
         "days": days,
         "organic_rate": round(organic_rate, 3),
-        "vvro_rate": round(dose_rate, 3),
+        "directed_rate": round(dose_rate, 3),
         "total_rate": round(total_rate, 3),
         "projected_orders": round(total_rate * days, 1),
         "aov": round(aov, 2),
         "projected_revenue": round(total_rate * days * aov, 2),
-        "note": ("Assumes AOV holds. Volume is capped by the organic constraint, "
-                 "so at this dose the only lever that moves this number materially "
-                 "is AOV."),
+        "note": ("Assumes AOV holds. Volume is capped by organic flow, which "
+                 "this engine cannot raise on demand, so the only lever that "
+                 "moves this number materially inside 30 days is AOV."),
     }
 
 

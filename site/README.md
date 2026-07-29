@@ -1,10 +1,11 @@
 # XStudioz daily brief — site
 
-The published copy of `reports/dashboard.html`, gated by the same password
+The published copy of `reports/dashboard.html`, behind the same password
 mechanism CSR Pulse uses.
 
-`index.html` is **generated**. Do not edit it by hand — it is overwritten
-every morning by `scripts/publish_site.py`, which the daily run calls.
+Everything here is **generated**. Do not edit `api/brief.js` by hand — it is
+overwritten every morning by `scripts/publish_site.py`, which the daily run
+calls.
 
 ## One-time setup
 
@@ -17,34 +18,54 @@ In the Vercel web UI:
 5. **Settings → Git → Production Branch** → `claude/xstudioz-growth-automation-dj8u2z`
    Without this the page never updates, because the daily run pushes to that
    branch and not to main.
+6. **Settings → Environment Variables** → add `APP_PASSWORD`.
 
 ## Access
 
-Two options. Pick by who actually needs to see it.
+### The password gate (what the daily run publishes)
 
-### Single viewer — Vercel Deployment Protection (default)
+`scripts/publish_site.py --gate` emits the whole page **inside a serverless
+function**, `api/brief.js`. A request with no valid session cookie gets a login
+form of about 4 KB and nothing else — no client names, no revenue, no pipeline.
+`vercel.json` rewrites `/` to that function.
 
-**Settings → Deployment Protection → Vercel Authentication → All Deployments.**
-
-Only people signed in to the Vercel account can open the page. The owner is
-already signed in, so it just opens — no password to type, none to leak, none
-to rotate. This is what `publish_site.py` assumes.
-
-### Team access — the password gate
-
-Run `python3 scripts/publish_site.py --gate` instead, and set two environment
-variables in Vercel:
+Two environment variables in Vercel:
 
 ```
-APP_PASSWORD     what the team types
+APP_PASSWORD     what the team types      (required — without it the page
+                                           refuses everyone rather than
+                                           opening to everyone)
 SESSION_SECRET   any long random string; rotating it logs everyone out
 ```
 
 `SESSION_SECRET` can be changed to revoke every session at once without
 changing the password anyone types. If unset the app still works.
 
-To make the gate permanent, add `--gate` to the `publish_site.py` line in
-`CLAUDE.md` step 4 so the daily run keeps it.
+### Why the page is not a static file
+
+It used to be. `--gate` wrapped the brief in `<div id="brief" hidden>` and
+revealed it in JavaScript once `/api/auth` answered — which means the server
+had already sent every figure to anyone who asked. `curl` on the deployed URL
+returned client usernames, revenue, AOV, the dead pipeline and the team roster
+without a password. A hidden div is a UI state, not an access control.
+
+Two consequences worth keeping in mind:
+
+* **There must be no `site/index.html`.** Vercel checks the filesystem before it
+  applies rewrites, so a static page at the root is served in front of the
+  function and reopens everything. The publisher deletes it and the test suite
+  fails if both exist.
+* **A missing `APP_PASSWORD` fails closed.** The function serves the login page
+  and logs a misconfiguration rather than assuming no password means no gate.
+
+### Single viewer, no password — Vercel Deployment Protection
+
+If only the owner ever opens the link, `python3 scripts/publish_site.py` with no
+flag writes a plain static `site/index.html` (and removes `api/brief.js`), and
+**Settings → Deployment Protection → Vercel Authentication → All Deployments**
+does the gating. Nothing to type, no shared password to leak or rotate. This is
+only safe with Deployment Protection actually switched on — the file itself is
+world-readable.
 
 ## Fonts
 
@@ -56,9 +77,8 @@ suite.
 
 ## Auth
 
-`api/auth.js` is copied verbatim from `ezanbhutta/csr-pulse` so the suite has one
-auth implementation rather than two that drift. The only change is the cookie
-name, so a CSR Pulse session is not a session here.
-
-It stays in the repo even when the gate is off — switching the team on later is
-one flag, not a rebuild.
+`api/auth.js` is copied from `ezanbhutta/csr-pulse` so the suite has one auth
+implementation rather than two that drift. Two changes: the cookie name is
+namespaced (a CSR Pulse session is not a session here), and `verifyToken`,
+`cookieFrom` and `COOKIE` are exported so `api/brief.js` checks sessions with
+the same code that issues them.

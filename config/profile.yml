@@ -303,7 +303,17 @@ targets:
 # VVRO DOSING CONTROLLER
 # ---------------------------------------------------------------------------
 dosing:
-  enabled: true
+  # OFF, at the CEO's instruction (2026-07-29). Inorganic volume is directed by
+  # the CEO, not by this engine. With this false the engine emits no dose, no
+  # quota, no price bands, no country mix and no schedule, and neither the
+  # brief nor the dashboard mentions the subject at all.
+  #
+  # Consequence, stated so it is a choice and not a surprise: the engine can no
+  # longer tell you whether inorganic volume is affecting organic flow, because
+  # that analysis is the thing being removed. It still tracks organic orders —
+  # that is the objective — and still reports when organic flow is declining.
+  # It just will not attribute the decline to inorganic volume any more.
+  enabled: false
   min_per_day: 0
   max_per_day: 5
   # 0.45 -> 0.30 per operating model 3.6. Dygram holds Success Score 9 at 44%,

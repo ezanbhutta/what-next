@@ -164,6 +164,7 @@ def run_daily(
     gap = forecast.gap_analysis(proj["projected_revenue"], float(targets.get("t30", 0)),
                                 aov, proj["total_rate"], days=30)
 
+    dosing_on = bool(config.get("dosing", {}).get("enabled", True))
     plan = dosing.decide(
         date=today, profile=profile_name, health=bundle.health,
         current_vvro_per_day=current_vvro, config=config,
@@ -171,6 +172,8 @@ def run_daily(
         revenue_gap=gap.get("gap") or None,
         cooldown_until=cooldown)
 
+    if not dosing_on:
+        plan = dosing.disabled_plan(today, profile_name)
     # Recompute the projection at the *recommended* rate, not the current one.
     proj = forecast.revenue_projection(bundle, plan.target_rate, days=30)
     gap = forecast.gap_analysis(proj["projected_revenue"], float(targets.get("t30", 0)),

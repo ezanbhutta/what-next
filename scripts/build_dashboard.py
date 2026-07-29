@@ -42,8 +42,7 @@ def load_flow(root: Path, profile: str) -> list[dict]:
             continue
         r = json.loads(line)
         if r.get("profile") == profile:
-            rows.append({"date": r["date"], "o": r.get("organic_orders", 0),
-                         "v": r.get("vvro_orders", 0)})
+            rows.append({"date": r["date"], "o": r.get("organic_orders", 0)})
     rows.sort(key=lambda r: r["date"])
     return rows
 
@@ -316,10 +315,10 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     A('<section class="kpis">')
     A(kpi("Organic / day", f'{h["ma7_now"]:.2f}', f'7d avg, was {h["ma7_prior"]:.2f}',
           "critical" if verdict == "BREACH" else ""))
-    A(kpi("VVRO share", f'{h["vvro_share_7d"]:.0%}', f'cap {share_cap:.0%}',
-          "critical" if h["vvro_share_7d"] > share_cap else "good"))
-    A(kpi("Today's dose", str(plan["dose"]), f'{plan["weekly_quota"]}/week'))
+    A(kpi("Organic, last 7d", f'{m["flow_7d"]["organic"]:.0f}', "orders"))
     A(kpi("AOV", money(econ["aov"]), f'median {money(econ["median"])}'))
+    A(kpi("Conversion", f'{fun["conversion"]:.1%}',
+          f'{fun["placed"]}/{fun["inquiries"]} inquiries'))
     A(kpi("Phase gate", f'{gmet}/{gtot}', ph.get("label", "—"),
           "good" if ph.get("gate_open") else "warn"))
     A('</section>')
@@ -339,56 +338,13 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
           f'No breach — the dose may rise if revenue needs it.</p>')
     A("</section>")
 
-    # ---- decision row ----
-    A('<div class="cols">')
-    act = plan["action"]
-    A(f'<section class="card"><h2>Place today</h2><div class="dose">'
-      f'<span class="big">{plan["dose"]}</span>'
-      f'<span class="unit">order{"s" if plan["dose"] != 1 else ""} &middot; '
-      f'{plan["weekly_quota"]}/week</span>'
-      f'<span class="pill {E(act)}">{E(act)}</span></div>')
-    bands = [b for b in plan.get("bands", []) if b["count"]]
-    if bands:
-        A('<div class="chips">' + "".join(
-            f'<span class="chip"><b>{b["count"]}&times;</b> {E(b["range"])}</span>'
-            for b in bands) + "</div>")
-    pattern = plan.get("week_pattern") or []
-    if pattern:
-        dow = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        wd = _dt.date.fromisoformat(today).weekday()
-        A('<div class="week">' + "".join(
-            f'<div class="day{" on" if n else ""}"><div class="dow">{dow[i]}'
-            f'{"&bull;" if i == wd else ""}</div><div class="n">{n}</div></div>'
-            for i, n in enumerate(pattern)) + "</div>")
-    A(f'<p class="note">Binding constraint: <code>{E(plan["binding_constraint"])}</code>. '
-      f'Days rotate weekly — a fixed cadence is what makes inorganic volume '
-      f'legible from outside.</p></section>')
-
-    # the ceiling formula as a live readout
-    A('<section class="card"><h2>Why that number</h2>'
-      '<div class="formula">'
-      '<span class="sym">v</span> &le; <span class="sym">o</span> &times; '
-      '<span class="sym">s</span> &divide; (1 &minus; <span class="sym">s</span>)<br>'
-      f'<span class="sub">organic <span class="sym">o</span></span> = '
-      f'<b>{o:.2f}</b>/day<br>'
-      f'<span class="sub">share cap <span class="sym">s</span></span> = '
-      f'<b>{share_cap:.0%}</b><br>'
-      f'<span class="sub">ceiling <span class="sym">v</span></span> = '
-      f'<b>{ceiling:.2f}</b>/day &rarr; <b>{plan["weekly_quota"]}</b>/week'
-      '</div>'
-      f'<p class="note">The cap is on the <em>share</em>, so the ceiling moves with '
-      f'organic volume. When organic falls, the inorganic headroom falls with it — '
-      f'the leverage shrinks exactly when it feels most tempting to pull harder.</p>'
-      '</section>')
-    A("</div>")
-
     # ---- flow chart ----
     if flow:
-        A('<section class="card"><h2>Order flow</h2>'
-          '<canvas id="flow" aria-label="Daily organic and inorganic orders"></canvas>'
+        A('<section class="card"><h2>Organic order flow</h2>'
+          '<canvas id="flow" aria-label="Daily organic orders"></canvas>'
           '<div class="legend">'
-          '<span><i style="background:var(--accent)"></i>Organic</span>'
-          '<span><i style="background:var(--muted)"></i>VVRO</span></div></section>')
+          '<span><i style="background:var(--violet)"></i>Organic orders</span>'
+          '</div></section>')
 
     # ---- why it moved ----
     if dec.get("have_data") and dec.get("verdict") not in (None, "no_data"):
@@ -425,9 +381,8 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     rows = [
         ("Organic orders/day (7d)", f'{h["ma7_now"]:.2f}',
          f'was {h["ma7_prior"]:.2f} 14d ago'),
-        ("Total orders/day (7d)", f'{m["flow_7d"]["total_per_day"]:.2f}',
-         f'{m["flow_7d"]["organic"]:.0f} organic + {m["flow_7d"]["vvro"]:.0f} VVRO'),
-        ("VVRO share (7d)", f'{h["vvro_share_7d"]:.0%}', f"cap {share_cap:.0%}"),
+        ("Organic orders, last 7d", f'{m["flow_7d"]["organic"]:.0f}',
+         f'{m["flow_7d"]["organic"] / 7:.2f}/day'),
         ("AOV", money(econ["aov"]),
          f'median {money(econ["median"])} · n={econ["n_priced"]}'),
         ("Inquiry conversion", f'{fun["conversion"]:.1%}',
@@ -438,7 +393,7 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
          f'of {econ.get("upsell_denominator", 0)} orders with the column'),
     ]
     if h.get("structural_delta_pct") is not None:
-        rows.insert(1, ("Organic since VVRO began",
+        rows.insert(1, ("Organic, recent vs earlier",
                         f'{h["structural_post"]:.2f}/day',
                         f'was {h["structural_pre"]:.2f} '
                         f'({h["structural_delta_pct"]:+.1%})'))
@@ -521,21 +476,19 @@ function draw(){{
   c.width=w*dpr; c.height=h*dpr;
   const x=c.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,w,h);
   const cs=getComputedStyle(document.documentElement);
-  const accent=cs.getPropertyValue('--accent').trim();
+  const accent=cs.getPropertyValue('--violet').trim();
   const muted=cs.getPropertyValue('--muted').trim();
   const hair=cs.getPropertyValue('--hair').trim();
   const pad=18, iw=w-pad*2, ih=h-pad*2;
-  const max=Math.max(1,...FLOW.map(d=>Math.max(d.o,d.v)));
+  const max=Math.max(1,...FLOW.map(d=>d.o));
   x.strokeStyle=hair; x.lineWidth=1;
   for(let i=0;i<=2;i++){{const y=pad+ih*i/2;
     x.beginPath();x.moveTo(pad,y);x.lineTo(w-pad,y);x.stroke();}}
   const bw=Math.max(1,iw/FLOW.length-1.5);
   FLOW.forEach((d,i)=>{{
     const bx=pad+i*(iw/FLOW.length);
-    if(d.v>0){{x.fillStyle=muted;const bh=ih*d.v/max;
-      x.fillRect(bx,pad+ih-bh,bw,bh);}}
     if(d.o>0){{x.fillStyle=accent;const bh=ih*d.o/max;
-      x.fillRect(bx,pad+ih-bh-(d.v>0?ih*d.v/max:0),bw,bh);}}
+      x.fillRect(bx,pad+ih-bh,bw,bh);}}
   }});
 }}
 draw();

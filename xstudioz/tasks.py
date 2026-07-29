@@ -520,7 +520,8 @@ def _data_quality_rules(violations: Sequence[C.Violation],
                  f"objective are currently inferred from the CRM sheet instead of "
                  f"measured, because this column is empty."),
             steps=[
-                "Fill Organic Revenue and VVRO Revenue for every day with orders.",
+                "Fill every revenue column in the ledger for every day that "
+                "recorded orders.",
                 "Backfill from 2026-06-11 forward — that is where the ledger starts.",
                 "This is the single highest-value data fix available: it unblocks "
                 "revenue forecasting entirely.",
@@ -620,9 +621,10 @@ def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
             "strongest ranking input you control.",
             "Audit on-time delivery and response time over the same window — "
             "both feed the success score that drives impressions.",
-            "Check whether the VVRO ramp coincides with the impression drop. "
-            "If it does, that is the dilution hypothesis showing up in the "
-            "one metric that can actually confirm it.",
+            "List every change made to how the profile was run in the same "
+            "window — pricing, order mix, delivery times, gig edits — and "
+            "line them up against the impression series by date. Impressions "
+            "are the one metric that can date a ranking change.",
         ]),
         "ctr": ("listing", "playbooks/lead_triage.md", [
             "Treat this as a listing problem — people are seeing the gig and "
@@ -803,7 +805,8 @@ def generate(
     tasks: list[Task] = []
     config = config or {}
     aov = bundle.econ.aov or 137.0
-    tasks.append(_dosing_rule(plan, bundle.health.verdict()))
+    if plan.action != "disabled":
+        tasks.append(_dosing_rule(plan, bundle.health.verdict()))
     tasks += _decomposition_rules(bundle)
     tasks += _dispute_rules(disputes, today, aov)
     tasks += _active_order_rules(active, today, bundle.gig, aov)

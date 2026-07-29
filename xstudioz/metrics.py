@@ -199,8 +199,9 @@ def organic_health(rows: Iterable[C.DailyFlow], profile: str, as_of: _dt.date,
     (< 1 order/day) it can read exactly flat while flow is genuinely eroding.
 
     *structural* — the organic rate since ``vvro_start`` against the rate
-    before it. Slower to react, but it is the test that actually answers
-    "is the VVRO programme costing us organic reach?"
+    before it. Slower to react, but it survives sparse counts, which the
+    rolling test does not. The break date is a parameter, not a claim: the
+    engine reports the step change and does not attribute it.
     """
     dates, org, vv = flow_series(rows, profile)
     if not dates:
@@ -241,7 +242,11 @@ def organic_health(rows: Iterable[C.DailyFlow], profile: str, as_of: _dt.date,
             f"({ma7_prior:.2f} -> {ma7_now:.2f}/day)")
     if s_delta is not None and s_delta < tolerance:
         breach_reasons.append(
-            f"structural: organic {s_delta:+.1%} since VVRO began {vvro_start} "
+            # The break date is named, the cause is not. Attributing this
+            # decline to a cause is exactly the analysis that was switched off
+            # with the dosing controller; stating the date keeps the signal
+            # honest without implying a mechanism the engine no longer tests.
+            f"structural: organic {s_delta:+.1%} since {vvro_start} "
             f"({s_pre:.2f} -> {s_post:.2f}/day)")
     breached = bool(breach_reasons)
 

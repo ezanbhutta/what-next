@@ -571,58 +571,28 @@
   "dose_plan": {
     "date": "2026-07-29",
     "profile": "X Studioz",
-    "dose": 1,
-    "weekly_quota": 2,
-    "target_rate": 0.286,
-    "previous_dose": 2.286,
-    "action": "cut",
-    "binding_constraint": "organic_health_breach",
+    "dose": 0,
+    "weekly_quota": 0,
+    "target_rate": 0.0,
+    "previous_dose": 0.0,
+    "action": "disabled",
+    "binding_constraint": "controller_disabled",
     "reasons": [
-      "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers."
+      "Inorganic volume is directed by the CEO, not by this engine."
     ],
-    "bands": [
-      {
-        "range": "$45-$85",
-        "lo": 45.0,
-        "hi": 85.0,
-        "count": 0
-      },
-      {
-        "range": "$86-$150",
-        "lo": 86.0,
-        "hi": 150.0,
-        "count": 0
-      },
-      {
-        "range": "$151-$260",
-        "lo": 151.0,
-        "hi": 260.0,
-        "count": 1
-      },
-      {
-        "range": "$261-$450",
-        "lo": 261.0,
-        "hi": 450.0,
-        "count": 0
-      }
-    ],
-    "countries": [
-      {
-        "country": "Other",
-        "count": 1
-      }
-    ],
-    "ceiling_from_share": 0.306,
-    "projected_share": 0.2857,
-    "cooldown_until": "2026-08-01",
-    "expected_revenue": 205.5,
+    "bands": [],
+    "countries": [],
+    "ceiling_from_share": 0.0,
+    "projected_share": null,
+    "cooldown_until": null,
+    "expected_revenue": 0.0,
     "week_pattern": [
       0,
       0,
-      1,
       0,
       0,
-      1,
+      0,
+      0,
       0
     ]
   },
@@ -653,29 +623,6 @@
       "score": 186.7
     },
     {
-      "id": "vvro-2026-07-29",
-      "title": "VVRO: 2/week (1 today) \u2014 CUT",
-      "category": "vvro_dosing",
-      "owner": "CEO / order placement",
-      "why": "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.",
-      "steps": [
-        "Place **1 VVRO order today** (1x $151-$260) \u2014 quota **2/week**.",
-        "Countries to spread across: Other x1",
-        "At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.",
-        "Do not place on a fixed weekday pattern \u2014 the schedule rotates weekly for a reason.",
-        "Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller."
-      ],
-      "impact_usd": 1438.5,
-      "confidence": 0.8,
-      "effort_hours": 0.5,
-      "priority": "P0",
-      "urgency": 1,
-      "playbook": "playbooks/vvro_dosing.md",
-      "refs": [],
-      "due": null,
-      "score": 2301.6
-    },
-    {
       "id": "impressions-stale",
       "title": "Bring the impressions sheet up to date \u2014 it stops months ago",
       "category": "data_quality",
@@ -704,7 +651,7 @@
       "owner": "Whoever owns the daily ledger",
       "why": "112 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
       "steps": [
-        "Fill Organic Revenue and VVRO Revenue for every day with orders.",
+        "Fill every revenue column in the ledger for every day that recorded orders.",
         "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
         "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
       ],
@@ -777,7 +724,7 @@
       "impact_usd": 3000,
       "confidence": 0.4,
       "effort_hours": 1.0,
-      "priority": "P2",
+      "priority": "P1",
       "urgency": 0,
       "playbook": "playbooks/upsell.md",
       "refs": [],
@@ -827,6 +774,27 @@
       "score": 560.0
     },
     {
+      "id": "fix-clickup",
+      "title": "Fix the broken ClickUp sync (334 logged failures)",
+      "category": "automation",
+      "owner": "CEO / whoever owns the Apps Script",
+      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+      "steps": [
+        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+        "Re-run the sync for the backlog.",
+        "Add a failure alert \u2014 300+ silent failures is the real defect."
+      ],
+      "impact_usd": 600,
+      "confidence": 0.7,
+      "effort_hours": 1.0,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 420.0
+    },
+    {
       "id": "deliver-4",
       "title": "Close out approved order #4 \u2014 Calum Snell",
       "category": "delivery",
@@ -873,25 +841,25 @@
       "score": 80.7
     },
     {
-      "id": "fix-clickup",
-      "title": "Fix the broken ClickUp sync (334 logged failures)",
-      "category": "automation",
-      "owner": "CEO / whoever owns the Apps Script",
-      "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+      "id": "upsell-tracking",
+      "title": "Start recording upsells \u2014 the column is empty",
+      "category": "data_quality",
+      "owner": "All CSRs",
+      "why": "Upsell is marked on 0.0% of the 2353 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
       "steps": [
-        "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
-        "Re-run the sync for the backlog.",
-        "Add a failure alert \u2014 300+ silent failures is the real defect."
+        "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
+        "Fill 'What did you upsell and how much' whenever TRUE.",
+        "Backfill the last 30 completed orders from memory this week."
       ],
-      "impact_usd": 600,
-      "confidence": 0.7,
-      "effort_hours": 1.0,
+      "impact_usd": 1200,
+      "confidence": 0.5,
+      "effort_hours": 1.5,
       "priority": "P3",
       "urgency": 0,
-      "playbook": "playbooks/data_hygiene.md",
+      "playbook": "playbooks/upsell.md",
       "refs": [],
       "due": null,
-      "score": 420.0
+      "score": 400.0
     }
   ],
   "predictions": [
@@ -921,12 +889,12 @@
       "created_on": "2026-07-29",
       "resolve_on": "2026-08-12",
       "metric": "health.index",
-      "statement": "Organic health index in 14 days will be 49 (80% CI 35-71).",
-      "point": 48.7,
-      "lo": 34.687646887,
-      "hi": 70.747853113,
+      "statement": "Organic health index in 14 days will be 45 (80% CI 32-65).",
+      "point": 44.7,
+      "lo": 31.838558847000005,
+      "hi": 64.936941153,
       "confidence": "low",
-      "basis": "VVRO dose cut to the share cap today; if the dilution hypothesis is right the index should recover ~12 points in 14 days. If it does not, the organic decline is not VVRO-driven and the cut should be reverted.",
+      "basis": "Breach with the signal-repair tasks in force; if review capture, response time and on-time delivery are the binding inputs, the index should recover ~8 points in 14 days. If it does not, those tasks are not the constraint and the diagnosis needs to change.",
       "horizon_days": 14,
       "profile": "X Studioz",
       "status": "open",
@@ -1003,58 +971,23 @@
   ],
   "resolved": [],
   "selfcheck": {
-    "score": 85.8,
+    "score": 95.8,
     "rubric": {
       "task_count": 10.0,
       "ownership": 20.0,
       "evidence": 20.8,
       "actionability": 15.0,
       "falsifiability": 20.0,
-      "priority_spread": 0.0
+      "priority_spread": 10.0
     },
     "blocking": 0,
     "repairs": [],
     "results": [
       {
-        "name": "dose_within_share_cap",
+        "name": "disabled_controller_emits_nothing",
         "passed": true,
         "severity": "block",
-        "detail": "projected VVRO share 28.57% vs cap 30%",
-        "repaired": false
-      },
-      {
-        "name": "dose_within_daily_max",
-        "passed": true,
-        "severity": "block",
-        "detail": "dose 1 vs max_per_day 5",
-        "repaired": false
-      },
-      {
-        "name": "weekly_quota_matches_rate",
-        "passed": true,
-        "severity": "block",
-        "detail": "weekly quota 2 vs rate 0.286/day x7 = 2.00",
-        "repaired": false
-      },
-      {
-        "name": "week_pattern_sums_to_quota",
-        "passed": true,
-        "severity": "block",
-        "detail": "pattern [0, 0, 1, 0, 0, 1, 0] sums to 2, quota is 2",
-        "repaired": false
-      },
-      {
-        "name": "no_raise_under_breach",
-        "passed": true,
-        "severity": "block",
-        "detail": "health BREACH with action=cut \u2014 the objective forbids scaling VVRO while organic is breached",
-        "repaired": false
-      },
-      {
-        "name": "bands_sum_to_dose",
-        "passed": true,
-        "severity": "block",
-        "detail": "price bands allocate 1, dose is 1",
+        "detail": "controller disabled but dose=0, quota=0, bands=0",
         "repaired": false
       },
       {
@@ -1143,9 +1076,9 @@
       },
       {
         "name": "priority_spread_sane",
-        "passed": false,
+        "passed": true,
         "severity": "warn",
-        "detail": "5 of 12 tasks are P0",
+        "detail": "4 of 12 tasks are P0",
         "repaired": false
       }
     ]
@@ -1202,8 +1135,8 @@
       "task_ids": [
         "rescue-5",
         "designer-routing",
-        "deliver-4",
-        "deliver-6"
+        "fix-clickup",
+        "deliver-4"
       ],
       "tasks": [
         {
@@ -1253,6 +1186,27 @@
           "score": 560.0
         },
         {
+          "id": "fix-clickup",
+          "title": "Fix the broken ClickUp sync (334 logged failures)",
+          "category": "automation",
+          "owner": "CEO / whoever owns the Apps Script",
+          "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+          "steps": [
+            "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
+            "Re-run the sync for the backlog.",
+            "Add a failure alert \u2014 300+ silent failures is the real defect."
+          ],
+          "impact_usd": 600,
+          "confidence": 0.7,
+          "effort_hours": 1.0,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 420.0
+        },
+        {
           "id": "deliver-4",
           "title": "Close out approved order #4 \u2014 Calum Snell",
           "category": "delivery",
@@ -1274,29 +1228,6 @@
           ],
           "due": null,
           "score": 80.7
-        },
-        {
-          "id": "deliver-6",
-          "title": "Close out approved order #6 \u2014 bethanyjademck",
-          "category": "delivery",
-          "owner": "Delivery lead",
-          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
-          "steps": [
-            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
-            "Deliver via the order (not chat) so it counts toward on-time delivery.",
-            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
-          ],
-          "impact_usd": 100.88,
-          "confidence": 0.8,
-          "effort_hours": 1.0,
-          "priority": "P3",
-          "urgency": 1,
-          "playbook": "playbooks/review_capture.md",
-          "refs": [
-            "order_tracker/tracker#b0r5"
-          ],
-          "due": null,
-          "score": 80.7
         }
       ],
       "standing": [
@@ -1306,40 +1237,16 @@
         "Escalate any cancellation risk before it is filed, never after."
       ],
       "total_effort_hours": 4.0,
-      "total_impact_usd": 1401.77
+      "total_impact_usd": 1900.88
     },
     {
       "person": "CEO",
       "role": "ceo",
       "window": "\u2014",
       "task_ids": [
-        "vvro-2026-07-29",
         "upsell-program"
       ],
       "tasks": [
-        {
-          "id": "vvro-2026-07-29",
-          "title": "VVRO: 2/week (1 today) \u2014 CUT",
-          "category": "vvro_dosing",
-          "owner": "CEO / order placement",
-          "why": "Organic constraint breached \u2014 structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.",
-          "steps": [
-            "Place **1 VVRO order today** (1x $151-$260) \u2014 quota **2/week**.",
-            "Countries to spread across: Other x1",
-            "At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.",
-            "Do not place on a fixed weekday pattern \u2014 the schedule rotates weekly for a reason.",
-            "Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller."
-          ],
-          "impact_usd": 1438.5,
-          "confidence": 0.8,
-          "effort_hours": 0.5,
-          "priority": "P0",
-          "urgency": 1,
-          "playbook": "playbooks/vvro_dosing.md",
-          "refs": [],
-          "due": null,
-          "score": 2301.6
-        },
         {
           "id": "upsell-program",
           "title": "Run the upsell A/B test to de-bias the 54% vs 31% gap",
@@ -1355,7 +1262,7 @@
           "impact_usd": 3000,
           "confidence": 0.4,
           "effort_hours": 1.0,
-          "priority": "P2",
+          "priority": "P1",
           "urgency": 0,
           "playbook": "playbooks/upsell.md",
           "refs": [],
@@ -1365,11 +1272,11 @@
       ],
       "standing": [
         "Post impressions and the 7-day average every morning. It is the single number that says whether the suppression is lifting.",
-        "Hold the inorganic team to the weekly quota and the price bands. Cheap controlled volume on a premium profile is the worst of both worlds.",
+        "Watch the blended AOV against the organic AOV every week. When the two diverge, the profile is being priced below what its review base can carry, and the objective is revenue, not order count.",
         "Any order past day 7, or any cancellation, comes to you the same day."
       ],
-      "total_effort_hours": 1.5,
-      "total_impact_usd": 4438.5
+      "total_effort_hours": 1.0,
+      "total_impact_usd": 3000
     },
     {
       "person": "Nadir",
@@ -1378,7 +1285,7 @@
       "task_ids": [
         "impressions-stale",
         "review-capture",
-        "fix-clickup"
+        "deliver-6"
       ],
       "tasks": [
         {
@@ -1426,25 +1333,27 @@
           "score": 1733.0
         },
         {
-          "id": "fix-clickup",
-          "title": "Fix the broken ClickUp sync (334 logged failures)",
-          "category": "automation",
-          "owner": "CEO / whoever owns the Apps Script",
-          "why": "The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.",
+          "id": "deliver-6",
+          "title": "Close out approved order #6 \u2014 bethanyjademck",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
           "steps": [
-            "Set CLICKUP_TOKEN in the Apps Script's Script Properties.",
-            "Re-run the sync for the backlog.",
-            "Add a failure alert \u2014 300+ silent failures is the real defect."
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
           ],
-          "impact_usd": 600,
-          "confidence": 0.7,
+          "impact_usd": 100.88,
+          "confidence": 0.8,
           "effort_hours": 1.0,
           "priority": "P3",
-          "urgency": 0,
-          "playbook": "playbooks/data_hygiene.md",
-          "refs": [],
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
           "due": null,
-          "score": 420.0
+          "score": 80.7
         }
       ],
       "standing": [
@@ -1456,7 +1365,7 @@
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
       "total_effort_hours": 3.0,
-      "total_impact_usd": 6951.06
+      "total_impact_usd": 6451.94
     },
     {
       "person": "Hasnain",
@@ -1474,7 +1383,7 @@
           "owner": "Whoever owns the daily ledger",
           "why": "112 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
           "steps": [
-            "Fill Organic Revenue and VVRO Revenue for every day with orders.",
+            "Fill every revenue column in the ledger for every day that recorded orders.",
             "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
             "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
           ],
@@ -1526,7 +1435,8 @@
       "role": "csr",
       "window": "09:00-17:00 PKT",
       "task_ids": [
-        "dead-pipeline"
+        "dead-pipeline",
+        "upsell-tracking"
       ],
       "tasks": [
         {
@@ -1550,6 +1460,27 @@
           "refs": [],
           "due": null,
           "score": 150.5
+        },
+        {
+          "id": "upsell-tracking",
+          "title": "Start recording upsells \u2014 the column is empty",
+          "category": "data_quality",
+          "owner": "All CSRs",
+          "why": "Upsell is marked on 0.0% of the 2353 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "steps": [
+            "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
+            "Fill 'What did you upsell and how much' whenever TRUE.",
+            "Backfill the last 30 completed orders from memory this week."
+          ],
+          "impact_usd": 1200,
+          "confidence": 0.5,
+          "effort_hours": 1.5,
+          "priority": "P3",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [],
+          "due": null,
+          "score": 400.0
         }
       ],
       "standing": [
@@ -1560,20 +1491,20 @@
         "Log every quoted price into the inquiry sheet the moment it is sent.",
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
-      "total_effort_hours": 3.0,
-      "total_impact_usd": 820.8
+      "total_effort_hours": 4.5,
+      "total_impact_usd": 2020.8
     }
   ],
   "edge": [
     {
       "id": "portfolio_control",
       "title": "Dygram is the experiment already run",
-      "detail": "Dygram holds Success Score 9 at 44% inorganic and pulls 8x the impressions of X Studioz (12,700/day against 1,564). Same operator, same team, same category. Copy its ratio policy rather than theorising about the algorithm."
+      "detail": "Dygram holds Success Score 9 against X Studioz's 8, and pulls 8x the impressions (12,700/day against 1,564). Same operator, same team, same category, same marketplace. Whatever is different between the two profiles is worth more than any competitor study \u2014 diagnose it directly rather than theorising about the algorithm."
     },
     {
       "id": "trust_asset",
       "title": "1,583 reviews is the moat, and it is being spent on cheap orders",
-      "detail": "Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds \u2014 and it is currently attached to a $77 inorganic average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try."
+      "detail": "Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds \u2014 and it is currently attached to a low average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try."
     },
     {
       "id": "repeat_base",
@@ -1621,12 +1552,12 @@
   "revenue_projection": {
     "days": 30,
     "organic_rate": 0.714,
-    "vvro_rate": 0.286,
-    "total_rate": 1.0,
-    "projected_orders": 30.0,
+    "directed_rate": 0.0,
+    "total_rate": 0.714,
+    "projected_orders": 21.4,
     "aov": 112.09,
-    "projected_revenue": 3362.7,
-    "note": "Assumes AOV holds. Volume is capped by the organic constraint, so at this dose the only lever that moves this number materially is AOV."
+    "projected_revenue": 2401.93,
+    "note": "Assumes AOV holds. Volume is capped by organic flow, which this engine cannot raise on demand, so the only lever that moves this number materially inside 30 days is AOV."
   },
   "gap": {
     "gap": 0.0,

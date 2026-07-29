@@ -88,6 +88,16 @@ class SelfCheckReport:
 def check_invariants(rep: SelfCheckReport, *, plan: DosePlan, bundle: MetricBundle,
                      config: dict[str, Any]) -> None:
     dcfg = config.get("dosing", {})
+    if plan.action == "disabled":
+        # Nothing was recommended, so there is nothing to check. Assert that
+        # explicitly rather than silently skipping — a disabled controller that
+        # still emitted a dose would be a bug worth catching.
+        rep.add("disabled_controller_emits_nothing",
+                plan.dose == 0 and plan.weekly_quota == 0 and not plan.bands,
+                "block",
+                f"controller disabled but dose={plan.dose}, "
+                f"quota={plan.weekly_quota}, bands={len(plan.bands)}")
+        return
     max_share = float(dcfg.get("max_vvro_share", 0.45))
     max_per_day = int(dcfg.get("max_per_day", 5))
 

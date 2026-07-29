@@ -135,8 +135,9 @@ STANDING_LEAD = [
 STANDING_CEO = [
     "Post impressions and the 7-day average every morning. It is the single "
     "number that says whether the suppression is lifting.",
-    "Hold the inorganic team to the weekly quota and the price bands. Cheap "
-    "controlled volume on a premium profile is the worst of both worlds.",
+    "Watch the blended AOV against the organic AOV every week. When the two "
+    "diverge, the profile is being priced below what its review base can "
+    "carry, and the objective is revenue, not order count.",
     "Any order past day 7, or any cancellation, comes to you the same day.",
 ]
 
@@ -269,22 +270,27 @@ def edge(config: dict[str, Any]) -> list[dict[str, str]]:
             "title": f"{best['profile']} is the experiment already run",
             "detail": (
                 f"{best['profile']} holds Success Score {best.get('success_score')} "
-                f"at {best.get('inorganic_share', 0):.0%} inorganic and pulls "
-                f"{ratio:.0f}x the impressions of X Studioz "
+                f"against X Studioz's {us.get('success_score')}, and pulls "
+                f"{ratio:.0f}x the impressions "
                 f"({best.get('jul_impressions_daily', 0):,}/day against "
                 f"{us.get('jul_impressions_daily', 0):,}). Same operator, same "
-                f"team, same category. Copy its ratio policy rather than "
-                f"theorising about the algorithm."),
+                f"team, same category, same marketplace. Whatever is different "
+                f"between the two profiles is worth more than any competitor "
+                f"study — diagnose it directly rather than theorising about "
+                f"the algorithm."),
         })
+    econ = config.get("economics") or {}
+    blended = econ.get("aov_blended")
     out.append({
         "id": "trust_asset",
         "title": "1,583 reviews is the moat, and it is being spent on cheap orders",
         "detail": (
             "Almost no competitor in logo design can match that review base. It "
             "is a conversion advantage that compounds — and it is currently "
-            "attached to a $77 inorganic average order value. The same trust "
-            "aimed at $150-$260 work is the single largest untaken edge here, "
-            "and it costs nothing to try."),
+            + (f"attached to a ${blended:,.0f} average order value. "
+               if blended else "attached to a low average order value. ")
+            + "The same trust aimed at $150-$260 work is the single largest "
+              "untaken edge here, and it costs nothing to try."),
     })
     out.append({
         "id": "repeat_base",

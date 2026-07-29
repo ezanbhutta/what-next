@@ -1,11 +1,9 @@
 # XStudioz — What Next · Wednesday 29 July 2026
 
-**Organic health: 🔴 BREACH** · index 37/100 · VVRO share 79% (cap 30%)
-
-> Place **1 VVRO order today** (1x $151-$260) — quota **2/week**.
+**Organic health: 🔴 BREACH** · index 37/100
 
 **Why the constraint is breached**
-- structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day)
+- structural: organic -14.3% since 2026-07-13 (0.66 -> 0.56/day)
 
 ## Do today
 
@@ -21,18 +19,6 @@
 - If they choose (b), process it same day — a fast clean exit is cheaper than a slow 1-star.
 - Script: `playbooks/dispute_rescue.md`
 - Source rows: `order_tracker/tracker#b0r4`
-
-### P0 · VVRO: 2/week (1 today) — CUT
-**Owner:** CEO / order placement · **Est. impact:** $1,438 · **Effort:** 0.5h · **Confidence:** 80%
-
-*Why:* Organic constraint breached — structural: organic -14.3% since VVRO began 2026-07-13 (0.66 -> 0.56/day). The objective makes organic recovery a hard constraint, so the dose is cut by 2/day and revenue upside is ignored until flow recovers. Quota 2/week (0.29/day); share cap allows 0.31/day.
-
-- Place **1 VVRO order today** (1x $151-$260) — quota **2/week**.
-- Countries to spread across: Other x1
-- At this quota the VVRO share settles at 29%, against a cap of 0.31 VVRO/day at the current organic rate.
-- Do not place on a fixed weekday pattern — the schedule rotates weekly for a reason.
-- Log every placement in the daily ledger with its real amount. Revenue columns are currently all zero, which blinds the whole controller.
-- Script: `playbooks/vvro_dosing.md`
 
 ### P0 · Bring the impressions sheet up to date — it stops months ago
 **Owner:** Hasnain · **Est. impact:** $2,500 · **Effort:** 1.0h · **Confidence:** 80%
@@ -50,7 +36,7 @@
 
 *Why:* 112 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.
 
-- Fill Organic Revenue and VVRO Revenue for every day with orders.
+- Fill every revenue column in the ledger for every day that recorded orders.
 - Backfill from 2026-06-11 forward — that is where the ledger starts.
 - This is the single highest-value data fix available: it unblocks revenue forecasting entirely.
 - Script: `playbooks/data_hygiene.md`
@@ -77,7 +63,7 @@
 - Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md.
 - Script: `playbooks/review_capture.md`
 
-### P2 · Run the upsell A/B test to de-bias the 54% vs 31% gap
+### P1 · Run the upsell A/B test to de-bias the 54% vs 31% gap
 **Owner:** CEO + Salman · **Est. impact:** $3,000 · **Effort:** 1.0h · **Confidence:** 40%
 
 *Why:* Leads with an upsell attempt convert 50.0% (n=38) against 5.3% (n=947), z=10.59. That is a +847% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
@@ -108,6 +94,16 @@
 - Revisit in 30 days with the engine's updated per-designer AOV.
 - Script: `playbooks/staffing.md`
 
+### P2 · Fix the broken ClickUp sync (334 logged failures)
+**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
+
+*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
+
+- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
+- Re-run the sync for the backlog.
+- Add a failure alert — 300+ silent failures is the real defect.
+- Script: `playbooks/data_hygiene.md`
+
 ### P3 · Close out approved order #4 — Calum Snell
 **Owner:** Delivery lead · **Est. impact:** $101 · **Effort:** 1.0h · **Confidence:** 80%
 
@@ -130,15 +126,15 @@
 - Script: `playbooks/review_capture.md`
 - Source rows: `order_tracker/tracker#b0r5`
 
-### P3 · Fix the broken ClickUp sync (334 logged failures)
-**Owner:** CEO / whoever owns the Apps Script · **Est. impact:** $600 · **Effort:** 1.0h · **Confidence:** 70%
+### P3 · Start recording upsells — the column is empty
+**Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
-*Why:* The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.
+*Why:* Upsell is marked on 0.0% of the 2353 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
 
-- Set CLICKUP_TOKEN in the Apps Script's Script Properties.
-- Re-run the sync for the backlog.
-- Add a failure alert — 300+ silent failures is the real defect.
-- Script: `playbooks/data_hygiene.md`
+- Fill the Upsell column on every order: TRUE/FALSE, no blanks.
+- Fill 'What did you upsell and how much' whenever TRUE.
+- Backfill the last 30 completed orders from memory this week.
+- Script: `playbooks/upsell.md`
 
 
 ---
@@ -150,8 +146,8 @@
 
 - **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
 - **P2** Route high-value briefs to Raylain
+- **P2** Fix the broken ClickUp sync (334 logged failures)
 - **P3** Close out approved order #4 — Calum Snell
-- **P3** Close out approved order #6 — bethanyjademck
 
 Standing duties, every shift:
 - QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.
@@ -160,14 +156,13 @@ Standing duties, every shift:
 - Escalate any cancellation risk before it is filed, never after.
 
 ### CEO · ceo · —
-*2 task(s), ~1.5h*
+*1 task(s), ~1.0h*
 
-- **P0** VVRO: 2/week (1 today) — CUT
-- **P2** Run the upsell A/B test to de-bias the 54% vs 31% gap
+- **P1** Run the upsell A/B test to de-bias the 54% vs 31% gap
 
 Standing duties, every shift:
 - Post impressions and the 7-day average every morning. It is the single number that says whether the suppression is lifting.
-- Hold the inorganic team to the weekly quota and the price bands. Cheap controlled volume on a premium profile is the worst of both worlds.
+- Watch the blended AOV against the organic AOV every week. When the two diverge, the profile is being priced below what its review base can carry, and the objective is revenue, not order count.
 - Any order past day 7, or any cancellation, comes to you the same day.
 
 ### Nadir · csr · 21:00-09:00 PKT
@@ -175,7 +170,7 @@ Standing duties, every shift:
 
 - **P0** Bring the impressions sheet up to date — it stops months ago
 - **P1** Install the mid-order checkpoint — private feedback is the leak
-- **P3** Fix the broken ClickUp sync (334 logged failures)
+- **P3** Close out approved order #6 — bethanyjademck
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -200,9 +195,10 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Amrah · csr · 09:00-17:00 PKT
-*1 task(s), ~3.0h*
+*2 task(s), ~4.5h*
 
 - **P0** Work the $5,472 dead pipeline, largest first
+- **P3** Start recording upsells — the column is empty
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -221,34 +217,11 @@ Standing duties, every shift:
 
 ## Where the edge is
 
-**Dygram is the experiment already run** — Dygram holds Success Score 9 at 44% inorganic and pulls 8x the impressions of X Studioz (12,700/day against 1,564). Same operator, same team, same category. Copy its ratio policy rather than theorising about the algorithm.
+**Dygram is the experiment already run** — Dygram holds Success Score 9 against X Studioz's 8, and pulls 8x the impressions (12,700/day against 1,564). Same operator, same team, same category, same marketplace. Whatever is different between the two profiles is worth more than any competitor study — diagnose it directly rather than theorising about the algorithm.
 
-**1,583 reviews is the moat, and it is being spent on cheap orders** — Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds — and it is currently attached to a $77 inorganic average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try.
+**1,583 reviews is the moat, and it is being spent on cheap orders** — Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds — and it is currently attached to a low average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try.
 
 **Half the revenue is from people who already know you** — 158 of 574 clients have ordered more than once, producing 48.2% of orders and $38,724 of revenue — with the Upsell column at 0.0% filled. Competitors fight for the first order. Nobody is fighting for the second one here, including us.
-
-
----
-
-## Inorganic (VVRO) plan
-
-- **Action:** CUT · binding constraint: `organic_health_breach`
-- **Quota:** 2/week (0.29/day) · today: **1**
-- **Ceiling from share cap:** 0.31/day at the current organic rate of 0.71/day
-- **Projected VVRO share at this rate:** 29%
-- **Cooldown until:** 2026-08-01
-
-| Date | Day | Place | Price bands |
-|---|---|---|---|
-| 2026-07-29 | Wed | 1 | 1x $151-$260 |
-| 2026-07-30 | Thu | 0 | — |
-| 2026-07-31 | Fri | 0 | — |
-| 2026-08-01 | Sat | 1 | 1x $86-$150 |
-| 2026-08-02 | Sun | 0 | — |
-| 2026-08-03 | Mon | 1 | 1x $45-$85 |
-| 2026-08-04 | Tue | 0 | — |
-
-Per ISO week: **2026-W31** = 2, **2026-W32** = 1 (quota is 2/week; a 7-day window straddles two weeks, so these will not both equal the quota).
 
 
 ---
@@ -260,7 +233,7 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Resolve on | Prediction | 80% interval | Confidence |
 |---|---|---|---|
 | 2026-08-05 | Organic orders over the 7 days to 05 Aug will be 5.6 (80% CI 2.6-8.6). | 2.57 – 8.63 | medium |
-| 2026-08-12 | Organic health index in 14 days will be 49 (80% CI 35-71). | 34.69 – 70.75 | low |
+| 2026-08-12 | Organic health index in 14 days will be 45 (80% CI 32-65). | 31.84 – 64.94 | low |
 | 2026-08-05 | Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07). | 2.34 – 4.07 | medium |
 | 2026-08-28 | Blended AOV in 30 days will be $112 (80% CI $101-$124). | 100.66 – 123.52 | high |
 | 2026-08-05 | Inquiry->order conversion in 7 days will be 22.6% (80% CI 19.7%-25.5%). | 0.20 – 0.26 | high |
@@ -276,8 +249,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Metric | Value | Note |
 |---|---|---|
 | Organic orders/day (7d MA) | 0.71 | vs 0.71 14d ago |
-| Organic since VVRO began | 0.56/day | was 0.66/day (-14.3%) |
-| Total orders/day (7d) | 3.00 | 5 organic + 16 VVRO |
+| Organic, recent vs earlier | 0.56/day | was 0.66/day (-14.3%) |
+| Organic orders, last 7d | 5 | 0.71/day |
 | AOV | $112 | median $100, n=1035 priced orders |
 | Lifetime tracked revenue | $116,017 | across 2353 order rows |
 | Inquiry conversion | 22.6% | 69/305 |
@@ -288,7 +261,7 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 
 ### Revenue path
 
-At 1.00 orders/day and $112 AOV, the next 30 days project **$3,363** (30 orders).
+At 0.71 orders/day and $112 AOV, the next 30 days project **$2,402** (21 orders).
 
 On track against the 30-day target.
 
@@ -310,19 +283,18 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 
 ## System integrity
 
-**Self-check score: 86/100** · 0 blocking failure(s)
+**Self-check score: 96/100** · 0 blocking failure(s)
 
 - task_count: 10
 - ownership: 20
 - evidence: 21
 - actionability: 15
 - falsifiability: 20
-- priority_spread: 0
+- priority_spread: 10
 
 **Checks not passing**
 - `warn` **ledger_vs_crm_orders** — daily ledger says 51 orders in window, CRM sheet says 1364 (96% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
-- `warn` **priority_spread_sane** — 5 of 12 tasks are P0
 
 **Data sources still missing**
 - Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.

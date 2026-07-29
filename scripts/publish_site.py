@@ -1,34 +1,47 @@
 #!/usr/bin/env python3
-"""Publish the dashboard as the gated Vercel site.
+"""Publish the dashboard as the Vercel site.
 
 Takes ``reports/dashboard.html`` — the same self-contained page the Claude
 artifact serves — and wraps it for deployment beside CSR Pulse:
 
 * a full ``<!doctype html>`` document (the artifact host supplies its own
   skeleton; Vercel does not),
-* the Google Fonts links csr-pulse uses, so here the page is typographically
+* the Google Fonts links csr-pulse uses, so the page is typographically
   identical rather than falling back to system faces,
-* optionally a password gate (``--gate``) that talks to ``site/api/auth.js``,
-  the same auth code copied verbatim from csr-pulse.
+* with ``--gate``, a password wall enforced **on the server**.
 
-The gate is **off by default**. For a single viewer, Vercel's own Deployment
-Protection is better: the owner is already signed in to Vercel, so the page
-just opens, and there is no shared password to leak or rotate. Turn the gate
-on with ``--gate`` when the team needs access — the auth function stays in the
-repo either way.
+Two publishing modes
+--------------------
 
-The file lands at ``site/index.html``, not in a subfolder: Vercel's zero-config
-static hosting serves the project root and treats ``api/`` as functions, so a
-page in ``public/`` would be reachable at ``/public/index.html`` rather than at
-``/``.
+``--gate`` **(server-rendered, the mode the team uses)**
+    The page is emitted as ``site/api/brief.js`` — a serverless function that
+    checks the session cookie and only then returns the HTML. An unauthenticated
+    request gets a login form and nothing else: no client names, no revenue, no
+    pipeline. ``site/index.html`` is *deleted*, because Vercel checks the
+    filesystem before it applies rewrites, so a leftover static page would keep
+    being served in front of the function.
 
-The output is generated on every run. Never hand-edit ``site/index.html``.
+    This replaced an earlier gate that shipped the whole brief inside
+    ``<div id="brief" hidden>`` and revealed it in JavaScript once ``/api/auth``
+    answered. That is not a gate. ``curl`` returned every figure on the page
+    without ever presenting a password, and the deployed site was in exactly
+    that state when the exposure was found. If you are tempted to go back to a
+    client-side reveal for speed: the data has already left the server by then.
+
+no flag
+    A plain static ``site/index.html``, for use behind Vercel's own Deployment
+    Protection. Right for a single viewer who is already signed in to Vercel:
+    nothing to type, and no shared password to leak or rotate. Wrong the moment
+    anyone else needs the link.
+
+The output is generated on every run. Never hand-edit either file.
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import json
 import re
 import sys
 from pathlib import Path
@@ -44,65 +57,78 @@ FONTS = (
     'family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">'
 )
 
-# The gate renders first and the brief stays hidden until /api/auth confirms a
-# session. It is not a security boundary on its own — the cookie check on the
-# server is — but it stops the numbers being visible for the half second before
-# a redirect would fire.
-GATE_CSS = """
-#gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;
+FAVICON = (
+    '<link rel="icon" href="data:image/svg+xml,'
+    "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+    "%3Crect width='32' height='32' rx='8' fill='%237229FF'/%3E"
+    "%3Cpath d='M9 21l5-6 4 3 5-8' stroke='white' stroke-width='2.5' "
+    "fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E"
+    "%3C/svg%3E\">"
+)
+
+# The login page is a whole separate document, not a layer over a hidden brief.
+# It carries its own tokens because the dashboard's stylesheet never reaches an
+# unauthenticated visitor — that is the point.
+LOGIN_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>XStudioz &middot; Daily brief</title>
+__FONTS__
+__FAVICON__
+<style>
+:root{--violet:#7229FF;--ink:#160A33;--dim:#6B6480;--bg:#FAFAFE;
+  --card:#fff;--raised:#F5F3FF;--border:#E9E5F5;--border-hi:#D8D0EE;
+  --coral:#E5484D;--sans:'Inter',system-ui,sans-serif;
+  --disp:'Space Grotesk','Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+@media (prefers-color-scheme:dark){:root{--ink:#F2EFFA;--dim:#9990AE;
+  --bg:#0D0918;--card:#161029;--raised:#1E1636;--border:#2A2145;
+  --border-hi:#3A2E5C}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;
   justify-content:center;background:var(--bg);padding:24px}
-#gate form{background:var(--card);border:1px solid var(--border);
-  border-radius:14px;padding:28px 30px;width:100%;max-width:340px;
-  display:flex;flex-direction:column;gap:14px}
-#gate h2{font:600 10px/1.4 var(--sans);text-transform:uppercase;
+form{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:28px 30px;width:100%;max-width:340px;display:flex;
+  flex-direction:column;gap:14px}
+h2{margin:0;font:600 10px/1.4 var(--sans);text-transform:uppercase;
   letter-spacing:.18em;color:var(--dim)}
-#gate .t{font:700 20px/1.25 var(--disp);letter-spacing:-.02em;color:var(--ink)}
-#gate input{font:500 14px/1.4 var(--sans);padding:11px 13px;border-radius:9px;
+.t{font:700 20px/1.25 var(--disp);letter-spacing:-.02em;color:var(--ink)}
+input{font:500 14px/1.4 var(--sans);padding:11px 13px;border-radius:9px;
   border:1px solid var(--border-hi);background:var(--raised);color:var(--ink)}
-#gate input:focus{outline:2px solid var(--violet);outline-offset:1px}
-#gate button{font:600 12px/1 var(--sans);letter-spacing:.06em;padding:12px;
-  border:0;border-radius:9px;background:var(--violet);color:#fff;cursor:pointer}
-#gate button:disabled{opacity:.55;cursor:default}
-#gate .err{font:500 12px/1.4 var(--sans);color:var(--coral);min-height:1.2em}
-#gate .foot{font:500 10px/1.5 var(--mono);color:var(--dim);text-align:center}
-#brief[hidden]{display:none}
-"""
-
-GATE_HTML = """
-<div id="gate">
-  <form id="gform" autocomplete="off">
-    <h2>XStudioz</h2>
-    <div class="t">Daily brief</div>
-    <label for="pw" class="sr-only" style="position:absolute;left:-9999px">Access password</label>
-    <input id="pw" type="password" placeholder="Access password" required
-           autocomplete="current-password">
-    <div class="err" id="gerr" role="alert" aria-live="polite"></div>
-    <button type="submit" id="gbtn">Sign in</button>
-    <div class="foot">Internal &middot; Confidential</div>
-  </form>
-</div>
-"""
-
-GATE_JS = """
+input:focus{outline:2px solid var(--violet);outline-offset:1px}
+button{font:600 12px/1 var(--sans);letter-spacing:.06em;padding:12px;border:0;
+  border-radius:9px;background:var(--violet);color:#fff;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+.err{font:500 12px/1.4 var(--sans);color:var(--coral);min-height:1.2em}
+.foot{font:500 10px/1.5 var(--mono);color:var(--dim);text-align:center}
+</style></head><body>
+<form id="gform" autocomplete="off">
+  <h2>XStudioz</h2>
+  <div class="t">Daily brief</div>
+  <label for="pw" style="position:absolute;left:-9999px">Access password</label>
+  <input id="pw" type="password" placeholder="Access password" required
+         autocomplete="current-password" autofocus>
+  <div class="err" id="gerr" role="alert" aria-live="polite"></div>
+  <button type="submit" id="gbtn">Sign in</button>
+  <div class="foot">Internal &middot; Confidential</div>
+</form>
 <script>
 (function(){
-  var gate=document.getElementById('gate'),brief=document.getElementById('brief'),
-      form=document.getElementById('gform'),pw=document.getElementById('pw'),
+  var form=document.getElementById('gform'),pw=document.getElementById('pw'),
       err=document.getElementById('gerr'),btn=document.getElementById('gbtn');
-  function post(body){
-    return fetch('/api/auth',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  }
-  function open_(){ gate.remove(); brief.hidden=false; }
-  post({action:'verify'}).then(function(r){ if(r.ok) open_(); else pw.focus(); })
-    .catch(function(){ pw.focus(); });
   form.addEventListener('submit',function(e){
     e.preventDefault(); err.textContent=''; btn.disabled=true;
-    post({action:'login',password:pw.value}).then(function(r){
-      if(r.ok){ open_(); return; }
-      // 429 is the auth function's rate limit, not a wrong password.
+    fetch('/api/auth',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'login',password:pw.value})
+    }).then(function(r){
+      // The brief is not in this document. A correct password sets the cookie;
+      // reloading is what fetches the page from the server for the first time.
+      if(r.ok){ location.reload(); return; }
       err.textContent = r.status===429
         ? 'Too many attempts. Wait a minute and try again.'
+        : r.status===503
+        ? 'The server has no password configured. Set APP_PASSWORD in Vercel.'
         : 'That password is not right.';
       btn.disabled=false; pw.select();
     }).catch(function(){
@@ -112,19 +138,58 @@ GATE_JS = """
   });
 })();
 </script>
+</body></html>
+"""
+
+FUNCTION_TEMPLATE = """// GENERATED by scripts/publish_site.py — do not edit.
+//
+// The daily brief, served only to an authenticated session.
+//
+// Everything confidential lives in PAGE, inside this function. It is never a
+// static asset, so there is no URL that returns it without the cookie check
+// below. An unauthenticated GET gets LOGIN, which contains a form and nothing
+// else.
+//
+// vercel.json rewrites `/` here. Vercel consults the filesystem before it
+// applies rewrites, so `site/index.html` must not exist in gated mode — the
+// publisher deletes it.
+import { verifyToken, cookieFrom, COOKIE } from './auth.js';
+
+const LOGIN = %(login)s;
+const PAGE = %(page)s;
+
+export default function handler(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
+    res.status(405).end();
+    return;
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
+  const password = process.env.APP_PASSWORD;
+  if (!password) {
+    // Fail CLOSED. A missing password must never mean "let everyone in" —
+    // that is the accident this whole function exists to prevent.
+    console.error('AUTH MISCONFIG: APP_PASSWORD is not set; serving the login page only');
+    res.status(503).send(LOGIN);
+    return;
+  }
+  if (!verifyToken(cookieFrom(req, COOKIE), password)) {
+    res.status(401).send(LOGIN);
+    return;
+  }
+  res.status(200).send(PAGE);
+}
 """
 
 
-def build(fragment: str, generated: str, gate: bool = False) -> str:
+def build(fragment: str, generated: str) -> str:
+    """Wrap the dashboard fragment in a full HTML document."""
     title_m = re.search(r"<title>(.*?)</title>", fragment, re.S)
     title = title_m.group(1) if title_m else "XStudioz — Daily brief"
     body = re.sub(r"<title>.*?</title>", "", fragment, count=1, flags=re.S)
-
-    # Fold the gate's styles into the page's own <style> so both share the
-    # design tokens rather than duplicating them.
-    if gate:
-        body = body.replace("</style>", GATE_CSS + "</style>", 1)
-
     return (
         "<!doctype html>\n"
         '<html lang="en"><head>'
@@ -132,50 +197,72 @@ def build(fragment: str, generated: str, gate: bool = False) -> str:
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         '<meta name="robots" content="noindex,nofollow">'
         f"<title>{title} · HaseebMadeIt</title>"
-        + FONTS +
-        '<link rel="icon" href="data:image/svg+xml,'
-        "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
-        "%3Crect width='32' height='32' rx='8' fill='%237229FF'/%3E"
-        "%3Cpath d='M9 21l5-6 4 3 5-8' stroke='white' stroke-width='2.5' "
-        "fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E"
-        "%3C/svg%3E\">"
+        + FONTS + FAVICON +
         "</head><body>"
-        + (GATE_HTML if gate else "")
-        + (f'<div id="brief"{" hidden" if gate else ""}>' + body + "</div>")
-        + (GATE_JS if gate else "")
-        + f"<!-- generated {generated} by scripts/publish_site.py"
-        + (" (password gate on)" if gate else " (protected by Vercel, no gate)")
-        + " -->"
+        + body
+        + f"<!-- generated {generated} by scripts/publish_site.py -->"
         "</body></html>\n"
     )
+
+
+def login_page() -> str:
+    return LOGIN_PAGE.replace("__FONTS__", FONTS).replace("__FAVICON__", FAVICON)
+
+
+def build_function(page_html: str) -> str:
+    """Emit the gated serverless function.
+
+    ``json.dumps`` is doing real work here, not cosmetics: it escapes the
+    backslashes, quotes and — with ``ensure_ascii`` — the U+2028/U+2029 line
+    terminators that would otherwise end a JavaScript string literal early and
+    turn the rest of the brief into syntax errors.
+    """
+    return FUNCTION_TEMPLATE % {
+        "login": json.dumps(login_page()),
+        "page": json.dumps(page_html),
+    }
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--root", default=str(ROOT))
     ap.add_argument("--src", help="default reports/dashboard.html")
-    ap.add_argument("--out", help="default site/index.html")
+    ap.add_argument("--out", help="static output; default site/index.html")
     ap.add_argument("--gate", action="store_true",
-                    help="add the password gate. Off by default — for a single "
-                         "viewer, Vercel Deployment Protection is simpler and "
-                         "has no shared password to leak.")
+                    help="serve the page from a server-side password gate "
+                         "instead of publishing it as a static file.")
     args = ap.parse_args()
 
     root = Path(args.root)
     src = Path(args.src) if args.src else root / "reports" / "dashboard.html"
-    out = Path(args.out) if args.out else root / "site" / "index.html"
+    static_out = Path(args.out) if args.out else root / "site" / "index.html"
+    fn_out = root / "site" / "api" / "brief.js"
 
     if not src.exists():
         print(f"[error] {src} not found. Run scripts/build_dashboard.py first.",
               file=sys.stderr)
         return 2
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    html = build(src.read_text(encoding="utf-8"),
-                 _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-                 gate=args.gate)
-    out.write_text(html, encoding="utf-8")
-    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
+    generated = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    page = build(src.read_text(encoding="utf-8"), generated)
+
+    if args.gate:
+        fn_out.parent.mkdir(parents=True, exist_ok=True)
+        fn_out.write_text(build_function(page), encoding="utf-8")
+        print(f"wrote {fn_out} ({fn_out.stat().st_size / 1024:.0f} KB, gated)")
+        if static_out.exists():
+            static_out.unlink()
+            print(f"removed {static_out} — a static page would be served "
+                  f"in front of the gate")
+        return 0
+
+    static_out.parent.mkdir(parents=True, exist_ok=True)
+    static_out.write_text(page, encoding="utf-8")
+    print(f"wrote {static_out} ({static_out.stat().st_size / 1024:.0f} KB, "
+          f"UNGATED — rely on Vercel Deployment Protection)")
+    if fn_out.exists():
+        fn_out.unlink()
+        print(f"removed {fn_out}")
     return 0
 
 

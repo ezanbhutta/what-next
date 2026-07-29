@@ -73,7 +73,7 @@ Read the `[BLOCK]` lines on stderr and act:
 
 ```bash
 python3 scripts/build_dashboard.py     # reports/dashboard.html
-python3 scripts/publish_site.py        # site/index.html (gated, for the team)
+python3 scripts/publish_site.py --gate # site/api/brief.js (password gated)
 ```
 
 Then republish the artifact to the same URL so the link you and Ezan already
@@ -86,10 +86,17 @@ have stays current:
 Passing `url` is what keeps the URL stable from a fresh session. Do not change
 the `<title>` or the favicon — the page is found by its name and tab icon.
 
-`site/index.html` is generated, never hand-edited. Committing it in step 6
+`site/api/brief.js` is generated, never hand-edited. Committing it in step 6
 is what deploys it: Vercel redeploys on push, so the team's page is current by
 07:15 PKT without anyone touching it. If the Vercel project is not linked yet,
 the file is still committed and simply waits — see `site/README.md`.
+
+**Never publish without `--gate`, and never commit a `site/index.html`.** The
+page carries client names, revenue and the dead pipeline. Vercel checks the
+filesystem before it applies rewrites, so a static `index.html` is served *in
+front of* the gate and silently reopens the whole page to anyone with the URL.
+`tests/test_engine.py` fails if both exist; do not delete that test to make a
+run pass.
 
 ### 5. Report to the user
 

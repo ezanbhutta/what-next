@@ -177,6 +177,23 @@ class DosePlan:
 # Controller
 # --------------------------------------------------------------------------
 
+def disabled_plan(date: _dt.date, profile: str) -> DosePlan:
+    """The plan when the controller is switched off.
+
+    Deliberately a real DosePlan rather than ``None``: every downstream
+    invariant, renderer and test keeps its shape, and turning the controller
+    back on is a config change rather than a code change. Callers check
+    ``action == "disabled"`` and render nothing.
+    """
+    return DosePlan(
+        date=date, profile=profile, dose=0, weekly_quota=0, target_rate=0.0,
+        previous_dose=0.0, action="disabled",
+        binding_constraint="controller_disabled",
+        reasons=["Inorganic volume is directed by the CEO, not by this engine."],
+        bands=[], countries=[], ceiling_from_share=0.0,
+        projected_share=None, expected_revenue=0.0, week_pattern=[0] * 7)
+
+
 def share_ceiling(organic_per_day: float, max_share: float) -> float:
     """Max VVRO per day that keeps VVRO share at or below ``max_share``.
 
