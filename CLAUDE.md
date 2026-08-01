@@ -113,8 +113,12 @@ detail is in `reports/latest.md`. Always state:
 ```bash
 git config user.email "ezanmujahid@gmail.com"
 git config user.name  "XStudioz Growth Engine"
-git add -A && git commit -m "daily: <date> brief" && git push -u origin claude/xstudioz-growth-automation-dj8u2z
+git add -A && git commit -m "daily: <date> brief" && git push -u origin main
 ```
+
+**Push to `main`.** It is the default branch and Vercel's production branch, so
+pushing there is what deploys. The engine used to push to a long-lived
+`claude/…` branch; that branch is history and nothing should target it.
 
 **Set the email every run — it is not optional.** The container is fresh each
 morning and defaults to `haseeb53810@gmail.com`, which is not attached to the

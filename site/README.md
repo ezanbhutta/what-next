@@ -15,9 +15,12 @@ In the Vercel web UI:
 2. **Root Directory** → `site`   ← the step people miss
 3. **Framework Preset** → Other. Leave build command and output directory empty.
 4. Deploy
-5. **Settings → Git → Production Branch** → `claude/xstudioz-growth-automation-dj8u2z`
-   Without this the page never updates, because the daily run pushes to that
-   branch and not to main.
+5. **Settings → Git → Production Branch** → `main`
+   This must match the branch the daily run pushes to, or the page never
+   updates: Vercel builds every other branch as a *preview* and leaves the
+   production domain on whatever it last built. The symptom is a run that
+   reports success, a deployment that is READY, and a team still reading
+   yesterday's numbers — check `target` on the deployment, not just its state.
 6. **Settings → Environment Variables** → add `APP_PASSWORD`.
 
 ## Access
