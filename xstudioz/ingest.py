@@ -526,6 +526,23 @@ def _rows_as(mb: MappedBlock, build) -> list:
     return out
 
 
+#: Values a spreadsheet writes into an untouched row on its own. A checkbox
+#: column renders as FALSE in every row of the sheet, including the empty ones
+#: below the last real entry, so "has any non-empty cell" is not a usable test
+#: for whether a row carries data.
+_DEFAULTED_CELLS = frozenset({"", "false", "true", "no", "0", "0.0", "-", "n/a"})
+
+
+def _is_padding(row: list[str]) -> bool:
+    """True when a row carries no content of its own.
+
+    Every cell is either empty or a value the sheet supplies by default, which
+    means nothing in this row was ever typed by a person. Real rows always
+    carry at least a date, a client or an amount.
+    """
+    return all(c.strip().lower() in _DEFAULTED_CELLS for c in row)
+
+
 def _clean_rows(header: list[str], rows: list[list[str]]) -> list[list[str]]:
     """Repair two things every hand-maintained sheet does.
 
@@ -538,12 +555,23 @@ def _clean_rows(header: list[str], rows: list[list[str]]) -> list[list[str]]:
     *repeated header rows* — the same sheet re-prints its header every seventh
     row. Left alone those parse as data and become a client called
     "Client Name".
+
+    *trailing blank rows* — and this is the one that mattered. Every tab in
+    these workbooks carries hundreds of empty padding rows below the last real
+    entry, because the sheet was sized generously and never trimmed. A wholly
+    blank row is not a merged-cell continuation; it is nothing. Forward-filling
+    it stamped the last real order's date and client onto all of them, which
+    turned 6,152 real orders into 16,049 and invented a single client with
+    1,311 same-day orders. Skip blank rows before the fill, never after: after
+    the fill they are no longer blank and cannot be told apart from real rows.
     """
     hdr_sig = [h.strip().lower() for h in header]
     out: list[list[str]] = []
     carry: list[str] = []
     for row in rows:
         if [c.strip().lower() for c in row][:len(hdr_sig)] == hdr_sig:
+            continue
+        if _is_padding(row):
             continue
         fixed = list(row)
         # Only forward-fill the leading key columns (date, profile). Filling

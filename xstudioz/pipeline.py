@@ -17,8 +17,8 @@ from typing import Any, Sequence
 import yaml
 
 from . import contracts as C
-from . import (dosing, forecast, ingest, ledger as L, metrics, report,
-               phase as _phase, roles as _roles, selfcheck, snapshot,
+from . import (dosing, forecast, ingest, ledger as L, metrics, recovery,
+               report, phase as _phase, roles as _roles, selfcheck, snapshot,
                tasks)
 
 
@@ -40,6 +40,7 @@ class RunArtifacts:
     phase: Any = None
     boards: Any = None
     edge: Any = field(default_factory=list)
+    recovery: Any = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -58,6 +59,7 @@ class RunArtifacts:
             "validation": self.validation,
             "revenue_projection": self.revenue_projection,
             "gap": self.gap,
+            "recovery": self.recovery.as_dict() if self.recovery else None,
         }
 
 
@@ -151,6 +153,11 @@ def run_daily(
         disputes=metrics.dispute_metrics(data.disputes, len(data.orders), today),
     )
 
+    # ---- recovery --------------------------------------------------------
+    # Money already committed or quoted that is not moving. Computed live
+    # from the same rows the team maintains, never from config.
+    recov = recovery.compute(data.orders, data.leads, today, profile_name)
+
     # ---- dosing ----------------------------------------------------------
     state_path = root / "data" / "state" / "controller.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
@@ -191,7 +198,7 @@ def run_daily(
         bundle=bundle, plan=plan, active=data.active, orders=data.orders,
         disputes=data.disputes,
         violations=vrep.data_issues, automation_errors=data.automation_errors,
-        missing_sources=missing, today=today, config=config,
+        missing_sources=missing, today=today, config=config, recovery=recov,
         max_tasks=int(config["selfcheck"].get("max_tasks", 12)))
 
     # ---- phase gate ------------------------------------------------------
@@ -239,7 +246,8 @@ def run_daily(
     brief = report.render_markdown(
         today=today, bundle=bundle, plan=plan, tasks=task_list,
         predictions=preds, resolved=resolved, ledger=led, check=check,
-        config=config, revenue_projection=proj, gap=gap, missing_sources=missing)
+        config=config, revenue_projection=proj, gap=gap, missing_sources=missing,
+        recovery=recov)
 
     art = RunArtifacts(
         phase=state,
@@ -248,7 +256,8 @@ def run_daily(
         brief_markdown=brief, ingest_stats=data.stats(),
         validation=vrep.summary(), emitted=emitted,
         revenue_projection=proj, gap=gap,
-        boards=_roles.route(config, task_list), edge=_roles.edge(config))
+        boards=_roles.route(config, task_list), edge=_roles.edge(config),
+        recovery=recov)
 
     # ---- persist ---------------------------------------------------------
     if write:

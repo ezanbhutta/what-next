@@ -13,6 +13,7 @@ from typing import Any, Sequence
 
 from .dosing import DosePlan
 from .ledger import Ledger, Prediction
+from . import recovery as _recovery_mod
 from .metrics import MetricBundle
 from .selfcheck import SelfCheckReport
 from .tasks import Task
@@ -39,6 +40,7 @@ def render_markdown(
     revenue_projection: dict[str, Any],
     gap: dict[str, Any],
     missing_sources: Sequence[dict],
+    recovery: Any = None,
 ) -> str:
     h = bundle.health
     e = bundle.econ
@@ -62,6 +64,46 @@ def render_markdown(
         for r in h.breach_reasons:
             out.append(f"- {r}")
         out.append("")
+
+    # ---------------- money at rest ----------------
+    # Leads the brief because it is the only block of money that needs no new
+    # traffic, no marketplace lever and no permission: it is already committed.
+    if recovery is not None:
+        ob, qb = recovery.open_book, recovery.quote_book
+        out.append("## Money sitting still")
+        out.append("")
+        out.append(f"**${recovery.total_at_rest:,.0f}** is committed or quoted and "
+                   f"not moving — ${ob.stale_value:,.0f} in orders open more than "
+                   f"{_recovery_mod.STALE_AFTER_DAYS} days, ${qb.total:,.0f} in "
+                   f"quotes that were never placed.")
+        out.append("")
+        out.append("| Open orders | Count | Value |")
+        out.append("| :-- | --: | --: |")
+        for name, stats in ob.by_band().items():
+            label = f"{name} days" + (" ⚠️" if name == "60+" else "")
+            out.append(f"| {label} | {stats['count']} | ${stats['value']:,.0f} |")
+        out.append(f"| **All open** | **{len(ob.orders)}** | "
+                   f"**${ob.total_value:,.0f}** |")
+        out.append("")
+        if ob.stale:
+            out.append("**Oldest open orders**")
+            out.append("")
+            out.append("| Client | Age | Status | Value | Designer |")
+            out.append("| :-- | --: | :-- | --: | :-- |")
+            for o in ob.oldest(8):
+                out.append(f"| {o.client} | {o.age_days}d | {o.status} | "
+                           f"${o.amount:,.0f} | {o.designer or '—'} |")
+            out.append("")
+        if qb.untouched:
+            out.append(f"**Quotes with no follow-up ever logged** — "
+                       f"{len(qb.untouched)} worth ${qb.untouched_value:,.0f}")
+            out.append("")
+            out.append("| Client | Quoted | Age | CSR |")
+            out.append("| :-- | --: | --: | :-- |")
+            for q in sorted(qb.untouched, key=lambda q: -q.quoted)[:8]:
+                out.append(f"| {q.client} | ${q.quoted:,.0f} | {q.age_days}d | "
+                           f"{q.csr or '—'} |")
+            out.append("")
 
     # ---------------- do today ----------------
     out.append("## Do today")
@@ -177,7 +219,8 @@ def render_markdown(
     out.append(f"| Inquiry conversion | {f.conversion:.1%} | {f.placed}/{f.inquiries} |")
     out.append(f"| Upsell recorded | {e.upsell_rate:.1%} | column is effectively unused |")
     out.append(f"| Review capture | {e.review_capture_rate:.1%} | "
-               f"biggest free growth lever |")
+               f"{round(e.review_capture_rate * e.review_denominator)}/"
+               f"{e.review_denominator} orders that could be rated |")
     if bundle.gig:
         g = bundle.gig
         out.append(f"| Gig rating | {g.get('rating', 0):.3f} | "

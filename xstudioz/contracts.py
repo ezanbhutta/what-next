@@ -162,12 +162,25 @@ def to_lead_status(value: Any) -> str:
 
 
 def to_rating(value: Any) -> float | None:
-    """Reviews are recorded as ``5.0``, ``5``, ``no review``, ``no``, ``0.0``."""
+    """Reviews are recorded as ``5.0``, ``5``, ``no review``, ``no``, ``0.0``.
+
+    They are also recorded as ``5 star``, ``5 Star``, ``5 STAR``, ``4.7 star``
+    and ``4.3 Star``. Nine CSRs have typed this column for nine months and no
+    validation ever ran on it, so the suffix is not an edge case: 374 real
+    ratings carry one. Parsing only the bare number silently reclassified all
+    of them as "no review", which understated review capture by a factor of
+    seven and put a fabricated "buyers are not reviewing" task at the top of
+    every brief.
+    """
     if value is None:
         return None
     text = str(value).strip().lower()
     if not text or text.startswith("no"):
         return None
+    # Drop a trailing "star"/"stars" before the numeric parse. Anchored to the
+    # end so a genuinely unparseable note ("escalated, star client") still
+    # fails rather than yielding a number.
+    text = re.sub(r"\s*stars?\s*$", "", text)
     try:
         r = float(text)
     except ValueError:

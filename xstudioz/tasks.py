@@ -27,6 +27,8 @@ from collections import Counter
 from typing import Any, Iterable, Sequence
 
 from . import contracts as C
+from . import recovery as recovery_mod
+from .recovery import RecoveryBundle
 from .metrics import MetricBundle, rating_damage
 from .dosing import DosePlan
 
@@ -724,41 +726,121 @@ def _dispute_rules(disputes: Sequence[C.Dispute], today: _dt.date,
     return tasks
 
 
-def _dead_pipeline_rule(config: dict[str, Any]) -> list[Task]:
-    """Quoted work that was never followed up.
+def _recovery_rules(recovery: RecoveryBundle | None,
+                    config: dict[str, Any]) -> list[Task]:
+    """Money already committed or quoted that is not moving.
 
-    The clearest money in the whole dataset: named leads, known prices, zero
-    touches, no new traffic required.
+    Both halves are computed live from the workbooks. The previous version of
+    this rule read a block of `config/profile.yml` that a human had pasted in
+    February and never updated, so it recommended the same seven names every
+    morning for five months — by the end, the newest of them was 174 days old
+    and the largest untouched quote in the actual sheet had never appeared at
+    all.
     """
-    dp = config.get("dead_pipeline") or {}
-    total = float(dp.get("total") or 0)
-    if total <= 0:
+    if recovery is None:
         return []
-    named = dp.get("named") or []
-    rate = float(dp.get("recovery_assumption", 0.15))
-    top = sorted(named, key=lambda x: -float(x.get("quoted", 0)))[:4]
-    return [Task(
-        id="dead-pipeline",
-        title=f"Work the ${total:,.0f} dead pipeline, largest first",
-        category="funnel",
-        owner=config.get("team", {}).get("lead", "Operations lead"),
-        why=(f"${total:,.0f} quoted across {dp.get('leads_logged', 0)} named leads "
-             f"with {dp.get('followups_logged', 0)} follow-ups ever logged. At a "
-             f"{rate:.0%} recovery that is ${total * rate:,.0f} — more than a full "
-             f"day of current revenue, for zero ad spend and no new traffic. Top "
-             f"Rated needs $10,000 earned and over half of it is sitting in a "
-             f"spreadsheet column."),
-        steps=[
-            "Start with: " + ", ".join(
-                f"{l['client']} (${l['quoted']:,.0f})" for l in top) + ".",
-            "Use the four-line message in playbooks/dead_pipeline.md — quote still "
-            "open, ask when to check back, ask for their number if budget was the "
-            "issue.",
-            "Log every touch in the FollowUp column with a date, same day.",
-            "Anything that reopens goes straight into the normal intake flow.",
-        ],
-        impact_usd=total * rate, confidence=0.55, effort_hours=3.0,
-        priority="P0", urgency=1, playbook="playbooks/dead_pipeline.md")]
+    out: list[Task] = []
+    lead = (config.get("team") or {}).get("lead", "Operations lead")
+    ob, qb = recovery.open_book, recovery.quote_book
+
+    # -- stale open orders -------------------------------------------------
+    stale = sorted(ob.stale, key=lambda o: -o.age_days)
+    if stale:
+        named = [o for o in stale if o.amount > 0][:5]
+        oldest = stale[0]
+        # Recovery here is not "win a new sale" — the buyer already committed.
+        # It is closing out work that is owed, so the realistic ceiling is the
+        # full stale value and the discount is for orders that are truly dead.
+        rate = 0.40
+        out.append(Task(
+            id="stale-open-orders",
+            title=f"Close out {len(stale)} orders open more than "
+                  f"{recovery_mod.STALE_AFTER_DAYS} days (${ob.stale_value:,.0f})",
+            category="delivery",
+            owner=lead,
+            why=(f"{len(stale)} orders worth ${ob.stale_value:,.0f} have been open "
+                 f"longer than {recovery_mod.STALE_AFTER_DAYS} days, out of "
+                 f"{len(ob.orders)} open orders worth ${ob.total_value:,.0f} in "
+                 f"total. The oldest is {oldest.client} at {oldest.age_days} days. "
+                 f"Every one of these buyers has already paid or committed, so "
+                 f"this is not new business to win — it is delivered-or-owed work "
+                 f"nobody closed. It is also the largest single block of "
+                 f"recoverable money in the dataset, and unlike the funnel it "
+                 f"needs no new traffic."),
+            steps=[
+                "Open each order and establish one thing: is the client waiting "
+                "on us, are we waiting on the client, or is it dead. That answer "
+                "decides everything else and takes a minute per order.",
+                "Where we owe work — assign it to the designer named on the row "
+                "with a delivery date this week. Oldest first: " + ", ".join(
+                    f"{o.client} ({o.age_days}d, ${o.amount:,.0f})"
+                    for o in named[:3]) + ".",
+                "Where the client is silent — send one message that states what "
+                "was last delivered and asks a single closed question. Do not "
+                "re-open the brief.",
+                "Where it is genuinely dead — set the status so it stops "
+                "appearing here, and note why in the CSR column.",
+                "Anything still open at this time next week gets escalated, not "
+                "re-listed.",
+            ],
+            impact_usd=ob.stale_value * rate, confidence=0.6, effort_hours=3.0,
+            priority="P0", urgency=2, playbook="playbooks/stale_orders.md",
+            refs=[f"{o.client}: {o.age_days}d, ${o.amount:,.0f}, {o.status}"
+                  for o in stale[:10]]))
+
+    # -- quotes nobody ever chased ----------------------------------------
+    if qb.untouched:
+        ranked = qb.ranked()
+        untouched = qb.untouched
+        biggest = max(untouched, key=lambda q: q.quoted)
+        bm = recovery.benchmark
+        # Cost this on what chasing actually returned here, not on a house
+        # number. Halved because these quotes are older and colder than the
+        # cohort the rate came from.
+        rate = (bm.followed_conv * 0.5) if bm.has_signal else 0.15
+        basis = (f"Of the {bm.followed_n} quoted leads anyone did chase, "
+                 f"{bm.followed_placed} placed ({bm.followed_conv:.0%}); this is "
+                 f"costed at half that, because these are older."
+                 if bm.has_signal else
+                 "Costed at a nominal 15% — too few chased leads on record to "
+                 "measure the real rate yet.")
+        out.append(Task(
+            id="untouched-quotes",
+            title=f"Follow up the {len(untouched)} quotes that never got one "
+                  f"(${qb.untouched_value:,.0f})",
+            category="funnel",
+            owner=lead,
+            why=(f"{len(untouched)} buyers were quoted ${qb.untouched_value:,.0f} "
+                 f"between them and no follow-up was ever logged against any of "
+                 f"them — the largest is {biggest.client} at "
+                 f"${biggest.quoted:,.0f}, quoted {biggest.age_days} days ago. "
+                 f"That sits inside a total unanswered pipeline of "
+                 f"${qb.total:,.0f} across {len(qb.quotes)} leads. {basis} "
+                 f"Note the raw split is misleading: quoted leads with no "
+                 f"follow-up appear to convert at "
+                 f"{(bm.never_placed / bm.never_n if bm.never_n else 0):.0%}, but "
+                 f"that is because a follow-up only gets logged when the buyer "
+                 f"did not say yes immediately. These {len(untouched)} are the "
+                 f"residue of that group, not part of its success."),
+            steps=[
+                "Work the never-followed-up list first, largest first: " +
+                ", ".join(f"{q.client} (${q.quoted:,.0f}, {q.age_days}d)"
+                          for q in sorted(untouched, key=lambda q: -q.quoted)[:4])
+                + ".",
+                "One message each. State the quote is still open, and ask one "
+                "question they can answer in a word — whether the project is "
+                "still live. Do not re-pitch and do not discount unprompted.",
+                "Log the touch in the FollowUp column the same day, or the next "
+                "run will tell you to send it again.",
+                "Then work the remainder by value; treat a third unanswered "
+                "follow-up as a no and stop.",
+            ],
+            impact_usd=qb.untouched_value * rate, confidence=0.45,
+            effort_hours=1.5, priority="P1", urgency=1,
+            playbook="playbooks/dead_pipeline.md",
+            refs=[f"{q.client}: ${q.quoted:,.0f}, {q.age_days}d, "
+                  f"{q.followups} follow-ups" for q in ranked[:10]]))
+    return out
 
 
 def _missing_source_rules(missing: Sequence[dict]) -> list[Task]:
@@ -799,6 +881,7 @@ def generate(
     automation_errors: Sequence[dict],
     missing_sources: Sequence[dict],
     today: _dt.date,
+    recovery: RecoveryBundle | None = None,
     config: dict[str, Any] | None = None,
     max_tasks: int = 12,
 ) -> list[Task]:
@@ -811,7 +894,7 @@ def generate(
     tasks += _dispute_rules(disputes, today, aov)
     tasks += _active_order_rules(active, today, bundle.gig, aov)
     tasks += _funnel_rules(bundle)
-    tasks += _dead_pipeline_rule(config)
+    tasks += _recovery_rules(recovery, config)
     tasks += _economics_rules(bundle, orders)
     tasks += _data_quality_rules(violations, automation_errors)
     tasks += _missing_source_rules(missing_sources)

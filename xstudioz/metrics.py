@@ -792,6 +792,15 @@ class MetricBundle:
                 "vvro_share_7d": round(self.health.vvro_share_7d, 4),
                 "total_per_day_7d": round(self.health.total_per_day_7d, 3),
                 "breached": self.health.breached,
+                # Without these the dashboard has a verdict but no evidence for
+                # it, and falls through to its "no breach" copy — printing
+                # "No breach" directly under a BREACH badge.
+                "breach_reasons": list(self.health.breach_reasons),
+                "structural_delta_pct": (
+                    round(self.health.structural_delta_pct, 4)
+                    if self.health.structural_delta_pct is not None else None),
+                "structural_pre": self.health.structural_pre,
+                "structural_post": self.health.structural_post,
                 "components": self.health.components,
             },
             "flow_7d": {

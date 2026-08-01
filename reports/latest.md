@@ -5,6 +5,42 @@
 **Why the constraint is breached**
 - structural: organic -14.3% since 2026-07-13 (0.66 -> 0.56/day)
 
+## Money sitting still
+
+**$8,007** is committed or quoted and not moving — $2,285 in orders open more than 60 days, $5,722 in quotes that were never placed.
+
+| Open orders | Count | Value |
+| :-- | --: | --: |
+| 0-7 days | 7 | $1,085 |
+| 8-30 days | 6 | $1,425 |
+| 31-60 days | 2 | $295 |
+| 60+ days ⚠️ | 17 | $2,285 |
+| **All open** | **32** | **$5,090** |
+
+**Oldest open orders**
+
+| Client | Age | Status | Value | Designer |
+| :-- | --: | :-- | --: | :-- |
+| osmanbey_35 | 265d | in_progress | $250 | Aashir |
+| johnjk001 | 209d | delivered | $0 | Dulal Khan |
+| faisalkazmi53 | 181d | in_progress | $0 | Shaoor |
+| madewelltech | 171d | delivered | $120 | Amin |
+| andrem530 | 156d | revision | $295 | Amin |
+| jordyspikker | 137d | revision | $100 | Ahmed Ashfaq |
+| calumsnell | 135d | revision | $100 | Nime |
+| kuykendalljr | 132d | in_progress | $75 | Saad Sajid |
+
+**Quotes with no follow-up ever logged** — 6 worth $1,477
+
+| Client | Quoted | Age | CSR |
+| :-- | --: | --: | :-- |
+| selmaprof | $950 | 26d | Iqra |
+| akhilkpfxx | $160 | 146d | — |
+| architpatel497 | $147 | 34d | Iqra |
+| kai_utzinger | $85 | 93d | — |
+| zain_qw | $75 | 28d | Swaid |
+| Mohamed L | $60 | 79d | — |
+
 ## Do today
 
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
@@ -19,6 +55,19 @@
 - If they choose (b), process it same day — a fast clean exit is cheaper than a slow 1-star.
 - Script: `playbooks/dispute_rescue.md`
 - Source rows: `order_tracker/tracker#b0r4`
+
+### P0 · Close out 17 orders open more than 60 days ($2,285)
+**Owner:** Ezan · **Est. impact:** $914 · **Effort:** 3.0h · **Confidence:** 60%
+
+*Why:* 17 orders worth $2,285 have been open longer than 60 days, out of 32 open orders worth $5,090 in total. The oldest is osmanbey_35 at 265 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.
+
+- Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.
+- Where we owe work — assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (265d, $250), madewelltech (171d, $120), andrem530 (156d, $295).
+- Where the client is silent — send one message that states what was last delivered and asks a single closed question. Do not re-open the brief.
+- Where it is genuinely dead — set the status so it stops appearing here, and note why in the CSR column.
+- Anything still open at this time next week gets escalated, not re-listed.
+- Script: `playbooks/stale_orders.md`
+- Source rows: `osmanbey_35: 265d, $250, in_progress`, `johnjk001: 209d, $0, delivered`, `faisalkazmi53: 181d, $0, in_progress`, `madewelltech: 171d, $120, delivered`, `andrem530: 156d, $295, revision`, `jordyspikker: 137d, $100, revision`, `calumsnell: 135d, $100, revision`, `kuykendalljr: 132d, $75, in_progress`, `vickizhou318: 123d, $0, in_progress`, `paolowhite: 95d, $320, delivered`
 
 ### P0 · Bring the impressions sheet up to date — it stops months ago
 **Owner:** Hasnain · **Est. impact:** $2,500 · **Effort:** 1.0h · **Confidence:** 80%
@@ -41,32 +90,10 @@
 - This is the single highest-value data fix available: it unblocks revenue forecasting entirely.
 - Script: `playbooks/data_hygiene.md`
 
-### P0 · Work the $5,472 dead pipeline, largest first
-**Owner:** Ezan · **Est. impact:** $821 · **Effort:** 3.0h · **Confidence:** 55%
-
-*Why:* $5,472 quoted across 19 named leads with 0 follow-ups ever logged. At a 15% recovery that is $821 — more than a full day of current revenue, for zero ad spend and no new traffic. Top Rated needs $10,000 earned and over half of it is sitting in a spreadsheet column.
-
-- Start with: selmaprof ($950), bobzinos ($900), farida_ism ($700), getgwoppa ($700).
-- Use the four-line message in playbooks/dead_pipeline.md — quote still open, ask when to check back, ask for their number if budget was the issue.
-- Log every touch in the FollowUp column with a date, same day.
-- Anything that reopens goes straight into the normal intake flow.
-- Script: `playbooks/dead_pipeline.md`
-
-### P1 · Install the mid-order checkpoint — private feedback is the leak
-**Owner:** All CSRs (compliance owned by Hasnain) · **Est. impact:** $3,851 · **Effort:** 1.0h · **Confidence:** 45%
-
-*Why:* Only 7.9% of the 2353 orders on tabs that track reviews have one recorded, but public reviews are not where the damage is. Private ratings run underneath, stay open 60 days, are weighted most heavily for first-time buyers, and are invisible. That is why 1,583 reviews at 4.8 sit alongside Success Score 8. Asking for reviews does nothing about it; catching the problem mid-order does.
-
-- At 50% of elapsed time on every order, send the direction so far and ask plainly whether anything needs changing. This is the one habit that converts a silent 3-star private rating into a fixed order, while the order is still open.
-- Chase any silent buyer within 24 hours of delivery — orders auto-complete after 3 days and the private window stays open 60 days after that.
-- Log every order where the buyer went silent, exceeded the agreed revisions, or accepted without a word. That is your proxy for the feedback you cannot see.
-- Do NOT ask for a review beyond one neutral line at delivery, and never name a rating. Team briefing Rule 7 treats soliciting as an Integrity violation; see playbooks/review_capture.md.
-- Script: `playbooks/review_capture.md`
-
 ### P1 · Run the upsell A/B test to de-bias the 54% vs 31% gap
 **Owner:** CEO + Salman · **Est. impact:** $3,000 · **Effort:** 1.0h · **Confidence:** 40%
 
-*Why:* Leads with an upsell attempt convert 50.0% (n=38) against 5.3% (n=947), z=10.59. That is a +847% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
+*Why:* Leads with an upsell attempt convert 50.0% (n=38) against 18.4% (n=271), z=4.37. That is a +171% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.
 
 - For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.
 - Do not let CSRs choose. That choice is exactly the bias being measured.
@@ -104,6 +131,28 @@
 - Add a failure alert — 300+ silent failures is the real defect.
 - Script: `playbooks/data_hygiene.md`
 
+### P2 · Start recording upsells — the column is empty
+**Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
+
+*Why:* Upsell is marked on 0.0% of the 1043 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+
+- Fill the Upsell column on every order: TRUE/FALSE, no blanks.
+- Fill 'What did you upsell and how much' whenever TRUE.
+- Backfill the last 30 completed orders from memory this week.
+- Script: `playbooks/upsell.md`
+
+### P3 · Follow up the 6 quotes that never got one ($1,477)
+**Owner:** Ezan · **Est. impact:** $289 · **Effort:** 1.5h · **Confidence:** 45%
+
+*Why:* 6 buyers were quoted $1,477 between them and no follow-up was ever logged against any of them — the largest is selmaprof at $950, quoted 26 days ago. That sits inside a total unanswered pipeline of $5,722 across 20 leads. Of the 23 quoted leads anyone did chase, 9 placed (39%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 91%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 6 are the residue of that group, not part of its success.
+
+- Work the never-followed-up list first, largest first: selmaprof ($950, 26d), akhilkpfxx ($160, 146d), architpatel497 ($147, 34d), kai_utzinger ($85, 93d).
+- One message each. State the quote is still open, and ask one question they can answer in a word — whether the project is still live. Do not re-pitch and do not discount unprompted.
+- Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.
+- Then work the remainder by value; treat a third unanswered follow-up as a no and stop.
+- Script: `playbooks/dead_pipeline.md`
+- Source rows: `selmaprof: $950, 26d, 0 follow-ups`, `akhilkpfxx: $160, 146d, 0 follow-ups`, `architpatel497: $147, 34d, 0 follow-ups`, `kai_utzinger: $85, 93d, 0 follow-ups`, `zain_qw: $75, 28d, 0 follow-ups`, `Mohamed L: $60, 79d, 0 follow-ups`, `bobzinos: $900, 133d, 1 follow-ups`, `farida_ism: $700, 166d, 1 follow-ups`, `ryan_wonders: $350, 92d, 1 follow-ups`, `rztwerk: $250, 2d, 1 follow-ups`
+
 ### P3 · Close out approved order #4 — Calum Snell
 **Owner:** Delivery lead · **Est. impact:** $101 · **Effort:** 1.0h · **Confidence:** 80%
 
@@ -126,28 +175,16 @@
 - Script: `playbooks/review_capture.md`
 - Source rows: `order_tracker/tracker#b0r5`
 
-### P3 · Start recording upsells — the column is empty
-**Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
-
-*Why:* Upsell is marked on 0.0% of the 2353 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
-
-- Fill the Upsell column on every order: TRUE/FALSE, no blanks.
-- Fill 'What did you upsell and how much' whenever TRUE.
-- Backfill the last 30 completed orders from memory this week.
-- Script: `playbooks/upsell.md`
-
 
 ---
 
 ## Who does what
 
 ### Ezan · team lead · all hours
-*4 task(s), ~4.0h*
+*2 task(s), ~4.5h*
 
 - **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
-- **P2** Route high-value briefs to Raylain
-- **P2** Fix the broken ClickUp sync (334 logged failures)
-- **P3** Close out approved order #4 — Calum Snell
+- **P0** Close out 17 orders open more than 60 days ($2,285)
 
 Standing duties, every shift:
 - QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.
@@ -166,25 +203,11 @@ Standing duties, every shift:
 - Any order past day 7, or any cancellation, comes to you the same day.
 
 ### Nadir · csr · 21:00-09:00 PKT
-*3 task(s), ~3.0h*
+*3 task(s), ~3.5h*
 
 - **P0** Bring the impressions sheet up to date — it stops months ago
-- **P1** Install the mid-order checkpoint — private feedback is the leak
-- **P3** Close out approved order #6 — bethanyjademck
-
-Standing duties, every shift:
-- Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
-- Report spam as spam within 24 hours — it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.
-- Post the 12-question intake within 15 minutes of any order starting.
-- Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.
-- Log every quoted price into the inquiry sheet the moment it is sent.
-- Never move a pre-order conversation off Fiverr, and never argue.
-
-### Hasnain · csr · 17:00-01:00 PKT
-*2 task(s), ~3.0h*
-
-- **P0** Fill revenue in the daily ledger (112 days blank)
-- **P2** Wire up the 2 promised data sources
+- **P2** Start recording upsells — the column is empty
+- **P2** Fix the broken ClickUp sync (334 logged failures)
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -195,10 +218,26 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Amrah · csr · 09:00-17:00 PKT
-*2 task(s), ~4.5h*
+*4 task(s), ~3.5h*
 
-- **P0** Work the $5,472 dead pipeline, largest first
-- **P3** Start recording upsells — the column is empty
+- **P2** Wire up the 2 promised data sources
+- **P3** Close out approved order #6 — bethanyjademck
+- **P3** Close out approved order #4 — Calum Snell
+- **P2** Route high-value briefs to Raylain
+
+Standing duties, every shift:
+- Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
+- Report spam as spam within 24 hours — it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.
+- Post the 12-question intake within 15 minutes of any order starting.
+- Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.
+- Log every quoted price into the inquiry sheet the moment it is sent.
+- Never move a pre-order conversation off Fiverr, and never argue.
+
+### Hasnain · csr · 17:00-01:00 PKT
+*2 task(s), ~3.5h*
+
+- **P0** Fill revenue in the daily ledger (112 days blank)
+- **P3** Follow up the 6 quotes that never got one ($1,477)
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -252,10 +291,10 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic, recent vs earlier | 0.56/day | was 0.66/day (-14.3%) |
 | Organic orders, last 7d | 5 | 0.71/day |
 | AOV | $112 | median $100, n=1035 priced orders |
-| Lifetime tracked revenue | $116,017 | across 2353 order rows |
+| Lifetime tracked revenue | $116,017 | across 1043 order rows |
 | Inquiry conversion | 22.6% | 69/305 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 7.9% | biggest free growth lever |
+| Review capture | 52.4% | 547/1043 orders that could be rated |
 | Gig rating | 4.834 | 1,583 reviews, Level 2 |
 | Orders in queue | 20 | live from the gig page |
 
@@ -293,7 +332,6 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - priority_spread: 10
 
 **Checks not passing**
-- `warn` **ledger_vs_crm_orders** — daily ledger says 51 orders in window, CRM sheet says 1364 (96% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 
 **Data sources still missing**

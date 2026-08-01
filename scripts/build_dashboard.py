@@ -217,6 +217,21 @@ a{color:var(--violet)}
 .standing{border-top:1px dashed var(--border-hi);padding-top:10px;
   font-size:12.5px;color:var(--dim)}
 
+/* age bands — the 60+ cell is the one the page exists to shrink */
+.bands{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  gap:10px;margin:16px 0 4px}
+.band{border:1px solid var(--border);border-radius:10px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:3px;background:var(--panel)}
+.band .bn{font:600 9px/1.4 var(--sans);text-transform:uppercase;
+  letter-spacing:.15em;color:var(--dim)}
+.band .bv{font-family:var(--mono);font-size:19px;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.band .bc{font-size:11.5px;color:var(--dim)}
+.band.hot{border-color:var(--coral);background:var(--coral-bg)}
+.band.hot .bv{color:var(--coral)}
+.card h3{font:600 10px/1.4 var(--sans);text-transform:uppercase;
+  letter-spacing:.15em;color:var(--dim);margin:22px 0 10px}
+
 /* tables */
 table{width:100%;border-collapse:collapse;font-size:13px}
 .scroll{overflow-x:auto}
@@ -315,7 +330,14 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     A('<section class="kpis">')
     A(kpi("Organic / day", f'{h["ma7_now"]:.2f}', f'7d avg, was {h["ma7_prior"]:.2f}',
           "critical" if verdict == "BREACH" else ""))
-    A(kpi("Organic, last 7d", f'{m["flow_7d"]["organic"]:.0f}', "orders"))
+    rec = run.get("recovery") or {}
+    if rec:
+        _ob = rec["open_orders"]
+        A(kpi("Money sitting still", money(rec["total_at_rest"]),
+              f'{_ob["stale_count"]} orders 60d+, {rec["quotes"]["count"]} quotes',
+              "critical" if _ob["stale_count"] else ""))
+    else:
+        A(kpi("Organic, last 7d", f'{m["flow_7d"]["organic"]:.0f}', "orders"))
     A(kpi("AOV", money(econ["aov"]), f'median {money(econ["median"])}'))
     A(kpi("Conversion", f'{fun["conversion"]:.1%}',
           f'{fun["placed"]}/{fun["inquiries"]} inquiries'))
@@ -337,6 +359,51 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
           f'{h["ma7_now"]:.2f}/day against {h["ma7_prior"]:.2f} a fortnight ago. '
           f'No breach — the dose may rise if revenue needs it.</p>')
     A("</section>")
+
+    # ---- money sitting still ----
+    # Directly under the constraint and above everything else: it is the only
+    # block on the page that needs no new traffic and no permission to act on.
+    if rec:
+        ob, qb = rec["open_orders"], rec["quotes"]
+        A('<section class="card"><h2>Money sitting still</h2>')
+        A(f'<p class="why"><strong>{money(rec["total_at_rest"])}</strong> is '
+          f'committed or quoted and not moving — {money(ob["stale_value"])} in '
+          f'{ob["stale_count"]} orders open more than {ob["stale_after_days"]} '
+          f'days, {money(qb["total"])} across {qb["count"]} quotes that never '
+          f'became orders.</p>')
+        A('<div class="bands">')
+        for name, st in ob["bands"].items():
+            hot = " hot" if name == "60+" else ""
+            A(f'<div class="band{hot}"><span class="bn">{E(name)} days</span>'
+              f'<span class="bv">{money(st["value"])}</span>'
+              f'<span class="bc">{st["count"]} orders</span></div>')
+        A('</div>')
+        rows = ob["orders"][:8]
+        if rows:
+            A('<h3>Oldest open orders</h3><div class="scroll"><table>'
+              '<thead><tr><th>Client</th><th class="n">Age</th><th>Status</th>'
+              '<th class="n">Value</th><th>Designer</th></tr></thead><tbody>')
+            for o in rows:
+                A(f'<tr><td>{E(o["client"])}</td>'
+                  f'<td class="n">{o["age_days"]}d</td>'
+                  f'<td>{E(o["status"])}</td>'
+                  f'<td class="n">{money(o["amount"])}</td>'
+                  f'<td>{E(o["designer"] or "—")}</td></tr>')
+            A('</tbody></table></div>')
+        untouched = [q for q in qb["quotes"] if q["untouched"]]
+        if untouched:
+            A(f'<h3>Quotes with no follow-up ever logged &middot; '
+              f'{len(untouched)} worth {money(qb["untouched_value"])}</h3>')
+            A('<div class="scroll"><table><thead><tr><th>Client</th>'
+              '<th class="n">Quoted</th><th class="n">Age</th><th>CSR</th>'
+              '</tr></thead><tbody>')
+            for q in sorted(untouched, key=lambda q: -q["quoted"])[:8]:
+                A(f'<tr><td>{E(q["client"])}</td>'
+                  f'<td class="n">{money(q["quoted"])}</td>'
+                  f'<td class="n">{q["age_days"]}d</td>'
+                  f'<td>{E(q["csr"] or "—")}</td></tr>')
+            A('</tbody></table></div>')
+        A('</section>')
 
     # ---- flow chart ----
     if flow:
