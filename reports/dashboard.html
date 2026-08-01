@@ -1,271 +1,262 @@
-<title>XStudioz — What Next</title><style>
-/* Design system lifted from ezanbhutta/csr-pulse (src/CSRPulse.jsx, const C)
-   so this page reads as part of the same suite as CSR Pulse and Designer
-   Pulse rather than a bolt-on. Their canvas principle is "~55% white
-   dominance via tinted off-whites" — a barely-there violet cast on every
-   neutral, deep violet as the only accent, white cards floating on it.
-
-   Fonts: csr-pulse loads Inter / Space Grotesk / JetBrains Mono from Google
-   Fonts. The Artifact CSP blocks external hosts, so the same families are
-   declared and resolve when the viewer has them, falling back to system
-   equivalents rather than risking a silent swap to Times.
-
-   csr-pulse is light-only. Artifacts render in the viewer's theme, so the
-   dark variant is a faithful translation: bgInk becomes the ground and
-   violetGlow carries the accent, keeping the brand legible either way. */
+<title>XStudioz — What Next</title>
+<style>
 *,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);
+  font:400 16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+
 :root{
-  --bg:#FAFAFE; --raised:#F4F2FA; --card:#FFFFFF; --hover:#F0EEFA;
-  --ink:#160A33; --muted:#534A78; --dim:#8B82A8;
-  --border:#E8E5F3; --border-hi:#D4CFEC;
-  --violet:#7229FF; --violet-dim:#5E1FD8; --violet-glow:#9F66FF;
-  --violet-bg:#F1EBFF;
-  --mint:#10B981; --mint-bg:#E7F8F1;
-  --amber:#F59E0B; --amber-bg:#FEF4DE;
-  --coral:#EF4444; --coral-bg:#FDE9E9;
-  --sky:#0EA5E9; --sky-bg:#E5F4FE;
-  --sans:"Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  --disp:"Space Grotesk","Inter",system-ui,sans-serif;
-  --mono:"JetBrains Mono","Fira Code",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --canvas:#FBFBFD; --card:#FFFFFF; --sunk:#F5F5F8;
+  --ink:#15151A; --body:#3E3E4A; --muted:#71717F; --faint:#A1A1AE;
+  --line:#E8E8EF; --line-soft:#F1F1F6;
+  --accent:#4F46E5; --accent-soft:#EEF0FE; --accent-ink:#3730A3;
+  --good:#059669; --good-soft:#E8F6F1;
+  --warn:#B45309; --warn-soft:#FDF3E4;
+  --bad:#DC2626;  --bad-soft:#FDECEC;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(20,20,40,.04),0 1px 3px rgba(20,20,40,.06);
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#0F0722; --raised:#160A33; --card:#1C0F3E; --hover:#241452;
-    --ink:#F4F2FA; --muted:#C3BBDF; --dim:#8B82A8;
-    --border:#2A1A56; --border-hi:#3B2670;
-    --violet:#9F66FF; --violet-dim:#7229FF; --violet-glow:#B98CFF;
-    --violet-bg:#241452;
-    --mint:#34D399; --mint-bg:#0C2C22;
-    --amber:#FBBF24; --amber-bg:#2E2410;
-    --coral:#F87171; --coral-bg:#301618;
-    --sky:#38BDF8; --sky-bg:#0B2739;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0F0722; --raised:#160A33; --card:#1C0F3E; --hover:#241452;
-  --ink:#F4F2FA; --muted:#C3BBDF; --dim:#8B82A8;
-  --border:#2A1A56; --border-hi:#3B2670;
-  --violet:#9F66FF; --violet-dim:#7229FF; --violet-glow:#B98CFF;
-  --violet-bg:#241452;
-  --mint:#34D399; --mint-bg:#0C2C22;
-  --amber:#FBBF24; --amber-bg:#2E2410;
-  --coral:#F87171; --coral-bg:#301618;
-  --sky:#38BDF8; --sky-bg:#0B2739;
-  color-scheme:dark;
-}
-:root[data-theme="light"]{
-  --bg:#FAFAFE; --raised:#F4F2FA; --card:#FFFFFF; --hover:#F0EEFA;
-  --ink:#160A33; --muted:#534A78; --dim:#8B82A8;
-  --border:#E8E5F3; --border-hi:#D4CFEC;
-  --violet:#7229FF; --violet-dim:#5E1FD8; --violet-glow:#9F66FF;
-  --violet-bg:#F1EBFF;
-  --mint:#10B981; --mint-bg:#E7F8F1;
-  --amber:#F59E0B; --amber-bg:#FEF4DE;
-  --coral:#EF4444; --coral-bg:#FDE9E9;
-  --sky:#0EA5E9; --sky-bg:#E5F4FE;
-  color-scheme:light;
-}
-body{margin:0;background:var(--bg);color:var(--muted);
-  font:14px/1.6 var(--sans);-webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale}
-.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px;
-  display:flex;flex-direction:column;gap:22px}
-h1,h2,h3{color:var(--ink);margin:0;text-wrap:balance}
-h1{font:700 26px/1.2 var(--disp);letter-spacing:-.02em}
-h2{font:600 10px/1.4 var(--sans);text-transform:uppercase;
-  letter-spacing:.18em;color:var(--dim)}
-h3{font:600 15px/1.35 var(--sans);letter-spacing:-.01em}
-a{color:var(--violet)}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.disp{font-family:var(--disp);letter-spacing:-.02em}
 
-/* masthead */
-.mast{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-  gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-.mast .meta{font:500 11px/1.5 var(--mono);color:var(--dim)}
-.brand{display:flex;align-items:center;gap:10px}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--violet);
-  box-shadow:0 0 0 3px var(--violet-bg)}
+.wrap{max-width:940px;margin:0 auto;padding:0 24px}
 
-/* KPI strip */
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:14px 16px;display:flex;flex-direction:column;gap:5px}
-.kpi .k{font:600 9px/1.4 var(--sans);text-transform:uppercase;
-  letter-spacing:.15em;color:var(--dim)}
-.kpi .v{font:600 24px/1.1 var(--mono);color:var(--ink);
+/* ---- masthead ---- */
+header.top{background:var(--card);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:22px 0 0}
+.brand h1{margin:0;font-size:17px;font-weight:640;letter-spacing:-.01em}
+.brand .date{font-size:13px;color:var(--muted)}
+.brand .stamp{margin-left:auto;font:500 11px/1 var(--mono);color:var(--faint);
+  text-transform:uppercase;letter-spacing:.08em}
+
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;
+  padding:14px 0 0;margin-bottom:-1px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{flex:0 0 auto;padding:9px 15px 13px;font-size:14px;font-weight:520;
+  color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;
+  border-radius:7px 7px 0 0;white-space:nowrap;transition:color .12s,background .12s}
+nav.tabs a:hover{color:var(--ink);background:var(--sunk)}
+nav.tabs a.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+nav.tabs a .pip{display:inline-block;min-width:19px;margin-left:7px;padding:1px 6px;
+  border-radius:9px;background:var(--sunk);color:var(--muted);
+  font:600 11px/1.5 var(--sans);text-align:center}
+nav.tabs a.on .pip{background:var(--accent-soft);color:var(--accent-ink)}
+nav.tabs a .pip.alert{background:var(--bad-soft);color:var(--bad)}
+
+/* ---- view scaffolding ---- */
+main{padding:44px 0 96px}
+.view{display:none;animation:in .16s ease-out}
+.view.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.view{animation:none}}
+
+.lede{margin:0 0 8px;font-size:27px;line-height:1.25;font-weight:660;
+  letter-spacing:-.022em;max-width:24ch}
+.sub{margin:0 0 40px;font-size:16px;color:var(--muted);max-width:64ch}
+
+h2.sec{margin:56px 0 4px;font-size:12px;font-weight:660;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.09em}
+p.secnote{margin:0 0 20px;font-size:14px;color:var(--faint);max-width:68ch}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow)}
+.pad{padding:26px 28px}
+
+/* ---- the one number ---- */
+.hero{padding:34px 32px;margin-bottom:16px}
+.hero .cap{font:600 11px/1 var(--sans);text-transform:uppercase;
+  letter-spacing:.09em;color:var(--muted);margin-bottom:14px}
+.hero .fig{font-size:52px;line-height:1;font-weight:680;letter-spacing:-.035em;
   font-variant-numeric:tabular-nums}
-.kpi .s{font:500 11px/1.4 var(--sans);color:var(--muted)}
-.kpi.good .v{color:var(--mint)} .kpi.warn .v{color:var(--amber)}
-.kpi.critical .v{color:var(--coral)}
+.hero .say{margin-top:14px;font-size:16px;color:var(--body);max-width:60ch}
+.hero.good .fig{color:var(--good)} .hero.warn .fig{color:var(--warn)}
+.hero.bad .fig{color:var(--bad)}   .hero.accent .fig{color:var(--accent)}
 
-/* cards */
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:20px 22px;display:flex;flex-direction:column;gap:14px}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
-
-/* the gate — page thesis */
-.gate{border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;
-  gap:14px;background:var(--card);border:1px solid var(--border);
-  border-left:4px solid var(--tone)}
-.gate.good{--tone:var(--mint)} .gate.warn{--tone:var(--amber)}
-.gate.critical{--tone:var(--coral)}
-.gate-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-.verdict{font:600 10px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;
-  color:var(--tone);background:var(--tone-bg);border-radius:999px;padding:7px 13px}
-.gate.good .verdict{--tone-bg:var(--mint-bg)}
-.gate.warn .verdict{--tone-bg:var(--amber-bg)}
-.gate.critical .verdict{--tone-bg:var(--coral-bg)}
-.gate-head{font:600 19px/1.3 var(--disp);letter-spacing:-.02em;color:var(--ink);
-  flex:1 1 260px}
-.idx{font:600 24px/1 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
-.idx small{font:500 10px/1 var(--sans);color:var(--dim);letter-spacing:.12em}
-.reasons{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.reasons li::marker{color:var(--tone)}
-
-/* dose */
-.dose{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.dose .big{font:700 44px/1 var(--mono);color:var(--violet);
+/* ---- stat row ---- */
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+  margin-bottom:12px}
+.stat{padding:20px 22px}
+.stat .k{font:600 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);margin-bottom:10px}
+.stat .v{font-size:27px;line-height:1.1;font-weight:660;letter-spacing:-.022em;
   font-variant-numeric:tabular-nums}
-.dose .unit{font:600 10px/1.4 var(--sans);color:var(--dim);
-  text-transform:uppercase;letter-spacing:.15em}
-.pill{font:600 9px/1 var(--sans);letter-spacing:.15em;text-transform:uppercase;
-  padding:6px 10px;border-radius:999px;background:var(--raised);color:var(--muted)}
-.pill.cut{background:var(--coral-bg);color:var(--coral)}
-.pill.raise{background:var(--mint-bg);color:var(--mint)}
-.pill.freeze,.pill.hold{background:var(--amber-bg);color:var(--amber)}
+.stat .n{margin-top:7px;font-size:13px;color:var(--faint);line-height:1.45}
+.stat .v.good{color:var(--good)} .stat .v.warn{color:var(--warn)}
+.stat .v.bad{color:var(--bad)}
 
-/* formula readout */
-.formula{background:var(--raised);border:1px solid var(--border);border-radius:10px;
-  padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.9;
-  overflow-x:auto}
-.formula .sym{color:var(--violet);font-weight:600}
-.formula .sub{color:var(--dim);font-size:10.5px}
-.formula b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+/* ---- tasks ---- */
+.task{display:flex;gap:15px;padding:19px 22px;border-bottom:1px solid var(--line-soft);
+  transition:background .12s}
+.task:last-child{border-bottom:0}
+.task:hover{background:#FCFCFE}
+.task input{appearance:none;flex:0 0 auto;width:21px;height:21px;margin:1px 0 0;
+  border:1.75px solid #C9C9D6;border-radius:6px;background:var(--card);
+  cursor:pointer;position:relative;transition:.14s}
+.task input:hover{border-color:var(--accent)}
+.task input:checked{background:var(--accent);border-color:var(--accent)}
+.task input:checked::after{content:"";position:absolute;left:6.5px;top:2.5px;
+  width:5px;height:10px;border:solid #fff;border-width:0 2.25px 2.25px 0;
+  transform:rotate(45deg)}
+.task input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.task .body{min-width:0;flex:1}
+.task h3{margin:0 0 5px;font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.4}
+.task .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  font-size:13px;color:var(--muted);margin-bottom:11px}
+.task .who{font-weight:560;color:var(--body)}
+.task .val{font-weight:620;color:var(--good);font-variant-numeric:tabular-nums}
+.task ol{margin:0;padding-left:19px;font-size:14px;color:var(--body);line-height:1.6}
+.task ol li{margin:4px 0}
+.task ol li::marker{color:var(--faint);font-size:12px}
+.task.done{opacity:.42}
+.task.done h3{text-decoration:line-through;text-decoration-color:var(--faint)}
 
-/* week strip */
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.day{border:1px solid var(--border);border-radius:9px;padding:9px 6px;
-  text-align:center;background:var(--raised)}
-.day.on{border-color:var(--violet);background:var(--violet-bg)}
-.day .dow{font:600 9px/1.4 var(--sans);letter-spacing:.12em;color:var(--dim);
-  text-transform:uppercase}
-.day .n{font:600 17px/1.3 var(--mono);color:var(--ink)}
-.day.on .n{color:var(--violet)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--faint);flex:0 0 auto}
 
-/* boards */
-.board{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:16px 18px;display:flex;flex-direction:column;gap:10px}
-.board-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
-.who{font:600 15px/1.3 var(--disp);letter-spacing:-.02em;color:var(--ink)}
-.win{font:500 11px/1.4 var(--mono);color:var(--dim)}
-.board ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px}
-.board li::marker{color:var(--violet-glow)}
-.standing{border-top:1px dashed var(--border-hi);padding-top:10px;
-  font-size:12.5px;color:var(--dim)}
-
-/* age bands — the 60+ cell is the one the page exists to shrink */
-.bands{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
-  gap:10px;margin:16px 0 4px}
-.band{border:1px solid var(--border);border-radius:10px;padding:12px 14px;
-  display:flex;flex-direction:column;gap:3px;background:var(--panel)}
-.band .bn{font:600 9px/1.4 var(--sans);text-transform:uppercase;
-  letter-spacing:.15em;color:var(--dim)}
-.band .bv{font-family:var(--mono);font-size:19px;color:var(--ink);
-  font-variant-numeric:tabular-nums}
-.band .bc{font-size:11.5px;color:var(--dim)}
-.band.hot{border-color:var(--coral);background:var(--coral-bg)}
-.band.hot .bv{color:var(--coral)}
-.card h3{font:600 10px/1.4 var(--sans);text-transform:uppercase;
-  letter-spacing:.15em;color:var(--dim);margin:22px 0 10px}
-
-/* tables */
-table{width:100%;border-collapse:collapse;font-size:13px}
-.scroll{overflow-x:auto}
-th{text-align:left;font:600 9px/1.4 var(--sans);text-transform:uppercase;
-  letter-spacing:.15em;color:var(--dim);padding:0 12px 9px 0;
-  border-bottom:1px solid var(--border-hi);white-space:nowrap}
-td{padding:9px 12px 9px 0;border-bottom:1px solid var(--border);vertical-align:top}
-td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);
-  white-space:nowrap}
+/* ---- tables ---- */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:11px 16px;font:600 11px/1 var(--sans);
+  text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  background:var(--sunk);white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:13px 16px;border-bottom:1px solid var(--line-soft);
+  color:var(--body);vertical-align:top}
 tr:last-child td{border-bottom:0}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.name{font-weight:560;color:var(--ink);white-space:nowrap}
 
-/* tasks */
-.tasks{display:flex;flex-direction:column;gap:10px}
-.task{background:var(--card);border:1px solid var(--border);
-  border-left:3px solid var(--tone);border-radius:12px;padding:15px 17px;
-  display:flex;flex-direction:column;gap:9px}
-.task.critical{--tone:var(--coral)} .task.warn{--tone:var(--amber)}
-.task.muted{--tone:var(--border-hi)}
-.task-top{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
-.pri{font:600 9px/1 var(--sans);letter-spacing:.15em;color:var(--tone);
-  background:var(--raised);border-radius:6px;padding:5px 8px}
-.task h3{flex:1 1 240px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:500 10px/1 var(--mono);color:var(--dim);background:var(--raised);
-  border-radius:999px;padding:6px 10px}
-.chip b{color:var(--ink);font-weight:600}
-.why{font-size:13px;color:var(--muted);margin:0}
-.steps{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px;
-  font-size:13px}
-.steps li::marker{color:var(--dim)}
+/* ---- pills ---- */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:999px;font:600 11px/1.6 var(--sans);letter-spacing:.02em;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.flat{background:var(--sunk);color:var(--muted)}
 
-/* chart */
-canvas{width:100%;height:150px;display:block}
-.legend{display:flex;gap:16px;font:600 9px/1 var(--sans);color:var(--dim);
-  text-transform:uppercase;letter-spacing:.15em}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;
-  margin-right:6px;vertical-align:-1px}
+/* ---- banner ---- */
+.banner{display:flex;gap:13px;padding:17px 20px;border-radius:11px;
+  font-size:14.5px;line-height:1.6;margin-bottom:16px}
+.banner.bad{background:var(--bad-soft);color:#8C1D1D}
+.banner.warn{background:var(--warn-soft);color:#7C3D08}
+.banner.good{background:var(--good-soft);color:#065F46}
+.banner b{font-weight:660}
+.banner .ic{flex:0 0 auto;font-size:15px;line-height:1.5}
 
-/* bar rows */
-.bars{display:flex;flex-direction:column;gap:8px}
-.bar{display:grid;grid-template-columns:150px 1fr 44px;gap:10px;align-items:center;
-  font:500 10.5px/1.4 var(--sans);color:var(--dim);letter-spacing:.04em}
-.bar .track{height:6px;background:var(--raised);border-radius:999px;overflow:hidden}
-.bar .fill{height:100%;background:var(--violet);border-radius:999px}
-.bar .v{text-align:right;color:var(--ink);font-family:var(--mono);
-  font-variant-numeric:tabular-nums}
+/* ---- disclosure ---- */
+details{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:14px}
+summary{cursor:pointer;font-size:13px;font-weight:560;color:var(--muted);
+  list-style:none;display:inline-flex;align-items:center;gap:6px;
+  padding:3px 0;border-radius:5px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"›";font-size:15px;transition:transform .14s;display:inline-block}
+details[open] summary::before{transform:rotate(90deg)}
+summary:hover{color:var(--accent)}
+details .inner{padding:12px 0 2px;font-size:14px;color:var(--body);
+  line-height:1.65;max-width:68ch}
 
-.note{font-size:12.5px;color:var(--dim);margin:0}
-code{font-family:var(--mono);font-size:.92em;background:var(--raised);
-  padding:1px 5px;border-radius:5px;color:var(--muted)}
-footer{border-top:1px solid var(--border);padding-top:14px;
-  font:500 11px/1.6 var(--mono);color:var(--dim)}
-:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:560px){
-  .week{grid-template-columns:repeat(4,1fr)}
-  .bar{grid-template-columns:104px 1fr 40px}
-  .dose .big{font-size:36px}
+.empty{padding:40px 28px;text-align:center;color:var(--faint);font-size:14.5px}
+.foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--faint);line-height:1.7;max-width:68ch}
+.sync{font:500 11px/1 var(--mono);color:var(--faint);margin-left:9px}
+
+@media (max-width:640px){
+  .wrap{padding:0 17px}
+  .lede{font-size:23px}
+  .hero{padding:26px 22px}
+  .hero .fig{font-size:40px}
+  .pad,.stat{padding:19px}
+  .task{padding:17px}
+  main{padding:32px 0 72px}
+  h2.sec{margin-top:44px}
 }
-</style><div class="wrap"><header class="mast"><div class="brand"><span class="dot"></span><h1>What Next <span style="color:var(--dim);font-weight:500">&middot; X Studioz</span></h1></div><div class="meta">2026-07-29 &middot; HaseebMadeIt &middot; self-check 96/100</div></header><section class="kpis"><div class="kpi critical"><span class="k">Organic / day</span><span class="v">0.71</span><span class="s">7d avg, was 0.71</span></div><div class="kpi critical"><span class="k">Money sitting still</span><span class="v">$8,007</span><span class="s">17 orders 60d+, 20 quotes</span></div><div class="kpi "><span class="k">AOV</span><span class="v">$112</span><span class="s">median $100</span></div><div class="kpi "><span class="k">Conversion</span><span class="v">22.6%</span><span class="s">69/305 inquiries</span></div><div class="kpi warn"><span class="k">Phase gate</span><span class="v">0/3</span><span class="s">Phase 1 · Signal repair</span></div></section><section class="gate critical"><div class="gate-top"><span class="verdict">BREACH</span><span class="gate-head">Organic flow is the constraint on everything else</span><span class="idx">37<small> / 100</small></span></div><ul class="reasons"><li>structural: organic -14.3% since 2026-07-13 (0.66 -&gt; 0.56/day)</li></ul></section><section class="card"><h2>Money sitting still</h2><p class="why"><strong>$8,007</strong> is committed or quoted and not moving — $2,285 in 17 orders open more than 60 days, $5,722 across 20 quotes that never became orders.</p><div class="bands"><div class="band"><span class="bn">0-7 days</span><span class="bv">$1,085</span><span class="bc">7 orders</span></div><div class="band"><span class="bn">8-30 days</span><span class="bv">$1,425</span><span class="bc">6 orders</span></div><div class="band"><span class="bn">31-60 days</span><span class="bv">$295</span><span class="bc">2 orders</span></div><div class="band hot"><span class="bn">60+ days</span><span class="bv">$2,285</span><span class="bc">17 orders</span></div></div><h3>Oldest open orders</h3><div class="scroll"><table><thead><tr><th>Client</th><th class="n">Age</th><th>Status</th><th class="n">Value</th><th>Designer</th></tr></thead><tbody><tr><td>osmanbey_35</td><td class="n">265d</td><td>in_progress</td><td class="n">$250</td><td>Aashir</td></tr><tr><td>johnjk001</td><td class="n">209d</td><td>delivered</td><td class="n">$0</td><td>Dulal Khan</td></tr><tr><td>faisalkazmi53</td><td class="n">181d</td><td>in_progress</td><td class="n">$0</td><td>Shaoor</td></tr><tr><td>madewelltech</td><td class="n">171d</td><td>delivered</td><td class="n">$120</td><td>Amin</td></tr><tr><td>andrem530</td><td class="n">156d</td><td>revision</td><td class="n">$295</td><td>Amin</td></tr><tr><td>jordyspikker</td><td class="n">137d</td><td>revision</td><td class="n">$100</td><td>Ahmed Ashfaq</td></tr><tr><td>calumsnell</td><td class="n">135d</td><td>revision</td><td class="n">$100</td><td>Nime</td></tr><tr><td>kuykendalljr</td><td class="n">132d</td><td>in_progress</td><td class="n">$75</td><td>Saad Sajid</td></tr></tbody></table></div><h3>Quotes with no follow-up ever logged &middot; 6 worth $1,477</h3><div class="scroll"><table><thead><tr><th>Client</th><th class="n">Quoted</th><th class="n">Age</th><th>CSR</th></tr></thead><tbody><tr><td>selmaprof</td><td class="n">$950</td><td class="n">26d</td><td>Iqra</td></tr><tr><td>akhilkpfxx</td><td class="n">$160</td><td class="n">146d</td><td>—</td></tr><tr><td>architpatel497</td><td class="n">$147</td><td class="n">34d</td><td>Iqra</td></tr><tr><td>kai_utzinger</td><td class="n">$85</td><td class="n">93d</td><td>—</td></tr><tr><td>zain_qw</td><td class="n">$75</td><td class="n">28d</td><td>Swaid</td></tr><tr><td>Mohamed L</td><td class="n">$60</td><td class="n">79d</td><td>—</td></tr></tbody></table></div></section><section class="card"><h2>Organic order flow</h2><canvas id="flow" aria-label="Daily organic orders"></canvas><div class="legend"><span><i style="background:var(--violet)"></i>Organic orders</span></div></section><section class="card"><h2>Why flow moved</h2><p class="why">Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately — the engine already reads it.</p></section><section><h2>Do today &middot; 12 tasks</h2><div class="tasks" style="margin-top:14px"><article class="task critical"><div class="task-top"><span class="pri">P0</span><h3>Rescue at-risk order #5 — Dr. Ali Albalawi</h3></div><div class="chips"><span class="chip">owner <b>Ezan (escalate to CEO if refund is formally requested)</b></span><span class="chip">impact <b>$400</b></span><span class="chip">effort <b>1.5h</b></span><span class="chip">confidence <b>70%</b></span></div><p class="why">Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -&gt; 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$112; the rating damage is worth far more.</p><ul class="steps"><li>Read the full order history before replying — do not reintroduce any concept the buyer already rejected.</li><li>Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.</li><li>Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.</li><li>If they choose (a), name the designer and give a fixed date.</li><li>If they choose (b), process it same day — a fast clean exit is cheaper than a slow 1-star.</li></ul><p class="note">Script: <code>playbooks/dispute_rescue.md</code></p></article><article class="task critical"><div class="task-top"><span class="pri">P0</span><h3>Close out 17 orders open more than 60 days ($2,285)</h3></div><div class="chips"><span class="chip">owner <b>Ezan</b></span><span class="chip">impact <b>$914</b></span><span class="chip">effort <b>3.0h</b></span><span class="chip">confidence <b>60%</b></span></div><p class="why">17 orders worth $2,285 have been open longer than 60 days, out of 32 open orders worth $5,090 in total. The oldest is osmanbey_35 at 265 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.</p><ul class="steps"><li>Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.</li><li>Where we owe work — assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (265d, $250), madewelltech (171d, $120), andrem530 (156d, $295).</li><li>Where the client is silent — send one message that states what was last delivered and asks a single closed question. Do not re-open the brief.</li><li>Where it is genuinely dead — set the status so it stops appearing here, and note why in the CSR column.</li><li>Anything still open at this time next week gets escalated, not re-listed.</li></ul><p class="note">Script: <code>playbooks/stale_orders.md</code></p></article><article class="task critical"><div class="task-top"><span class="pri">P0</span><h3>Bring the impressions sheet up to date — it stops months ago</h3></div><div class="chips"><span class="chip">owner <b>Hasnain</b></span><span class="chip">impact <b>$2,500</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>80%</b></span></div><p class="why">Impression data exists but stops at 2025-12-13, 228 days before today. The last 28 days carry no rows, so the current decline cannot be attributed to reach, click-through or closing rate. Update the impressions sheet to the present and this becomes answerable immediately — the engine already reads it. Impressions are the leading indicator on the whole objective: Success Score drives impressions, impressions drive organic orders, organic orders drive revenue. Without a current series the engine can see that organic fell but not whether reach or conversion caused it, and those need opposite responses.</p><ul class="steps"><li>Append daily rows from Fiverr Analytics from the last logged date to today: Date, Account Name, Impressions, Clicks, Organic Orders.</li><li>Keep the existing column names exactly — the engine already reads them and a rename is what schema drift is.</li><li>Post impressions and the 7-day average every morning at 09:00 PKT. It is the one number that says whether the suppression is lifting.</li><li>Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically.</li></ul><p class="note">Script: <code>playbooks/data_hygiene.md</code></p></article><article class="task critical"><div class="task-top"><span class="pri">P0</span><h3>Fill revenue in the daily ledger (112 days blank)</h3></div><div class="chips"><span class="chip">owner <b>Whoever owns the daily ledger</b></span><span class="chip">impact <b>$2,000</b></span><span class="chip">effort <b>2.0h</b></span><span class="chip">confidence <b>90%</b></span></div><p class="why">112 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.</p><ul class="steps"><li>Fill every revenue column in the ledger for every day that recorded orders.</li><li>Backfill from 2026-06-11 forward — that is where the ledger starts.</li><li>This is the single highest-value data fix available: it unblocks revenue forecasting entirely.</li></ul><p class="note">Script: <code>playbooks/data_hygiene.md</code></p></article><article class="task warn"><div class="task-top"><span class="pri">P1</span><h3>Run the upsell A/B test to de-bias the 54% vs 31% gap</h3></div><div class="chips"><span class="chip">owner <b>CEO + Salman</b></span><span class="chip">impact <b>$3,000</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>40%</b></span></div><p class="why">Leads with an upsell attempt convert 50.0% (n=38) against 18.4% (n=271), z=4.37. That is a +171% relative lift — but it is observational, and CSRs choose who to upsell. The test tells you how much of it is real.</p><ul class="steps"><li>For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.</li><li>Do not let CSRs choose. That choice is exactly the bias being measured.</li><li>Log the assignment in the Upsell column so the engine can score it.</li><li>The engine will report the de-biased effect once n&gt;=100 per arm.</li></ul><p class="note">Script: <code>playbooks/upsell.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P2</span><h3>Wire up the 2 promised data sources</h3></div><div class="chips"><span class="chip">owner <b>CEO</b></span><span class="chip">impact <b>$1,500</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>50%</b></span></div><p class="why">2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.</p><ul class="steps"><li>Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.</li><li>Needed to attribute outcome changes to team actions rather than to Fiverr&#x27;s algorithm.</li><li>Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.</li></ul><p class="note">Script: <code>playbooks/data_hygiene.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P2</span><h3>Route high-value briefs to Raylain</h3></div><div class="chips"><span class="chip">owner <b>CEO</b></span><span class="chip">impact <b>$800</b></span><span class="chip">effort <b>0.5h</b></span><span class="chip">confidence <b>35%</b></span></div><p class="why">Raylain averages $154 across 7 orders; Abdullah averages $61 across 6. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.</p><ul class="steps"><li>Assign every brief above $200 to Raylain or the next two by AOV.</li><li>Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.</li><li>Revisit in 30 days with the engine&#x27;s updated per-designer AOV.</li></ul><p class="note">Script: <code>playbooks/staffing.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P2</span><h3>Fix the broken ClickUp sync (334 logged failures)</h3></div><div class="chips"><span class="chip">owner <b>CEO / whoever owns the Apps Script</b></span><span class="chip">impact <b>$600</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>70%</b></span></div><p class="why">The Apps Script has logged 334 failures, including: CLICKUP_TOKEN script property is missing.. Every ClickUp task the sheet should have created since then does not exist, so work is being tracked in two places that disagree.</p><ul class="steps"><li>Set CLICKUP_TOKEN in the Apps Script&#x27;s Script Properties.</li><li>Re-run the sync for the backlog.</li><li>Add a failure alert — 300+ silent failures is the real defect.</li></ul><p class="note">Script: <code>playbooks/data_hygiene.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P2</span><h3>Start recording upsells — the column is empty</h3></div><div class="chips"><span class="chip">owner <b>All CSRs</b></span><span class="chip">impact <b>$1,200</b></span><span class="chip">effort <b>1.5h</b></span><span class="chip">confidence <b>50%</b></span></div><p class="why">Upsell is marked on 0.0% of the 1043 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.</p><ul class="steps"><li>Fill the Upsell column on every order: TRUE/FALSE, no blanks.</li><li>Fill &#x27;What did you upsell and how much&#x27; whenever TRUE.</li><li>Backfill the last 30 completed orders from memory this week.</li></ul><p class="note">Script: <code>playbooks/upsell.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P3</span><h3>Follow up the 6 quotes that never got one ($1,477)</h3></div><div class="chips"><span class="chip">owner <b>Ezan</b></span><span class="chip">impact <b>$289</b></span><span class="chip">effort <b>1.5h</b></span><span class="chip">confidence <b>45%</b></span></div><p class="why">6 buyers were quoted $1,477 between them and no follow-up was ever logged against any of them — the largest is selmaprof at $950, quoted 26 days ago. That sits inside a total unanswered pipeline of $5,722 across 20 leads. Of the 23 quoted leads anyone did chase, 9 placed (39%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 91%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 6 are the residue of that group, not part of its success.</p><ul class="steps"><li>Work the never-followed-up list first, largest first: selmaprof ($950, 26d), akhilkpfxx ($160, 146d), architpatel497 ($147, 34d), kai_utzinger ($85, 93d).</li><li>One message each. State the quote is still open, and ask one question they can answer in a word — whether the project is still live. Do not re-pitch and do not discount unprompted.</li><li>Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.</li><li>Then work the remainder by value; treat a third unanswered follow-up as a no and stop.</li></ul><p class="note">Script: <code>playbooks/dead_pipeline.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P3</span><h3>Close out approved order #4 — Calum Snell</h3></div><div class="chips"><span class="chip">owner <b>Delivery lead</b></span><span class="chip">impact <b>$101</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>80%</b></span></div><p class="why">Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.</p><ul class="steps"><li>Ship the full final package today: vectors, all formats, variations, fonts, colour values.</li><li>Deliver via the order (not chat) so it counts toward on-time delivery.</li><li>Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.</li></ul><p class="note">Script: <code>playbooks/review_capture.md</code></p></article><article class="task muted"><div class="task-top"><span class="pri">P3</span><h3>Close out approved order #6 — bethanyjademck</h3></div><div class="chips"><span class="chip">owner <b>Delivery lead</b></span><span class="chip">impact <b>$101</b></span><span class="chip">effort <b>1.0h</b></span><span class="chip">confidence <b>80%</b></span></div><p class="why">Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.</p><ul class="steps"><li>Ship the full final package today: vectors, all formats, variations, fonts, colour values.</li><li>Deliver via the order (not chat) so it counts toward on-time delivery.</li><li>Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.</li></ul><p class="note">Script: <code>playbooks/review_capture.md</code></p></article></div></section><section class="card"><h2>Where the business is</h2><div class="scroll"><table><thead><tr><th>Metric</th><th>Value</th><th>Context</th></tr></thead><tbody><tr><td>Organic orders/day (7d)</td><td class="n">0.71</td><td class="n" style="color:var(--muted)">was 0.71 14d ago</td></tr><tr><td>Organic, recent vs earlier</td><td class="n">0.56/day</td><td class="n" style="color:var(--muted)">was 0.66 (-14.3%)</td></tr><tr><td>Organic orders, last 7d</td><td class="n">5</td><td class="n" style="color:var(--muted)">0.71/day</td></tr><tr><td>AOV</td><td class="n">$112</td><td class="n" style="color:var(--muted)">median $100 · n=1035</td></tr><tr><td>Inquiry conversion</td><td class="n">22.6%</td><td class="n" style="color:var(--muted)">69/305</td></tr><tr><td>Review capture</td><td class="n">52.4%</td><td class="n" style="color:var(--muted)">of 1043 reviewable orders</td></tr><tr><td>Upsell recorded</td><td class="n">0.0%</td><td class="n" style="color:var(--muted)">of 1043 orders with the column</td></tr><tr><td>Gig rating</td><td class="n">4.834</td><td class="n" style="color:var(--muted)">1,583 reviews · Level 2</td></tr><tr><td>Orders in queue</td><td class="n">20</td><td class="n" style="color:var(--muted)">live from the gig page</td></tr></tbody></table></div></section><section class="card"><h2>Predictions</h2><div class="scroll"><table><thead><tr><th>Resolves</th><th>Claim</th><th>80% interval</th><th>Confidence</th></tr></thead><tbody><tr><td class="n">2026-08-05</td><td>Organic orders over the 7 days to 05 Aug will be 5.6 (80% CI 2.6-8.6).</td><td class="n">2.57 &ndash; 8.63</td><td class="n" style="color:var(--muted)">medium</td></tr><tr><td class="n">2026-08-12</td><td>Organic health index in 14 days will be 45 (80% CI 32-65).</td><td class="n">31.84 &ndash; 64.94</td><td class="n" style="color:var(--muted)">low</td></tr><tr><td class="n">2026-08-05</td><td>Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07).</td><td class="n">2.34 &ndash; 4.07</td><td class="n" style="color:var(--muted)">medium</td></tr><tr><td class="n">2026-08-28</td><td>Blended AOV in 30 days will be $112 (80% CI $101-$124).</td><td class="n">100.66 &ndash; 123.52</td><td class="n" style="color:var(--muted)">high</td></tr><tr><td class="n">2026-08-05</td><td>Inquiry-&gt;order conversion in 7 days will be 22.6% (80% CI 19.7%-25.5%).</td><td class="n">0.20 &ndash; 0.26</td><td class="n" style="color:var(--muted)">high</td></tr></tbody></table></div><p class="note">Each is scored automatically on its resolution date. Interval widths are derived from realised coverage, so stated confidence converges on real accuracy.</p></section><section class="card"><h2>System integrity</h2><div class="bars"><div class="bar"><span>task count</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">10</span></div><div class="bar"><span>ownership</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">20</span></div><div class="bar"><span>evidence</span><span class="track"><span class="fill" style="width:83%"></span></span><span class="v">21</span></div><div class="bar"><span>actionability</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">15</span></div><div class="bar"><span>falsifiability</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">20</span></div><div class="bar"><span>priority spread</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">10</span></div></div><p class="note"><strong>Not passing:</strong></p><ul class="steps"><li><code>warn</code> all_tasks_evidenced &mdash; 10/12 tasks cite a number in their rationale</li></ul><p class="note">Ingest saw 25 tables, 2.2% of header cells unrecognised. 115 source-data issues found — those become tasks, they do not block the run.</p></section><footer>Generated 2026-07-29 &middot; read-only: no source sheet was modified &middot; every number traces to a source row via <code>reports/2026-07-29-run.json</code></footer></div><script>
-const FLOW=[{"date": "2026-06-11", "o": 1.0}, {"date": "2026-06-12", "o": 0.0}, {"date": "2026-06-13", "o": 1.0}, {"date": "2026-06-14", "o": 1.0}, {"date": "2026-06-15", "o": 1.0}, {"date": "2026-06-16", "o": 1.0}, {"date": "2026-06-17", "o": 0.0}, {"date": "2026-06-18", "o": 1.0}, {"date": "2026-06-19", "o": 0.0}, {"date": "2026-06-20", "o": 0.0}, {"date": "2026-06-21", "o": 0.0}, {"date": "2026-06-22", "o": 1.0}, {"date": "2026-06-23", "o": 1.0}, {"date": "2026-06-24", "o": 0.0}, {"date": "2026-06-25", "o": 2.0}, {"date": "2026-06-26", "o": 1.0}, {"date": "2026-06-27", "o": 0.0}, {"date": "2026-06-28", "o": 0.0}, {"date": "2026-06-30", "o": 3.0}, {"date": "2026-07-01", "o": 0.0}, {"date": "2026-07-02", "o": 1.0}, {"date": "2026-07-03", "o": 1.0}, {"date": "2026-07-04", "o": 0.0}, {"date": "2026-07-05", "o": 0.0}, {"date": "2026-07-06", "o": 1.0}, {"date": "2026-07-07", "o": 1.0}, {"date": "2026-07-08", "o": 2.0}, {"date": "2026-07-09", "o": 0.0}, {"date": "2026-07-10", "o": 1.0}, {"date": "2026-07-11", "o": 0.0}, {"date": "2026-07-12", "o": 0.0}, {"date": "2026-07-13", "o": 2.0}, {"date": "2026-07-14", "o": 0.0}, {"date": "2026-07-15", "o": 0.0}, {"date": "2026-07-16", "o": 0.0}, {"date": "2026-07-17", "o": 0.0}, {"date": "2026-07-18", "o": 0.0}, {"date": "2026-07-19", "o": 0.0}, {"date": "2026-07-20", "o": 2.0}, {"date": "2026-07-21", "o": 0.0}, {"date": "2026-07-22", "o": 0.0}, {"date": "2026-07-23", "o": 0.0}, {"date": "2026-07-24", "o": 2.0}, {"date": "2026-07-25", "o": 0.0}, {"date": "2026-07-26", "o": 0.0}, {"date": "2026-07-27", "o": 2.0}, {"date": "2026-07-28", "o": 1.0}];
-function draw(){
-  const c=document.getElementById('flow'); if(!c) return;
-  const dpr=window.devicePixelRatio||1, w=c.clientWidth, h=150;
-  c.width=w*dpr; c.height=h*dpr;
-  const x=c.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,w,h);
-  const cs=getComputedStyle(document.documentElement);
-  const accent=cs.getPropertyValue('--violet').trim();
-  const muted=cs.getPropertyValue('--muted').trim();
-  const hair=cs.getPropertyValue('--hair').trim();
-  const pad=18, iw=w-pad*2, ih=h-pad*2;
-  const max=Math.max(1,...FLOW.map(d=>d.o));
-  x.strokeStyle=hair; x.lineWidth=1;
-  for(let i=0;i<=2;i++){const y=pad+ih*i/2;
-    x.beginPath();x.moveTo(pad,y);x.lineTo(w-pad,y);x.stroke();}
-  const bw=Math.max(1,iw/FLOW.length-1.5);
-  FLOW.forEach((d,i)=>{
-    const bx=pad+i*(iw/FLOW.length);
-    if(d.o>0){x.fillStyle=accent;const bh=ih*d.o/max;
-      x.fillRect(bx,pad+ih-bh,bw,bh);}
+</style>
+<header class="top"><div class="wrap">
+  <div class="brand">
+    <h1>XStudioz</h1><span class="date">Wednesday, 29 July 2026</span>
+    <span class="stamp">brief<span class="sync" id="sync">·</span></span>
+  </div>
+  <nav class="tabs"><a href="#/today" id="t-today">Today<span class="pip" id="pip-today">12</span></a><a href="#/money" id="t-money">Money</a><a href="#/orders" id="t-orders">Orders<span class="pip alert">!</span></a><a href="#/marketing" id="t-marketing">Marketing</a><a href="#/health" id="t-health">Health</a><a href="#/history" id="t-history">History</a></nav>
+</div></header>
+<main><div class="wrap"><section class="view" id="v-today"><p class="lede">Here is today.</p><p class="sub">12 tasks, in the order they should be done. Tick as you go — it saves.</p><div class="banner bad"><span class="ic">●</span><span><b>Organic flow is breached.</b> structural: organic -14.3% since 2026-07-13 (0.66 -&gt; 0.56/day). Today's work is recovery and organic repair — nothing that adds volume on top of it.</span></div><div class="stats"><div class="card stat"><div class="k">Money at rest</div><div class="v warn">$8,007</div><div class="n">recoverable without new traffic</div></div><div class="card stat"><div class="k">Orders past 60 days</div><div class="v bad">17</div><div class="n">$2,285 — see Money</div></div><div class="card stat"><div class="k">Tasks left</div><div class="v "><span id="done-line">—</span></div><div class="n">updates as you tick</div></div></div><h2 class="sec">The list</h2><div class="card"><div class="task"><input type="checkbox" data-id="rescue-5" aria-label="Mark done: Rescue at-risk order #5 — Dr. Ali Albalawi"><div class="body"><h3>Rescue at-risk order #5 — Dr. Ali Albalawi</h3><div class="meta"><span class="who">Ezan (escalate to CEO if refund is formally requested)</span><span class="dot"></span><span class="val">$400</span><span class="dot"></span><span>1.5h</span><span class="dot"></span><span>due 2026-07-29</span></div><ol><li>Read the full order history before replying — do not reintroduce any concept the buyer already rejected.</li><li>Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.</li><li>Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.</li><li>If they choose (a), name the designer and give a fixed date.</li></ol></div></div><div class="task"><input type="checkbox" data-id="stale-open-orders" aria-label="Mark done: Close out 17 orders open more than 60 days ($2,285)"><div class="body"><h3>Close out 17 orders open more than 60 days ($2,285)</h3><div class="meta"><span class="who">Ezan</span><span class="dot"></span><span class="val">$914</span><span class="dot"></span><span>3.0h</span></div><ol><li>Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.</li><li>Where we owe work — assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (265d, $250), madewelltech (171d, $120), andrem530 (156d, $295).</li><li>Where the client is silent — send one message that states what was last delivered and asks a single closed question. Do not re-open the brief.</li><li>Where it is genuinely dead — set the status so it stops appearing here, and note why in the CSR column.</li></ol></div></div><div class="task"><input type="checkbox" data-id="impressions-stale" aria-label="Mark done: Bring the impressions sheet up to date — it stops months ago"><div class="body"><h3>Bring the impressions sheet up to date — it stops months ago</h3><div class="meta"><span class="who">Hasnain</span><span class="dot"></span><span class="val">$2,500</span><span class="dot"></span><span>1.0h</span></div><ol><li>Append daily rows from Fiverr Analytics from the last logged date to today: Date, Account Name, Impressions, Clicks, Organic Orders.</li><li>Keep the existing column names exactly — the engine already reads them and a rename is what schema drift is.</li><li>Post impressions and the 7-day average every morning at 09:00 PKT. It is the one number that says whether the suppression is lifting.</li><li>Once 28 consecutive days exist, the engine attributes any decline to reach, click-through or close rate automatically.</li></ol></div></div><div class="task"><input type="checkbox" data-id="dq-flow-revenue" aria-label="Mark done: Fill revenue in the daily ledger (112 days blank)"><div class="body"><h3>Fill revenue in the daily ledger (112 days blank)</h3><div class="meta"><span class="who">Whoever owns the daily ledger</span><span class="dot"></span><span class="val">$2,000</span><span class="dot"></span><span>2.0h</span></div><ol><li>Fill every revenue column in the ledger for every day that recorded orders.</li><li>Backfill from 2026-06-11 forward — that is where the ledger starts.</li><li>This is the single highest-value data fix available: it unblocks revenue forecasting entirely.</li></ol></div></div><div class="task"><input type="checkbox" data-id="upsell-program" aria-label="Mark done: Run the upsell A/B test to de-bias the 54% vs 31% gap"><div class="body"><h3>Run the upsell A/B test to de-bias the 54% vs 31% gap</h3><div class="meta"><span class="who">CEO + Salman</span><span class="dot"></span><span class="val">$3,000</span><span class="dot"></span><span>1.0h</span></div><ol><li>For the next 100 inbound inquiries, alternate strictly: odd-numbered leads get an upsell attempt, even-numbered do not.</li><li>Do not let CSRs choose. That choice is exactly the bias being measured.</li><li>Log the assignment in the Upsell column so the engine can score it.</li><li>The engine will report the de-biased effect once n&gt;=100 per arm.</li></ol></div></div><div class="task"><input type="checkbox" data-id="wire-missing-sources" aria-label="Mark done: Wire up the 2 promised data sources"><div class="body"><h3>Wire up the 2 promised data sources</h3><div class="meta"><span class="who">CEO</span><span class="dot"></span><span class="val">$1,500</span><span class="dot"></span><span>1.0h</span></div><ol><li>Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.</li><li>Needed to attribute outcome changes to team actions rather than to Fiverr&#x27;s algorithm.</li><li>Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.</li></ol></div></div><div class="task"><input type="checkbox" data-id="designer-routing" aria-label="Mark done: Route high-value briefs to Raylain"><div class="body"><h3>Route high-value briefs to Raylain</h3><div class="meta"><span class="who">CEO</span><span class="dot"></span><span class="val">$800</span><span class="dot"></span><span>0.5h</span></div><ol><li>Assign every brief above $200 to Raylain or the next two by AOV.</li><li>Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.</li><li>Revisit in 30 days with the engine&#x27;s updated per-designer AOV.</li></ol></div></div><div class="task"><input type="checkbox" data-id="fix-clickup" aria-label="Mark done: Fix the broken ClickUp sync (334 logged failures)"><div class="body"><h3>Fix the broken ClickUp sync (334 logged failures)</h3><div class="meta"><span class="who">CEO / whoever owns the Apps Script</span><span class="dot"></span><span class="val">$600</span><span class="dot"></span><span>1.0h</span></div><ol><li>Set CLICKUP_TOKEN in the Apps Script&#x27;s Script Properties.</li><li>Re-run the sync for the backlog.</li><li>Add a failure alert — 300+ silent failures is the real defect.</li></ol></div></div><div class="task"><input type="checkbox" data-id="upsell-tracking" aria-label="Mark done: Start recording upsells — the column is empty"><div class="body"><h3>Start recording upsells — the column is empty</h3><div class="meta"><span class="who">All CSRs</span><span class="dot"></span><span class="val">$1,200</span><span class="dot"></span><span>1.5h</span></div><ol><li>Fill the Upsell column on every order: TRUE/FALSE, no blanks.</li><li>Fill &#x27;What did you upsell and how much&#x27; whenever TRUE.</li><li>Backfill the last 30 completed orders from memory this week.</li></ol></div></div><div class="task"><input type="checkbox" data-id="untouched-quotes" aria-label="Mark done: Follow up the 6 quotes that never got one ($1,477)"><div class="body"><h3>Follow up the 6 quotes that never got one ($1,477)</h3><div class="meta"><span class="who">Ezan</span><span class="dot"></span><span class="val">$288.98</span><span class="dot"></span><span>1.5h</span></div><ol><li>Work the never-followed-up list first, largest first: selmaprof ($950, 26d), akhilkpfxx ($160, 146d), architpatel497 ($147, 34d), kai_utzinger ($85, 93d).</li><li>One message each. State the quote is still open, and ask one question they can answer in a word — whether the project is still live. Do not re-pitch and do not discount unprompted.</li><li>Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.</li><li>Then work the remainder by value; treat a third unanswered follow-up as a no and stop.</li></ol></div></div><div class="task"><input type="checkbox" data-id="deliver-4" aria-label="Mark done: Close out approved order #4 — Calum Snell"><div class="body"><h3>Close out approved order #4 — Calum Snell</h3><div class="meta"><span class="who">Delivery lead</span><span class="dot"></span><span class="val">$100.88</span><span class="dot"></span><span>1.0h</span></div><ol><li>Ship the full final package today: vectors, all formats, variations, fonts, colour values.</li><li>Deliver via the order (not chat) so it counts toward on-time delivery.</li><li>Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.</li></ol></div></div><div class="task"><input type="checkbox" data-id="deliver-6" aria-label="Mark done: Close out approved order #6 — bethanyjademck"><div class="body"><h3>Close out approved order #6 — bethanyjademck</h3><div class="meta"><span class="who">Delivery lead</span><span class="dot"></span><span class="val">$100.88</span><span class="dot"></span><span>1.0h</span></div><ol><li>Ship the full final package today: vectors, all formats, variations, fonts, colour values.</li><li>Deliver via the order (not chat) so it counts toward on-time delivery.</li><li>Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.</li></ol></div></div></div></section><section class="view" id="v-money"><p class="lede">Money already earned, still sitting.</p><p class="sub">None of this needs new traffic, a marketplace lever, or anyone's permission. Ezan owns all of it.</p><div class="card hero warn"><div class="cap">Total at rest</div><div class="fig">$8,007</div><div class="say">17 orders open past 60 days, plus 6 quotes never followed up.</div></div><div class="stats"><div class="card stat"><div class="k">Open orders</div><div class="v ">32</div><div class="n">$5,090 in flight</div></div><div class="card stat"><div class="k">Stale past 60d</div><div class="v bad">17</div><div class="n">$2,285 — chase these</div></div><div class="card stat"><div class="k">Live quotes</div><div class="v ">20</div><div class="n">$5,722 quoted</div></div><div class="card stat"><div class="k">Never followed up</div><div class="v warn">6</div><div class="n">$1,477 cold</div></div></div><div class="banner warn"><span class="ic">▲</span><span><b>Sort before you send.</b> Every open order is one of three things: <i>we owe work</i>, <i>they owe a reply</i>, or <i>dead</i>. A &ldquo;just checking in&rdquo; to a buyer who is waiting on us is how a late order becomes a dispute. Never attach a review request to any of this.</span></div><h2 class="sec">Stale orders</h2><p class="secnote">Open past 60 days, largest first.</p><div class="card scroll"><table><thead><tr><th>Client</th><th>Project</th><th>Age</th><th>Value</th><th>Designer</th><th>CSR</th></tr></thead><tbody><tr><td class="name">paolowhite</td><td class="name">Island Laser Clean</td><td class="n">95d</td><td class="n">$320</td><td class="name">Zahid</td><td class="name">Salman</td></tr><tr><td class="name">andrem530</td><td class="name">PEAK21</td><td class="n">156d</td><td class="n">$295</td><td class="name">Amin</td><td class="name">Iqra</td></tr><tr><td class="name">hammo1991</td><td class="name">The Sir Thomas Daly Foundation</td><td class="n">65d</td><td class="n">$260</td><td class="name">Amin</td><td class="name">Iqra</td></tr><tr><td class="name">osmanbey_35</td><td class="name">Vodenco Pitch Deck Template + Catalog Design</td><td class="n">265d</td><td class="n">$250</td><td class="name">Aashir</td><td class="name">Salman</td></tr><tr><td class="name">adriamartin</td><td class="name">Noodles</td><td class="n">64d</td><td class="n">$175</td><td class="name">Atta Razaq</td><td class="name">Ezan</td></tr><tr><td class="name">bethanyjademck</td><td class="name">McKoy Consulting</td><td class="n">81d</td><td class="n">$140</td><td class="name">Rashdul</td><td class="name">Hasnain</td></tr><tr><td class="name">madewelltech</td><td class="name">OFFERLETR</td><td class="n">171d</td><td class="n">$120</td><td class="name">Amin</td><td class="name">Iqra</td></tr><tr><td class="name">alialbalawi896</td><td class="name">Dr. Ali Albalawi</td><td class="n">90d</td><td class="n">$115</td><td class="name">Amin</td><td class="name">Iqra</td></tr><tr><td class="name">institutoibt</td><td class="name">IBT Institute</td><td class="n">62d</td><td class="n">$115</td><td class="name">Nimeazad</td><td class="name">Shahzaib</td></tr><tr><td class="name">moni_rotanak</td><td class="name">Auto Meccanica</td><td class="n">62d</td><td class="n">$115</td><td class="name">Abiha Imran</td><td class="name">Swaid</td></tr><tr><td class="name">elite9921</td><td class="name">ELITE EXPERIENCE</td><td class="n">89d</td><td class="n">$105</td><td class="name">Musharaf</td><td class="name">Iqra</td></tr><tr><td class="name">jordyspikker</td><td class="name">Effectief</td><td class="n">137d</td><td class="n">$100</td><td class="name">Ahmed Ashfaq</td><td class="name">Hasnain</td></tr><tr><td class="name">calumsnell</td><td class="name">S Squared</td><td class="n">135d</td><td class="n">$100</td><td class="name">Nime</td><td class="name">Hasnain</td></tr><tr><td class="name">kuykendalljr</td><td class="name">Global Gourmet</td><td class="n">132d</td><td class="n">$75</td><td class="name">Saad Sajid</td><td class="name">Hasnain</td></tr><tr><td class="name">johnjk001</td><td class="name">Goble</td><td class="n">209d</td><td class="n">$0</td><td class="name">Dulal Khan</td><td class="name">—</td></tr><tr><td class="name">faisalkazmi53</td><td class="name">HangingPanda</td><td class="n">181d</td><td class="n">$0</td><td class="name">Shaoor</td><td class="name">Hasnain</td></tr><tr><td class="name">vickizhou318</td><td class="name">Rainier Landing ( Banners)</td><td class="n">123d</td><td class="n">$0</td><td class="name">—</td><td class="name">Hasnain</td></tr></tbody></table></div><h2 class="sec">Quotes never followed up</h2><p class="secnote">Highest value first.</p><div class="card scroll"><table><thead><tr><th>Client</th><th>Quoted</th><th>Age</th><th>Country</th><th>CSR</th><th>Note</th></tr></thead><tbody><tr><td class="name">selmaprof</td><td class="n">$950</td><td class="n">26d</td><td class="name">United Kingdom</td><td class="name">Iqra</td><td class="name">Waiting response</td></tr><tr><td class="name">akhilkpfxx</td><td class="n">$160</td><td class="n">146d</td><td class="name">India</td><td class="name">—</td><td class="name">Waiting response</td></tr><tr><td class="name">architpatel497</td><td class="n">$147</td><td class="n">34d</td><td class="name">United Kingdom</td><td class="name">Iqra</td><td class="name">Waiting response</td></tr><tr><td class="name">kai_utzinger</td><td class="n">$85</td><td class="n">93d</td><td class="name">Germany</td><td class="name">—</td><td class="name">Waiting response</td></tr><tr><td class="name">zain_qw</td><td class="n">$75</td><td class="n">28d</td><td class="name">United Kingdom</td><td class="name">Swaid</td><td class="name">Waiting response</td></tr><tr><td class="name">Mohamed L</td><td class="n">$60</td><td class="n">79d</td><td class="name">United Arab Emirates</td><td class="name">—</td><td class="name">Waiting response</td></tr></tbody></table></div><h2 class="sec">Does chasing work?</h2><div class="stats"><div class="card stat"><div class="k">Converts after follow-up</div><div class="v good">39.1%</div><div class="n">9 of 23 chased</div></div></div><div class="card pad"><details><summary>Why the raw split is misleading</summary><div class="inner">Leads with no logged follow-up convert at <b>90.6%</b>, which reads as if chasing hurt. It does not. A follow-up only ever gets logged when the buyer did not say yes immediately, so the never-followed group is mostly instant wins. The honest number is the rate <i>within</i> the followed-up group: <b>39.1%</b>. That is what the task is costed on.</div></details></div></section><section class="view" id="v-orders"><p class="lede">Where orders are coming from.</p><p class="sub">Organic flow is a hard constraint, not a preference. If it is breached, directed volume does not scale — whatever revenue is doing.</p><div class="card hero bad"><div class="cap">Organic health index</div><div class="fig">36.7</div><div class="say"><b>Breached.</b> structural: organic -14.3% since 2026-07-13 (0.66 -&gt; 0.56/day)</div></div><div class="stats"><div class="card stat"><div class="k">Organic, 7d</div><div class="v ">5</div><div class="n">orders</div></div><div class="card stat"><div class="k">Directed, 7d</div><div class="v ">16</div><div class="n">orders</div></div><div class="card stat"><div class="k">Directed share</div><div class="v bad">76.2%</div><div class="n">of all orders</div></div><div class="card stat"><div class="k">Orders/day</div><div class="v ">3.0</div><div class="n">7-day mean</div></div></div><h2 class="sec">Volume controller</h2><div class="banner good"><span class="ic">○</span><span><b>Off.</b> No volume is being added on top of organic flow. Everything below is what organic is doing on its own.</span></div><h2 class="sec">Next 30 days, if nothing changes</h2><div class="stats"><div class="card stat"><div class="k">Projected orders</div><div class="v ">21.4</div><div class="n">at current rate</div></div><div class="card stat"><div class="k">Projected revenue</div><div class="v ">$2,401.93</div><div class="n">AOV $112.09</div></div></div><div class="card pad"><details><summary>Correlation is not causation here</summary><div class="inner">The organic decline and the start of directed volume are <i>correlated</i>. Sixteen days is not proof of a cut. The engine logs a falsifiable prediction about this on every run precisely so it resolves on evidence rather than on argument — see History.</div></details></div></section><section class="view" id="v-marketing"><p class="lede">The shopfront.</p><p class="sub">What buyers see before they ever message you, and what happens to the ones who do.</p><div class="card hero good"><div class="cap">Public rating</div><div class="fig">4.834</div><div class="say">Across 1,583 reviews. Every future buyer sorts on this.</div></div><div class="stats"><div class="card stat"><div class="k">Level</div><div class="v ">Level 2</div><div class="n">success score 8</div></div><div class="card stat"><div class="k">Impressions</div><div class="v ">1,564</div><div class="n">7-day average</div></div><div class="card stat"><div class="k">In queue</div><div class="v ">20</div><div class="n">active orders</div></div><div class="card stat"><div class="k">Response time</div><div class="v ">1h</div><div class="n">average</div></div></div><h2 class="sec">Inquiries to orders</h2><div class="stats"><div class="card stat"><div class="k">Inquiries</div><div class="v ">305</div><div class="n">logged</div></div><div class="card stat"><div class="k">Placed</div><div class="v ">69</div><div class="n">became orders</div></div><div class="card stat"><div class="k">Conversion</div><div class="v warn">22.6%</div></div><div class="card stat"><div class="k">Pipeline value</div><div class="v ">$11,920</div><div class="n">quoted, open</div></div></div><h2 class="sec">Economics</h2><div class="stats"><div class="card stat"><div class="k">Revenue</div><div class="v ">$116,017</div><div class="n">1,043 orders</div></div><div class="card stat"><div class="k">Average order</div><div class="v ">$112.09</div><div class="n">median $100</div></div><div class="card stat"><div class="k">Review capture</div><div class="v ">52.4%</div><div class="n">of orders reviewed</div></div><div class="card stat"><div class="k">Mean rating</div><div class="v ">4.90</div><div class="n">private and public</div></div></div><h2 class="sec">Level gate — Phase 1 · Signal repair</h2><p class="secnote">12 days remaining in this phase.</p><div class="card scroll"><table><thead><tr><th>Requirement</th><th>Needed</th><th>Actual</th><th></th></tr></thead><tbody><tr><td class="name">Success Score</td><td class="n">9</td><td class="n">8</td><td><span class="pill bad">not met</span></td></tr><tr><td class="name">Impressions, 7-day average</td><td class="n">4,000</td><td class="n">1,564</td><td><span class="pill bad">not met</span></td></tr><tr><td class="name">Consecutive days with completion ratio &gt;= 1.0</td><td class="n">5</td><td class="n">—</td><td><span class="pill bad">not met</span></td></tr></tbody></table></div><h2 class="sec">Edge</h2><div class="card pad" style="margin-bottom:12px"><h3 style="margin:0 0 7px;font-size:15.5px;font-weight:620;letter-spacing:-.01em">Dygram is the experiment already run</h3><p style="margin:0;font-size:14.5px;color:var(--body);line-height:1.65;max-width:68ch">Dygram holds Success Score 9 against X Studioz&#x27;s 8, and pulls 8x the impressions (12,700/day against 1,564). Same operator, same team, same category, same marketplace. Whatever is different between the two profiles is worth more than any competitor study — diagnose it directly rather than theorising about the algorithm.</p></div><div class="card pad" style="margin-bottom:12px"><h3 style="margin:0 0 7px;font-size:15.5px;font-weight:620;letter-spacing:-.01em">1,583 reviews is the moat, and it is being spent on cheap orders</h3><p style="margin:0;font-size:14.5px;color:var(--body);line-height:1.65;max-width:68ch">Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds — and it is currently attached to a low average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try.</p></div><div class="card pad" style="margin-bottom:12px"><h3 style="margin:0 0 7px;font-size:15.5px;font-weight:620;letter-spacing:-.01em">Half the revenue is from people who already know you</h3><p style="margin:0;font-size:14.5px;color:var(--body);line-height:1.65;max-width:68ch">158 of 574 clients have ordered more than once, producing 48.2% of orders and $38,724 of revenue — with the Upsell column at 0.0% filled. Competitors fight for the first order. Nobody is fighting for the second one here, including us.</p></div></section><section class="view" id="v-health"><p class="lede">Can you trust today's numbers?</p><p class="sub">The engine grades its own brief before you see it. A blocked check means something upstream is wrong.</p><div class="card hero good"><div class="cap">Self-check score</div><div class="fig">95.8</div><div class="say">No blocking failures. The brief is trustworthy.</div></div><div class="stats"><div class="card stat"><div class="k">Orders parsed</div><div class="v ">1,043</div><div class="n">rows</div></div><div class="card stat"><div class="k">Leads parsed</div><div class="v ">310</div><div class="n">rows</div></div><div class="card stat"><div class="k">Unmapped columns</div><div class="v good">2.22%</div><div class="n">of headers seen</div></div><div class="card stat"><div class="k">Data issues</div><div class="v ">115</div><div class="n">1 errors, 114 warnings</div></div></div><h2 class="sec">Every check</h2><p class="secnote">13 of 14 passing.</p><div class="card scroll"><table><thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td class="name">disabled controller emits nothing</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">ledger vs crm orders</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">flow total recompute</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">aov recompute</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">health delta recompute</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">phase gate respected</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">data freshness</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">schema drift</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">task count in range</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">all tasks owned</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">all tasks evidenced</td><td><span class="pill warn">warn</span></td><td class="name">10/12 tasks cite a number in their rationale</td></tr><tr><td class="name">all tasks actionable</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">predictions falsifiable</td><td><span class="pill good">pass</span></td><td class="name"></td></tr><tr><td class="name">priority spread sane</td><td><span class="pill good">pass</span></td><td class="name"></td></tr></tbody></table></div><h2 class="sec">Columns the parser did not recognise</h2><p class="secnote">Each one is signal the engine is not using. Add it to the alias table in xstudioz/ingest.py, or to IGNORED_HEADERS if it carries none.</p><div class="card scroll"><table><thead><tr><th>Column</th><th>Times seen</th></tr></thead><tbody><tr><td class="name">Upsell</td><td class="n">5</td></tr><tr><td class="name">Order type</td><td class="n">1</td></tr><tr><td class="name">Public review</td><td class="n">1</td></tr><tr><td class="name">Service Demand</td><td class="n">1</td></tr><tr><td class="name">&lt;unclassified tab: Daily Data Sheet Profiles&gt;</td><td class="n">1</td></tr></tbody></table></div><h2 class="sec">Validation findings</h2><div class="card scroll"><table><thead><tr><th>Code</th><th>Count</th></tr></thead><tbody><tr><td class="name">FLOW REVENUE MISSING</td><td class="n">112</td></tr><tr><td class="name">LEAD PLACED NO VALUE</td><td class="n">2</td></tr><tr><td class="name">ORDER DELIVERY BEFORE ORDER</td><td class="n">1</td></tr></tbody></table></div></section><section class="view" id="v-history"><p class="lede">What the engine said would happen.</p><p class="sub">Every forecast carries a metric path and a date, so it can be proven wrong. Stated confidence is rebuilt from how often it actually was.</p><div class="stats"><div class="card stat"><div class="k">Open forecasts</div><div class="v ">5</div><div class="n">awaiting their date</div></div><div class="card stat"><div class="k">Resolved this run</div><div class="v ">0</div><div class="n">scored against reality</div></div></div><h2 class="sec">Open forecasts</h2><div class="card scroll"><table><thead><tr><th>Resolves</th><th>Statement</th><th>Metric</th><th>Confidence</th></tr></thead><tbody><tr><td class="name">2026-08-05</td><td>Organic orders over the 7 days to 05 Aug will be 5.6 (80% CI 2.6-8.6).</td><td><code style="font:500 12.5px var(--mono);color:var(--muted)">flow_7d.organic</code></td><td><span class="pill flat">medium</span></td></tr><tr><td class="name">2026-08-05</td><td>Total orders/day averaged over the next 7 days will be 3.21 (80% CI 2.34-4.07).</td><td><code style="font:500 12.5px var(--mono);color:var(--muted)">flow_7d.total_per_day</code></td><td><span class="pill flat">medium</span></td></tr><tr><td class="name">2026-08-05</td><td>Inquiry-&gt;order conversion in 7 days will be 22.6% (80% CI 19.7%-25.5%).</td><td><code style="font:500 12.5px var(--mono);color:var(--muted)">funnel.conversion</code></td><td><span class="pill flat">high</span></td></tr><tr><td class="name">2026-08-12</td><td>Organic health index in 14 days will be 45 (80% CI 32-65).</td><td><code style="font:500 12.5px var(--mono);color:var(--muted)">health.index</code></td><td><span class="pill flat">low</span></td></tr><tr><td class="name">2026-08-28</td><td>Blended AOV in 30 days will be $112 (80% CI $101-$124).</td><td><code style="font:500 12.5px var(--mono);color:var(--muted)">economics.aov</code></td><td><span class="pill flat">high</span></td></tr></tbody></table></div><div class="card pad"><details><summary>How this makes the system better</summary><div class="inner">A miss that produces no change is a wasted miss. When a forecast resolves badly the question is not &ldquo;was it close&rdquo; but &ldquo;why was the model wrong&rdquo; — and the model changes. Interval widths for future forecasts are derived from realised coverage, so stated confidence converges on real accuracy rather than on optimism.</div></details></div></section>
+  <p class="foot">Generated by the XStudioz Growth Engine from the order workbook, the inquiry
+  workbook and the live gig page. Ticked tasks sync across your devices; if the network is
+  unavailable they are kept on this device instead.</p>
+</div></main>
+<script>
+(function(){
+  var PAGES=["today", "money", "orders", "marketing", "health", "history"], RUN="2026-07-29";
+  var SB="https://aeytsgipuuyjlbvebhez.supabase.co", KEY="sb_publishable_wfNec5XJcOMI-kJM6dSuig_xqi445aN", TABLE='growth_task_state';
+  var LS='xs.tasks.'+RUN;
+
+  function show(id){
+    if(PAGES.indexOf(id)<0) id=PAGES[0];
+    PAGES.forEach(function(p){
+      var v=document.getElementById('v-'+p), t=document.getElementById('t-'+p);
+      if(v) v.classList.toggle('on',p===id);
+      if(t){ t.classList.toggle('on',p===id);
+             p===id?t.setAttribute('aria-current','page'):t.removeAttribute('aria-current'); }
+    });
+    window.scrollTo(0,0);
+  }
+  function route(){ show((location.hash||'').replace(/^#\/?/,'')||PAGES[0]); }
+  window.addEventListener('hashchange',route);
+
+  function local(){ try{return JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){return{}} }
+  function saveLocal(m){ try{localStorage.setItem(LS,JSON.stringify(m))}catch(e){} }
+
+  var mark=document.getElementById('sync');
+  function say(t){ if(mark) mark.textContent=t; }
+
+  function boxes(){ return [].slice.call(document.querySelectorAll('.task input[data-id]')); }
+  function paint(map){
+    boxes().forEach(function(b){
+      var on=!!map[b.dataset.id];
+      b.checked=on; b.closest('.task').classList.toggle('done',on);
+    });
+    count();
+  }
+  function count(){
+    var all=boxes(), left=all.filter(function(b){return !b.checked}).length;
+    var pip=document.getElementById('pip-today');
+    if(pip) pip.textContent=left;
+    var d=document.getElementById('done-line');
+    if(d) d.textContent=(all.length&&left===0)?'all done':left+' of '+all.length;
+  }
+
+  var remote=true;
+  function hdr(){ return {apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'}; }
+
+  function pull(){
+    if(!remote) return Promise.reject();
+    return fetch(SB+'/rest/v1/'+TABLE+'?run_date=eq.'+RUN+'&select=task_id,done',{headers:hdr()})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(rows){
+        var m={}; rows.forEach(function(r){ if(r.done) m[r.task_id]=1; });
+        return m;
+      });
+  }
+  function push(id,on){
+    var m=local(); if(on){m[id]=1}else{delete m[id]} saveLocal(m);
+    if(!remote){ say('saved here'); return; }
+    fetch(SB+'/rest/v1/'+TABLE+'?on_conflict=run_date,task_id',{
+      method:'POST',
+      headers:Object.assign(hdr(),{Prefer:'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({run_date:RUN,task_id:id,done:on,updated_at:new Date().toISOString()})
+    }).then(function(r){
+      if(!r.ok){ remote=false; say('saved here'); } else { say('synced'); }
+    }).catch(function(){ remote=false; say('saved here'); });
+  }
+
+  document.addEventListener('change',function(ev){
+    var b=ev.target;
+    if(!b.matches||!b.matches('.task input[data-id]')) return;
+    b.closest('.task').classList.toggle('done',b.checked);
+    count(); push(b.dataset.id,b.checked);
   });
-}
-draw();
-addEventListener('resize',draw);
-new MutationObserver(draw).observe(document.documentElement,
-  {attributes:true,attributeFilter:['data-theme']});
-matchMedia('(prefers-color-scheme:dark)').addEventListener('change',draw);
+
+  route();
+  paint(local());
+  pull().then(function(m){ paint(m); saveLocal(m); say('synced'); })
+        .catch(function(){ remote=false; say('saved here'); });
+})();
 </script>

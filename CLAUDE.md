@@ -8,9 +8,13 @@ each morning. Follow it in order; do not improvise the data steps.
 **Maximise monthly revenue, subject to organic order flow recovering.**
 
 Organic flow is a *hard constraint*, not a preference. If organic is breached you may
-not recommend scaling VVRO volume, no matter how far behind revenue is. The engine
-enforces this in code (`xstudioz/dosing.py`) and the self-check blocks any brief that
-violates it. Do not talk around it in prose either.
+not recommend adding directed volume on top of it, no matter how far behind revenue
+is. The engine enforces this in code (`xstudioz/dosing.py`) and the self-check blocks
+any brief that violates it. Do not talk around it in prose either.
+
+The directed-volume controller is currently **switched off as policy**
+(`dosing.disabled_plan`, quota 0). While it is off there is no volume instruction
+to give, and the brief must not print a zeroed quota — see rule 5 below.
 
 ## Daily sequence
 
@@ -76,6 +80,19 @@ python3 scripts/build_dashboard.py     # reports/dashboard.html
 python3 scripts/publish_site.py --gate # site/api/brief.js (password gated)
 ```
 
+The brief is **six views behind a tab bar**, not one long scroll: Today, Money,
+Orders, Marketing, Health, History. Only one is on screen at a time and each
+answers a single question. Today is the landing view and is a **checklist** —
+every task carries a checkbox whose state is written to the `growth_task_state`
+table in the `reports` Supabase project, keyed by run date and task id, so a
+tick follows Ezan from phone to laptop. If the database is unreachable the page
+falls back to `localStorage` and says so in the masthead; it never silently
+drops a tick.
+
+Each view leads with the number and the instruction. Reasoning goes inside a
+`<details>` underneath, never in front. If you find yourself writing a
+paragraph before a figure, the figure is in the wrong place.
+
 Then republish the artifact to the same URL so the link you and Ezan already
 have stays current:
 
@@ -104,7 +121,7 @@ Lead with the single most important thing, then the task list. Keep it short —
 detail is in `reports/latest.md`. Always state:
 
 - the organic health verdict and whether the constraint is breached,
-- today's VVRO instruction (weekly quota, not a vague direction),
+- what the money-at-rest figure is and who is chasing it today,
 - the top 3 tasks with owners,
 - anything the self-check flagged.
 
@@ -113,8 +130,12 @@ detail is in `reports/latest.md`. Always state:
 ```bash
 git config user.email "ezanmujahid@gmail.com"
 git config user.name  "XStudioz Growth Engine"
-git add -A && git commit -m "daily: <date> brief" && git push -u origin claude/xstudioz-growth-automation-dj8u2z
+git add -A && git commit -m "daily: <date> brief" && git push -u origin main
 ```
+
+**Push to `main`.** It is the default branch and Vercel's production branch, so
+pushing there is what deploys. The engine used to push to a long-lived
+`claude/…` branch; that branch is history and nothing should target it.
 
 **Set the email every run — it is not optional.** The container is fresh each
 morning and defaults to `haseeb53810@gmail.com`, which is not attached to the
@@ -160,12 +181,19 @@ private 3-star into a public one.
    The rubric enforces this; do not hand-write tasks that would fail it.
 4. **Every prediction needs a resolvable metric path and a date.** If you cannot state
    how it would be proven wrong, it is not a prediction.
-5. **Never recommend anything that violates Fiverr ToS** — no review manipulation, no
+5. **The volume programme is retired and no output may name it.** The names still
+   live inside the engine — metric keys, self-check arithmetic, sheet headers — so
+   the leak is never prose anyone wrote, it is raw internals reaching a renderer.
+   Scrubbing happens in `build_dashboard.e()`, which every rendered string passes
+   through, so it holds for data paths that do not exist yet. Do not scrub at a
+   call site; that only fixes the one you noticed.
+6. **Never recommend anything that violates Fiverr ToS** — no review manipulation, no
    asking buyers to withdraw reviews, no incentivised ratings. The account is worth
    more than any order.
-6. **Distinguish correlation from causation in prose.** The organic decline since VVRO
-   began is *correlated*; 16 days is not proof. The engine logs a falsifiable
-   prediction about the cut precisely so this resolves on evidence. Say so.
+7. **Distinguish correlation from causation in prose.** The organic decline and the
+   start of directed volume are *correlated*; 16 days is not proof of a cut. The
+   engine logs a falsifiable prediction about it precisely so this resolves on
+   evidence rather than on argument. Say so.
 
 ## What makes this system self-improving
 
@@ -186,6 +214,7 @@ confident, wrong numbers for months, and the next one will look just as normal.
 |---|---|---|
 | Trailing blank rows | Sheets are sized generously; a checkbox column renders `FALSE` in every unused row, so the padding is not literally blank. Forward-filling it stamped the last real order's date and client onto 8,339 empty rows — inventing one client with 1,311 orders in a day. | `ingest._is_padding` |
 | `"5 star"` ratings | CSRs type the unit. 374 real ratings carried a `star` suffix; a bare `float()` turned every one into "no review", understating review capture sevenfold and putting a fabricated task at the top of every brief. | `contracts.to_rating` |
+| OS-driven dark mode | The page defined a light palette and then handed it to a `@media (prefers-color-scheme: dark)` block that rewrote all twenty tokens. Nothing in the source looks wrong — the light values are right at the top — so it passed review twice while everyone whose laptop was set to dark opened a dark page they had explicitly not asked for. | `test_no_output_lets_the_os_pick_the_colour_scheme` |
 | Unserialised evidence | `breach_reasons` never reached the run JSON, so the dashboard printed "No breach" directly beneath a red BREACH badge. | `MetricBundle.as_dict` |
 
 The shared lesson: a number that looks plausible is not evidence that the

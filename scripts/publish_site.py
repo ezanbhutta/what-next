@@ -6,9 +6,13 @@ artifact serves — and wraps it for deployment beside CSR Pulse:
 
 * a full ``<!doctype html>`` document (the artifact host supplies its own
   skeleton; Vercel does not),
-* the Google Fonts links csr-pulse uses, so the page is typographically
-  identical rather than falling back to system faces,
 * with ``--gate``, a password wall enforced **on the server**.
+
+The page deliberately loads no webfont and no external stylesheet. It used to
+pull Inter and Space Grotesk from Google Fonts to match csr-pulse, but the
+published artifact runs under a CSP that blocks every external host, so those
+requests failed silently on one of the two targets while looking correct on
+the other. System faces render identically in both places.
 
 Two publishing modes
 --------------------
@@ -48,19 +52,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-FONTS = (
-    '<link rel="preconnect" href="https://fonts.googleapis.com">'
-    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-    '<link href="https://fonts.googleapis.com/css2?'
-    'family=Inter:wght@400;500;600;700&'
-    'family=Space+Grotesk:wght@500;600;700&'
-    'family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">'
-)
+# No webfont link. The brief renders in system fonts, and the published
+# artifact runs under a CSP that blocks every external host, so a Google Fonts
+# <link> is not a cosmetic choice — it is a request that fails on one of the
+# two targets while looking fine on the other. Empty rather than deleted so the
+# __FONTS__ placeholder keeps working.
+FONTS = ""
 
 FAVICON = (
     '<link rel="icon" href="data:image/svg+xml,'
     "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
-    "%3Crect width='32' height='32' rx='8' fill='%237229FF'/%3E"
+    "%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E"
     "%3Cpath d='M9 21l5-6 4 3 5-8' stroke='white' stroke-width='2.5' "
     "fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E"
     "%3C/svg%3E\">"
@@ -77,13 +79,17 @@ LOGIN_PAGE = """<!doctype html>
 __FONTS__
 __FAVICON__
 <style>
-:root{--violet:#7229FF;--ink:#160A33;--dim:#6B6480;--bg:#FAFAFE;
-  --card:#fff;--raised:#F5F3FF;--border:#E9E5F5;--border-hi:#D8D0EE;
-  --coral:#E5484D;--sans:'Inter',system-ui,sans-serif;
-  --disp:'Space Grotesk','Inter',sans-serif;--mono:'JetBrains Mono',monospace}
-@media (prefers-color-scheme:dark){:root{--ink:#F2EFFA;--dim:#9990AE;
-  --bg:#0D0918;--card:#161029;--raised:#1E1636;--border:#2A2145;
-  --border-hi:#3A2E5C}}
+/* Light only, and deliberately no prefers-color-scheme block. This page used
+   to define a light palette and then hand it to a dark override, so anyone
+   whose device was set to dark met a dark sign-in screen having asked for a
+   light one. The tokens below match the brief's, so signing in is continuous
+   rather than a jump between two different products. */
+:root{--accent:#4F46E5;--ink:#15151A;--dim:#71717F;--bg:#FBFBFD;
+  --card:#fff;--raised:#F5F5F8;--border:#E8E8EF;--border-hi:#DDDDE7;
+  --coral:#DC2626;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:flex;align-items:center;
   justify-content:center;background:var(--bg);padding:24px}
@@ -92,12 +98,12 @@ form{background:var(--card);border:1px solid var(--border);border-radius:14px;
   flex-direction:column;gap:14px}
 h2{margin:0;font:600 10px/1.4 var(--sans);text-transform:uppercase;
   letter-spacing:.18em;color:var(--dim)}
-.t{font:700 20px/1.25 var(--disp);letter-spacing:-.02em;color:var(--ink)}
+.t{font:700 20px/1.25 var(--sans);letter-spacing:-.02em;color:var(--ink)}
 input{font:500 14px/1.4 var(--sans);padding:11px 13px;border-radius:9px;
   border:1px solid var(--border-hi);background:var(--raised);color:var(--ink)}
-input:focus{outline:2px solid var(--violet);outline-offset:1px}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
 button{font:600 12px/1 var(--sans);letter-spacing:.06em;padding:12px;border:0;
-  border-radius:9px;background:var(--violet);color:#fff;cursor:pointer}
+  border-radius:9px;background:var(--accent);color:#fff;cursor:pointer}
 button:disabled{opacity:.55;cursor:default}
 .err{font:500 12px/1.4 var(--sans);color:var(--coral);min-height:1.2em}
 .foot{font:500 10px/1.5 var(--mono);color:var(--dim);text-align:center}
