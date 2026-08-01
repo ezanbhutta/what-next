@@ -771,7 +771,11 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     except ValueError:
         pretty = run_date
 
-    return f"""<style>{CSS}</style>
+    # The artifact is found by its name and tab icon, so the title is fixed
+    # even though the page behind it was rebuilt. Changing it would read as a
+    # different page in the gallery and in an open browser tab.
+    return f"""<title>XStudioz — What Next</title>
+<style>{CSS}</style>
 <header class="top"><div class="wrap">
   <div class="brand">
     <h1>XStudioz</h1><span class="date">{e(pretty)}</span>
