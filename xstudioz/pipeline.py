@@ -41,6 +41,9 @@ class RunArtifacts:
     boards: Any = None
     edge: Any = field(default_factory=list)
     recovery: Any = None
+    #: The analysis window in force, so a renderer can state the period every
+    #: rate covers instead of leaving it implied.
+    window: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -60,6 +63,7 @@ class RunArtifacts:
             "revenue_projection": self.revenue_projection,
             "gap": self.gap,
             "recovery": self.recovery.as_dict() if self.recovery else None,
+            "window": self.window,
         }
 
 
@@ -114,6 +118,32 @@ def run_daily(
     # If nothing matched, the tab names changed shape. Keep everything rather
     # than emitting an empty brief, and let schema_drift say so.
 
+    # ---- analysis window --------------------------------------------------
+    # Rates, trends and averages are measured from config's window start; rows
+    # before it belong to a different era and would drag every average toward
+    # a period the team is no longer running.
+    #
+    # `recovery` deliberately keeps the unwindowed rows. Its whole job is to
+    # surface money that has been sitting still the longest, so filtering by
+    # order date would remove exactly the orders it exists to find. That
+    # exemption is declared in config, not assumed here.
+    win = config.get("analysis_window") or {}
+    win_start = win.get("start")
+    if win_start and not isinstance(win_start, _dt.date):
+        win_start = _dt.date.fromisoformat(str(win_start))
+
+    def _since(rows, attr):
+        if not win_start:
+            return list(rows)
+        return [r for r in rows
+                if getattr(r, attr, None) and getattr(r, attr) >= win_start]
+
+    all_orders, all_leads = data.orders, data.leads
+    w_orders = _since(data.orders, "order_date")
+    w_leads = _since(data.leads, "date")
+    w_flow = _since(data.flow, "date")
+    w_impressions = _since(data.impressions, "date")
+
     # ---- validate --------------------------------------------------------
     vrep = C.ValidationReport()
     vrep.merge(C.validate_orders(data.orders, today))
@@ -137,26 +167,33 @@ def run_daily(
         as_of=today,
         profile=profile_name,
         health=metrics.organic_health(
-            data.flow, profile_name, today,
+            w_flow, profile_name, today,
             lookback_days=int(obj.get("lookback_days", 14)),
             tolerance=float(obj.get("tolerance", -0.05)),
             max_vvro_share=float(dcfg.get("max_vvro_share", 0.45)),
             vvro_start=vvro_start),
-        flow_7d=metrics.flow_window(data.flow, profile_name,
+        flow_7d=metrics.flow_window(w_flow, profile_name,
                                     today - _dt.timedelta(days=6), today),
-        flow_28d=metrics.flow_window(data.flow, profile_name,
+        flow_28d=metrics.flow_window(w_flow, profile_name,
                                      today - _dt.timedelta(days=27), today),
-        funnel=metrics.funnel_metrics(data.leads),
-        econ=metrics.economics(data.orders),
+        funnel=metrics.funnel_metrics(
+            w_leads,
+            min_sample=int((win.get("min_sample") or {}).get("conversion", 0))),
+        econ=metrics.economics(w_orders),
         gig=gig,
-        decomposition=metrics.decompose_funnel(data.impressions, today),
-        disputes=metrics.dispute_metrics(data.disputes, len(data.orders), today),
+        decomposition=metrics.decompose_funnel(w_impressions, today),
+        disputes=metrics.dispute_metrics(data.disputes, len(w_orders), today),
     )
 
     # ---- recovery --------------------------------------------------------
     # Money already committed or quoted that is not moving. Computed live
     # from the same rows the team maintains, never from config.
-    recov = recovery.compute(data.orders, data.leads, today, profile_name)
+    #
+    # Note the unwindowed lists: this is the exemption declared in
+    # `analysis_window.exempt`. The oldest open order was placed in November
+    # and is the most recoverable item on the page, so the window that makes
+    # every rate current would, applied here, hide the whole point.
+    recov = recovery.compute(all_orders, all_leads, today, profile_name)
 
     # ---- dosing ----------------------------------------------------------
     state_path = root / "data" / "state" / "controller.json"
@@ -238,6 +275,8 @@ def run_daily(
         config=config, today=today, latest_data=latest,
         unmapped_rate=data.unmapped_rate, unmapped=dict(data.unmapped_columns),
         ledger_orders=bundle.flow_28d.total, crm_orders=crm_window,
+        window_rows_before=len(all_orders), window_rows_after=len(w_orders),
+        window_start=win_start,
         state=state)
 
     min_score = float(config["selfcheck"].get("min_rubric_score", 70))
@@ -257,7 +296,12 @@ def run_daily(
         validation=vrep.summary(), emitted=emitted,
         revenue_projection=proj, gap=gap,
         boards=_roles.route(config, task_list), edge=_roles.edge(config),
-        recovery=recov)
+        recovery=recov,
+        window={"start": win_start.isoformat() if win_start else None,
+                "label": win.get("label") or "",
+                "orders_in_window": len(w_orders),
+                "orders_all_time": len(all_orders),
+                "exempt": sorted((win.get("exempt") or {}).keys())})
 
     # ---- persist ---------------------------------------------------------
     if write:

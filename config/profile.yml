@@ -614,3 +614,41 @@ selfcheck:
   # A Phase 2 action recommended during Phase 1 is a gate violation, not a
   # judgement call. It blocks.
   enforce_phase_gate: true
+
+# ---------------------------------------------------------------------------
+# ANALYSIS WINDOW
+# ---------------------------------------------------------------------------
+# Performance is measured from this date forward. Everything before it is
+# treated as a different era and left out of rates, trends and averages.
+#
+# The window does NOT apply to aging money. An order open since November is
+# the single most recoverable thing in the dataset precisely BECAUSE it is
+# old; filtering by order date would delete all 17 stale orders ($2,285) and
+# leave the brief recommending nothing about the largest block of committed
+# cash. Age is the signal there, not noise, so `recovery` is exempt.
+#
+# Anything exempt must say why. Add to `exempt` only when the metric's whole
+# purpose is to look backwards.
+analysis_window:
+  start: 2026-07-01
+  exempt:
+    recovery: "Open orders and unconverted quotes are ranked BY age; a date
+      filter would hide the oldest and most recoverable money."
+  # Printed on the brief so nobody reads a windowed rate as an all-time one.
+  label: "since 1 July 2026"
+  # A short window buys recency and pays for it in sample size. Below this many
+  # observations a rate is reported as a range and explicitly not called: 2
+  # placed orders from 25 inquiries reads as 8% against an all-time 22.6%, but
+  # the interval is 2.2%-25.0% and contains 22.6%, so nothing has been shown
+  # to have changed. Raise this if the brief starts calling noise.
+  min_sample:
+    conversion: 30
+
+# ---------------------------------------------------------------------------
+# INTEGRATIONS
+# ---------------------------------------------------------------------------
+# Systems the engine is allowed to raise work about. Switching one off stops
+# the task being generated at source rather than filtering it from the page,
+# so it cannot reappear through a renderer that does not know about it.
+integrations:
+  clickup: false   # retired by the CEO 2026-08-01; emit no ClickUp work

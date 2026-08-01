@@ -65,6 +65,26 @@ def wilson_lower_bound(successes: int, n: int, z: float = 1.96) -> float:
     return max(0.0, (centre - margin) / d)
 
 
+def wilson_interval(successes: int, n: int,
+                    z: float = 1.96) -> tuple[float, float]:
+    """Two-sided interval on a rate.
+
+    A short analysis window buys recency at the cost of sample size, and a
+    rate computed on a handful of rows swings hard for reasons that are not
+    real. 2 orders from 25 inquiries reads as 8% against an all-time 22.6%,
+    which looks like a collapse; the interval is 2.2%-25.0% and contains
+    22.6%, so nothing has been shown to change at all. Report the range
+    alongside any windowed rate rather than the point estimate on its own.
+    """
+    if n == 0:
+        return (0.0, 1.0)
+    p = successes / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    margin = z * math.sqrt((p * (1 - p) + z * z / (4 * n)) / n) / d
+    return (max(0.0, centre - margin), min(1.0, centre + margin))
+
+
 def two_proportion_z(s1: int, n1: int, s2: int, n2: int) -> float:
     """Z statistic for the difference of two rates. |z| > 1.96 ~ p < 0.05."""
     if n1 == 0 or n2 == 0:
@@ -334,11 +354,25 @@ class FunnelMetrics:
     by_country: list[SegmentStat]
     by_followup_depth: list[SegmentStat]
     upsell_lift: dict[str, Any]
+    # Sample floor below which the conversion rate is reported as a range and
+    # explicitly not called. Set from config so it moves with the window.
+    min_sample: int = 0
+
+    @property
+    def conversion_ci(self) -> tuple[float, float]:
+        return wilson_interval(self.placed, self.inquiries)
+
+    @property
+    def too_few_to_call(self) -> bool:
+        return bool(self.min_sample) and self.inquiries < self.min_sample
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "inquiries": self.inquiries, "placed": self.placed,
             "conversion": round(self.conversion, 4),
+            "conversion_ci": [round(x, 4) for x in self.conversion_ci],
+            "min_sample": self.min_sample,
+            "too_few_to_call": self.too_few_to_call,
             "quoted_mean": round(self.quoted_mean, 2),
             "quoted_median": round(self.quoted_median, 2),
             "pipeline_value": round(self.pipeline_value, 2),
@@ -350,7 +384,8 @@ class FunnelMetrics:
         }
 
 
-def funnel_metrics(leads: Sequence[C.Lead], min_segment_n: int = 15) -> FunnelMetrics:
+def funnel_metrics(leads: Sequence[C.Lead], min_segment_n: int = 15,
+                   min_sample: int = 0) -> FunnelMetrics:
     considered = [l for l in leads if l.status in ("placed", "not_placed")]
     placed = [l for l in considered if l.converted()]
     quotes = [l.quoted for l in placed if l.quoted]
@@ -384,6 +419,7 @@ def funnel_metrics(leads: Sequence[C.Lead], min_segment_n: int = 15) -> FunnelMe
         by_country=segment(considered, lambda l: l.country, min_segment_n),
         by_followup_depth=segment(considered, lambda l: f"F{l.followup_depth()}", 1),
         upsell_lift=upsell_lift,
+        min_sample=min_sample,
     )
 
 

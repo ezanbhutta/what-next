@@ -644,12 +644,32 @@ def test_pipeline_runs_and_gates_on_real_snapshots():
         orders_text=snaps[-1].read_text(),
         inquiries_text=sorted(inq.glob("*.md"))[-1].read_text() if inq.exists() else "",
         write=False)
-    assert art.emitted, [r.detail for r in art.check.blocking_failures]
+    # The pipeline must still run end to end on the markdown fallback.
     assert art.check.score >= 70
     assert 3 <= len(art.tasks) <= 12
     assert art.predictions
     assert "What Next" in art.brief_markdown
-    # Every number in the brief must be reproducible from the artefacts.
+
+    # ...but this fixture ends 2026-06-23, entirely before the analysis
+    # window. Emitting here would mean publishing a brief whose every rate is
+    # zero because the data predates the window, not because the business
+    # stopped. Refusing is the correct outcome, and the reason must say so.
+    reasons = [r.detail for r in art.check.blocking_failures]
+    assert not art.emitted, "an all-zero brief must not be publishable"
+    assert any("fall on or after" in r for r in reasons), reasons
+    assert art.bundle.as_dict()["economics"]["n_priced"] == 0
+
+
+def test_the_snapshot_path_does_produce_a_publishable_brief():
+    """The guard above must not be masking a broken window on real data:
+    the JSON snapshot path carries July rows and has to emit."""
+    from xstudioz import pipeline, snapshot
+    snaps = sorted((ROOT / "data" / "raw" / "snapshots").glob("*.json"))
+    if not snaps:
+        pytest.skip("no snapshots checked in")
+    art = pipeline.run_daily(root=ROOT, today=dt.date(2026, 7, 29),
+                             snap=snapshot.load(snaps[-1]), write=False)
+    assert art.emitted, [r.detail for r in art.check.blocking_failures]
     assert art.bundle.as_dict()["economics"]["n_priced"] > 0
 
 
@@ -1683,3 +1703,96 @@ def test_every_task_on_the_page_can_be_ticked_off():
     assert ids, "the brief rendered no tickable tasks"
     assert len(ids) == len(set(ids)), "duplicate task ids — ticking one ticks another"
     assert all(i.strip() for i in ids), "a task rendered with an empty id"
+
+
+# ---------------------------------------------------------------------------
+# Analysis window and retired integrations (2026-08-01 policy change)
+# ---------------------------------------------------------------------------
+
+def _cfg():
+    import yaml, pathlib
+    return yaml.safe_load((pathlib.Path(__file__).parent.parent
+                           / "config" / "profile.yml").read_text())
+
+
+def test_analysis_window_exempts_recovery_from_the_date_filter():
+    """The window makes rates current; recovery must still see old money.
+
+    Every stale order predates the window start by definition — an order is
+    only stale because it is old. Applying the filter here once removed all
+    17 of them ($2,285), which is the largest recoverable block on the page
+    and the thing the brief exists to shrink.
+    """
+    import json, pathlib
+    run = json.loads((pathlib.Path(__file__).parent.parent / "reports"
+                      / "2026-07-29-run.json").read_text())
+    start = str(_cfg()["analysis_window"]["start"])
+    orders = run["recovery"]["open_orders"]["orders"]
+    assert any(o["order_date"] < start for o in orders), \
+        "recovery lost its pre-window orders — the exemption is not applied"
+    assert run["recovery"]["open_orders"]["stale_count"] > 0
+
+
+def test_windowed_metrics_actually_exclude_pre_window_rows():
+    import json, pathlib
+    run = json.loads((pathlib.Path(__file__).parent.parent / "reports"
+                      / "2026-07-29-run.json").read_text())
+    # 1043 orders all-time; the window must cut it down or it is not applied.
+    assert run["metrics"]["economics"]["n_orders"] < 200
+
+
+def test_a_rate_below_the_sample_floor_is_not_reported_as_a_point_estimate():
+    """2 of 25 reads as 8% against an all-time 22.6% and looks like collapse.
+
+    The interval contains 22.6%, so nothing has been shown to change. The
+    brief must say so rather than print the point estimate alone.
+    """
+    import json, pathlib
+    fn = json.loads((pathlib.Path(__file__).parent.parent / "reports"
+                     / "2026-07-29-run.json").read_text())["metrics"]["funnel"]
+    if fn["inquiries"] < fn["min_sample"]:
+        assert fn["too_few_to_call"] is True
+        lo, hi = fn["conversion_ci"]
+        assert lo < fn["conversion"] < hi
+        html = (pathlib.Path(__file__).parent.parent / "reports"
+                / "dashboard.html").read_text()
+        assert "too few to call" in html.lower(), \
+            "the flag is serialised but never rendered — the BREACH-badge trap"
+
+
+def test_a_retired_integration_emits_no_task():
+    """Gated at birth, not filtered downstream: a suppressed task cannot leak
+    through a renderer that was never taught to hide it."""
+    import json, pathlib
+    cfg = _cfg()
+    run = json.loads((pathlib.Path(__file__).parent.parent / "reports"
+                      / "2026-07-29-run.json").read_text())
+    for name, enabled in (cfg.get("integrations") or {}).items():
+        if not enabled:
+            blob = json.dumps(run["tasks"]).lower()
+            assert name.lower() not in blob, \
+                f"{name} is retired but still generates a task"
+
+
+def test_wilson_interval_brackets_the_point_estimate():
+    from xstudioz.metrics import wilson_interval
+    lo, hi = wilson_interval(2, 25)
+    assert lo < 2 / 25 < hi
+    assert lo >= 0.0 and hi <= 1.0
+    assert wilson_interval(0, 0) == (0.0, 1.0)
+
+
+def test_the_page_states_which_period_its_numbers_cover():
+    """Windowed revenue is $5,667 where all-time is $116,017. A reader who is
+    not told the period will read the smaller number as a collapse."""
+    import pathlib, json
+    html = (pathlib.Path(__file__).parent.parent / "reports"
+            / "dashboard.html").read_text()
+    run = json.loads((pathlib.Path(__file__).parent.parent / "reports"
+                      / "2026-07-29-run.json").read_text())
+    label = (run.get("window") or {}).get("label")
+    if label:
+        assert label in html, "the analysis window is applied but never stated"
+        # ...and the one view that ignores the window must say that too.
+        assert "looks further back" in html, \
+            "money-at-rest is exempt from the window without telling the reader"

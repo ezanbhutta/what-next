@@ -24,7 +24,7 @@ import datetime as _dt
 import re
 from dataclasses import dataclass, field
 from collections import Counter
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from . import contracts as C
 from . import recovery as recovery_mod
@@ -504,7 +504,9 @@ def _economics_rules(bundle: MetricBundle, orders: Sequence[C.Order]) -> list[Ta
 
 
 def _data_quality_rules(violations: Sequence[C.Violation],
-                        automation_errors: Sequence[dict]) -> list[Task]:
+                        automation_errors: Sequence[dict],
+                        integrations: Mapping[str, bool] | None = None,
+                        ) -> list[Task]:
     tasks: list[Task] = []
     counts: dict[str, int] = {}
     for v in violations:
@@ -551,7 +553,10 @@ def _data_quality_rules(violations: Sequence[C.Violation],
             impact_usd=400, confidence=0.8, effort_hours=1.0,
             playbook="playbooks/data_hygiene.md"))
 
-    if automation_errors:
+    # A retired integration is switched off in config/profile.yml. Gate the
+    # task where it is BORN rather than filtering it downstream: a suppressed
+    # task cannot reach a renderer that has not been taught to hide it.
+    if automation_errors and (integrations or {}).get("clickup", True):
         msgs = {e["message"] for e in automation_errors}
         token = [m for m in msgs if "TOKEN" in m.upper()]
         if token:
@@ -896,7 +901,8 @@ def generate(
     tasks += _funnel_rules(bundle)
     tasks += _recovery_rules(recovery, config)
     tasks += _economics_rules(bundle, orders)
-    tasks += _data_quality_rules(violations, automation_errors)
+    tasks += _data_quality_rules(violations, automation_errors,
+                                 (config or {}).get("integrations"))
     tasks += _missing_source_rules(missing_sources)
 
     # De-duplicate by id, keeping the highest-scoring instance.

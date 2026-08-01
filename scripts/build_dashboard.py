@@ -117,6 +117,9 @@ header.top{background:var(--card);border-bottom:1px solid var(--line);
 .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:22px 0 0}
 .brand h1{margin:0;font-size:17px;font-weight:640;letter-spacing:-.01em}
 .brand .date{font-size:13px;color:var(--muted)}
+.brand .win{font:600 11px/1 var(--sans);letter-spacing:.03em;
+  color:var(--accent-ink);background:var(--accent-soft);
+  padding:5px 9px;border-radius:999px;white-space:nowrap}
 .brand .stamp{margin-left:auto;font:500 11px/1 var(--mono);color:var(--faint);
   text-transform:uppercase;letter-spacing:.08em}
 
@@ -456,6 +459,7 @@ def view_money(run: dict) -> str:
     q = rec.get("quotes") or {}
     fb = rec.get("followup_benchmark") or {}
 
+    win = run.get("window") or {}
     o = ['<p class="lede">Money already earned, still sitting.</p>',
          '<p class="sub">None of this needs new traffic, a marketplace lever, or anyone\'s '
          'permission. Ezan owns all of it.</p>',
@@ -463,6 +467,18 @@ def view_money(run: dict) -> str:
               f'{oo.get("stale_count", 0)} orders open past '
               f'{oo.get("stale_after_days", 60)} days, plus '
               f'{q.get("untouched_count", 0)} quotes never followed up.', "warn")]
+
+    # Every other view is windowed. This one is not, and the difference has to
+    # be stated: an order is only recoverable *because* it is old, so applying
+    # the window here would delete the oldest and most valuable items on the
+    # page. Without this line the two sets of numbers look inconsistent.
+    if win.get("label") and "recovery" in (win.get("exempt") or []):
+        o.append(banner(
+            "good", "i",
+            f'Every other page counts only activity <b>{e(win["label"])}</b>. '
+            f'This one deliberately looks further back — an order matters here '
+            f'<i>because</i> it is old. The oldest below was placed well before '
+            f'the window starts.'))
 
     o.append('<div class="stats">'
              + stat("Open orders", str(oo.get("open_count", 0)),
@@ -603,13 +619,32 @@ def view_marketing(run: dict) -> str:
              + "</div>")
 
     o.append(section("Inquiries to orders"))
+    # Below the sample floor the rate is shown as a range and given no colour.
+    # A point estimate off 25 inquiries reads as a collapse when the interval
+    # still contains the old figure, and a red tile is an instruction to act
+    # on something that has not been shown to have happened.
+    thin = fn.get("too_few_to_call")
+    ci = fn.get("conversion_ci") or [0, 1]
+    conv_note = (f'{fn.get("placed")} of {fn.get("inquiries")} — too few to call'
+                 if thin else "")
     o.append('<div class="stats">'
              + stat("Inquiries", num(fn.get("inquiries")), "logged")
              + stat("Placed", num(fn.get("placed")), "became orders")
-             + stat("Conversion", pct(fn.get("conversion")), "",
-                    "good" if (fn.get("conversion") or 0) > .25 else "warn")
+             + stat("Conversion",
+                    f"{pct(ci[0])}–{pct(ci[1])}" if thin else pct(fn.get("conversion")),
+                    conv_note,
+                    "" if thin else
+                    ("good" if (fn.get("conversion") or 0) > .25 else "warn"))
              + stat("Pipeline value", money(fn.get("pipeline_value")), "quoted, open")
              + "</div>")
+    if thin:
+        o.append(banner(
+            "warn", "!",
+            f'Conversion is {pct(fn.get("conversion"))} on only '
+            f'{fn.get("inquiries")} inquiries in the window, below the '
+            f'{fn.get("min_sample")} needed to call a rate. The honest range is '
+            f'<b>{pct(ci[0])}–{pct(ci[1])}</b>. Treat any move inside that band '
+            f'as noise, not as a change worth acting on.'))
 
     o.append(section("Economics"))
     o.append('<div class="stats">'
@@ -771,6 +806,12 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     except ValueError:
         pretty = run_date
 
+    # Rates, averages and totals on this page cover the analysis window, not
+    # all time. Revenue reads $5,667 rather than $116,017 for that reason, so
+    # the period has to be on screen or the figure is simply wrong to a
+    # reader. Money-at-rest is exempt and says so in its own view.
+    wlabel = (run.get("window") or {}).get("label") or ""
+
     # The artifact is found by its name and tab icon, so the title is fixed
     # even though the page behind it was rebuilt. Changing it would read as a
     # different page in the gallery and in an open browser tab.
@@ -779,6 +820,7 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
 <header class="top"><div class="wrap">
   <div class="brand">
     <h1>XStudioz</h1><span class="date">{e(pretty)}</span>
+    {f'<span class="win">{e(wlabel)}</span>' if wlabel else ''}
     <span class="stamp">brief<span class="sync" id="sync">·</span></span>
   </div>
   <nav class="tabs">{"".join(tabs)}</nav>

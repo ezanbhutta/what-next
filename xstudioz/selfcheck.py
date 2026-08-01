@@ -205,6 +205,28 @@ def check_freshness(rep: SelfCheckReport, *, latest_data: _dt.date | None,
                " — recommendations are based on stale data, say so in the brief"))
 
 
+def check_window(rep: SelfCheckReport, *, rows_before: int, rows_after: int,
+                 window_start: _dt.date | None) -> None:
+    """The analysis window must leave something to analyse.
+
+    Blocks the case where source data exists but none of it falls inside the
+    window: every rate then computes as zero and the brief reads as a total
+    collapse rather than as a configuration mismatch. This is not theoretical
+    — the markdown fallback export ends 2026-06-23, so a morning where the
+    snapshot endpoint is down and the engine falls back would otherwise emit
+    an all-zero brief with no complaint.
+    """
+    if window_start is None or rows_before == 0:
+        return
+    rep.add("window_retains_data", rows_after > 0, "block",
+            f"{rows_after} of {rows_before} orders fall on or after "
+            f"{window_start}"
+            + ("" if rows_after else
+               " — the source predates the window entirely, so every rate "
+               "would report zero. Widen analysis_window.start or fix the "
+               "feed; do not publish this."))
+
+
 def check_ingest(rep: SelfCheckReport, *, unmapped_rate: float, max_rate: float,
                  unmapped: dict[str, int]) -> None:
     ok = unmapped_rate <= max_rate
@@ -338,6 +360,9 @@ def run(
     unmapped: dict[str, int],
     ledger_orders: float = 0.0,
     crm_orders: float = 0.0,
+    window_rows_before: int = 0,
+    window_rows_after: int = 0,
+    window_start: _dt.date | None = None,
     state=None,
 ) -> tuple[SelfCheckReport, list[Task], list[Prediction]]:
     scfg = config.get("selfcheck", {})
@@ -353,6 +378,8 @@ def run(
         check_phase_gate(rep, state=state, tasks=tasks, config=config)
     check_freshness(rep, latest_data=latest_data, today=today,
                     max_staleness_days=int(scfg.get("max_source_staleness_days", 3)))
+    check_window(rep, rows_before=window_rows_before,
+                 rows_after=window_rows_after, window_start=window_start)
     check_ingest(rep, unmapped_rate=unmapped_rate,
                  max_rate=float(scfg.get("max_unmapped_column_rate", 0.15)),
                  unmapped=unmapped)
