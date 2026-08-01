@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -1612,3 +1613,73 @@ def test_breach_reasons_survive_serialisation():
     payload = bundle.as_dict()["health"]
     assert payload["verdict"] == "BREACH"
     assert payload["breach_reasons"] == health.breach_reasons
+
+
+# =========================================================================
+# The page is light. Not "light unless your laptop says otherwise".
+# =========================================================================
+#
+# The brief defined a light palette and then handed it to a
+# `@media (prefers-color-scheme: dark)` block that rewrote all twenty tokens.
+# Every check passed, the HTML was "correct", and the person who had asked for
+# a light page opened a dark one — because the decision was delegated to their
+# OS. It survived review twice, since nothing in the source looks wrong: the
+# light tokens are right there at the top.
+#
+# A media query is the wrong mechanism for a stated product decision. If a dark
+# mode is ever wanted it belongs behind a control the reader operates.
+
+_RENDERED = ("reports/dashboard.html", "site/api/brief.js")
+
+
+def _rendered_outputs():
+    for rel in _RENDERED:
+        p = ROOT / rel
+        if p.exists():
+            yield rel, p.read_text(encoding="utf-8")
+
+
+def test_no_output_lets_the_os_pick_the_colour_scheme():
+    for rel, text in _rendered_outputs():
+        # Match the mechanism, not the word: a comment explaining why there is
+        # no dark block is fine, an actual @media rule is not.
+        hit = re.search(r"@media[^{]*prefers-color-scheme", text)
+        assert hit is None, (
+            f"{rel} re-introduces an OS-driven colour scheme at {hit.start()}. "
+            f"The brief is light; a dark mode belongs behind an explicit toggle, "
+            f"not a media query that reads the reader's operating system.")
+
+
+def test_rendered_palette_stays_light():
+    """A dark block could also arrive without the media query — e.g. someone
+    swaps the token values. Check the actual background colours are light."""
+    for rel, text in _rendered_outputs():
+        for token in ("--canvas:", "--card:", "--sunk:"):
+            for m in re.finditer(re.escape(token) + r"\s*(#[0-9A-Fa-f]{6})", text):
+                hexv = m.group(1)
+                lum = sum(int(hexv[i:i + 2], 16) for i in (1, 3, 5)) / 3
+                assert lum > 200, f"{rel}: {token}{hexv} is not a light background"
+
+
+def test_brief_requests_nothing_external_except_its_own_database():
+    """The published artifact runs under a CSP that blocks every external host.
+    A webfont link fails there while looking fine on Vercel, so the page must
+    not reach out for anything but the task-state database it needs."""
+    allowed = "aeytsgipuuyjlbvebhez.supabase.co"
+    for rel, text in _rendered_outputs():
+        hosts = {h for h in re.findall(r"https?://([A-Za-z0-9.-]+)", text)}
+        stray = {h for h in hosts if h != allowed and not h.endswith(".w3.org")}
+        assert not stray, f"{rel} loads external resources: {sorted(stray)}"
+
+
+def test_every_task_on_the_page_can_be_ticked_off():
+    """The checklist is the product. A task rendered without a stable id has a
+    checkbox that cannot persist, and it silently un-ticks on reload."""
+    p = ROOT / "reports" / "dashboard.html"
+    if not p.exists():
+        return
+    html_text = p.read_text(encoding="utf-8")
+    ids = re.findall(r'type="checkbox" data-id="([^"]+)"', html_text)
+    assert ids, "the brief rendered no tickable tasks"
+    assert len(ids) == len(set(ids)), "duplicate task ids — ticking one ticks another"
+    assert all(i.strip() for i in ids), "a task rendered with an empty id"
