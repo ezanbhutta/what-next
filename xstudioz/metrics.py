@@ -357,6 +357,11 @@ class FunnelMetrics:
     # Sample floor below which the conversion rate is reported as a range and
     # explicitly not called. Set from config so it moves with the window.
     min_sample: int = 0
+    #: Widest interval still worth quoting as a point estimate, in rate units.
+    #: n alone is the wrong test: 2/25 and 4/34 both clear or miss a count
+    #: floor while spanning ~20 points, which is not a number anyone can act
+    #: on. Width is what decides whether a rate has been measured.
+    max_interval_width: float = 0.0
 
     @property
     def conversion_ci(self) -> tuple[float, float]:
@@ -364,7 +369,12 @@ class FunnelMetrics:
 
     @property
     def too_few_to_call(self) -> bool:
-        return bool(self.min_sample) and self.inquiries < self.min_sample
+        if self.min_sample and self.inquiries < self.min_sample:
+            return True
+        if self.max_interval_width:
+            lo, hi = self.conversion_ci
+            return (hi - lo) > self.max_interval_width
+        return False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -372,6 +382,8 @@ class FunnelMetrics:
             "conversion": round(self.conversion, 4),
             "conversion_ci": [round(x, 4) for x in self.conversion_ci],
             "min_sample": self.min_sample,
+            "interval_width": round(self.conversion_ci[1] - self.conversion_ci[0], 4),
+            "max_interval_width": self.max_interval_width,
             "too_few_to_call": self.too_few_to_call,
             "quoted_mean": round(self.quoted_mean, 2),
             "quoted_median": round(self.quoted_median, 2),
@@ -385,7 +397,8 @@ class FunnelMetrics:
 
 
 def funnel_metrics(leads: Sequence[C.Lead], min_segment_n: int = 15,
-                   min_sample: int = 0) -> FunnelMetrics:
+                   min_sample: int = 0,
+                   max_interval_width: float = 0.0) -> FunnelMetrics:
     considered = [l for l in leads if l.status in ("placed", "not_placed")]
     placed = [l for l in considered if l.converted()]
     quotes = [l.quoted for l in placed if l.quoted]
@@ -420,6 +433,7 @@ def funnel_metrics(leads: Sequence[C.Lead], min_segment_n: int = 15,
         by_followup_depth=segment(considered, lambda l: f"F{l.followup_depth()}", 1),
         upsell_lift=upsell_lift,
         min_sample=min_sample,
+        max_interval_width=max_interval_width,
     )
 
 

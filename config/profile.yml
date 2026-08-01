@@ -634,6 +634,11 @@ analysis_window:
   exempt:
     recovery: "Open orders and unconverted quotes are ranked BY age; a date
       filter would hide the oldest and most recoverable money."
+    health: "The organic constraint is a comparison against the period BEFORE
+      the change it is detecting. Windowed to 1 July it read +8.3% (recovered)
+      where the full series read -3.8% (still short) — opposite directions on
+      the same day. A trend cannot be measured against a baseline the window
+      has deleted, and this is the objective's hard constraint."
   # Printed on the brief so nobody reads a windowed rate as an all-time one.
   label: "since 1 July 2026"
   # A short window buys recency and pays for it in sample size. Below this many
@@ -643,6 +648,17 @@ analysis_window:
   # to have changed. Raise this if the brief starts calling noise.
   min_sample:
     conversion: 30
+  # A count floor is necessary but not sufficient. 4 placed from 34 clears a
+  # floor of 30 and still spans 4.7%-26.6% — a range that contains both "we
+  # have a crisis" and "nothing changed". Any rate whose interval is wider
+  # than this is reported as a range, whatever its n.
+  max_interval_width:
+    conversion: 0.15
+  # Fewest in-window rows that can still produce a brief worth publishing.
+  # "more than zero" is not a floor: the markdown fallback export yielded 2
+  # orders from 805 and sailed through a zero-check, which would have put a
+  # page built on two orders in front of the team.
+  min_rows: 10
 
 # ---------------------------------------------------------------------------
 # INTEGRATIONS

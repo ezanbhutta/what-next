@@ -206,7 +206,7 @@ def check_freshness(rep: SelfCheckReport, *, latest_data: _dt.date | None,
 
 
 def check_window(rep: SelfCheckReport, *, rows_before: int, rows_after: int,
-                 window_start: _dt.date | None) -> None:
+                 window_start: _dt.date | None, min_rows: int = 1) -> None:
     """The analysis window must leave something to analyse.
 
     Blocks the case where source data exists but none of it falls inside the
@@ -218,12 +218,12 @@ def check_window(rep: SelfCheckReport, *, rows_before: int, rows_after: int,
     """
     if window_start is None or rows_before == 0:
         return
-    rep.add("window_retains_data", rows_after > 0, "block",
+    rep.add("window_retains_data", rows_after >= min_rows, "block",
             f"{rows_after} of {rows_before} orders fall on or after "
-            f"{window_start}"
-            + ("" if rows_after else
-               " — the source predates the window entirely, so every rate "
-               "would report zero. Widen analysis_window.start or fix the "
+            f"{window_start} (floor {min_rows})"
+            + ("" if rows_after >= min_rows else
+               " — too little of the source falls inside the window for any "
+               "rate to mean anything. Widen analysis_window.start or fix the "
                "feed; do not publish this."))
 
 
@@ -379,7 +379,9 @@ def run(
     check_freshness(rep, latest_data=latest_data, today=today,
                     max_staleness_days=int(scfg.get("max_source_staleness_days", 3)))
     check_window(rep, rows_before=window_rows_before,
-                 rows_after=window_rows_after, window_start=window_start)
+                 rows_after=window_rows_after, window_start=window_start,
+                 min_rows=int((config.get("analysis_window") or {})
+                              .get("min_rows", 1)))
     check_ingest(rep, unmapped_rate=unmapped_rate,
                  max_rate=float(scfg.get("max_unmapped_column_rate", 0.15)),
                  unmapped=unmapped)

@@ -141,7 +141,6 @@ def run_daily(
     all_orders, all_leads = data.orders, data.leads
     w_orders = _since(data.orders, "order_date")
     w_leads = _since(data.leads, "date")
-    w_flow = _since(data.flow, "date")
     w_impressions = _since(data.impressions, "date")
 
     # ---- validate --------------------------------------------------------
@@ -166,19 +165,24 @@ def run_daily(
     bundle = metrics.MetricBundle(
         as_of=today,
         profile=profile_name,
+        # Unwindowed by design — see analysis_window.exempt.health. The
+        # structural test needs the pre-change baseline to compare against,
+        # and flow_7d/flow_28d bound themselves by date anyway.
         health=metrics.organic_health(
-            w_flow, profile_name, today,
+            data.flow, profile_name, today,
             lookback_days=int(obj.get("lookback_days", 14)),
             tolerance=float(obj.get("tolerance", -0.05)),
             max_vvro_share=float(dcfg.get("max_vvro_share", 0.45)),
             vvro_start=vvro_start),
-        flow_7d=metrics.flow_window(w_flow, profile_name,
+        flow_7d=metrics.flow_window(data.flow, profile_name,
                                     today - _dt.timedelta(days=6), today),
-        flow_28d=metrics.flow_window(w_flow, profile_name,
+        flow_28d=metrics.flow_window(data.flow, profile_name,
                                      today - _dt.timedelta(days=27), today),
         funnel=metrics.funnel_metrics(
             w_leads,
-            min_sample=int((win.get("min_sample") or {}).get("conversion", 0))),
+            min_sample=int((win.get("min_sample") or {}).get("conversion", 0)),
+            max_interval_width=float(
+                (win.get("max_interval_width") or {}).get("conversion", 0.0))),
         econ=metrics.economics(w_orders),
         gig=gig,
         decomposition=metrics.decompose_funnel(w_impressions, today),
