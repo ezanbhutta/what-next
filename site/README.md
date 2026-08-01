@@ -15,7 +15,12 @@ In the Vercel web UI:
 2. **Root Directory** → `site`   ← the step people miss
 3. **Framework Preset** → Other. Leave build command and output directory empty.
 4. Deploy
-5. **Settings → Git → Production Branch** → `main`
+5. **Settings → Environments → Production → Branch Tracking** → `main`, then Save.
+   Not under Settings → Git, which is where most guides still point and where
+   it used to live; Vercel moved it when custom environments landed. The
+   sentence above the input names the *saved* branch, so it is the thing to
+   read after saving — the value in the field is not confirmation.
+
    This must match the branch the daily run pushes to, or the page never
    updates: Vercel builds every other branch as a *preview* and leaves the
    production domain on whatever it last built. The symptom is a run that
