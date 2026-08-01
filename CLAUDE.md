@@ -126,6 +126,31 @@ READY deployment, check the commit author before anything else.
 
 The container is ephemeral. Uncommitted state is lost. Commit every run.
 
+## What the brief leads with
+
+The top of the page is **Money sitting still** — orders open past 60 days, and
+quotes that never became orders. Both are computed live in
+`xstudioz/recovery.py` on every run. This is the centre of the page on purpose:
+it is the only block of money that needs no new traffic, no marketplace lever
+and nobody's permission. Ezan owns all of it.
+
+Two traps live in this data, and both are already handled in code. Do not
+re-introduce either in prose:
+
+- **An open order is not one thing.** Before any message goes out, each order
+  has to be sorted into *we owe work*, *they owe a reply*, or *dead* — see
+  `playbooks/stale_orders.md`. A "just checking in" note sent to a buyer who is
+  waiting on us is how a late order becomes a dispute.
+- **Follow-up counts are not a measure of neglect.** Quoted leads with no
+  logged follow-up convert at ~91%, because a follow-up only ever gets logged
+  when the buyer did not say yes immediately. `recovery.followup_benchmark`
+  reports the rate *within* the followed-up group instead, and that is what the
+  task is costed on. Never quote the raw split as if chasing were harmful.
+
+Never attach a review request to any of this work. These are late or cold
+orders, and a review ask on a late delivery is the most reliable way to turn a
+private 3-star into a public one.
+
 ## Rules that do not bend
 
 1. **Read-only on all source sheets.** The team depends on them live.
@@ -151,6 +176,22 @@ realised coverage, so stated confidence converges on real accuracy.
 
 **Your part:** when a prediction resolves badly, do not just note it. Ask why the model
 was wrong and change the model. A miss that produces no change is a wasted miss.
+
+## Known parsing traps
+
+These are fixed and pinned by tests. They are listed because each one produced
+confident, wrong numbers for months, and the next one will look just as normal.
+
+| Trap | What it did | Guard |
+|---|---|---|
+| Trailing blank rows | Sheets are sized generously; a checkbox column renders `FALSE` in every unused row, so the padding is not literally blank. Forward-filling it stamped the last real order's date and client onto 8,339 empty rows — inventing one client with 1,311 orders in a day. | `ingest._is_padding` |
+| `"5 star"` ratings | CSRs type the unit. 374 real ratings carried a `star` suffix; a bare `float()` turned every one into "no review", understating review capture sevenfold and putting a fabricated task at the top of every brief. | `contracts.to_rating` |
+| Unserialised evidence | `breach_reasons` never reached the run JSON, so the dashboard printed "No breach" directly beneath a red BREACH badge. | `MetricBundle.as_dict` |
+
+The shared lesson: a number that looks plausible is not evidence that the
+parse was right. When a metric drives a task, check the raw column
+distribution before trusting it — `collections.Counter` over the source cells
+takes a minute and has caught every one of these.
 
 ## Adding a new data source
 

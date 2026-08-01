@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from xstudioz import contracts as C  # noqa: E402
-from xstudioz import dosing, ingest, ledger as L, metrics, selfcheck, tasks  # noqa: E402
+from xstudioz import dosing, ingest, ledger as L, metrics, recovery, selfcheck, tasks  # noqa: E402
 from xstudioz.contracts import Provenance  # noqa: E402
 
 P = Provenance("test", "t", 0, 0)
@@ -65,6 +65,13 @@ def test_money_parsing(raw, expected):
     # "no review" / "no" / 0.0 all mean "not reviewed" in this dataset.
     # Fiverr has no zero-star rating, so 0.0 must not become a real score.
     ("no review", None), ("no", None), ("0.0", None), ("", None),
+    # The CSRs write the unit. 374 real ratings in the live sheet carry a
+    # "star" suffix; parsing only the bare number silently reclassified every
+    # one of them as "not reviewed" and understated review capture sevenfold.
+    ("5 star", 5.0), ("5 Star", 5.0), ("5 STAR", 5.0), ("5 stars", 5.0),
+    ("4.7 star", 4.7), ("4.3 Star", 4.3), ("1 Star", 1.0),
+    # A suffix is not a licence to guess: still reject genuine junk.
+    ("escalated", None), ("55.0", None), ("star", None),
 ])
 def test_rating_parsing(raw, expected):
     assert C.to_rating(raw) == expected
@@ -1416,3 +1423,192 @@ console.log(JSON.stringify({anon:{code:out.anon.code,len:out.anon.body.length,
     assert r["nopw"]["code"] == 503 and r["nopw"]["leak"] == []
     assert r["authed"]["code"] == 200
     assert r["authed"]["len"] > 5 * r["anon"]["len"]
+
+
+# --------------------------------------------------------------------------
+# Padding rows and recovery
+# --------------------------------------------------------------------------
+
+def test_blank_padding_rows_do_not_become_orders():
+    """A sheet's empty tail must not inherit the last real row's identity.
+
+    Google returns every row of a sized sheet, and a checkbox column renders as
+    FALSE in all of them — so the padding below the last real entry is not
+    literally blank. Forward-filling it stamped the last order's date and
+    client onto 8,339 empty rows across the workbook, which more than doubled
+    the order count and invented a client with 1,311 orders in one day.
+    """
+    header = ["Date", "Client Name", "Order Amount", "Add to Clickup"]
+    rows = [
+        ["29-Jul-2026", "realbuyer", "$115.00", "FALSE"],
+        ["", "", "", "FALSE"],          # padding: checkbox default only
+        ["", "", "", ""],               # padding: wholly empty
+        ["", "", "", "false"],          # padding: case must not matter
+    ]
+    cleaned = ingest._clean_rows(header, rows)
+    assert len(cleaned) == 1
+    assert cleaned[0][1] == "realbuyer"
+
+
+def test_merged_cell_rows_still_forward_fill():
+    """The padding fix must not break the merged-cell repair it sits next to.
+
+    A merged date cell arrives blank on continuation rows, but those rows carry
+    real values elsewhere — that is exactly what distinguishes them from
+    padding.
+    """
+    header = ["Date", "Profile", "Organic Orders"]
+    rows = [
+        ["2026-07-29", "X Studioz", "3"],
+        ["", "", "2"],                  # merged date + profile, real value
+    ]
+    cleaned = ingest._clean_rows(header, rows)
+    assert len(cleaned) == 2
+    assert cleaned[1][0] == "2026-07-29"
+    assert cleaned[1][1] == "X Studioz"
+
+
+def _order(client, days_ago, status, amount, today):
+    return C.Order(
+        client=client, provenance=Provenance("t", "t", 0, 0), profile="X Studioz",
+        order_date=today - dt.timedelta(days=days_ago), status=status,
+        amount=amount)
+
+
+def test_open_order_banding_and_staleness():
+    today = dt.date(2026, 7, 29)
+    orders = [
+        _order("fresh", 3, "in_progress", 100.0, today),
+        _order("mid", 20, "revision", 200.0, today),
+        _order("aging", 45, "revision", 50.0, today),
+        _order("stale", 120, "in_progress", 300.0, today),
+        _order("delivered_stale", 90, "delivered", 80.0, today),
+        _order("done", 200, "completed", 999.0, today),   # not open
+    ]
+    book = recovery.open_orders(orders, today, "X Studioz")
+    assert len(book.orders) == 5                     # completed excluded
+    assert book.by_band()["60+"]["count"] == 2       # stale + delivered_stale
+    assert book.stale_value == 380.0
+    assert book.oldest(1)[0].client == "stale"
+
+
+def test_undated_open_order_is_skipped_not_assumed_fresh():
+    today = dt.date(2026, 7, 29)
+    o = C.Order(client="nodate", provenance=Provenance("t", "t", 0, 0),
+                profile="X Studioz", order_date=None, status="revision",
+                amount=100.0)
+    assert recovery.open_orders([o], today, "X Studioz").orders == []
+
+
+def _lead(client, days_ago, quoted, status, depth, today):
+    return C.Lead(
+        client=client, provenance=Provenance("t", "t", 0, 0), profile="X Studioz",
+        date=today - dt.timedelta(days=days_ago), status=status, quoted=quoted,
+        followup_1=depth >= 1, followup_2=depth >= 2, followup_3=depth >= 3)
+
+
+def test_unanswered_quotes_rank_never_asked_first():
+    """A bigger quote that has been chased three times ranks below a small one
+    nobody has asked. Silence after three asks is an answer."""
+    today = dt.date(2026, 7, 29)
+    leads = [
+        _lead("chased_big", 100, 900.0, "not_placed", 3, today),
+        _lead("never_small", 10, 75.0, "not_placed", 0, today),
+        _lead("never_big", 26, 950.0, "not_placed", 0, today),
+        _lead("bought", 5, 500.0, "placed", 0, today),      # excluded
+    ]
+    book = recovery.unanswered_quotes(leads, today, "X Studioz")
+    assert len(book.quotes) == 3
+    assert [q.client for q in book.ranked()][:2] == ["never_big", "never_small"]
+    assert book.untouched_value == 1025.0
+
+
+def test_old_quotes_are_kept_not_aged_out():
+    """No age cut-off: the team's read is that these buyers never replied
+    rather than declined, so an old quote is ranked down, never dropped."""
+    today = dt.date(2026, 7, 29)
+    book = recovery.unanswered_quotes(
+        [_lead("ancient", 400, 175.0, "not_placed", 1, today)], today, "X Studioz")
+    assert len(book.quotes) == 1
+    assert book.quotes[0].age_days == 400
+
+
+def test_followup_benchmark_separates_the_selection_effect():
+    """The no-follow-up group is dominated by instant closes, so its raw
+    conversion rate must never be used as the value of chasing."""
+    today = dt.date(2026, 7, 29)
+    leads = (
+        [_lead(f"instant{i}", 5, 100.0, "placed", 0, today) for i in range(9)]
+        + [_lead("cold", 90, 100.0, "not_placed", 0, today)]
+        + [_lead(f"chased_win{i}", 30, 100.0, "placed", 1, today) for i in range(4)]
+        + [_lead(f"chased_lost{i}", 30, 100.0, "not_placed", 1, today) for i in range(6)]
+    )
+    bm = recovery.followup_benchmark(leads, "X Studioz")
+    assert (bm.never_n, bm.never_placed) == (10, 9)      # 90% — selection, not skill
+    assert (bm.followed_n, bm.followed_placed) == (10, 4)
+    assert bm.followed_conv == 0.4                        # the usable rate
+    assert bm.has_signal
+
+
+def test_followup_benchmark_reports_no_signal_on_thin_data():
+    today = dt.date(2026, 7, 29)
+    bm = recovery.followup_benchmark(
+        [_lead("a", 10, 100.0, "placed", 1, today)], "X Studioz")
+    assert not bm.has_signal
+
+
+def test_recovery_tasks_are_owned_and_evidenced():
+    """Rule 3 of the operating manual, enforced: owner, a number in the
+    rationale, and at least two concrete steps."""
+    today = dt.date(2026, 7, 29)
+    orders = [_order("stale", 120, "in_progress", 300.0, today)]
+    leads = [_lead("never", 26, 950.0, "not_placed", 0, today)]
+    bundle = recovery.compute(orders, leads, today, "X Studioz")
+    generated = tasks._recovery_rules(bundle, {"team": {"lead": "Ezan"}})
+    assert {t.id for t in generated} == {"stale-open-orders", "untouched-quotes"}
+    for t in generated:
+        assert t.owner == "Ezan"
+        assert any(ch.isdigit() for ch in t.why)
+        assert len(t.steps) >= 2
+
+
+def test_recovery_rules_are_silent_when_there_is_nothing_to_recover():
+    today = dt.date(2026, 7, 29)
+    bundle = recovery.compute([_order("fresh", 2, "in_progress", 100.0, today)],
+                              [], today, "X Studioz")
+    assert tasks._recovery_rules(bundle, {"team": {"lead": "Ezan"}}) == []
+
+
+def test_breach_reasons_survive_serialisation():
+    """A verdict without its evidence is worse than no verdict.
+
+    The dashboard reads this dict, not the dataclass. When `breach_reasons` was
+    dropped in serialisation the page rendered its no-breach copy — the words
+    "No breach" — directly beneath a red BREACH badge.
+    """
+    today = dt.date(2026, 7, 29)
+    flow = []
+    # Healthy before VVRO, halved after: a structural breach with a reason.
+    for i in range(60, 30, -1):
+        flow.append(C.DailyFlow(profile="X Studioz", provenance=Provenance("t", "t", 0, 0),
+                                date=today - dt.timedelta(days=i),
+                                organic_orders=2.0, vvro_orders=0.0))
+    for i in range(30, -1, -1):
+        flow.append(C.DailyFlow(profile="X Studioz", provenance=Provenance("t", "t", 0, 0),
+                                date=today - dt.timedelta(days=i),
+                                organic_orders=0.5, vvro_orders=3.0))
+    health = metrics.organic_health(flow, "X Studioz", today,
+                                    vvro_start=today - dt.timedelta(days=30))
+    assert health.verdict() == "BREACH"
+    assert health.breach_reasons, "a breach must say why"
+
+    bundle = metrics.MetricBundle(
+        as_of=today, profile="X Studioz", health=health,
+        flow_7d=metrics.flow_window(flow, "X Studioz",
+                                    today - dt.timedelta(days=6), today),
+        flow_28d=metrics.flow_window(flow, "X Studioz",
+                                     today - dt.timedelta(days=27), today),
+        funnel=metrics.funnel_metrics([]), econ=metrics.economics([]), gig={})
+    payload = bundle.as_dict()["health"]
+    assert payload["verdict"] == "BREACH"
+    assert payload["breach_reasons"] == health.breach_reasons

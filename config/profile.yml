@@ -483,11 +483,18 @@ team:
 # Top Rated requires $10,000 earned; more than half that figure has been
 # sitting untouched in a spreadsheet column.
 # ---------------------------------------------------------------------------
-dead_pipeline:
+# Superseded 2026-08-01. These seven names and the $5,472 were pasted in by
+# hand in February and never updated, so the engine recommended the same aging
+# quotes every morning for five months while the largest untouched quote in the
+# live sheet never appeared at all. The pipeline is now computed on every run
+# from the inquiry workbook by xstudioz/recovery.py — see `unanswered_quotes`.
+# Nothing reads this block; it is kept only so the recovery figure in a brief
+# from before that date can still be traced to its source.
+dead_pipeline_ARCHIVED_2026_02:
   total: 5472
   leads_logged: 19
   followups_logged: 0
-  recovery_assumption: 0.15     # 15% of $5,472 = $820
+  recovery_assumption: 0.15
   named:
     - {client: selmaprof,     country: UK,          quoted: 950}
     - {client: bobzinos,      country: Qatar,       quoted: 900}
