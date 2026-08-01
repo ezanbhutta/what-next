@@ -145,6 +145,20 @@ The site then silently keeps serving yesterday's page, so a run can look
 successful while nothing reached the team. If a push does not produce a new
 READY deployment, check the commit author before anything else.
 
+**`READY` is not the check — `target` is.** A deployment built from a branch
+that is not Vercel's production branch comes back `READY` and looks perfect,
+but it is a *preview*: the production domain stays on whatever it last built
+and the team keeps reading yesterday's numbers. Confirm both fields on the
+deployment the push produced:
+
+    state:  READY
+    target: production        # null means preview — nothing reached the team
+
+The production branch is set in the Vercel dashboard under
+**Settings → Environments → Production → Branch Tracking**, not under
+Settings → Git, which is where it used to live and where most guides still
+point. It must name the branch this step pushes to.
+
 The container is ephemeral. Uncommitted state is lost. Commit every run.
 
 ## What the brief leads with
