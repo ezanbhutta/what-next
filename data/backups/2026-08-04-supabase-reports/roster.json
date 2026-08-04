@@ -1,0 +1,354 @@
+[
+{
+"id": "582c54a6-9588-48c2-9952-f569751879e4",
+"name": "Saad ",
+"shift": "Night",
+"profile": "Grid Designs",
+"role": "CSR",
+"active": false
+},
+{
+"id": "ahmad",
+"name": "Ahmad",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "alishakeel",
+"name": "Ali Shakeel",
+"shift": "Evening",
+"profile": "",
+"role": "CSR",
+"active": false
+},
+{
+"id": "amrah",
+"name": "Amrah",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "basit",
+"name": "Abdul Basit",
+"shift": "Evening",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "d-20129cda-64f4-4688-b49d-4c02b1733996",
+"name": "Ahmed Fawad",
+"shift": "",
+"profile": "",
+"role": "Graphic Designer",
+"active": true
+},
+{
+"id": "d-73d9eb5e-671f-4133-ba54-0caa4bed6de3",
+"name": "Asad Sohail",
+"shift": "",
+"profile": "",
+"role": "Graphic Designer",
+"active": true
+},
+{
+"id": "d-a14c2331-a19b-4b76-8044-93303b6930ff",
+"name": "Ezan",
+"shift": "",
+"profile": "",
+"role": "Designer",
+"active": true
+},
+{
+"id": "d-a6886663-5b73-4fe9-8e6a-af25ffbab9ff",
+"name": "Hassan Onsite",
+"shift": "",
+"profile": "",
+"role": "Graphic Designer",
+"active": true
+},
+{
+"id": "d-abiha-imran",
+"name": "Abiha Imran",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-afjal-hussain",
+"name": "Afjal Hussain",
+"shift": "",
+"profile": "",
+"role": "Branding",
+"active": true
+},
+{
+"id": "d-amin-ullah",
+"name": "Amin Ullah",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-aqeel",
+"name": "Aqeel",
+"shift": "",
+"profile": "",
+"role": "PPT Designer",
+"active": true
+},
+{
+"id": "d-atta-razaq",
+"name": "Atta Razaq",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-b5912f4e-732b-4a5a-970c-c3edd65700a0",
+"name": "Ahmed Ishfaq",
+"shift": "",
+"profile": "",
+"role": "Logo and Branding Designer",
+"active": true
+},
+{
+"id": "d-ce4ec688-c8d4-448c-ac50-c26de6f77948",
+"name": "Moona",
+"shift": "",
+"profile": "",
+"role": "Branding Designer",
+"active": true
+},
+{
+"id": "d-de138f8f-93e4-4e65-a9f4-f3ba591cd28b",
+"name": "Zubair",
+"shift": "",
+"profile": "",
+"role": "Designer",
+"active": true
+},
+{
+"id": "d-hamid",
+"name": "Hamid",
+"shift": "",
+"profile": "",
+"role": "Branding",
+"active": true
+},
+{
+"id": "d-khubaib",
+"name": "Khubaib",
+"shift": "",
+"profile": "",
+"role": "Branding",
+"active": true
+},
+{
+"id": "d-m-tariq",
+"name": "Tariq",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-md-dulal",
+"name": "Dulal",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-md-rashadul",
+"name": "Rashadul Haque",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-md-rezaul",
+"name": "Rezaul",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-md-zahid",
+"name": "Zahid Hasan",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-nimeazad",
+"name": "Nimeazad",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-owais-nadeem",
+"name": "Owais Nadeem",
+"shift": "",
+"profile": "",
+"role": "Branding",
+"active": true
+},
+{
+"id": "d-owais-rehan",
+"name": "Owais Rehan",
+"shift": "",
+"profile": "",
+"role": "Branding",
+"active": true
+},
+{
+"id": "d-rejaul-karim",
+"name": "Rejaul Karim",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-shahmeer",
+"name": "Shahmeer",
+"shift": "",
+"profile": "",
+"role": "Canva Designer",
+"active": true
+},
+{
+"id": "d-shaoor-haider",
+"name": "Shaoor Haider",
+"shift": "",
+"profile": "",
+"role": "Logo",
+"active": true
+},
+{
+"id": "d-syed-mubahat",
+"name": "Syed Mubahat",
+"shift": "",
+"profile": "",
+"role": "Animation",
+"active": true
+},
+{
+"id": "ea0f5a4c-f468-463b-a221-bd8ea35e2106",
+"name": "Zaheen",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "ezan",
+"name": "Ezan",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "hadi",
+"name": "Hadi",
+"shift": "Evening",
+"profile": "",
+"role": "CSR",
+"active": false
+},
+{
+"id": "hasnain",
+"name": "Hasnain Gillani",
+"shift": "Evening",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "hassan",
+"name": "Hassan",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "iqra",
+"name": "Iqra",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "nadir",
+"name": "Nadir",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "salman",
+"name": "Salman",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "samama",
+"name": "Samama",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "swaid",
+"name": "Swaid",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": false
+},
+{
+"id": "tanzeel",
+"name": "Tanzeel",
+"shift": "Morning",
+"profile": "",
+"role": "CSR",
+"active": true
+},
+{
+"id": "tayyab",
+"name": "Tayyab",
+"shift": "Evening",
+"profile": "",
+"role": "CSR",
+"active": false
+},
+{
+"id": "zubair",
+"name": "Zubair",
+"shift": "Night",
+"profile": "",
+"role": "CSR",
+"active": true
+}
+]

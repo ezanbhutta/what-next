@@ -1,0 +1,13 @@
+[
+{
+"key": "geofence",
+"value": {
+"lat": 30.206736,
+"lng": 71.461618,
+"label": "",
+"enabled": true,
+"radiusM": 200
+},
+"updated_at": "2026-06-18T06:27:59.205+00:00"
+}
+]
