@@ -206,25 +206,46 @@ def normalise_country(value: Any) -> str | None:
 #: "X Studioz" in the orders ledger. Left unnormalised, every impressions row
 #: silently belongs to a profile that has no orders, and the decomposition
 #: quietly reports "no data" forever.
-_PROFILE_CANON = {
+#:
+#: Keys are matched on their *squashed* form — lowercase, alphanumerics only —
+#: so one entry covers "Grid Designs", "grid designs", "GridDesigns" and
+#: "grid_designs" without anyone having to think of each variant. The previous
+#: version enumerated spellings by hand and was therefore only as good as
+#: whoever last edited it: it carried "dygram" and "storm" while the sheets
+#: actually say "Dygram Designs" and "Storm Design", so those two keys never
+#: fired once and both profiles passed through uncanonicalised. An enumerated
+#: list that looks exhaustive is worse than an obvious rule, because nobody
+#: re-checks it. Add a spelling here only when squashing genuinely cannot
+#: reach it (an abbreviation like "ah2", or a rename).
+_PROFILE_CANON_RAW = {
     "xstudioz": "X Studioz",
-    "x studioz": "X Studioz",
-    "x_studioz": "X Studioz",
     "carpicon": "Carpicon",
-    "grid designs": "Grid Designs",
     "griddesigns": "Grid Designs",
-    "eikon designs": "Eikon Designs",
     "eikondesigns": "Eikon Designs",
     "alee": "Alee Studioz",
-    "alee studioz": "Alee Studioz",
+    "aleestudioz": "Alee Studioz",
     "ah2": "Abdul Haseeb",
-    "ah2 branding": "Abdul Haseeb",
-    "abdul haseeb": "Abdul Haseeb",
+    "ah2branding": "Abdul Haseeb",
+    "abdulhaseeb": "Abdul Haseeb",
     "bic": "BIC",
-    "dygram": "Dygram",
-    "storm": "Storm",
-    "tariq mahmood": "Tariq Mahmood",
+    "dygram": "Dygram Designs",
+    "dygramdesigns": "Dygram Designs",
+    "storm": "Storm Design",
+    "stormdesign": "Storm Design",
+    "stormdesigns": "Storm Design",
+    "tariqmahmood": "Tariq Mahmood",
+    # A different marketplace, not a spelling of the Fiverr profile. Kept
+    # deliberately distinct so its orders never pool into Fiverr economics.
+    "abdulhaseebupwork": "Abdul Haseeb Upwork",
 }
+
+
+def _squash(text: str) -> str:
+    """Lowercase, alphanumerics only — 'Grid Designs' and 'GridDesigns' agree."""
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+_PROFILE_CANON = {_squash(k): v for k, v in _PROFILE_CANON_RAW.items()}
 
 
 def normalise_profile(value: Any) -> str | None:
@@ -232,7 +253,7 @@ def normalise_profile(value: Any) -> str | None:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     if not text:
         return None
-    return _PROFILE_CANON.get(text.lower(), text)
+    return _PROFILE_CANON.get(_squash(text), text)
 
 
 def normalise_person(value: Any) -> str | None:

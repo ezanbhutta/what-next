@@ -892,6 +892,29 @@ def test_profile_names_collapse_across_sheets():
     assert C.normalise_profile("Brand New Profile") == "Brand New Profile"
 
 
+def test_profile_canon_matches_the_spellings_the_sheets_actually_use():
+    """The canon map used to list "dygram" and "storm" while the workbooks
+    write "Dygram Designs" and "Storm Design". Both keys therefore never fired
+    once, and both profiles passed through uncanonicalised for months — an
+    enumerated list that looks exhaustive but is only as good as its last
+    editor. These are the literal strings present in the 2026-08-01 snapshot."""
+    assert C.normalise_profile("Dygram Designs") == "Dygram Designs"
+    assert C.normalise_profile("Dygram") == "Dygram Designs"
+    assert C.normalise_profile("Storm Design") == "Storm Design"
+    assert C.normalise_profile("Storm") == "Storm Design"
+
+    # Squashing is the rule, so spacing and case never need their own entry.
+    for raw in ("GridDesigns", "grid designs", "Grid  Designs", "grid_designs"):
+        assert C.normalise_profile(raw) == "Grid Designs"
+    for raw in ("Alee Studioz", "aleestudioz", "ALEE STUDIOZ"):
+        assert C.normalise_profile(raw) == "Alee Studioz"
+
+    # A different marketplace, deliberately NOT merged into the Fiverr profile:
+    # pooling Upwork orders into Fiverr economics would corrupt AOV silently.
+    assert C.normalise_profile("Abdul Haseeb Upwork") == "Abdul Haseeb Upwork"
+    assert C.normalise_profile("Abdul Haseeb") == "Abdul Haseeb"
+
+
 def test_impressions_table_does_not_double_count_as_flow():
     """The impressions sheet also carries Organic/VVRO order columns. If it
     were classified as daily_flow it would double every order in the ledger."""
