@@ -1,0 +1,2020 @@
+{
+  "today": "2026-08-01",
+  "emitted": true,
+  "metrics": {
+    "as_of": "2026-08-01",
+    "profile": "X Studioz",
+    "health": {
+      "verdict": "SOFTENING",
+      "index": 45.5,
+      "ma7_now": 0.857,
+      "ma7_prior": 0.286,
+      "delta_pct": 2.0,
+      "slope_14d": 0.0703,
+      "vvro_share_7d": 0.7391,
+      "total_per_day_7d": 3.286,
+      "breached": false,
+      "breach_reasons": [],
+      "structural_delta_pct": -0.0376,
+      "structural_pre": 0.65625,
+      "structural_post": 0.631578947368421,
+      "components": {
+        "trend": 0.425,
+        "slope": 0.852,
+        "vvro_dilution": 0.0,
+        "volume": 0.571
+      }
+    },
+    "flow_7d": {
+      "organic": 6.0,
+      "vvro": 14.0,
+      "total_per_day": 2.857,
+      "vvro_share": 0.7
+    },
+    "flow_28d": {
+      "organic": 17.0,
+      "vvro": 43.0,
+      "total_per_day": 2.143,
+      "vvro_share": 0.7167
+    },
+    "funnel": {
+      "inquiries": 34,
+      "placed": 4,
+      "conversion": 0.1176,
+      "conversion_ci": [
+        0.0467,
+        0.2662
+      ],
+      "min_sample": 30,
+      "interval_width": 0.2195,
+      "max_interval_width": 0.15,
+      "too_few_to_call": true,
+      "quoted_mean": 200.0,
+      "quoted_median": 200.0,
+      "pipeline_value": 800.0,
+      "by_csr": [],
+      "by_shift": [],
+      "by_country": [],
+      "by_followup_depth": [
+        {
+          "key": "F0",
+          "n": 16,
+          "placed": 4,
+          "conv": 0.25,
+          "conv_lb": 0.1018,
+          "value": 800.0,
+          "value_per_lead": 50.0
+        },
+        {
+          "key": "F1",
+          "n": 13,
+          "placed": 0,
+          "conv": 0.0,
+          "conv_lb": 0.0,
+          "value": 0.0,
+          "value_per_lead": 0.0
+        },
+        {
+          "key": "F2",
+          "n": 5,
+          "placed": 0,
+          "conv": 0.0,
+          "conv_lb": 0.0,
+          "value": 0.0,
+          "value_per_lead": 0.0
+        }
+      ],
+      "upsell_lift": {
+        "with_upsell": {
+          "n": 0,
+          "placed": 0,
+          "conv": 0
+        },
+        "without_upsell": {
+          "n": 34,
+          "placed": 4,
+          "conv": 0.1176
+        },
+        "relative_lift": null,
+        "z": 0.0,
+        "significant": false,
+        "caveat": "Observational, not randomised: CSRs likely attempt upsells on warmer leads, so part of this gap is selection, not causation. Run the randomised test in playbooks/upsell.md before trusting the full effect size."
+      }
+    },
+    "economics": {
+      "n_orders": 64,
+      "n_priced": 63,
+      "revenue": 6952.0,
+      "aov": 110.35,
+      "median": 80.0,
+      "q1": 45.0,
+      "q3": 115.0,
+      "tip_rate": 0.0,
+      "tip_total": 0,
+      "upsell_rate": 0.0,
+      "upsell_denominator": 64,
+      "review_capture_rate": 0.6094,
+      "review_denominator": 64,
+      "mean_rating": 4.974,
+      "by_type": {
+        "organic": {
+          "n": 18,
+          "revenue": 3482.0,
+          "aov": 193.44
+        },
+        "vvro": {
+          "n": 45,
+          "revenue": 3470.0,
+          "aov": 77.11
+        },
+        "unknown": {
+          "n": 0,
+          "revenue": 0,
+          "aov": 0.0
+        }
+      },
+      "by_designer": [
+        {
+          "name": "Md Rezaul",
+          "n": 5,
+          "aov": 169.4,
+          "revenue": 847.0
+        },
+        {
+          "name": "Amin",
+          "n": 9,
+          "aov": 151.11,
+          "revenue": 1360.0
+        },
+        {
+          "name": "Dulal Khan",
+          "n": 6,
+          "aov": 130.83,
+          "revenue": 785.0
+        },
+        {
+          "name": "Zahid",
+          "n": 6,
+          "aov": 84.17,
+          "revenue": 505.0
+        },
+        {
+          "name": "Nimeazad",
+          "n": 13,
+          "aov": 78.08,
+          "revenue": 1015.0
+        },
+        {
+          "name": "Rashdul",
+          "n": 10,
+          "aov": 78.0,
+          "revenue": 780.0
+        },
+        {
+          "name": "Abiha",
+          "n": 6,
+          "aov": 71.67,
+          "revenue": 430.0
+        }
+      ],
+      "by_industry": [
+        {
+          "name": "Packaging + Shopify",
+          "n": 1,
+          "aov": 800.0,
+          "revenue": 800.0
+        },
+        {
+          "name": "Sports",
+          "n": 2,
+          "aov": 197.5,
+          "revenue": 395.0
+        },
+        {
+          "name": "Construction",
+          "n": 2,
+          "aov": 160.0,
+          "revenue": 320.0
+        },
+        {
+          "name": "Law Firm, It",
+          "n": 1,
+          "aov": 250.0,
+          "revenue": 250.0
+        },
+        {
+          "name": "Lifestyle",
+          "n": 2,
+          "aov": 125.0,
+          "revenue": 250.0
+        },
+        {
+          "name": "Auto Manufacturers",
+          "n": 2,
+          "aov": 97.5,
+          "revenue": 195.0
+        },
+        {
+          "name": "Rock Band",
+          "n": 1,
+          "aov": 175.0,
+          "revenue": 175.0
+        },
+        {
+          "name": "Bookkeeping & Cloud Accounting (Xero)",
+          "n": 1,
+          "aov": 175.0,
+          "revenue": 175.0
+        },
+        {
+          "name": "Pet Care",
+          "n": 1,
+          "aov": 170.0,
+          "revenue": 170.0
+        },
+        {
+          "name": "Design Services",
+          "n": 2,
+          "aov": 80.0,
+          "revenue": 160.0
+        },
+        {
+          "name": "Finance",
+          "n": 2,
+          "aov": 80.0,
+          "revenue": 160.0
+        },
+        {
+          "name": "Art & Design",
+          "n": 2,
+          "aov": 80.0,
+          "revenue": 160.0
+        },
+        {
+          "name": "Cricket",
+          "n": 1,
+          "aov": 147.0,
+          "revenue": 147.0
+        },
+        {
+          "name": "Ai",
+          "n": 2,
+          "aov": 72.5,
+          "revenue": 145.0
+        },
+        {
+          "name": "Food Truck",
+          "n": 2,
+          "aov": 67.5,
+          "revenue": 135.0
+        },
+        {
+          "name": "Retail & Wholesale",
+          "n": 1,
+          "aov": 130.0,
+          "revenue": 130.0
+        },
+        {
+          "name": "Development",
+          "n": 1,
+          "aov": 120.0,
+          "revenue": 120.0
+        },
+        {
+          "name": "Manufacturing",
+          "n": 1,
+          "aov": 115.0,
+          "revenue": 115.0
+        },
+        {
+          "name": "Hospitality",
+          "n": 1,
+          "aov": 115.0,
+          "revenue": 115.0
+        },
+        {
+          "name": "Ed-Tech",
+          "n": 1,
+          "aov": 115.0,
+          "revenue": 115.0
+        }
+      ]
+    },
+    "gig": {
+      "captured_on": "2026-07-29",
+      "url": "https://www.fiverr.com/x_studioz/design-modern-logo-branding-kit-with-complete-brand-identity",
+      "level": "Level 2",
+      "success_score": 8,
+      "reviews_total": 1583,
+      "stars": {
+        "5": 1420,
+        "4": 106,
+        "3": 29,
+        "2": 14,
+        "1": 14
+      },
+      "sub_ratings": {
+        "communication": 4.9,
+        "quality_of_delivery": 4.8,
+        "value_of_delivery": 4.8
+      },
+      "orders_in_queue": 20,
+      "avg_response_time_hours": 1,
+      "impressions_7d_ma": 1564,
+      "live_gigs": 3,
+      "gig_slots": 10,
+      "member_since": "2023-06",
+      "starting_price": 45,
+      "source": "operating model 27 Jul 2026 + live gig scrape 29 Jul 2026",
+      "rating": 4.834491471888819
+    },
+    "decomposition": {
+      "have_data": false,
+      "days": 0,
+      "impressions_now": 0.0,
+      "impressions_prior": 0.0,
+      "ctr_now": null,
+      "ctr_prior": null,
+      "order_rate_now": null,
+      "order_rate_prior": null,
+      "orders_now": 0.0,
+      "orders_prior": 0.0,
+      "attribution": {},
+      "verdict": "no_data",
+      "explanation": "No impression data. A fall in organic orders cannot be attributed to reach, click-through or closing rate \u2014 and those three need opposite responses. This is the single most valuable missing input."
+    },
+    "disputes": {
+      "have_data": false,
+      "total": 0,
+      "open_count": 0,
+      "open_exposure": 0.0,
+      "refunded_total": 0.0,
+      "refund_rate": null,
+      "mean_days_to_resolve": null,
+      "by_cause": [],
+      "by_type": {}
+    }
+  },
+  "dose_plan": {
+    "date": "2026-08-01",
+    "profile": "X Studioz",
+    "dose": 0,
+    "weekly_quota": 0,
+    "target_rate": 0.0,
+    "previous_dose": 0.0,
+    "action": "disabled",
+    "binding_constraint": "controller_disabled",
+    "reasons": [
+      "Inorganic volume is directed by the CEO, not by this engine."
+    ],
+    "bands": [],
+    "countries": [],
+    "ceiling_from_share": 0.0,
+    "projected_share": null,
+    "cooldown_until": null,
+    "expected_revenue": 0.0,
+    "week_pattern": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tasks": [
+    {
+      "id": "rescue-5",
+      "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+      "category": "dispute_rescue",
+      "owner": "Ezan (escalate to CEO if refund is formally requested)",
+      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$110; the rating damage is worth far more.",
+      "steps": [
+        "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+        "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+        "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+        "If they choose (a), name the designer and give a fixed date.",
+        "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+      ],
+      "impact_usd": 400,
+      "confidence": 0.7,
+      "effort_hours": 1.5,
+      "priority": "P0",
+      "urgency": 2,
+      "playbook": "playbooks/dispute_rescue.md",
+      "refs": [
+        "order_tracker/tracker#b0r4"
+      ],
+      "due": "2026-08-01",
+      "score": 186.7
+    },
+    {
+      "id": "stale-open-orders",
+      "title": "Close out 17 orders open more than 60 days ($2,285)",
+      "category": "delivery",
+      "owner": "Ezan",
+      "why": "17 orders worth $2,285 have been open longer than 60 days, out of 27 open orders worth $4,235 in total. The oldest is osmanbey_35 at 268 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
+      "steps": [
+        "Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.",
+        "Where we owe work \u2014 assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (268d, $250), madewelltech (174d, $120), andrem530 (159d, $295).",
+        "Where the client is silent \u2014 send one message that states what was last delivered and asks a single closed question. Do not re-open the brief.",
+        "Where it is genuinely dead \u2014 set the status so it stops appearing here, and note why in the CSR column.",
+        "Anything still open at this time next week gets escalated, not re-listed."
+      ],
+      "impact_usd": 914.0,
+      "confidence": 0.6,
+      "effort_hours": 3.0,
+      "priority": "P0",
+      "urgency": 2,
+      "playbook": "playbooks/stale_orders.md",
+      "refs": [
+        "osmanbey_35: 268d, $250, in_progress",
+        "johnjk001: 212d, $0, delivered",
+        "faisalkazmi53: 184d, $0, in_progress",
+        "madewelltech: 174d, $120, delivered",
+        "andrem530: 159d, $295, revision",
+        "jordyspikker: 140d, $100, revision",
+        "calumsnell: 138d, $100, revision",
+        "kuykendalljr: 135d, $75, in_progress",
+        "vickizhou318: 126d, $0, in_progress",
+        "paolowhite: 98d, $320, delivered"
+      ],
+      "due": null,
+      "score": 182.8
+    },
+    {
+      "id": "dq-flow-revenue",
+      "title": "Fill revenue in the daily ledger (122 days blank)",
+      "category": "data_quality",
+      "owner": "Whoever owns the daily ledger",
+      "why": "122 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
+      "steps": [
+        "Fill every revenue column in the ledger for every day that recorded orders.",
+        "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
+        "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
+      ],
+      "impact_usd": 2000,
+      "confidence": 0.9,
+      "effort_hours": 2.0,
+      "priority": "P0",
+      "urgency": 1,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 900.0
+    },
+    {
+      "id": "wire-missing-sources",
+      "title": "Wire up the 2 promised data sources",
+      "category": "data_quality",
+      "owner": "CEO",
+      "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+      "steps": [
+        "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
+        "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
+        "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
+      ],
+      "impact_usd": 1500,
+      "confidence": 0.5,
+      "effort_hours": 1.0,
+      "priority": "P1",
+      "urgency": 0,
+      "playbook": "playbooks/data_hygiene.md",
+      "refs": [],
+      "due": null,
+      "score": 750.0
+    },
+    {
+      "id": "designer-routing",
+      "title": "Route high-value briefs to Md Rezaul",
+      "category": "delivery",
+      "owner": "CEO",
+      "why": "Md Rezaul averages $169 across 5 orders; Abiha averages $72 across 6. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+      "steps": [
+        "Assign every brief above $200 to Md Rezaul or the next two by AOV.",
+        "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
+        "Revisit in 30 days with the engine's updated per-designer AOV."
+      ],
+      "impact_usd": 800,
+      "confidence": 0.35,
+      "effort_hours": 0.5,
+      "priority": "P1",
+      "urgency": 0,
+      "playbook": "playbooks/staffing.md",
+      "refs": [],
+      "due": null,
+      "score": 560.0
+    },
+    {
+      "id": "upsell-tracking",
+      "title": "Start recording upsells \u2014 the column is empty",
+      "category": "data_quality",
+      "owner": "All CSRs",
+      "why": "Upsell is marked on 0.0% of the 64 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+      "steps": [
+        "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
+        "Fill 'What did you upsell and how much' whenever TRUE.",
+        "Backfill the last 30 completed orders from memory this week."
+      ],
+      "impact_usd": 1200,
+      "confidence": 0.5,
+      "effort_hours": 1.5,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [],
+      "due": null,
+      "score": 400.0
+    },
+    {
+      "id": "upsell-1",
+      "title": "Upsell andrem530 (order #1)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r0"
+      ],
+      "due": null,
+      "score": 157.5
+    },
+    {
+      "id": "deliver-4",
+      "title": "Close out approved order #4 \u2014 Calum Snell",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 99.31,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r3"
+      ],
+      "due": null,
+      "score": 79.5
+    },
+    {
+      "id": "deliver-6",
+      "title": "Close out approved order #6 \u2014 bethanyjademck",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 99.31,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r5"
+      ],
+      "due": null,
+      "score": 79.5
+    },
+    {
+      "id": "untouched-quotes",
+      "title": "Follow up the 5 quotes that never got one ($527)",
+      "category": "funnel",
+      "owner": "Ezan",
+      "why": "5 buyers were quoted $527 between them and no follow-up was ever logged against any of them \u2014 the largest is akhilkpfxx at $160, quoted 149 days ago. That sits inside a total unanswered pipeline of $5,722 across 20 leads. Of the 24 quoted leads anyone did chase, 9 placed (38%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 92%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 5 are the residue of that group, not part of its success.",
+      "steps": [
+        "Work the never-followed-up list first, largest first: akhilkpfxx ($160, 149d), architpatel497 ($147, 37d), kai_utzinger ($85, 96d), zain_qw ($75, 31d).",
+        "One message each. State the quote is still open, and ask one question they can answer in a word \u2014 whether the project is still live. Do not re-pitch and do not discount unprompted.",
+        "Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.",
+        "Then work the remainder by value; treat a third unanswered follow-up as a no and stop."
+      ],
+      "impact_usd": 98.81,
+      "confidence": 0.45,
+      "effort_hours": 1.5,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/dead_pipeline.md",
+      "refs": [
+        "akhilkpfxx: $160, 149d, 0 follow-ups",
+        "architpatel497: $147, 37d, 0 follow-ups",
+        "kai_utzinger: $85, 96d, 0 follow-ups",
+        "zain_qw: $75, 31d, 0 follow-ups",
+        "Mohamed L: $60, 82d, 0 follow-ups",
+        "bobzinos: $900, 136d, 1 follow-ups",
+        "farida_ism: $700, 169d, 1 follow-ups",
+        "ryan_wonders: $350, 95d, 1 follow-ups",
+        "rztwerk: $250, 5d, 1 follow-ups",
+        "chupetes: $200, 144d, 1 follow-ups"
+      ],
+      "due": null,
+      "score": 29.6
+    },
+    {
+      "id": "upsell-4",
+      "title": "Upsell Calum Snell (order #4)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P3",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r3"
+      ],
+      "due": null,
+      "score": 157.5
+    },
+    {
+      "id": "upsell-6",
+      "title": "Upsell bethanyjademck (order #6)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P3",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r5"
+      ],
+      "due": null,
+      "score": 157.5
+    }
+  ],
+  "predictions": [
+    {
+      "id": "1d7fa3383a6b",
+      "created_on": "2026-08-01",
+      "resolve_on": "2026-08-08",
+      "metric": "flow_7d.organic",
+      "statement": "Organic orders over the 7 days to 08 Aug will be 6.7 (80% CI 3.4-10.0).",
+      "point": 6.723076923076923,
+      "lo": 3.4041781251668044,
+      "hi": 10.041975720987041,
+      "confidence": "medium",
+      "basis": "14d damped organic rate 0.960/day; Poisson spread. Health SOFTENING (index 45.5).",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "769b550e2227",
+      "created_on": "2026-08-01",
+      "resolve_on": "2026-08-15",
+      "metric": "health.index",
+      "statement": "Organic health index in 14 days will be 46 (80% CI 27-66).",
+      "point": 45.5,
+      "lo": 26.97751875,
+      "hi": 65.72873125,
+      "confidence": "medium",
+      "basis": "No breach; index expected to hold near its current level.",
+      "horizon_days": 14,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "8ce9d2227fa4",
+      "created_on": "2026-08-01",
+      "resolve_on": "2026-08-08",
+      "metric": "flow_7d.total_per_day",
+      "statement": "Total orders/day averaged over the next 7 days will be 3.60 (80% CI 2.68-4.52).",
+      "point": 3.6,
+      "lo": 2.6820644280311856,
+      "hi": 4.517935571968814,
+      "confidence": "medium",
+      "basis": "14d damped total rate; current 7d actual 2.857.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "e3dfd1ab8d5c",
+      "created_on": "2026-08-01",
+      "resolve_on": "2026-08-31",
+      "metric": "economics.aov",
+      "statement": "Blended AOV in 30 days will be $110 (80% CI $98-$124).",
+      "point": 110.35,
+      "lo": 98.29651363999999,
+      "hi": 124.34564635999998,
+      "confidence": "high",
+      "basis": "Lifetime AOV across 63 priced orders. Moves only if the upsell programme lands.",
+      "horizon_days": 30,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    },
+    {
+      "id": "4267ad6d5e1f",
+      "created_on": "2026-08-01",
+      "resolve_on": "2026-08-08",
+      "metric": "funnel.conversion",
+      "statement": "Inquiry->order conversion in 7 days will be 11.8% (80% CI 10.4%-13.7%).",
+      "point": 0.1176,
+      "lo": 0.1036926755676,
+      "hi": 0.1369522044324,
+      "confidence": "high",
+      "basis": "Lifetime conversion over 34 scored inquiries.",
+      "horizon_days": 7,
+      "profile": "X Studioz",
+      "status": "open",
+      "actual": null,
+      "abs_error": null,
+      "pct_error": null,
+      "within_interval": null,
+      "resolved_on": null,
+      "note": null
+    }
+  ],
+  "resolved": [],
+  "selfcheck": {
+    "score": 95.8,
+    "rubric": {
+      "task_count": 10.0,
+      "ownership": 20.0,
+      "evidence": 20.8,
+      "actionability": 15.0,
+      "falsifiability": 20.0,
+      "priority_spread": 10.0
+    },
+    "blocking": 0,
+    "repairs": [],
+    "results": [
+      {
+        "name": "disabled_controller_emits_nothing",
+        "passed": true,
+        "severity": "block",
+        "detail": "controller disabled but dose=0, quota=0, bands=0",
+        "repaired": false
+      },
+      {
+        "name": "ledger_vs_crm_orders",
+        "passed": true,
+        "severity": "warn",
+        "detail": "daily ledger says 60 orders in window, CRM sheet says 62 (3% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.",
+        "repaired": false
+      },
+      {
+        "name": "flow_total_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "flow_7d.total_per_day=2.857143 but organic+vvro/7=2.857143",
+        "repaired": false
+      },
+      {
+        "name": "aov_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "aov=110.349206 but revenue/n_priced=110.349206",
+        "repaired": false
+      },
+      {
+        "name": "health_delta_recompute",
+        "passed": true,
+        "severity": "block",
+        "detail": "delta_pct=2.000000 but recomputed=2.000000",
+        "repaired": false
+      },
+      {
+        "name": "phase_gate_respected",
+        "passed": true,
+        "severity": "block",
+        "detail": "Phase 1 \u00b7 Signal repair: no task violates the 4 forbidden action(s)",
+        "repaired": false
+      },
+      {
+        "name": "data_freshness",
+        "passed": true,
+        "severity": "warn",
+        "detail": "newest record is 2026-08-01 (0d old, SLA 3d)",
+        "repaired": false
+      },
+      {
+        "name": "window_retains_data",
+        "passed": true,
+        "severity": "block",
+        "detail": "64 of 1053 orders fall on or after 2026-07-01 (floor 10)",
+        "repaired": false
+      },
+      {
+        "name": "schema_drift",
+        "passed": true,
+        "severity": "warn",
+        "detail": "unmapped column rate 2.5% (limit 15%); unrecognised: ['<unclassified tab: Daily Data Sheet Profiles>', 'Order type', 'Public review', 'Reply', 'Service Demand', 'Upsell']",
+        "repaired": false
+      },
+      {
+        "name": "task_count_in_range",
+        "passed": true,
+        "severity": "block",
+        "detail": "12 tasks (allowed 3-12)",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_owned",
+        "passed": true,
+        "severity": "block",
+        "detail": "12/12 tasks have an owner",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_evidenced",
+        "passed": false,
+        "severity": "warn",
+        "detail": "10/12 tasks cite a number in their rationale",
+        "repaired": false
+      },
+      {
+        "name": "all_tasks_actionable",
+        "passed": true,
+        "severity": "warn",
+        "detail": "12/12 tasks have >=2 concrete steps",
+        "repaired": false
+      },
+      {
+        "name": "predictions_falsifiable",
+        "passed": true,
+        "severity": "block",
+        "detail": "5/5 predictions have a resolvable metric, a date and a non-degenerate interval",
+        "repaired": false
+      },
+      {
+        "name": "priority_spread_sane",
+        "passed": true,
+        "severity": "warn",
+        "detail": "3 of 12 tasks are P0",
+        "repaired": false
+      }
+    ]
+  },
+  "phase": {
+    "id": "signal_repair",
+    "label": "Phase 1 \u00b7 Signal repair",
+    "objective": "Stop the damage. Do not grow the queue. Do not spend on ads.",
+    "window": [
+      "2026-07-28",
+      "2026-08-10"
+    ],
+    "days_remaining": 9,
+    "gate_open": false,
+    "gate": [
+      {
+        "id": "success_score_9",
+        "label": "Success Score",
+        "required": 9.0,
+        "actual": 8,
+        "met": false,
+        "source": "Level Overview page"
+      },
+      {
+        "id": "impressions_4000",
+        "label": "Impressions, 7-day average",
+        "required": 4000.0,
+        "actual": 1564,
+        "met": false,
+        "source": ""
+      },
+      {
+        "id": "completion_ratio_5d",
+        "label": "Consecutive days with completion ratio >= 1.0",
+        "required": 5.0,
+        "actual": null,
+        "met": false,
+        "source": ""
+      }
+    ],
+    "kills_fired": [],
+    "forbidden": [
+      "fiverr_ads",
+      "new_gig_launch",
+      "price_increase",
+      "queue_growth"
+    ]
+  },
+  "boards": [
+    {
+      "person": "Ezan",
+      "role": "team_lead",
+      "window": "all hours",
+      "task_ids": [
+        "rescue-5",
+        "stale-open-orders",
+        "designer-routing"
+      ],
+      "tasks": [
+        {
+          "id": "rescue-5",
+          "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+          "category": "dispute_rescue",
+          "owner": "Ezan (escalate to CEO if refund is formally requested)",
+          "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$110; the rating damage is worth far more.",
+          "steps": [
+            "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+            "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+            "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+            "If they choose (a), name the designer and give a fixed date.",
+            "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+          ],
+          "impact_usd": 400,
+          "confidence": 0.7,
+          "effort_hours": 1.5,
+          "priority": "P0",
+          "urgency": 2,
+          "playbook": "playbooks/dispute_rescue.md",
+          "refs": [
+            "order_tracker/tracker#b0r4"
+          ],
+          "due": "2026-08-01",
+          "score": 186.7
+        },
+        {
+          "id": "stale-open-orders",
+          "title": "Close out 17 orders open more than 60 days ($2,285)",
+          "category": "delivery",
+          "owner": "Ezan",
+          "why": "17 orders worth $2,285 have been open longer than 60 days, out of 27 open orders worth $4,235 in total. The oldest is osmanbey_35 at 268 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
+          "steps": [
+            "Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.",
+            "Where we owe work \u2014 assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (268d, $250), madewelltech (174d, $120), andrem530 (159d, $295).",
+            "Where the client is silent \u2014 send one message that states what was last delivered and asks a single closed question. Do not re-open the brief.",
+            "Where it is genuinely dead \u2014 set the status so it stops appearing here, and note why in the CSR column.",
+            "Anything still open at this time next week gets escalated, not re-listed."
+          ],
+          "impact_usd": 914.0,
+          "confidence": 0.6,
+          "effort_hours": 3.0,
+          "priority": "P0",
+          "urgency": 2,
+          "playbook": "playbooks/stale_orders.md",
+          "refs": [
+            "osmanbey_35: 268d, $250, in_progress",
+            "johnjk001: 212d, $0, delivered",
+            "faisalkazmi53: 184d, $0, in_progress",
+            "madewelltech: 174d, $120, delivered",
+            "andrem530: 159d, $295, revision",
+            "jordyspikker: 140d, $100, revision",
+            "calumsnell: 138d, $100, revision",
+            "kuykendalljr: 135d, $75, in_progress",
+            "vickizhou318: 126d, $0, in_progress",
+            "paolowhite: 98d, $320, delivered"
+          ],
+          "due": null,
+          "score": 182.8
+        },
+        {
+          "id": "designer-routing",
+          "title": "Route high-value briefs to Md Rezaul",
+          "category": "delivery",
+          "owner": "CEO",
+          "why": "Md Rezaul averages $169 across 5 orders; Abiha averages $72 across 6. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+          "steps": [
+            "Assign every brief above $200 to Md Rezaul or the next two by AOV.",
+            "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
+            "Revisit in 30 days with the engine's updated per-designer AOV."
+          ],
+          "impact_usd": 800,
+          "confidence": 0.35,
+          "effort_hours": 0.5,
+          "priority": "P1",
+          "urgency": 0,
+          "playbook": "playbooks/staffing.md",
+          "refs": [],
+          "due": null,
+          "score": 560.0
+        }
+      ],
+      "standing": [
+        "QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.",
+        "Reconcile the inquiry log against the order tracker. On 27 July the tracker showed 5 orders and the inquiry log showed 2 for the whole month; until those agree, no conversion figure is trustworthy.",
+        "Take the shift handoff at each changeover \u2014 five lines, no exceptions.",
+        "Escalate any cancellation risk before it is filed, never after."
+      ],
+      "total_effort_hours": 5.0,
+      "total_impact_usd": 2114.0
+    },
+    {
+      "person": "CEO",
+      "role": "ceo",
+      "window": "\u2014",
+      "task_ids": [],
+      "tasks": [],
+      "standing": [
+        "Post impressions and the 7-day average every morning. It is the single number that says whether the suppression is lifting.",
+        "Watch the blended AOV against the organic AOV every week. When the two diverge, the profile is being priced below what its review base can carry, and the objective is revenue, not order count.",
+        "Any order past day 7, or any cancellation, comes to you the same day."
+      ],
+      "total_effort_hours": 0,
+      "total_impact_usd": 0
+    },
+    {
+      "person": "Nadir",
+      "role": "csr",
+      "window": "21:00-09:00 PKT",
+      "task_ids": [
+        "dq-flow-revenue",
+        "upsell-1",
+        "upsell-6"
+      ],
+      "tasks": [
+        {
+          "id": "dq-flow-revenue",
+          "title": "Fill revenue in the daily ledger (122 days blank)",
+          "category": "data_quality",
+          "owner": "Whoever owns the daily ledger",
+          "why": "122 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.",
+          "steps": [
+            "Fill every revenue column in the ledger for every day that recorded orders.",
+            "Backfill from 2026-06-11 forward \u2014 that is where the ledger starts.",
+            "This is the single highest-value data fix available: it unblocks revenue forecasting entirely."
+          ],
+          "impact_usd": 2000,
+          "confidence": 0.9,
+          "effort_hours": 2.0,
+          "priority": "P0",
+          "urgency": 1,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 900.0
+        },
+        {
+          "id": "upsell-1",
+          "title": "Upsell andrem530 (order #1)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+          "steps": [
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+          ],
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [
+            "order_tracker/tracker#b0r0"
+          ],
+          "due": null,
+          "score": 157.5
+        },
+        {
+          "id": "upsell-6",
+          "title": "Upsell bethanyjademck (order #6)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+          "steps": [
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+          ],
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
+          "priority": "P3",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
+          "due": null,
+          "score": 157.5
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 2.8,
+      "total_impact_usd": 2360
+    },
+    {
+      "person": "Hasnain",
+      "role": "csr",
+      "window": "17:00-01:00 PKT",
+      "task_ids": [
+        "wire-missing-sources",
+        "untouched-quotes",
+        "deliver-4"
+      ],
+      "tasks": [
+        {
+          "id": "wire-missing-sources",
+          "title": "Wire up the 2 promised data sources",
+          "category": "data_quality",
+          "owner": "CEO",
+          "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+          "steps": [
+            "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
+            "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
+            "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
+          ],
+          "impact_usd": 1500,
+          "confidence": 0.5,
+          "effort_hours": 1.0,
+          "priority": "P1",
+          "urgency": 0,
+          "playbook": "playbooks/data_hygiene.md",
+          "refs": [],
+          "due": null,
+          "score": 750.0
+        },
+        {
+          "id": "untouched-quotes",
+          "title": "Follow up the 5 quotes that never got one ($527)",
+          "category": "funnel",
+          "owner": "Ezan",
+          "why": "5 buyers were quoted $527 between them and no follow-up was ever logged against any of them \u2014 the largest is akhilkpfxx at $160, quoted 149 days ago. That sits inside a total unanswered pipeline of $5,722 across 20 leads. Of the 24 quoted leads anyone did chase, 9 placed (38%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 92%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 5 are the residue of that group, not part of its success.",
+          "steps": [
+            "Work the never-followed-up list first, largest first: akhilkpfxx ($160, 149d), architpatel497 ($147, 37d), kai_utzinger ($85, 96d), zain_qw ($75, 31d).",
+            "One message each. State the quote is still open, and ask one question they can answer in a word \u2014 whether the project is still live. Do not re-pitch and do not discount unprompted.",
+            "Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.",
+            "Then work the remainder by value; treat a third unanswered follow-up as a no and stop."
+          ],
+          "impact_usd": 98.81,
+          "confidence": 0.45,
+          "effort_hours": 1.5,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/dead_pipeline.md",
+          "refs": [
+            "akhilkpfxx: $160, 149d, 0 follow-ups",
+            "architpatel497: $147, 37d, 0 follow-ups",
+            "kai_utzinger: $85, 96d, 0 follow-ups",
+            "zain_qw: $75, 31d, 0 follow-ups",
+            "Mohamed L: $60, 82d, 0 follow-ups",
+            "bobzinos: $900, 136d, 1 follow-ups",
+            "farida_ism: $700, 169d, 1 follow-ups",
+            "ryan_wonders: $350, 95d, 1 follow-ups",
+            "rztwerk: $250, 5d, 1 follow-ups",
+            "chupetes: $200, 144d, 1 follow-ups"
+          ],
+          "due": null,
+          "score": 29.6
+        },
+        {
+          "id": "deliver-4",
+          "title": "Close out approved order #4 \u2014 Calum Snell",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 99.31,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r3"
+          ],
+          "due": null,
+          "score": 79.5
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 3.5,
+      "total_impact_usd": 1698.13
+    },
+    {
+      "person": "Amrah",
+      "role": "csr",
+      "window": "09:00-17:00 PKT",
+      "task_ids": [
+        "upsell-tracking",
+        "upsell-4",
+        "deliver-6"
+      ],
+      "tasks": [
+        {
+          "id": "upsell-tracking",
+          "title": "Start recording upsells \u2014 the column is empty",
+          "category": "data_quality",
+          "owner": "All CSRs",
+          "why": "Upsell is marked on 0.0% of the 64 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "steps": [
+            "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
+            "Fill 'What did you upsell and how much' whenever TRUE.",
+            "Backfill the last 30 completed orders from memory this week."
+          ],
+          "impact_usd": 1200,
+          "confidence": 0.5,
+          "effort_hours": 1.5,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [],
+          "due": null,
+          "score": 400.0
+        },
+        {
+          "id": "upsell-4",
+          "title": "Upsell Calum Snell (order #4)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+          "steps": [
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+          ],
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
+          "priority": "P3",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [
+            "order_tracker/tracker#b0r3"
+          ],
+          "due": null,
+          "score": 157.5
+        },
+        {
+          "id": "deliver-6",
+          "title": "Close out approved order #6 \u2014 bethanyjademck",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 99.31,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
+          "due": null,
+          "score": 79.5
+        }
+      ],
+      "standing": [
+        "Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.",
+        "Report spam as spam within 24 hours \u2014 it then does not count against response rate. Most agencies bleed this metric on messages they could have flagged in three seconds.",
+        "Post the 12-question intake within 15 minutes of any order starting.",
+        "Send the 50%-elapsed checkpoint on every live order. This is the habit that converts an invisible 3-star private rating into a fixed order.",
+        "Log every quoted price into the inquiry sheet the moment it is sent.",
+        "Never move a pre-order conversation off Fiverr, and never argue."
+      ],
+      "total_effort_hours": 2.9,
+      "total_impact_usd": 1479.31
+    }
+  ],
+  "edge": [
+    {
+      "id": "portfolio_control",
+      "title": "Dygram is the experiment already run",
+      "detail": "Dygram holds Success Score 9 against X Studioz's 8, and pulls 8x the impressions (12,700/day against 1,564). Same operator, same team, same category, same marketplace. Whatever is different between the two profiles is worth more than any competitor study \u2014 diagnose it directly rather than theorising about the algorithm."
+    },
+    {
+      "id": "trust_asset",
+      "title": "1,583 reviews is the moat, and it is being spent on cheap orders",
+      "detail": "Almost no competitor in logo design can match that review base. It is a conversion advantage that compounds \u2014 and it is currently attached to a low average order value. The same trust aimed at $150-$260 work is the single largest untaken edge here, and it costs nothing to try."
+    },
+    {
+      "id": "repeat_base",
+      "title": "Half the revenue is from people who already know you",
+      "detail": "158 of 574 clients have ordered more than once, producing 48.2% of orders and $38,724 of revenue \u2014 with the Upsell column at 0.0% filled. Competitors fight for the first order. Nobody is fighting for the second one here, including us."
+    }
+  ],
+  "ingest": {
+    "orders": 1053,
+    "leads": 319,
+    "flow_rows": 350,
+    "flow_aggregate_rows": 50,
+    "active_orders": 8,
+    "impressions": 98,
+    "disputes": 0,
+    "automation_errors": 334,
+    "blocks_seen": 27,
+    "blocks_used": 25,
+    "header_cells_seen": 407,
+    "unmapped_columns": {
+      "Upsell": 5,
+      "Order type": 1,
+      "Public review": 1,
+      "Service Demand": 1,
+      "Reply": 1,
+      "<unclassified tab: Daily Data Sheet Profiles>": 1
+    },
+    "unmapped_rate": 0.0246,
+    "coercion_misses": {
+      "order_date": 7
+    }
+  },
+  "validation": {
+    "checked": 1722,
+    "blocking": 0,
+    "errors": 1,
+    "warnings": 124,
+    "data_issues": 125,
+    "by_code": {
+      "FLOW_REVENUE_MISSING": 122,
+      "LEAD_PLACED_NO_VALUE": 2,
+      "ORDER_DELIVERY_BEFORE_ORDER": 1
+    }
+  },
+  "revenue_projection": {
+    "days": 30,
+    "organic_rate": 0.857,
+    "directed_rate": 0.0,
+    "total_rate": 0.857,
+    "projected_orders": 25.7,
+    "aov": 110.35,
+    "projected_revenue": 2837.57,
+    "note": "Assumes AOV holds. Volume is capped by organic flow, which this engine cannot raise on demand, so the only lever that moves this number materially inside 30 days is AOV."
+  },
+  "gap": {
+    "gap": 0.0,
+    "status": "on_track"
+  },
+  "recovery": {
+    "open_orders": {
+      "as_of": "2026-08-01",
+      "open_count": 27,
+      "open_value": 4235.0,
+      "stale_count": 17,
+      "stale_value": 2285.0,
+      "stale_after_days": 60,
+      "bands": {
+        "0-7": {
+          "count": 2,
+          "value": 165.0
+        },
+        "8-30": {
+          "count": 5,
+          "value": 1490.0
+        },
+        "31-60": {
+          "count": 3,
+          "value": 295.0
+        },
+        "60+": {
+          "count": 17,
+          "value": 2285.0
+        }
+      },
+      "orders": [
+        {
+          "client": "osmanbey_35",
+          "age_days": 268,
+          "band": "60+",
+          "status": "in_progress",
+          "amount": 250.0,
+          "order_date": "2025-11-06",
+          "project": "Vodenco Pitch Deck Template + Catalog Design",
+          "designer": "Aashir",
+          "csr": "Salman",
+          "stale": true
+        },
+        {
+          "client": "johnjk001",
+          "age_days": 212,
+          "band": "60+",
+          "status": "delivered",
+          "amount": 0.0,
+          "order_date": "2026-01-01",
+          "project": "Goble",
+          "designer": "Dulal Khan",
+          "csr": null,
+          "stale": true
+        },
+        {
+          "client": "faisalkazmi53",
+          "age_days": 184,
+          "band": "60+",
+          "status": "in_progress",
+          "amount": 0.0,
+          "order_date": "2026-01-29",
+          "project": "HangingPanda",
+          "designer": "Shaoor",
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "madewelltech",
+          "age_days": 174,
+          "band": "60+",
+          "status": "delivered",
+          "amount": 120.0,
+          "order_date": "2026-02-08",
+          "project": "OFFERLETR",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": true
+        },
+        {
+          "client": "andrem530",
+          "age_days": 159,
+          "band": "60+",
+          "status": "revision",
+          "amount": 295.0,
+          "order_date": "2026-02-23",
+          "project": "PEAK21",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": true
+        },
+        {
+          "client": "jordyspikker",
+          "age_days": 140,
+          "band": "60+",
+          "status": "revision",
+          "amount": 100.0,
+          "order_date": "2026-03-14",
+          "project": "Effectief",
+          "designer": "Ahmed Ashfaq",
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "calumsnell",
+          "age_days": 138,
+          "band": "60+",
+          "status": "revision",
+          "amount": 100.0,
+          "order_date": "2026-03-16",
+          "project": "S Squared",
+          "designer": "Nime",
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "kuykendalljr",
+          "age_days": 135,
+          "band": "60+",
+          "status": "in_progress",
+          "amount": 75.0,
+          "order_date": "2026-03-19",
+          "project": "Global Gourmet",
+          "designer": "Saad Sajid",
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "vickizhou318",
+          "age_days": 126,
+          "band": "60+",
+          "status": "in_progress",
+          "amount": 0.0,
+          "order_date": "2026-03-28",
+          "project": "Rainier Landing ( Banners)",
+          "designer": null,
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "paolowhite",
+          "age_days": 98,
+          "band": "60+",
+          "status": "delivered",
+          "amount": 320.0,
+          "order_date": "2026-04-25",
+          "project": "Island Laser Clean",
+          "designer": "Zahid",
+          "csr": "Salman",
+          "stale": true
+        },
+        {
+          "client": "alialbalawi896",
+          "age_days": 93,
+          "band": "60+",
+          "status": "revision",
+          "amount": 115.0,
+          "order_date": "2026-04-30",
+          "project": "Dr. Ali Albalawi",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": true
+        },
+        {
+          "client": "elite9921",
+          "age_days": 92,
+          "band": "60+",
+          "status": "in_progress",
+          "amount": 105.0,
+          "order_date": "2026-05-01",
+          "project": "ELITE EXPERIENCE",
+          "designer": "Musharaf",
+          "csr": "Iqra",
+          "stale": true
+        },
+        {
+          "client": "bethanyjademck",
+          "age_days": 84,
+          "band": "60+",
+          "status": "revision",
+          "amount": 140.0,
+          "order_date": "2026-05-09",
+          "project": "McKoy Consulting",
+          "designer": "Rashdul",
+          "csr": "Hasnain",
+          "stale": true
+        },
+        {
+          "client": "hammo1991",
+          "age_days": 68,
+          "band": "60+",
+          "status": "revision",
+          "amount": 260.0,
+          "order_date": "2026-05-25",
+          "project": "The Sir Thomas Daly Foundation",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": true
+        },
+        {
+          "client": "adriamartin",
+          "age_days": 67,
+          "band": "60+",
+          "status": "revision",
+          "amount": 175.0,
+          "order_date": "2026-05-26",
+          "project": "Noodles",
+          "designer": "Atta Razaq",
+          "csr": "Ezan",
+          "stale": true
+        },
+        {
+          "client": "institutoibt",
+          "age_days": 65,
+          "band": "60+",
+          "status": "revision",
+          "amount": 115.0,
+          "order_date": "2026-05-28",
+          "project": "IBT Institute",
+          "designer": "Nimeazad",
+          "csr": "Shahzaib",
+          "stale": true
+        },
+        {
+          "client": "moni_rotanak",
+          "age_days": 65,
+          "band": "60+",
+          "status": "revision",
+          "amount": 115.0,
+          "order_date": "2026-05-28",
+          "project": "Auto Meccanica",
+          "designer": "Abiha Imran",
+          "csr": "Swaid",
+          "stale": true
+        },
+        {
+          "client": "bugihh",
+          "age_days": 44,
+          "band": "31-60",
+          "status": "revision",
+          "amount": 175.0,
+          "order_date": "2026-06-18",
+          "project": "Niehues Bugala & Partner",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "institutoibt",
+          "age_days": 37,
+          "band": "31-60",
+          "status": "in_progress",
+          "amount": 120.0,
+          "order_date": "2026-06-25",
+          "project": "IBT Institute",
+          "designer": "Nimeazad",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "zain_qw",
+          "age_days": 32,
+          "band": "31-60",
+          "status": "delivered",
+          "amount": 0.0,
+          "order_date": "2026-06-30",
+          "project": "Elevasite Media",
+          "designer": "Shaoor",
+          "csr": "Swaid",
+          "stale": false
+        },
+        {
+          "client": "bytecon_it",
+          "age_days": 29,
+          "band": "8-30",
+          "status": "in_progress",
+          "amount": 250.0,
+          "order_date": "2026-07-03",
+          "project": "KanzleiSimple and  Priki.de",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "hoppycampers",
+          "age_days": 26,
+          "band": "8-30",
+          "status": "revision",
+          "amount": 150.0,
+          "order_date": "2026-07-06",
+          "project": "Akarra",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "micitech",
+          "age_days": 24,
+          "band": "8-30",
+          "status": "in_progress",
+          "amount": 800.0,
+          "order_date": "2026-07-08",
+          "project": "REBOOT",
+          "designer": "Hamid",
+          "csr": "Salman",
+          "stale": false
+        },
+        {
+          "client": "goncalo_sa",
+          "age_days": 12,
+          "band": "8-30",
+          "status": "revision",
+          "amount": 115.0,
+          "order_date": "2026-07-20",
+          "project": "Flowt",
+          "designer": "Amin",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "hydroiant",
+          "age_days": 8,
+          "band": "8-30",
+          "status": "in_progress",
+          "amount": 175.0,
+          "order_date": "2026-07-24",
+          "project": "Chamber Home",
+          "designer": "Md Rezaul",
+          "csr": "Iqra",
+          "stale": false
+        },
+        {
+          "client": "maggiemae2021",
+          "age_days": 5,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 120.0,
+          "order_date": "2026-07-27",
+          "project": "Revolve",
+          "designer": "Amin",
+          "csr": "Hasnain",
+          "stale": false
+        },
+        {
+          "client": "kelleyhoney",
+          "age_days": 0,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 45.0,
+          "order_date": "2026-08-01",
+          "project": "Buzzhound",
+          "designer": "Zahid",
+          "csr": "Amrah",
+          "stale": false
+        }
+      ]
+    },
+    "quotes": {
+      "as_of": "2026-08-01",
+      "count": 20,
+      "total": 5722.0,
+      "untouched_count": 5,
+      "untouched_value": 527.0,
+      "quotes": [
+        {
+          "client": "akhilkpfxx",
+          "quoted": 160.0,
+          "age_days": 149,
+          "followups": 0,
+          "untouched": true,
+          "country": "India",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-03-05"
+        },
+        {
+          "client": "architpatel497",
+          "quoted": 147.0,
+          "age_days": 37,
+          "followups": 0,
+          "untouched": true,
+          "country": "United Kingdom",
+          "csr": "Iqra",
+          "note": "Waiting response",
+          "date": "2026-06-25"
+        },
+        {
+          "client": "kai_utzinger",
+          "quoted": 85.0,
+          "age_days": 96,
+          "followups": 0,
+          "untouched": true,
+          "country": "Germany",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-04-27"
+        },
+        {
+          "client": "zain_qw",
+          "quoted": 75.0,
+          "age_days": 31,
+          "followups": 0,
+          "untouched": true,
+          "country": "United Kingdom",
+          "csr": "Swaid",
+          "note": "Waiting response",
+          "date": "2026-07-01"
+        },
+        {
+          "client": "Mohamed L",
+          "quoted": 60.0,
+          "age_days": 82,
+          "followups": 0,
+          "untouched": true,
+          "country": "United Arab Emirates",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-05-11"
+        },
+        {
+          "client": "bobzinos",
+          "quoted": 900.0,
+          "age_days": 136,
+          "followups": 1,
+          "untouched": false,
+          "country": "Qatar",
+          "csr": null,
+          "note": null,
+          "date": "2026-03-18"
+        },
+        {
+          "client": "farida_ism",
+          "quoted": 700.0,
+          "age_days": 169,
+          "followups": 1,
+          "untouched": false,
+          "country": "Azerbaijan",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-02-13"
+        },
+        {
+          "client": "ryan_wonders",
+          "quoted": 350.0,
+          "age_days": 95,
+          "followups": 1,
+          "untouched": false,
+          "country": "United Kingdom",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-04-28"
+        },
+        {
+          "client": "rztwerk",
+          "quoted": 250.0,
+          "age_days": 5,
+          "followups": 1,
+          "untouched": false,
+          "country": "Switzerland",
+          "csr": "Shahzaib",
+          "note": null,
+          "date": "2026-07-27"
+        },
+        {
+          "client": "chupetes",
+          "quoted": 200.0,
+          "age_days": 144,
+          "followups": 1,
+          "untouched": false,
+          "country": "Costa Rica",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-03-10"
+        },
+        {
+          "client": "dgtl_depot",
+          "quoted": 175.0,
+          "age_days": 177,
+          "followups": 1,
+          "untouched": false,
+          "country": "United States",
+          "csr": null,
+          "note": null,
+          "date": "2026-02-05"
+        },
+        {
+          "client": "paulmesaric",
+          "quoted": 175.0,
+          "age_days": 176,
+          "followups": 1,
+          "untouched": false,
+          "country": "Australia",
+          "csr": null,
+          "note": null,
+          "date": "2026-02-06"
+        },
+        {
+          "client": "abdulla336699",
+          "quoted": 175.0,
+          "age_days": 94,
+          "followups": 1,
+          "untouched": false,
+          "country": "United Arab Emirates",
+          "csr": null,
+          "note": null,
+          "date": "2026-04-29"
+        },
+        {
+          "client": "thbs92",
+          "quoted": 135.0,
+          "age_days": 178,
+          "followups": 1,
+          "untouched": false,
+          "country": "United Kingdom",
+          "csr": null,
+          "note": null,
+          "date": "2026-02-04"
+        },
+        {
+          "client": "takes_jonny",
+          "quoted": 100.0,
+          "age_days": 84,
+          "followups": 1,
+          "untouched": false,
+          "country": "United Kingdom",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-05-09"
+        },
+        {
+          "client": "jojolily2",
+          "quoted": 90.0,
+          "age_days": 69,
+          "followups": 1,
+          "untouched": false,
+          "country": "Qatar",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-05-24"
+        },
+        {
+          "client": "selmaprof",
+          "quoted": 950.0,
+          "age_days": 29,
+          "followups": 2,
+          "untouched": false,
+          "country": "United Kingdom",
+          "csr": "Iqra",
+          "note": "Waiting response",
+          "date": "2026-07-03"
+        },
+        {
+          "client": "getgwoppa",
+          "quoted": 700.0,
+          "age_days": 95,
+          "followups": 2,
+          "untouched": false,
+          "country": "United Kingdom",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-04-28"
+        },
+        {
+          "client": "alisa_kruhle1",
+          "quoted": 180.0,
+          "age_days": 57,
+          "followups": 3,
+          "untouched": false,
+          "country": "Netherland",
+          "csr": "Iqra",
+          "note": "Waiting response",
+          "date": "2026-06-05"
+        },
+        {
+          "client": "jeff_wilf",
+          "quoted": 115.0,
+          "age_days": 71,
+          "followups": 3,
+          "untouched": false,
+          "country": "Netherland",
+          "csr": null,
+          "note": "Waiting response",
+          "date": "2026-05-22"
+        }
+      ]
+    },
+    "followup_benchmark": {
+      "followed_n": 24,
+      "followed_placed": 9,
+      "followed_conv": 0.375,
+      "never_n": 65,
+      "never_placed": 60,
+      "has_signal": true
+    },
+    "total_at_rest": 8007.0
+  },
+  "window": {
+    "start": "2026-07-01",
+    "label": "since 1 July 2026",
+    "orders_in_window": 64,
+    "orders_all_time": 1053,
+    "exempt": [
+      "health",
+      "recovery"
+    ]
+  }
+}
