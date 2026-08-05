@@ -1578,8 +1578,23 @@ def test_the_retired_list_agrees_across_the_engine():
 
     cfg = yaml.safe_load((ROOT / "config" / "sources.yml").read_text())
     live = {s["id"] for s in cfg["sources"]}
+    retired = cfg["retired"]
     assert keys.isdisjoint(live), f"a retired sheet is live again: {keys & live}"
-    assert {r["id"] for r in cfg["retired"]} == keys
+
+    # `gated` splits the retired list into workbooks the ingester must refuse
+    # and sources that were never ingestible. Only the first kind needs a gate,
+    # and every one of them must have one — an ungated workbook comes back as
+    # whatever it most resembles and its rows are counted twice.
+    gated = {r["id"] for r in retired if r.get("gated")}
+    assert gated == keys, (
+        f"the gate and the config disagree: config gates {sorted(gated)}, "
+        f"RETIRED_ROLES holds {sorted(keys)}")
+    for r in retired:
+        assert "gated" in r, f"retired source {r['id']!r} does not say whether it needs a gate"
+    ungated = {r["id"] for r in retired if not r.get("gated")}
+    assert ungated.isdisjoint(keys)
+    assert ungated.isdisjoint(live), f"an ungated retirement is live again: {ungated & live}"
+
     assert live >= {"orders", "inquiries"}, "the two live workbooks stay"
 
 

@@ -78,13 +78,12 @@
 - This is the single highest-value data fix available: it unblocks revenue forecasting entirely.
 - Script: `playbooks/data_hygiene.md`
 
-### P1 · Wire up the 2 promised data sources
+### P1 · Wire up the 1 promised data source
 **Owner:** CEO · **Est. impact:** $1,500 · **Effort:** 1.0h · **Confidence:** 50%
 
-*Why:* 2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.
+*Why:* 1 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion — and those need opposite responses.
 
 - Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
-- Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 - Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.
 - Script: `playbooks/data_hygiene.md`
 
@@ -222,7 +221,7 @@ Standing duties, every shift:
 ### Hasnain · csr · 17:00-01:00 PKT
 *4 task(s), ~3.4h*
 
-- **P1** Wire up the 2 promised data sources
+- **P1** Wire up the 1 promised data source
 - **P2** Upsell Calum Snell (order #4)
 - **P3** Close out approved order #6 — bethanyjademck
 - **P3** Close out approved order #4 — Calum Snell
@@ -337,7 +336,6 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 
 **Data sources still missing**
 - Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.
-- Daily team activity report — Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.
 
 
 ---

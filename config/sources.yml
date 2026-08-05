@@ -48,25 +48,6 @@ sources:
         role: active_orders
     freshness_sla_days: 1
 
-  - id: csr_pulse
-    name: CSR Pulse dashboard
-    kind: web_app
-    url: https://csr-pulse-vbsz.vercel.app/
-    auth: password
-    status: unreachable          # engine cannot log in; see docs/ACCESS.md
-    role: csr_activity
-    freshness_sla_days: 1
-
-  - id: csr_shift_logger
-    name: CSR Shift Logger / Reports
-    kind: web_app
-    url: https://reports-six-coral.vercel.app/#ceo
-    auth: device_registration
-    device_code: C6AC-6F
-    status: unreachable          # device not registered; see docs/ACCESS.md
-    role: shift_reports
-    freshness_sla_days: 1
-
   - id: snapshot_endpoint
     name: Apps Script snapshot web app
     kind: https_json
@@ -96,8 +77,22 @@ sources:
 # The refusal that actually holds is xstudioz.ingest.RETIRED_ROLES, which drops
 # any table matching a retired source id, role tag or header fingerprint and
 # counts what it dropped. This list is documentation; that code is the gate.
+# Two different kinds of thing live here, and `gated` is what separates them.
+#
+#   gated: true   a WORKBOOK the engine used to ingest. It can still arrive in
+#                 a snapshot, so the ingester has to refuse it by name and by
+#                 header fingerprint, or it gets classified as whatever it
+#                 most resembles and its rows are counted twice.
+#   gated: false  a source that was never ingestible: a web app the engine
+#                 could not log into, or a sheet nobody ever created. There is
+#                 no table to refuse, so a gate entry would be a rule that can
+#                 never fire.
+#
+# test_the_retired_list_agrees_across_the_engine holds RETIRED_ROLES equal to
+# the gated set, in all three places.
 retired:
   - id: impressions
+    gated: true
     name: Impressions / Daily Data Sheet
     file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
     replaced_by: "the hub's Daily entry (daily_entry, daily_entry_gig)"
@@ -109,13 +104,48 @@ retired:
     # ledger, and it carried its own Organic and directed order columns, so
     # anything classifying it as the daily ledger doubled every order in it.
   - id: team_review
+    gated: true
     name: Team review sheet
     replaced_by: "the hub's Team (team_week: weekly 1-5, self against manager)"
     retired_on: 2026-08-05
   - id: resources_upsell
+    gated: true
     name: Resources + upsell sheet
     replaced_by: "the hub's Responses (response, talk) and Money (upsell)"
     retired_on: 2026-08-05
+  - id: csr_pulse
+    gated: false
+    name: CSR Pulse dashboard
+    was: https://csr-pulse-vbsz.vercel.app/
+    replaced_by: "the hub's Reports (activity: inquiry, lead_followup,
+      client_conversation, logged against an open shift)"
+    retired_on: 2026-08-05
+    # Never once supplied a number. `status: unreachable` since it was added:
+    # the engine could not log in, so every run reported it MISSING and moved
+    # on. A source that has only ever produced a warning is not a gap in the
+    # data, it is a gap in the config, and the hub now holds this for real.
+  - id: csr_shift_logger
+    gated: false
+    name: CSR Shift Logger / Reports
+    was: https://reports-six-coral.vercel.app/#ceo
+    replaced_by: "the hub's Reports and Reports/CEO (shift_report,
+      shift_handoff_read: open, notes, handoff, close)"
+    retired_on: 2026-08-05
+    # Same story: device registration was never completed, so it was
+    # unreachable for its whole life. The roster makes the handover the thing
+    # that matters here, and the hub records it against a named person.
+  - id: daily_team_report
+    gated: false
+    name: Daily team activity report
+    replaced_by: "the hub's Reports (shift_report + activity, one row per
+      inquiry, follow-up and client conversation, against a named person)"
+    retired_on: 2026-08-05
+    # This was in expected_but_missing, so every run emitted a task telling
+    # Ezan to CREATE this sheet. That advice went stale the day the hub started
+    # collecting it: following it would have put the same fact in two places,
+    # which is the exact problem the sheet retirements were about. The engine
+    # does not read the hub's database — that boundary is deliberate — so this
+    # data is read in the hub rather than in the brief.
 
 # Sources the user mentioned but has not yet wired up. The engine reports
 # these as MISSING every day until they exist, so gaps stay visible.
@@ -123,6 +153,3 @@ expected_but_missing:
   - id: disputes
     name: Disputed / dead / conflicted orders sheet
     why: "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers."
-  - id: daily_team_report
-    name: Daily team activity report
-    why: "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm."

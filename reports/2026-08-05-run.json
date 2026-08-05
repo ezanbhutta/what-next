@@ -528,13 +528,12 @@
     },
     {
       "id": "wire-missing-sources",
-      "title": "Wire up the 2 promised data sources",
+      "title": "Wire up the 1 promised data source",
       "category": "data_quality",
       "owner": "CEO",
-      "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+      "why": "1 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
       "steps": [
         "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
-        "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
         "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
       ],
       "impact_usd": 1500,
@@ -1239,13 +1238,12 @@
       "tasks": [
         {
           "id": "wire-missing-sources",
-          "title": "Wire up the 2 promised data sources",
+          "title": "Wire up the 1 promised data source",
           "category": "data_quality",
           "owner": "CEO",
-          "why": "2 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet, Daily team activity report. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
+          "why": "1 sources are referenced by the plan but not readable by the engine: Disputed / dead / conflicted orders sheet. Until they exist, dispute exposure, impression-vs-conversion attribution and team-activity attribution are all guesses. In particular, without impressions the engine cannot tell whether an organic decline is falling reach or falling conversion \u2014 and those need opposite responses.",
           "steps": [
             "Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.",
-            "Needed to attribute outcome changes to team actions rather than to Fiverr's algorithm.",
             "Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml."
           ],
           "impact_usd": 1500,

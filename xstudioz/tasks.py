@@ -856,7 +856,11 @@ def _missing_source_rules(missing: Sequence[dict]) -> list[Task]:
     names = ", ".join(m["name"] for m in missing)
     return [Task(
         id="wire-missing-sources",
-        title=f"Wire up the {len(missing)} promised data sources",
+        # Pluralised because retiring csr_pulse, csr_shift_logger and
+        # daily_team_report took this from 3 to 1, and "1 promised data
+        # sources" is the kind of seam that makes a reader distrust the
+        # figures beside it.
+        title=f"Wire up the {len(missing)} promised data source{'' if len(missing) == 1 else 's'}",
         category="data_quality",
         owner="CEO",
         why=(f"{len(missing)} sources are referenced by the plan but not readable "
