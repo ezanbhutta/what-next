@@ -566,8 +566,17 @@ function page(key, loader) {
 //
 // Only typed rows and route-specific joins. Not one of these queries
 // recomputes a figure the engine already published.
+//
+// EXPORTED so tests/wiring.test.js can run each one against a stub `q` and
+// check it supplies every `ctx.data` key its view actually reads. That is not
+// a hypothetical: this table and views/ are written separately, and three of
+// them had already drifted apart — Messages was handed `sent` while its view
+// read `buyer`, `directory`, `orders` and `leads`, so the per-buyer half of
+// the section could not be reached at all, and the picker was the only thing
+// anyone had ever seen. Nothing about that renders as an error. The page is
+// 200, the shell is correct, and the missing half simply never appears.
 
-const loaders = {
+export const loaders = {
   async today(ctx, q) {
     const runDate = ctx.engine.runDate;
     const ticks = runDate

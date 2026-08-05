@@ -81,7 +81,19 @@ db/schema.sql      MySQL DDL — only human-entered state
 views/             one module per section, server-rendered
 public/app.css     the design system
 data/              engine output, committed
+tests/wiring.js    the seam: routes exist, loaders feed their views
 ```
+
+### The seam between `server.js` and `views/`
+
+A view is written against `ctx.data`; `server.js` decides what goes in it. The
+two are edited separately and they drift, and the drift is invisible: a view
+handed nothing takes the branch written for "there is nothing here yet" and
+renders a calm, correct-looking page that is missing half of itself. HTTP 200,
+no error in the log, nothing to notice. `tests/wiring.test.js` runs every
+loader against a stub database and fails if a view reads a key its loader never
+sets — and separately, if a link or form a view emits points at a route nobody
+registered. Run it before believing a section works because it loaded.
 
 ## Sections
 

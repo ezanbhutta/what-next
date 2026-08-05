@@ -420,6 +420,7 @@ def ingest_orders_workbook(text: str, source_id: str = "orders") -> IngestResult
                 notes=mb.get(row, "notes"),
                 rating_tracked="rating" in mb.field_to_col,
                 upsell_tracked="upsell" in mb.field_to_col,
+                status_tracked="status" in mb.field_to_col,
             ))
 
     # --- Apps Script error log ----------------------------------------------
@@ -663,7 +664,8 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                     upsell_detail=mb.get(row, "upsell_detail"),
                     notes=mb.get(row, "notes"),
                     rating_tracked="rating" in f2c,
-                    upsell_tracked="upsell" in f2c))
+                    upsell_tracked="upsell" in f2c,
+                    status_tracked="status" in f2c))
 
         elif table.role == "funnel":
             for r_i, row in enumerate(mb.rows):

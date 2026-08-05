@@ -575,6 +575,50 @@ def test_recently_stalled_order_is_revived():
     assert {t.category for t in out} == {"order_revival"}
 
 
+def test_revenue_counts_only_orders_the_buyer_accepted():
+    """Cancelled and in-flight work is not revenue.
+
+    ``economics`` used to select on ``amount > 0`` with no reference to status,
+    so the live book reported $117,302 against $107,067 actually earned — it
+    was counting $4,350 of CANCELLED orders and $5,885 of work still in flight.
+    Every rate built on that figure (AOV, revenue per designer, per industry)
+    inherited the error without a hint on screen.
+    """
+    def o(client, status, amount):
+        return C.Order(client=client, provenance=P, amount=amount,
+                       status=status, status_tracked=True)
+
+    book = [
+        o("a", "completed", 100.0),
+        o("b", "approved", 100.0),      # accepted under its other spelling
+        o("c", "cancelled", 500.0),     # never money
+        o("d", "delivered", 500.0),     # delivered is not accepted on Fiverr
+        o("e", "revision", 500.0),
+        o("f", "in_progress", 500.0),
+        o("g", None, 500.0),            # tab tracks status; this one is blank
+    ]
+    econ = metrics.economics(book)
+    assert econ.revenue == 200.0
+    assert econ.n_priced == 2
+
+
+def test_a_tab_with_no_status_column_still_counts_as_revenue():
+    """The absence of a column is not evidence that the work was cancelled.
+
+    The counterpart to the test above, and the reason this is a flag rather
+    than a plain status check: several source tabs are historical order
+    records with no status column at all. Treating a blank status as
+    unaccepted there would erase an entire profile's revenue over a column
+    that was never present — the same trap ``rating_tracked`` exists to avoid.
+    """
+    book = [
+        C.Order(client="a", provenance=P, amount=100.0, status=None, status_tracked=False),
+        C.Order(client="b", provenance=P, amount=100.0, status=None, status_tracked=False),
+    ]
+    econ = metrics.economics(book)
+    assert econ.revenue == 200.0
+
+
 def test_placeholder_designers_are_not_ranked_as_people():
     orders = [
         C.Order(client=f"c{i}", provenance=P, amount=300.0,

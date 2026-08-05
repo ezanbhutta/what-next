@@ -42,7 +42,7 @@
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
 **Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
 
-*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$110; the rating damage is worth far more.
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$85; the rating damage is worth far more.
 
 - Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
 - Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
@@ -85,17 +85,7 @@
 - Share each sheet with the Google account the engine reads as, then add its file_id to config/sources.yml.
 - Script: `playbooks/data_hygiene.md`
 
-### P1 · Route high-value briefs to Md Rezaul
-**Owner:** CEO · **Est. impact:** $800 · **Effort:** 0.5h · **Confidence:** 35%
-
-*Why:* Md Rezaul averages $169 across 5 orders; Abiha averages $72 across 6. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.
-
-- Assign every brief above $200 to Md Rezaul or the next two by AOV.
-- Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.
-- Revisit in 30 days with the engine's updated per-designer AOV.
-- Script: `playbooks/staffing.md`
-
-### P2 · Start recording upsells — the column is empty
+### P1 · Start recording upsells — the column is empty
 **Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
 *Why:* Upsell is marked on 0.0% of the 64 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
@@ -117,8 +107,20 @@
 - Script: `playbooks/upsell.md`
 - Source rows: `order_tracker/tracker#b0r0`
 
+### P2 · Upsell Calum Snell (order #4)
+**Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
+
+*Why:* Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.
+
+- Lead with what they already have, not with a price.
+- Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.
+- Anchor at the $151-$260 band — it is the top quartile of your order book and it lands with buyers who already trust you.
+- Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured.
+- Script: `playbooks/upsell.md`
+- Source rows: `order_tracker/tracker#b0r3`
+
 ### P3 · Close out approved order #4 — Calum Snell
-**Owner:** Delivery lead · **Est. impact:** $99 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $77 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -129,7 +131,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #6 — bethanyjademck
-**Owner:** Delivery lead · **Est. impact:** $99 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $77 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -151,18 +153,6 @@
 - Script: `playbooks/dead_pipeline.md`
 - Source rows: `akhilkpfxx: $160, 153d, 0 follow-ups`, `architpatel497: $147, 41d, 0 follow-ups`, `kai_utzinger: $85, 100d, 0 follow-ups`, `zain_qw: $75, 35d, 0 follow-ups`, `Mohamed L: $60, 86d, 0 follow-ups`, `bobzinos: $900, 140d, 1 follow-ups`, `farida_ism: $700, 173d, 1 follow-ups`, `ryan_wonders: $350, 99d, 1 follow-ups`, `rztwerk: $250, 9d, 1 follow-ups`, `chupetes: $200, 148d, 1 follow-ups`
 
-### P3 · Upsell Calum Snell (order #4)
-**Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
-
-*Why:* Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.
-
-- Lead with what they already have, not with a price.
-- Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.
-- Anchor at the $151-$260 band — it is the top quartile of your order book and it lands with buyers who already trust you.
-- Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured.
-- Script: `playbooks/upsell.md`
-- Source rows: `order_tracker/tracker#b0r3`
-
 ### P3 · Upsell bethanyjademck (order #6)
 **Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
 
@@ -175,17 +165,27 @@
 - Script: `playbooks/upsell.md`
 - Source rows: `order_tracker/tracker#b0r5`
 
+### P3 · Close out order #2 — jordyspikker (144d silent)
+**Owner:** Assigned CSR · **Est. impact:** $30 · **Effort:** 0.1h · **Confidence:** 80%
+
+*Why:* Status 'On Hold' with no movement for 144 days — over 1 months. This is not a stalled order, it is an open record that inflates the pipeline and hides the real active count. Chasing it costs goodwill and returns nothing.
+
+- Send one final short message leaving the door open, with no ask.
+- Mark the order Dead in the tracker today.
+- Do not follow up again. If they return, they return warm.
+- Script: `playbooks/order_revival.md`
+- Source rows: `order_tracker/tracker#b0r1`
+
 
 ---
 
 ## Who does what
 
 ### Ezan · team lead · all hours
-*3 task(s), ~5.0h*
+*2 task(s), ~4.5h*
 
 - **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
 - **P0** Close out 17 orders open more than 60 days ($2,285)
-- **P1** Route high-value briefs to Md Rezaul
 
 Standing duties, every shift:
 - QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.
@@ -217,10 +217,12 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Hasnain · csr · 17:00-01:00 PKT
-*3 task(s), ~3.5h*
+*5 task(s), ~3.5h*
 
 - **P1** Wire up the 2 promised data sources
-- **P3** Follow up the 5 quotes that never got one ($527)
+- **P2** Upsell Calum Snell (order #4)
+- **P3** Close out order #2 — jordyspikker (144d silent)
+- **P3** Close out approved order #6 — bethanyjademck
 - **P3** Close out approved order #4 — Calum Snell
 
 Standing duties, every shift:
@@ -232,11 +234,10 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Amrah · csr · 09:00-17:00 PKT
-*3 task(s), ~2.9h*
+*2 task(s), ~3.0h*
 
-- **P2** Start recording upsells — the column is empty
-- **P3** Upsell Calum Snell (order #4)
-- **P3** Close out approved order #6 — bethanyjademck
+- **P1** Start recording upsells — the column is empty
+- **P3** Follow up the 5 quotes that never got one ($527)
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -273,18 +274,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | 2026-08-12 | Organic orders over the 7 days to 12 Aug will be 6.7 (80% CI 3.4-10.0). | 3.40 – 10.04 | medium |
 | 2026-08-19 | Organic health index in 14 days will be 46 (80% CI 26-63). | 25.53 – 63.49 | medium |
 | 2026-08-12 | Total orders/day averaged over the next 7 days will be 3.60 (80% CI 2.68-4.52). | 2.68 – 4.52 | medium |
-| 2026-09-04 | Blended AOV in 30 days will be $110 (80% CI $97-$127). | 96.68 – 127.46 | high |
+| 2026-09-04 | Blended AOV in 30 days will be $85 (80% CI $75-$98). | 74.51 – 98.24 | high |
 | 2026-08-12 | Inquiry->order conversion in 7 days will be 11.8% (80% CI 10.1%-13.6%). | 0.10 – 0.14 | high |
-
-### Resolved since last run
-
-| Made on | Prediction | Predicted | Actual | In interval? |
-|---|---|---|---|---|
-| 2026-07-05 | economics.aov | 128.39 | 110.35 | ❌ |
-| 2026-07-21 | health.index | 22.60 | 45.50 | ❌ |
-| 2026-07-29 | flow_7d.organic | 5.60 | 3.00 | ✅ |
-| 2026-07-29 | flow_7d.total_per_day | 3.21 | 1.29 | ❌ |
-| 2026-07-29 | funnel.conversion | 0.08 | 0.12 | ❌ |
 
 **Track record:** 67 resolved, coverage 57% 
 (target 80%), median absolute error 14%.
@@ -299,8 +290,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic orders/day (7d MA) | 0.86 | vs 0.29 14d ago |
 | Organic, recent vs earlier | 0.63/day | was 0.66/day (-3.8%) |
 | Organic orders, last 7d | 3 | 0.43/day |
-| AOV | $110 | median $80, n=63 priced orders |
-| Lifetime tracked revenue | $6,952 | across 64 order rows |
+| AOV | $85 | median $70, n=44 priced orders |
+| Lifetime tracked revenue | $3,742 | across 64 order rows |
 | Inquiry conversion | 11.8% | 4/34 |
 | Upsell recorded | 0.0% | column is effectively unused |
 | Review capture | 60.9% | 39/64 orders that could be rated |
@@ -309,7 +300,7 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 
 ### Revenue path
 
-At 0.86 orders/day and $110 AOV, the next 30 days project **$2,838** (26 orders).
+At 0.86 orders/day and $85 AOV, the next 30 days project **$2,187** (26 orders).
 
 On track against the 30-day target.
 

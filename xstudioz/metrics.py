@@ -492,7 +492,24 @@ def is_real_designer(name: str | None) -> bool:
 
 
 def economics(orders: Sequence[C.Order], min_designer_n: int = 5) -> Economics:
-    priced = [o for o in orders if o.amount and o.amount > 0]
+    # Revenue means EARNED revenue: the buyer accepted and the money is real.
+    #
+    # This used to select on `amount > 0` alone, with no reference to status,
+    # which counted $4,350 of cancelled orders and $5,885 of work still in
+    # flight — 9.6% above what had actually been earned. Cancelled work in a
+    # revenue line is not a rounding error; it is a different number wearing
+    # the same name, and every rate built on it (AOV, revenue per designer,
+    # per industry) inherited the error silently.
+    #
+    # A blank cell in a tab that DOES track status means "not accepted yet"
+    # and must not count. A tab with NO status column tells us nothing about
+    # acceptance — it is a historical order record — and excluding all of it
+    # would erase a whole profile's revenue over a column that was never
+    # there. Same distinction as rating_tracked, for the same reason.
+    priced = [
+        o for o in orders
+        if o.amount and o.amount > 0 and (C.is_earned(o.status) if o.status_tracked else True)
+    ]
     amounts = sorted(o.amount for o in priced)
     tips = [o.tip for o in orders if o.tip and o.tip > 0]
     # Only orders whose source tab actually had a review column can be

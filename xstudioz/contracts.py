@@ -59,6 +59,43 @@ _STATUS_MAP = {
     "canceled": "cancelled",
 }
 
+#: An order is EARNED only when the buyer has accepted it. Everything else is
+#: either still in flight or gone.
+#:
+#: This distinction is the operator's, not an invention: "active orders are all
+#: that are in revisions, missing requirement, delivered — only completed order
+#: are completed from sheet". On Fiverr a delivery is not money; the buyer has
+#: to accept it, and until then the order can still be revised, disputed or
+#: cancelled.
+#:
+#: Before this existed, ``economics()`` selected on ``amount > 0`` and never
+#: looked at status, so revenue counted $4,350 of CANCELLED orders and $5,885
+#: of work not yet accepted — 9.6% above what had actually been earned. A
+#: revenue line that includes cancelled work is not a rounding error, it is a
+#: different number wearing the same name.
+EARNED_STATUSES = frozenset({"completed", "approved"})
+
+#: In flight: the work exists, the money does not yet.
+ACTIVE_STATUSES = frozenset({"new", "in_progress", "rev_sent", "revision", "delivered", "on_hold"})
+
+#: Gone. Never counts as revenue, and never counts as a live order either.
+CLOSED_LOST_STATUSES = frozenset({"cancelled", "dead"})
+
+
+def is_earned(status: Any) -> bool:
+    """True only when the buyer has accepted and the money is real."""
+    return str(status or "").strip().lower() in EARNED_STATUSES
+
+
+def is_active(status: Any) -> bool:
+    """True while the order is live work — including delivered-but-not-accepted."""
+    return str(status or "").strip().lower() in ACTIVE_STATUSES
+
+
+def is_lost(status: Any) -> bool:
+    return str(status or "").strip().lower() in CLOSED_LOST_STATUSES
+
+
 LEAD_STATUSES = {"placed", "not_placed", "out_of_scope", "cancelled", "unknown"}
 
 _LEAD_STATUS_MAP = {
@@ -322,6 +359,13 @@ class Order:
     #: and counting its rows as un-reviewed understates capture badly.
     rating_tracked: bool = False
     upsell_tracked: bool = False
+    #: Whether the source tab had a status column at all. A blank cell in a tab
+    #: that tracks status means "not accepted yet" and must not count as
+    #: revenue. A tab with no status column tells us nothing about acceptance —
+    #: it is a historical order record — and excluding all of it would erase a
+    #: whole profile's revenue over a column that was never there. Same
+    #: distinction as ``rating_tracked``, and it exists for the same reason.
+    status_tracked: bool = False
 
     def revenue(self) -> float:
         return (self.amount or 0.0) + (self.tip or 0.0)

@@ -12,7 +12,8 @@
     "build": "node -e \"console.log('no build step: server-rendered, no bundler')\"",
     "//env": "--env-file-if-exists, not --env-file. README tells you to copy .env.example to .env and run npm start; nothing loaded it, so `npm run migrate` answered 'not configured' on a correctly filled-in file and every local run needed the flag typed by hand. IF-EXISTS is the half that matters in production: on Hostinger the variables come from the Web App panel and there is no .env on disk, and plain --env-file exits non-zero on a missing file — which would turn a working deploy into a boot loop.",
     "start": "node --env-file-if-exists=.env server.js",
-    "test": "node --test \"lib/*.test.js\"",
+    "//test": "Unqualified `node --test` discovers every *.test.js in the repo (node_modules excluded by default). The old \"lib/*.test.js\" glob would have skipped tests/wiring.test.js in silence — a test file nobody runs is worse than no test file, because it reads as covered.",
+    "test": "node --test",
     "migrate": "node --env-file-if-exists=.env db/migrate.js",
     "seed": "node --env-file-if-exists=.env db/seed.js",
     "dev": "node --watch --env-file-if-exists=.env server.js"
