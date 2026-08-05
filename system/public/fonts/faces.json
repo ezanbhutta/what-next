@@ -1,0 +1,62 @@
+[
+ {
+  "family": "Inter",
+  "weight": "400",
+  "file": "inter-400.woff2",
+  "bytes": 48256
+ },
+ {
+  "family": "Inter",
+  "weight": "500",
+  "file": "inter-500.woff2",
+  "bytes": 48256
+ },
+ {
+  "family": "Inter",
+  "weight": "600",
+  "file": "inter-600.woff2",
+  "bytes": 48256
+ },
+ {
+  "family": "Inter",
+  "weight": "700",
+  "file": "inter-700.woff2",
+  "bytes": 48256
+ },
+ {
+  "family": "Space Grotesk",
+  "weight": "500",
+  "file": "space-grotesk-500.woff2",
+  "bytes": 22288
+ },
+ {
+  "family": "Space Grotesk",
+  "weight": "600",
+  "file": "space-grotesk-600.woff2",
+  "bytes": 22288
+ },
+ {
+  "family": "Space Grotesk",
+  "weight": "700",
+  "file": "space-grotesk-700.woff2",
+  "bytes": 22288
+ },
+ {
+  "family": "JetBrains Mono",
+  "weight": "400",
+  "file": "jetbrains-mono-400.woff2",
+  "bytes": 31432
+ },
+ {
+  "family": "JetBrains Mono",
+  "weight": "500",
+  "file": "jetbrains-mono-500.woff2",
+  "bytes": 31432
+ },
+ {
+  "family": "JetBrains Mono",
+  "weight": "600",
+  "file": "jetbrains-mono-600.woff2",
+  "bytes": 31432
+ }
+]

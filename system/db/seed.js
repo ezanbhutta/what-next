@@ -61,36 +61,59 @@ const RESPONSES_PATH = path.join(HERE, '..', 'data', 'responses.json');
 export const TEAM = [
   { name: 'Ezan', role: 'owner' }, // owns money-at-rest and every recovery task
   { name: 'Amrah', role: 'csr' },
-  { name: 'Zaheen', role: 'csr' }, // reviewed weekly, absent from all engine data
+  { name: 'Zaheen', role: 'csr' },
   { name: 'Hasnain', role: 'csr' },
   { name: 'Nadir', role: 'csr' },
-  { name: 'Iqra', role: 'csr' }, // 612 orders, no review row
-  { name: 'Salman', role: 'csr' }, // 55 orders, no review row
-  { name: 'Shahzaib', role: 'csr' }, // 14 orders, no review row
 ];
+
+// Names that appear in the engine's historical data but are NOT the current
+// team. They are deactivated, never deleted, and the difference matters:
+//
+//   Iqra      handled 612 orders
+//   Salman     55
+//   Shahzaib   14
+//
+// Deleting them would orphan 681 orders' worth of attribution and make every
+// historical conversion figure unexplainable — "who handled this?" would
+// answer "nobody", which is a lie about the past. Deactivating removes them
+// from the device-claim picker and the review programme while leaving every
+// row that names them intact and readable.
+export const FORMER = ['Iqra', 'Salman', 'Shahzaib'];
 
 async function seedUsers(log) {
   const inserted = [];
   const skipped = [];
   for (const person of TEAM) {
-    const result = await run('INSERT IGNORE INTO app_user (name, role) VALUES (?, ?)', [
-      person.name,
-      person.role,
-    ]);
-    (result.affectedRows ? inserted : skipped).push(person.name);
+    const result = await run(
+      'INSERT INTO app_user (name, role, active) VALUES (?, ?, 1) ' +
+        'ON DUPLICATE KEY UPDATE role = VALUES(role), active = 1',
+      [person.name, person.role]
+    );
+    // affectedRows is 1 for a fresh insert, 2 for an update that changed a row,
+    // 0 when the row already matched exactly.
+    (result.affectedRows === 1 ? inserted : skipped).push(person.name);
   }
   log(
     `[seed] app_user: ${inserted.length} inserted${inserted.length ? ` (${inserted.join(', ')})` : ''}` +
       `, ${skipped.length} already present`
   );
 
-  // Report anyone in the table who is not in TEAM rather than removing them —
-  // a hand-added colleague is data, and a seed script does not delete people.
+  // Retire the former team. UPDATE, never DELETE — see FORMER above.
+  let retired = 0;
+  for (const name of FORMER) {
+    const result = await run('UPDATE app_user SET active = 0 WHERE name = ? AND active = 1', [name]);
+    if (result.affectedRows) retired += 1;
+  }
+  if (retired) log(`[seed] app_user: ${retired} former member(s) deactivated (${FORMER.join(', ')})`);
+
+  // Report anyone else in the table rather than removing them — a colleague
+  // added by hand is data, and a seed script does not delete people.
   const rows = await query('SELECT name FROM app_user');
-  const extra = rows.map((r) => r.name).filter((n) => !TEAM.some((t) => t.name === n));
+  const known = new Set([...TEAM.map((t) => t.name), ...FORMER]);
+  const extra = rows.map((r) => r.name).filter((n) => !known.has(n));
   if (extra.length) log(`[seed] app_user: ${extra.length} name(s) added outside this seed: ${extra.join(', ')}`);
 
-  return { inserted, skipped, extra };
+  return { inserted, skipped, retired, extra };
 }
 
 // --------------------------------------------------------------- responses
