@@ -615,6 +615,20 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
 }
 .dateline .dot{ color:var(--rule-3); }             /* decorative only      */
 
+/* Who is on the desk. Same size as the dateline it sits under, one step
+   quieter, because it orients rather than informs. Lower case on purpose:
+   it is a sentence about people, and the uppercase treatment above it is
+   for machine facts (run date, engine age, signed-in name). */
+.dateline.desk{
+  text-transform:none; letter-spacing:.01em; font-weight:500;
+  color:var(--ink-3); margin-top:6px;
+}
+.dateline.desk b{ font-weight:650; color:var(--ink-2); }
+/* Single cover is a stated, accepted risk for 75 hours of the week. It gets
+   a mark, not a colour alone, so it survives a greyscale print and reaches
+   a colour-blind reader. */
+.dateline.desk-thin b::after{ content:" \25C6"; color:var(--warn); font-size:.8em; }
+
 /* Three across, not six.
    Six standing figures in a 1440px row gave each cell about 190px, so every
    label had to be 11px, truncated with an ellipsis, and stacked hard against

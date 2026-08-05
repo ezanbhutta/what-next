@@ -40,65 +40,111 @@
       "vvro_share": 0.8
     },
     "funnel": {
-      "inquiries": 42,
-      "placed": 6,
-      "conversion": 0.1429,
+      "inquiries": 62,
+      "placed": 11,
+      "conversion": 0.1774,
       "conversion_ci": [
-        0.0672,
-        0.2784
+        0.1021,
+        0.2904
       ],
       "min_sample": 30,
-      "interval_width": 0.2113,
+      "interval_width": 0.1884,
       "max_interval_width": 0.15,
       "too_few_to_call": true,
-      "quoted_mean": 225.0,
-      "quoted_median": 250.0,
-      "pipeline_value": 1350.0,
-      "by_csr": [],
+      "quoted_mean": 203.18,
+      "quoted_median": 215.0,
+      "pipeline_value": 2235.0,
+      "by_csr": [
+        {
+          "key": "Hasnain",
+          "n": 17,
+          "placed": 3,
+          "conv": 0.1765,
+          "conv_lb": 0.0619,
+          "value": 505.0,
+          "value_per_lead": 29.71
+        },
+        {
+          "key": "Iqra",
+          "n": 18,
+          "placed": 2,
+          "conv": 0.1111,
+          "conv_lb": 0.031,
+          "value": 490.0,
+          "value_per_lead": 27.22
+        }
+      ],
       "by_shift": [
         {
+          "key": "Night",
+          "n": 15,
+          "placed": 5,
+          "conv": 0.3333,
+          "conv_lb": 0.1518,
+          "value": 940.0,
+          "value_per_lead": 62.67
+        },
+        {
+          "key": "Evening",
+          "n": 23,
+          "placed": 4,
+          "conv": 0.1739,
+          "conv_lb": 0.0698,
+          "value": 845.0,
+          "value_per_lead": 36.74
+        },
+        {
           "key": "Morning",
-          "n": 16,
+          "n": 24,
           "placed": 2,
-          "conv": 0.125,
-          "conv_lb": 0.035,
+          "conv": 0.0833,
+          "conv_lb": 0.0232,
           "value": 450.0,
-          "value_per_lead": 28.12
+          "value_per_lead": 18.75
         }
       ],
       "by_country": [
         {
           "key": "United Kingdom",
-          "n": 17,
-          "placed": 3,
-          "conv": 0.1765,
-          "conv_lb": 0.0619,
-          "value": 570.0,
-          "value_per_lead": 33.53
+          "n": 25,
+          "placed": 5,
+          "conv": 0.2,
+          "conv_lb": 0.0886,
+          "value": 1125.0,
+          "value_per_lead": 45.0
         }
       ],
       "by_followup_depth": [
         {
           "key": "F0",
-          "n": 24,
-          "placed": 6,
-          "conv": 0.25,
-          "conv_lb": 0.12,
-          "value": 1350.0,
-          "value_per_lead": 56.25
+          "n": 27,
+          "placed": 8,
+          "conv": 0.2963,
+          "conv_lb": 0.1585,
+          "value": 1655.0,
+          "value_per_lead": 61.3
+        },
+        {
+          "key": "F3",
+          "n": 2,
+          "placed": 1,
+          "conv": 0.5,
+          "conv_lb": 0.0945,
+          "value": 70.0,
+          "value_per_lead": 35.0
         },
         {
           "key": "F1",
-          "n": 13,
-          "placed": 0,
-          "conv": 0.0,
-          "conv_lb": 0.0,
-          "value": 0.0,
-          "value_per_lead": 0.0
+          "n": 21,
+          "placed": 2,
+          "conv": 0.0952,
+          "conv_lb": 0.0265,
+          "value": 510.0,
+          "value_per_lead": 24.29
         },
         {
           "key": "F2",
-          "n": 5,
+          "n": 12,
           "placed": 0,
           "conv": 0.0,
           "conv_lb": 0.0,
@@ -108,46 +154,46 @@
       ],
       "upsell_lift": {
         "with_upsell": {
-          "n": 0,
+          "n": 1,
           "placed": 0,
-          "conv": 0
+          "conv": 0.0
         },
         "without_upsell": {
-          "n": 44,
-          "placed": 6,
-          "conv": 0.1364
+          "n": 63,
+          "placed": 11,
+          "conv": 0.1746
         },
-        "relative_lift": null,
-        "z": 0.0,
+        "relative_lift": -1.0,
+        "z": -0.46,
         "significant": false,
         "caveat": "Observational, not randomised: CSRs likely attempt upsells on warmer leads, so part of this gap is selection, not causation. Run the randomised test in playbooks/upsell.md before trusting the full effect size."
       }
     },
     "economics": {
-      "n_orders": 84,
-      "n_priced": 58,
-      "revenue": 5087.0,
-      "aov": 87.71,
-      "median": 77.5,
+      "n_orders": 103,
+      "n_priced": 75,
+      "revenue": 6922.0,
+      "aov": 92.29,
+      "median": 80.0,
       "q1": 45.0,
       "q3": 115.0,
-      "tip_rate": 0.0,
-      "tip_total": 0,
+      "tip_rate": 0.0194,
+      "tip_total": 15.0,
       "upsell_rate": 0.0,
-      "upsell_denominator": 84,
-      "review_capture_rate": 0.5476,
-      "review_denominator": 84,
-      "mean_rating": 4.978,
+      "upsell_denominator": 103,
+      "review_capture_rate": 0.5146,
+      "review_denominator": 103,
+      "mean_rating": 4.968,
       "by_type": {
         "organic": {
-          "n": 8,
-          "revenue": 1162.0,
-          "aov": 145.25
+          "n": 24,
+          "revenue": 2977.0,
+          "aov": 124.04
         },
         "vvro": {
-          "n": 50,
-          "revenue": 3925.0,
-          "aov": 78.5
+          "n": 51,
+          "revenue": 3945.0,
+          "aov": 77.35
         },
         "unknown": {
           "n": 0,
@@ -158,15 +204,15 @@
       "by_designer": [
         {
           "name": "Dulal Khan",
-          "n": 6,
-          "aov": 130.83,
-          "revenue": 785.0
+          "n": 8,
+          "aov": 129.38,
+          "revenue": 1035.0
         },
         {
-          "name": "Zahid",
-          "n": 6,
-          "aov": 84.17,
-          "revenue": 505.0
+          "name": "Amin",
+          "n": 10,
+          "aov": 121.0,
+          "revenue": 1210.0
         },
         {
           "name": "Rashdul",
@@ -175,16 +221,22 @@
           "revenue": 975.0
         },
         {
-          "name": "Nimeazad",
-          "n": 14,
-          "aov": 79.64,
-          "revenue": 1115.0
+          "name": "Zahid",
+          "n": 7,
+          "aov": 78.57,
+          "revenue": 550.0
         },
         {
           "name": "Abiha",
           "n": 7,
           "aov": 77.86,
           "revenue": 545.0
+        },
+        {
+          "name": "Nimeazad",
+          "n": 15,
+          "aov": 77.33,
+          "revenue": 1160.0
         }
       ],
       "by_industry": [
@@ -201,15 +253,45 @@
           "revenue": 350.0
         },
         {
+          "name": "Finance",
+          "n": 3,
+          "aov": 85.0,
+          "revenue": 255.0
+        },
+        {
+          "name": "Construction",
+          "n": 2,
+          "aov": 122.5,
+          "revenue": 245.0
+        },
+        {
+          "name": "Online Media & Streaming",
+          "n": 1,
+          "aov": 215.0,
+          "revenue": 215.0
+        },
+        {
+          "name": "Business Consulting",
+          "n": 1,
+          "aov": 175.0,
+          "revenue": 175.0
+        },
+        {
           "name": "Pet Care",
           "n": 1,
           "aov": 170.0,
           "revenue": 170.0
         },
         {
-          "name": "Finance",
-          "n": 2,
-          "aov": 80.0,
+          "name": "Home & Kitchen Stores",
+          "n": 1,
+          "aov": 170.0,
+          "revenue": 170.0
+        },
+        {
+          "name": "Interior Design",
+          "n": 1,
+          "aov": 160.0,
           "revenue": 160.0
         },
         {
@@ -249,6 +331,12 @@
           "revenue": 130.0
         },
         {
+          "name": "Personal Training",
+          "n": 1,
+          "aov": 115.0,
+          "revenue": 115.0
+        },
+        {
           "name": "Manufacturing",
           "n": 1,
           "aov": 115.0,
@@ -271,42 +359,6 @@
           "n": 1,
           "aov": 115.0,
           "revenue": 115.0
-        },
-        {
-          "name": "Bread",
-          "n": 1,
-          "aov": 115.0,
-          "revenue": 115.0
-        },
-        {
-          "name": "Estate Planning",
-          "n": 1,
-          "aov": 115.0,
-          "revenue": 115.0
-        },
-        {
-          "name": "Agriculture",
-          "n": 1,
-          "aov": 115.0,
-          "revenue": 115.0
-        },
-        {
-          "name": "Cultivation",
-          "n": 1,
-          "aov": 115.0,
-          "revenue": 115.0
-        },
-        {
-          "name": "Consulting",
-          "n": 1,
-          "aov": 105.0,
-          "revenue": 105.0
-        },
-        {
-          "name": "Real Estate",
-          "n": 1,
-          "aov": 100.0,
-          "revenue": 100.0
         }
       ]
     },
@@ -399,7 +451,7 @@
       "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
       "category": "dispute_rescue",
       "owner": "Ezan (escalate to CEO if refund is formally requested)",
-      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$88; the rating damage is worth far more.",
+      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$92; the rating damage is worth far more.",
       "steps": [
         "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
         "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
@@ -500,7 +552,7 @@
       "title": "Route high-value briefs to Dulal Khan",
       "category": "delivery",
       "owner": "CEO",
-      "why": "Dulal Khan averages $131 across 6 orders; Abiha averages $78 across 7. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+      "why": "Dulal Khan averages $129 across 8 orders; Nimeazad averages $77 across 15. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
       "steps": [
         "Assign every brief above $200 to Dulal Khan or the next two by AOV.",
         "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
@@ -521,7 +573,7 @@
       "title": "Start recording upsells \u2014 the column is empty",
       "category": "data_quality",
       "owner": "All CSRs",
-      "why": "Upsell is marked on 0.0% of the 84 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+      "why": "Upsell is marked on 0.0% of the 103 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
       "steps": [
         "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
         "Fill 'What did you upsell and how much' whenever TRUE.",
@@ -596,7 +648,7 @@
         "Deliver via the order (not chat) so it counts toward on-time delivery.",
         "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
       ],
-      "impact_usd": 78.94,
+      "impact_usd": 83.06,
       "confidence": 0.8,
       "effort_hours": 1.0,
       "priority": "P3",
@@ -606,7 +658,7 @@
         "order_tracker/tracker#b0r3"
       ],
       "due": null,
-      "score": 63.1
+      "score": 66.5
     },
     {
       "id": "deliver-6",
@@ -619,7 +671,7 @@
         "Deliver via the order (not chat) so it counts toward on-time delivery.",
         "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
       ],
-      "impact_usd": 78.94,
+      "impact_usd": 83.06,
       "confidence": 0.8,
       "effort_hours": 1.0,
       "priority": "P3",
@@ -629,7 +681,7 @@
         "order_tracker/tracker#b0r5"
       ],
       "due": null,
-      "score": 63.1
+      "score": 66.5
     },
     {
       "id": "untouched-quotes",
@@ -758,12 +810,12 @@
       "created_on": "2026-08-05",
       "resolve_on": "2026-09-04",
       "metric": "economics.aov",
-      "statement": "Blended AOV in 30 days will be $88 (80% CI $77-$101).",
-      "point": 87.71,
-      "lo": 76.845334513472,
-      "hi": 101.311217486528,
+      "statement": "Blended AOV in 30 days will be $92 (80% CI $81-$107).",
+      "point": 92.29,
+      "lo": 80.85800846252802,
+      "hi": 106.60143953747202,
       "confidence": "high",
-      "basis": "Lifetime AOV across 58 priced orders. Moves only if the upsell programme lands.",
+      "basis": "Lifetime AOV across 75 priced orders. Moves only if the upsell programme lands.",
       "horizon_days": 30,
       "profile": "X Studioz",
       "status": "open",
@@ -779,12 +831,12 @@
       "created_on": "2026-08-05",
       "resolve_on": "2026-08-12",
       "metric": "funnel.conversion",
-      "statement": "Inquiry->order conversion in 7 days will be 14.3% (80% CI 12.3%-16.5%).",
-      "point": 0.1429,
-      "lo": 0.122547811138775,
-      "hi": 0.164952698861225,
+      "statement": "Inquiry->order conversion in 7 days will be 17.7% (80% CI 15.2%-20.5%).",
+      "point": 0.1774,
+      "lo": 0.15213423160265,
+      "hi": 0.20477682839734995,
       "confidence": "high",
-      "basis": "Lifetime conversion over 42 scored inquiries.",
+      "basis": "Lifetime conversion over 62 scored inquiries.",
       "horizon_days": 7,
       "profile": "X Studioz",
       "status": "open",
@@ -835,7 +887,7 @@
         "name": "aov_recompute",
         "passed": true,
         "severity": "block",
-        "detail": "aov=87.706897 but revenue/n_priced=87.706897",
+        "detail": "aov=92.293333 but revenue/n_priced=92.293333",
         "repaired": false
       },
       {
@@ -863,7 +915,7 @@
         "name": "window_retains_data",
         "passed": true,
         "severity": "block",
-        "detail": "84 of 1073 orders fall on or after 2026-07-01 (floor 10)",
+        "detail": "103 of 1073 orders fall on or after 2026-06-01 (floor 10)",
         "repaired": false
       },
       {
@@ -984,7 +1036,7 @@
           "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
           "category": "dispute_rescue",
           "owner": "Ezan (escalate to CEO if refund is formally requested)",
-          "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$88; the rating damage is worth far more.",
+          "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$92; the rating damage is worth far more.",
           "steps": [
             "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
             "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
@@ -1043,7 +1095,7 @@
           "title": "Route high-value briefs to Dulal Khan",
           "category": "delivery",
           "owner": "CEO",
-          "why": "Dulal Khan averages $131 across 6 orders; Abiha averages $78 across 7. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
+          "why": "Dulal Khan averages $129 across 8 orders; Nimeazad averages $77 across 15. Some of that is brief mix rather than skill \u2014 but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.",
           "steps": [
             "Assign every brief above $200 to Dulal Khan or the next two by AOV.",
             "Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.",
@@ -1241,7 +1293,7 @@
             "Deliver via the order (not chat) so it counts toward on-time delivery.",
             "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
           ],
-          "impact_usd": 78.94,
+          "impact_usd": 83.06,
           "confidence": 0.8,
           "effort_hours": 1.0,
           "priority": "P3",
@@ -1251,7 +1303,7 @@
             "order_tracker/tracker#b0r5"
           ],
           "due": null,
-          "score": 63.1
+          "score": 66.5
         },
         {
           "id": "deliver-4",
@@ -1264,7 +1316,7 @@
             "Deliver via the order (not chat) so it counts toward on-time delivery.",
             "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
           ],
-          "impact_usd": 78.94,
+          "impact_usd": 83.06,
           "confidence": 0.8,
           "effort_hours": 1.0,
           "priority": "P3",
@@ -1274,7 +1326,7 @@
             "order_tracker/tracker#b0r3"
           ],
           "due": null,
-          "score": 63.1
+          "score": 66.5
         }
       ],
       "standing": [
@@ -1286,7 +1338,7 @@
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
       "total_effort_hours": 3.4,
-      "total_impact_usd": 1837.87
+      "total_impact_usd": 1846.13
     },
     {
       "person": "Amrah",
@@ -1302,7 +1354,7 @@
           "title": "Start recording upsells \u2014 the column is empty",
           "category": "data_quality",
           "owner": "All CSRs",
-          "why": "Upsell is marked on 0.0% of the 84 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "why": "Upsell is marked on 0.0% of the 103 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
           "steps": [
             "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
             "Fill 'What did you upsell and how much' whenever TRUE.",
@@ -1463,8 +1515,8 @@
     "directed_rate": 0.0,
     "total_rate": 0.571,
     "projected_orders": 17.1,
-    "aov": 87.71,
-    "projected_revenue": 1503.6,
+    "aov": 92.29,
+    "projected_revenue": 1582.11,
     "note": "Assumes AOV holds. Volume is capped by organic flow, which this engine cannot raise on demand, so the only lever that moves this number materially inside 30 days is AOV."
   },
   "gap": {
@@ -2124,9 +2176,9 @@
     "total_at_rest": 7627.0
   },
   "window": {
-    "start": "2026-07-01",
-    "label": "since 1 July 2026",
-    "orders_in_window": 84,
+    "start": "2026-06-01",
+    "label": "since 1 June 2026",
+    "orders_in_window": 103,
     "orders_all_time": 1073,
     "exempt": [
       "health",

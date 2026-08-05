@@ -81,6 +81,7 @@ import {
 } from './lib/data.js';
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
+import { deskNow } from './lib/roster.js';
 
 // The six owner-written documents. Read from data/handbook/, parsed out of
 // plain text, and never written to. Nothing here touches the database.
@@ -418,11 +419,16 @@ function buildCtx(req, res, sectionKey, { access = null, headline = null, chrome
     },
     runDateLabel: isMissing(stale.run_date) ? 'no engine run' : `Run ${stale.run_date}`,
     engineLabel: stale.ok ? stale.label : 'engine data MISSING',
+    // Who holds the desk, from the roster. Computed per request rather than
+    // cached: the answer changes on the hour and a stale one is worse than
+    // none, because it names somebody who has gone home.
+    desk: deskNow(),
   };
 
   if (chrome === 'minimal') {
     ctx.nav = [];
     ctx.ticker = [];
+    ctx.desk = null;
   }
 
   // Two things every page must say out loud rather than imply.

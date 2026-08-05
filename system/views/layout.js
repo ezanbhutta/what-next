@@ -56,6 +56,7 @@
 
 import { MISSING, isMissing } from '../lib/data.js';
 import { wilson, MIN_SAMPLE } from '../lib/reconcile.js';
+import { clock } from '../lib/roster.js';
 
 export { MIN_SAMPLE };
 
@@ -630,6 +631,38 @@ function tickerRow(ctx, custom) {
     )}</dl>`;
 }
 
+/**
+ * Who holds the desk right now, in one line under the dateline.
+ *
+ * One line, because the masthead is already the most crowded part of the page
+ * and this is orientation rather than a figure. It answers the question a CSR
+ * opening the hub mid-shift actually has: is this mine, and who else is on.
+ *
+ * When one person is alone it says so. That is not decoration: the roster's
+ * own risk section accepts 75 hours a week at single cover, and a lone name
+ * printed like a full desk hides a risk somebody signed off on knowingly.
+ */
+function deskLine(ctx) {
+  const desk = ctx.desk;
+  if (!desk) return '';
+
+  const who = desk.names.length
+    ? join(
+        desk.on.map((p) => html`<b>${p.name}</b>`),
+        ', '
+      )
+    : missing('nobody rostered');
+
+  const next = desk.next
+    ? html`<span class="dot">·</span><span>hands over at ${clock(desk.next.hour)}, ${desk.next.what}</span>`
+    : '';
+
+  return html`<p class="dateline desk${desk.alone ? ' desk-thin' : ''}">
+    <span>${desk.label}</span><span class="dot">·</span>
+    <span>on the desk ${who}${desk.alone ? html`, on their own` : ''}</span>${next}
+  </p>`;
+}
+
 function noticeStack(ctx) {
   const out = (ctx.notices || []).map((n) => banner(n.level || 'info', n.title, n.body));
   if (ctx.flash?.ok) out.unshift(banner('info', 'Saved.', ctx.flash.ok));
@@ -698,6 +731,7 @@ ${navRail(ctx)}
         <span>${ctx.engineLabel}</span><span class="dot">·</span>
         <span>${ctx.user ? ctx.user.name : 'not signed in'}</span>
       </p>
+      ${deskLine(ctx)}
     </div>
     ${tickerRow(ctx, view.ticker)}
   </header>

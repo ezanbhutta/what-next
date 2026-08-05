@@ -630,7 +630,11 @@ selfcheck:
 # Anything exempt must say why. Add to `exempt` only when the metric's whole
 # purpose is to look backwards.
 analysis_window:
-  start: 2026-07-01
+  # 1 June 2026, set by Ezan on 2026-08-05: "use the data from June and onwards
+  # only from everywhere you are sourcing the data". Everything before it
+  # belongs to a different team size and a different order mix, and averaging
+  # across the two describes a business that no longer exists.
+  start: 2026-06-01
   exempt:
     recovery: "Open orders and unconverted quotes are ranked BY age; a date
       filter would hide the oldest and most recoverable money."
@@ -640,7 +644,7 @@ analysis_window:
       the same day. A trend cannot be measured against a baseline the window
       has deleted, and this is the objective's hard constraint."
   # Printed on the brief so nobody reads a windowed rate as an all-time one.
-  label: "since 1 July 2026"
+  label: "since 1 June 2026"
   # A short window buys recency and pays for it in sample size. Below this many
   # observations a rate is reported as a range and explicitly not called: 2
   # placed orders from 25 inquiries reads as 8% against an all-time 22.6%, but

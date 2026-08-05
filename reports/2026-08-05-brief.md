@@ -45,7 +45,7 @@
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
 **Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
 
-*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$88; the rating damage is worth far more.
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.834 -> 4.832) across 1,583 reviews, and that rating is what every future buyer sorts on. The order is worth ~$92; the rating damage is worth far more.
 
 - Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
 - Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
@@ -91,7 +91,7 @@
 ### P1 · Route high-value briefs to Dulal Khan
 **Owner:** CEO · **Est. impact:** $800 · **Effort:** 0.5h · **Confidence:** 35%
 
-*Why:* Dulal Khan averages $131 across 6 orders; Abiha averages $78 across 7. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.
+*Why:* Dulal Khan averages $129 across 8 orders; Nimeazad averages $77 across 15. Some of that is brief mix rather than skill — but routing the $200+ briefs to the designers who already deliver at that level protects both AOV and rating.
 
 - Assign every brief above $200 to Dulal Khan or the next two by AOV.
 - Check whether the low-AOV designers are getting low-value briefs or producing low-value outcomes before acting on this.
@@ -101,7 +101,7 @@
 ### P2 · Start recording upsells — the column is empty
 **Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
-*Why:* Upsell is marked on 0.0% of the 84 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+*Why:* Upsell is marked on 0.0% of the 103 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
 
 - Fill the Upsell column on every order: TRUE/FALSE, no blanks.
 - Fill 'What did you upsell and how much' whenever TRUE.
@@ -133,7 +133,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #4 — Calum Snell
-**Owner:** Delivery lead · **Est. impact:** $79 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $83 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -144,7 +144,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #6 — bethanyjademck
-**Owner:** Delivery lead · **Est. impact:** $79 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $83 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -276,8 +276,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | 2026-08-12 | Organic orders over the 7 days to 12 Aug will be 4.3 (80% CI 1.7-7.0). | 1.67 – 7.00 | medium |
 | 2026-08-19 | Organic health index in 14 days will be 34 (80% CI 21-45). | 21.21 – 45.12 | low |
 | 2026-08-12 | Total orders/day averaged over the next 7 days will be 3.63 (80% CI 2.71-4.55). | 2.71 – 4.55 | medium |
-| 2026-09-04 | Blended AOV in 30 days will be $88 (80% CI $77-$101). | 76.85 – 101.31 | high |
-| 2026-08-12 | Inquiry->order conversion in 7 days will be 14.3% (80% CI 12.3%-16.5%). | 0.12 – 0.16 | high |
+| 2026-09-04 | Blended AOV in 30 days will be $92 (80% CI $81-$107). | 80.86 – 106.60 | high |
+| 2026-08-12 | Inquiry->order conversion in 7 days will be 17.7% (80% CI 15.2%-20.5%). | 0.15 – 0.20 | high |
 
 **Track record:** 67 resolved, coverage 57% 
 (target 80%), median absolute error 14%.
@@ -292,17 +292,17 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic orders/day (7d MA) | 0.57 | vs 0.29 14d ago |
 | Organic, recent vs earlier | 0.57/day | was 0.66/day (-13.9%) |
 | Organic orders, last 7d | 4 | 0.57/day |
-| AOV | $88 | median $78, n=58 priced orders |
-| Lifetime tracked revenue | $5,087 | across 84 order rows |
-| Inquiry conversion | 14.3% | 6/42 |
+| AOV | $92 | median $80, n=75 priced orders |
+| Lifetime tracked revenue | $6,922 | across 103 order rows |
+| Inquiry conversion | 17.7% | 11/62 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 54.8% | 46/84 orders that could be rated |
+| Review capture | 51.5% | 53/103 orders that could be rated |
 | Gig rating | 4.834 | 1,583 reviews, Level 2 |
 | Orders in queue | 20 | live from the gig page |
 
 ### Revenue path
 
-At 0.57 orders/day and $88 AOV, the next 30 days project **$1,504** (17 orders).
+At 0.57 orders/day and $92 AOV, the next 30 days project **$1,582** (17 orders).
 
 On track against the 30-day target.
 
@@ -310,8 +310,10 @@ On track against the 30-day target.
 
 | Segment | n | Conversion | Lower bound |
 |---|---|---|---|
-| Shift: Morning | 16 | 12.5% | 3.5% |
-| United Kingdom | 17 | 17.6% | 6.2% |
+| Shift: Night | 15 | 33.3% | 15.2% |
+| Shift: Evening | 23 | 17.4% | 7.0% |
+| Shift: Morning | 24 | 8.3% | 2.3% |
+| United Kingdom | 25 | 20.0% | 8.9% |
 
 Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank large ones.
 
