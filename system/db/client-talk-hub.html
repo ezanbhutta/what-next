@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Client Talk Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F6F3;--surface:#FFF;--ink:#0F1512;--muted:#5F6B65;--faint:#93A099;
+  --line:#E4E6E1;--line-2:#D2D6D0;
+  --go:#0E7A4A;--go-soft:#EAF5EF;
+  --stop:#C43D1E;--stop-soft:#FCEFEA;
+  --chrome:#0D1A15;--gold:#8A6A12;--gold-soft:#FBF3DC;--r:3px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::selection{background:#D8ECD9}
+
+header{position:sticky;top:0;z-index:50;background:var(--chrome);color:#fff;padding:13px 24px 0}
+.hbar{display:flex;align-items:center;gap:20px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
+.logo{font-size:15px;font-weight:700;letter-spacing:-.015em;flex:none}
+.searchwrap{position:relative;flex:1;min-width:220px}
+.searchwrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5}
+#q{width:100%;padding:11px 74px 11px 38px;border:1px solid #2A3C34;border-radius:var(--r);background:#132720;color:#fff;font-family:inherit;font-size:14.5px}
+#q::placeholder{color:#6F8A7C}
+#q:focus{outline:none;border-color:#3FA97A;background:#163026}
+.kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#6F8A7C;border:1px solid #2A3C34;padding:3px 6px;border-radius:2px;pointer-events:none}
+
+.rail{max-width:1100px;margin:11px auto 0;display:flex;overflow-x:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail button{flex:1;min-width:112px;background:none;border:none;border-bottom:3px solid transparent;color:#7E958A;padding:9px 10px 11px;cursor:pointer;text-align:left;font-family:inherit}
+.rail button b{display:block;font-size:12.5px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.rail button i{display:block;font-family:'JetBrains Mono',monospace;font-style:normal;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:4px;opacity:.65}
+.rail button:hover{color:#C6D6CE}
+.rail button.on{color:#fff;border-bottom-color:#3FA97A}
+.rail button.on i{color:#3FA97A;opacity:1}
+
+.shell{max-width:1100px;margin:0 auto;padding:24px 24px 120px}
+.status{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.status b{color:var(--ink)}
+.clear{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;cursor:pointer;color:var(--muted)}
+.clear:hover{border-color:var(--ink);color:var(--ink)}
+
+h2.grp{font-size:11.5px;font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:30px 0 11px;padding-bottom:8px;border-bottom:1px solid var(--line-2)}
+h2.grp:first-of-type{margin-top:0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+.card.stop{border-left:3px solid var(--stop)}
+.card.ask{border-left:3px solid var(--go)}
+.card.care{border-left:3px solid var(--gold)}
+.head{padding:15px 20px;cursor:pointer;display:flex;gap:14px;align-items:flex-start}
+.head:hover{background:#FCFCFA}
+.head .t{flex:1;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.chip{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:2px;border:1px solid var(--line-2);color:var(--muted)}
+.chip.go{background:var(--go-soft);border-color:#BEDFCD;color:var(--go);font-weight:700}
+.chip.stop{background:var(--stop-soft);border-color:#F0C8BB;color:var(--stop);font-weight:700}
+.chip.src{background:var(--gold-soft);border-color:#E6D49B;color:var(--gold);font-weight:700}
+.title{font-size:17px;font-weight:600;letter-spacing:-.015em;line-height:1.35}
+.card.stop .title{color:var(--stop)}
+.sub{font-family:'Newsreader',Georgia,serif;font-size:14.5px;color:var(--muted);line-height:1.55;margin-top:6px}
+.caret{flex:none;width:22px;height:22px;border:1px solid var(--line-2);border-radius:2px;display:grid;place-items:center;color:var(--muted);font-size:11px;margin-top:2px}
+.card.open .caret{background:var(--ink);border-color:var(--ink);color:#fff}
+.body{display:none;padding:0 20px 18px;border-top:1px solid var(--line)}
+.card.open .body{display:block}
+
+.turn{padding-top:15px}
+.turn+.turn{border-top:1px dashed var(--line-2);margin-top:4px}
+.heard{display:inline-block;max-width:86%;background:#F1F2EF;border-radius:2px 12px 12px 12px;padding:9px 14px;font-family:'Newsreader',Georgia,serif;font-size:15px;color:#3E4A44;line-height:1.5}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;font-weight:500}
+.say{position:relative;margin-top:12px;background:var(--go-soft);border:1px solid #CFE6DA;border-radius:var(--r);padding:14px 16px}
+.say .lbl{color:var(--go);font-weight:700}
+.say p{font-family:'Newsreader',Georgia,serif;font-size:16px;line-height:1.6;color:#0C2E1E}
+.copy{margin-top:11px;border:1px solid var(--go);background:var(--go);color:#fff;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:8px 14px;cursor:pointer;min-height:34px}
+.copy:hover{background:#0B6440}
+.copy.done{background:var(--ink);border-color:var(--ink)}
+.unlock{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--go);margin-top:10px}
+.warn{font-family:'Newsreader',Georgia,serif;font-size:14px;color:var(--stop);margin-top:10px;line-height:1.5;background:var(--stop-soft);padding:10px 13px;border-radius:var(--r)}
+
+.none{display:none;text-align:center;padding:60px 20px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+.none.on{display:block}
+.hide{display:none!important}
+
+@media(max-width:880px){
+ header{padding:11px 16px 0}
+ .shell{padding:18px 16px 90px}
+ .rail button{min-width:100px}
+ .heard{max-width:100%}
+}
+@media(prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.copy{transition:background .15s}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="logo">Client Talk Hub</div>
+    <div class="searchwrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Type what the client just said..." autocomplete="off">
+      <span class="kbd">/</span>
+    </div>
+  </div>
+  <div class="rail" id="rail">
+    <button data-s="all" class="on"><i>Show</i><b>Everything</b></button>
+    <button data-s="inquiry"><i>Step 1</i><b>Before order</b></button>
+    <button data-s="kickoff"><i>Step 2</i><b>Order starts</b></button>
+    <button data-s="working"><i>Step 3</i><b>While working</b></button>
+    <button data-s="approved"><i>Step 4</i><b>They approve</b></button>
+    <button data-s="delivered"><i>Step 5</i><b>After delivery</b></button>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="status" id="status"></div>
+  <div id="out"></div>
+  <div class="none" id="none">Nothing found. Try one word: <b>vector</b>, <b>expensive</b>, <b>later</b>, <b>free</b>, <b>print</b>.</div>
+</div>
+
+<script>
+const S={all:'Everything',inquiry:'Before order',kickoff:'Order starts',working:'While working',approved:'They approve',delivered:'After delivery'};
+
+const DATA=[
+
+/* ================= QUESTIONS ================= */
+{g:'ask',kind:'ask',stage:['inquiry','kickoff'],chips:['Ask this every time'],
+ title:'“Where is this logo going to be used first?”',
+ sub:'One question and the client tells you which package they need. Sounds like interest, not selling.',
+ turns:[
+  {h:'On Instagram and Facebook.',s:"Good to know. Logos usually get cut off inside those profile circles, so I'd size yours properly for Facebook, Instagram and LinkedIn. Want me to include that set?",u:'Social Media Kit, or Premium if they also want cards'},
+  {h:'Business cards and printed stuff.',s:"Perfect. Your printer will ask for vector files and those come with Standard. If cards are already on the list, Premium covers the stationery too.",u:'Standard or Premium'},
+  {h:'On my website.',s:"Nice. Is the site live already or still being built? If it's not built yet I'll design the logo to sit properly in a header.",u:'Standard, plus an animation lead later'},
+  {h:'Signage, my van, packaging.',s:"Big format like that needs vector, no way around it. Standard includes AI, EPS and SVG, which stay sharp from a business card right up to a billboard.",u:'Standard. Closes more often than any other upgrade.'},
+  {h:'Everywhere, not sure yet.',s:"No problem. I'd keep your options open then. Standard comes with the vector and source files, so you're covered whatever you decide later.",u:'Standard as the floor'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['kickoff'],chips:['Gives you their fear'],
+ title:'“Have you had a logo made before?” then “What went wrong with it?”',
+ sub:'The second half is where the money is. Whatever failed last time is what they will pay to avoid repeating.',
+ turns:[
+  {h:'I only got a PNG and could not use it.',s:"That's the one I hear most. You got the image but never the actual working file. Standard includes the vector and source files, so you won't get stuck like that again.",u:'Standard. Very high close rate.'},
+  {h:'The designer disappeared on me.',s:"Sorry you went through that, it happens more than it should. With the source files the artwork stays with you rather than the designer, and we keep your files on record so you can ask for them any time.",u:'Standard, then Brand Guidelines'},
+  {h:'It looked terrible when I printed it.',s:"Almost always a file problem rather than a design one. Vector stays sharp at any size, and those files come with Standard.",u:'Standard'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['inquiry','kickoff'],chips:['Fiverr official'],src:true,
+ title:'“Is this order part of a bigger project?”',
+ sub:'Fiverr recommends this exact question. A logo is often one piece of a launch, and this finds the rest of the launch in one line.',
+ turns:[
+  {h:'Yes, I am launching a whole new brand.',s:"That helps a lot. To get your launch covered in one go, Premium includes three to four concepts plus the social media kit and stationery. Works out better than adding those separately later.",u:'Straight to Premium'},
+  {h:'No, just the logo for now.',s:"No problem, I'll keep it focused on the logo. We keep your files saved on our side, so anything you need later is easy to add.",u:'Close cleanly. Come back after delivery.'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['inquiry','kickoff'],chips:['Fiverr official'],src:true,
+ title:'“How do you plan to use this long term?”',
+ sub:'Also recommended by Fiverr. It reads as a design question so nobody puts their guard up.',
+ turns:[
+  {h:'On everything. This is my main business.',s:"Then I'd go with Standard at minimum. The vector and source files are what you'll need for print, signage and any edits as the business grows.",u:'Standard, aiming at Premium'},
+  {h:'Just online for now.',s:"Fair enough, Basic covers that. Just so you know, the day you print anything you'll need the vector files, and they're easiest to add while I still have the artwork open.",u:'Soft Standard'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['kickoff'],chips:['Sounds practical, not salesy'],
+ title:'“Is anyone else going to be working with this logo?”',
+ sub:'A printer, a developer or a team member will always come back asking for files. This is a logistics question, which is exactly why it converts.',
+ turns:[
+  {h:'Yes, I have a printer and a web guy.',s:"They'll ask you for the vector files and the exact colour codes, that's always the first thing. Standard includes both, so you won't have to come back to me every time they need something.",u:'Standard'},
+  {h:'No, just me.',s:"Got it. I'll make sure everything you get is usable without any design software installed.",u:'Skip Brand Guidelines. Offer the Social Media Kit instead.'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['kickoff'],chips:['Brand Guidelines'],
+ title:'“Are you handling the branding yourself, or is there a team?”',
+ sub:'More hands on a brand means more ways to break it. Brand Guidelines is custom quoted, so there is no package ceiling here.',
+ turns:[
+  {h:'I have a small team.',s:"In that case brand guidelines are worth having. They set out how the logo, colours and fonts should be used so everyone works from the same rules. Happy to send you a custom offer for it.",u:'Brand Guidelines, custom offer'},
+  {h:'Just me at the moment.',s:"Understood, I'll keep it to things you'll actually use rather than a big document that sits unopened.",u:'Skip it. Offer the Social Media Kit.'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['approved'],chips:['Biggest ticket'],
+ title:'“What is next after the logo?”',
+ sub:'Ask the moment they approve a concept. Highest trust point in the whole order. One offer only.',
+ turns:[
+  {h:'Getting the website built.',s:"Nice. If it's going on a site, an animated version works really well in the header. I can quote that separately if you want to see it.",u:'Logo Animation, custom offer'},
+  {h:'Packaging and labels.',s:"Vector is a must for that, your supplier will ask for it. Standard covers that. Packaging layouts I'd quote separately if you want them done too.",u:'Standard plus a packaging quote'},
+  {h:'Marketing and social content.',s:"An animated logo does really well in reels and video intros. Happy to send a custom offer if you'd like to see one.",u:'Logo Animation, custom offer'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['delivered'],chips:['Website lead'],
+ title:'“Where do new customers look you up first?”',
+ sub:'Ask after delivery. It shows the gap without you pointing at it.',
+ turns:[
+  {h:'They just message me directly.',s:"That works early on, though you lose the people who check first and never message. Even a one page site fixes that. Happy to show you what it'd look like if that's useful.",u:'Website, custom quote'},
+  {h:'My Instagram, I suppose.',s:"Your profile is doing the job a website normally does then, so it's worth keeping it consistent. I can size your logo properly for each platform if you'd like.",u:'Social Media Kit'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['delivered'],chips:['Fiverr official','Review and repeat'],src:true,
+ title:'The delivery message',
+ sub:'Fiverr recommends leaving a door open rather than pushing. This one message earns the review and sets up the next order.',
+ turns:[
+  {h:'Thank you, this looks great.',s:"Really glad you like it. Your files stay saved with us, so just message me any time you need them again or want to add animation, brand guidelines or stationery. And if the work helped, a review would mean a lot.",u:'Review plus repeat order in one message'}
+ ]},
+
+/* ================= UPGRADES ================= */
+{g:'up',kind:'ask',stage:['inquiry','kickoff'],chips:['Highest value moment'],
+ title:'Basic to Standard: the vector question',
+ sub:'Basic is JPEG and PNG only. Most buyers do not realise that until they try to print. Ask before you start designing, not after.',
+ turns:[
+  {h:'(any Basic order, before you begin)',s:"Before I get started, quick question. Will this logo ever get printed, or used somewhere large like signage or packaging?",u:'Their answer picks your next line'},
+  {h:'Yes, it will be printed.',s:"Then Standard is the one you want. Basic is JPEG and PNG only, while Standard adds the vector and source files in AI, EPS, SVG and PDF. Those stay sharp from a business card up to a billboard. Want me to upgrade it?",u:'Basic to Standard'},
+  {h:'Only online for now.',s:"All good, Basic covers that. Worth keeping in mind that print needs vector, and it's much simpler to add now while I have the artwork open than as a separate order later.",u:'Soft. Try again at delivery.'}
+ ]},
+
+{g:'up',kind:'ask',stage:['inquiry','kickoff'],chips:['Fiverr official'],src:true,
+ title:'Standard to Premium: the launch question',
+ sub:'Premium already contains the social media kit and the stationery kit. Never sell those as two separate add-ons to someone launching.',
+ turns:[
+  {h:'(before the order starts)',s:"Before we start, is this logo part of a bigger launch or more of a standalone piece?",u:'Fiverr recommends asking this'},
+  {h:'Yes, I am launching soon.',s:"Premium would suit you better in that case. It includes three to four concepts plus the social media kit and stationery kit, so the whole launch is covered in one order instead of three.",u:'Straight to Premium'}
+ ]},
+
+{g:'up',kind:'ask',stage:['working'],chips:['Protects your delivery time'],
+ title:'When revisions keep coming on the same concept',
+ sub:'Revisions are unlimited and that is public on the gig, so you cannot refuse them. But a second concept is often faster than a sixth revision.',
+ turns:[
+  {h:'Can we try another version of this?',s:"Happy to keep refining it. One thought though, we've been adjusting the same direction for a few rounds now. It might be quicker to look at a fresh second concept instead. Standard includes that if you want me to add it.",u:'Basic to Standard, mid order'},
+  {h:'No, just keep changing this one.',s:"Sure, I'll stick with this direction then. Send the changes over and I'll have them back to you within 24 hours.",w:'Accept it straight away. Unlimited revisions is on our gig page. Arguing it turns into a dispute.'}
+ ]},
+
+/* ================= OBJECTIONS ================= */
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“It is too expensive.”',
+ sub:'Do not defend the price. Ask for their number.',
+ turns:[{h:'That is too expensive for me.',s:"Fair enough. What sort of budget were you working with? I'd rather tell you straight whether I can do it than have you feel you overpaid.",w:'Small gap, close it. Big gap, let it go without any friction.'}]},
+
+{g:'obj',kind:'stop',stage:['all'],chips:['Most common'],
+ title:'“I will get it later.”',
+ sub:'Later usually means never. The only honest reason to act now is that the artwork is already open.',
+ turns:[{h:'I will add it later.',s:"That's completely fine, no rush. Only thing worth knowing is the artwork is already open on my end right now, so it's quicker and cheaper today than it would be as a separate order later. Totally your call.",w:'Only say this if it is actually true. A false deadline costs you a review, and a review is worth far more than the extra.'}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“Do I really need it?”',
+ sub:'Never answer yes. Give the honest split and let them place themselves.',
+ turns:[{h:'Do I really need vector files?',s:"Depends where it's going. If it stays on social media, honestly no. If it's going anywhere printed, then yes, and you'll find out the hard way. Which sounds closer to your plan?",w:'Being willing to say no is the reason they believe your yes.'}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“Can you just include it for free?”',
+ sub:'Hold the price, give the real reason, offer one small thing instead.',
+ turns:[{h:'Can you add it for free?',s:"I wish I could. The source file is the actual working artwork and that's where most of the time goes, the image is just an export of it. What I can do is keep it at the add on price since you're already in an order with me."}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“I will just resize the PNG myself.”',
+ sub:'Agree with the true part, then state the limit as a fact.',
+ turns:[{h:'I can resize it myself.',s:"You can, and on screen it'll look fine. Once it goes bigger than the original it turns fuzzy and print shops usually reject it. That's the only reason I mention it."}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“My friend can do that part.”',
+ sub:'Never criticise the friend. Point at the file they will need anyway.',
+ turns:[{h:'A friend of mine can handle that.',s:"Fine by me. Just make sure they get the source file, otherwise they'll end up tracing over the logo and it won't quite match the original."}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“I am on a tight budget.”',
+ sub:'Stop selling the stack. Make them pick one.',
+ turns:[{h:'My budget is really tight.',s:"Understood, and I won't push. Out of everything we've talked about, which one would help you most right now? I'd rather you put it into the one that matters than spread it thin."}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“Let me think about it.”',
+ sub:'Not a no. A hidden question. Find out which one.',
+ turns:[{h:'Let me think about it.',s:"Of course, take your time. Can I ask what you're weighing up, the price or whether you'd actually use it? I'll give you a straight answer either way."}]},
+
+{g:'obj',kind:'stop',stage:['kickoff','working','approved'],chips:['Dispute risk'],
+ title:'“Why is that not included in what I already paid for?”',
+ sub:'Answer with the real package structure. Calm and factual, never defensive.',
+ turns:[{h:'Why is vector not included?',s:"Basic covers one concept delivered as JPEG and PNG. The vector and source files come with Standard. Keeping them separate is what lets the starting price stay low for people who only need a screen logo.",w:'If they push a second time, drop it and deliver. A $40 upgrade is never worth a bad review on an order you already won.'}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“Another seller offers more for less.”',
+ sub:'Do not compete on price and do not criticise anyone. Give them one thing to check, then release the pressure.',
+ turns:[{h:'Someone else is much cheaper.',s:"They might be, and that could genuinely be the right call for you. The two things I'd check are whether the work is original rather than a template, and whether the source files are included. I won't talk you out of a better deal though."}]},
+
+{g:'obj',kind:'stop',stage:['working','approved'],
+ title:'The client goes quiet after your offer',
+ sub:'Wait a full day, then follow up about the design only. Never repeat the offer. Follow ups do not affect your response rate.',
+ turns:[{h:'(no reply for 24 hours)',s:"No pressure on the extras at all. I just wanted to check nothing's holding you up on the design itself. Everything looking right so far?"}]},
+
+{g:'obj',kind:'stop',stage:['all'],chips:['Stop immediately'],
+ title:'“Just send me what I paid for.”',
+ sub:'Every extras conversation ends here. Deliver clean, deliver early, say nothing more.',
+ turns:[{h:'Just send me what I ordered.',s:"Of course, it's on the way. I won't bring it up again.",w:'One line. No long apology. Then over deliver on the work itself.'}]},
+
+{g:'obj',kind:'ask',stage:['all'],chips:['Buying signal'],
+ title:'“Can I get a better price if I take everything?”',
+ sub:'They just asked to spend more. Say yes and stop negotiating against yourself.',
+ turns:[{h:'Any discount if I take it all?',s:"Yes. Rather than adding each piece separately, Premium already includes the social media kit and stationery along with three to four concepts. I can upgrade the order to that and it works out better value for you.",u:'Straight to Premium'}]},
+
+{g:'obj',kind:'stop',stage:['all'],
+ title:'“I need to check with my partner.”',
+ sub:'You are not in that conversation, so make forwarding easier than explaining.',
+ turns:[{h:'I need to ask my business partner.',s:"Makes sense. Want me to put it in one short message you can just forward to them?"}]},
+
+/* ================= CAREFUL ================= */
+{g:'care',kind:'care',stage:['all'],chips:['Account risk'],
+ title:'“Can we talk on WhatsApp?” or “Can I pay you directly?”',
+ sub:'This gets sellers banned, even when the client suggests it first. Never agree, and never give an email address.',
+ turns:[{h:'Can I message you on WhatsApp instead?',s:"I'd love to keep working with you, though everything needs to stay here on Fiverr. It keeps your order protected under their system, which works in your favour if anything ever goes wrong."}]},
+
+{g:'care',kind:'care',stage:['inquiry','kickoff','working'],chips:['Scope trap'],
+ title:'“Can you make it a mascot or a 3D logo?”',
+ sub:'Our gig says mascot, 3D and detailed illustration are quoted separately. Never say yes inside a normal order.',
+ turns:[{h:'Can you turn it into a mascot character?',s:"Yes, though mascot and 3D work gets quoted separately since it takes a lot longer than a standard mark. Let me send you a custom offer with the price and the timing.",u:'Custom offer'}]},
+
+{g:'care',kind:'care',stage:['approved','delivered'],chips:['Always free'],
+ title:'“Do I own the copyright?”',
+ sub:'Our gig page promises full copyright on completion and a signed document on request. Never charge for this. Give it, and ask for the review in the same message.',
+ turns:[{h:'Will I own the copyright to this?',s:"Yes, full copyright is yours the moment the order completes. If you need a signed transfer document for trademark registration, just say the word and I'll send it over at no cost."}]},
+
+{g:'care',kind:'care',stage:['working'],chips:['Say nothing here'],
+ title:'While you are still designing, sell nothing',
+ sub:'Send updates, reply fast, mention no extras. Every message in this window that is not about the design lowers your chance at the end.',
+ turns:[{h:'(mid project check in)',s:"Just a quick update, the first concepts are coming along well and I'll have them with you shortly. Shout if anything changes on your side in the meantime."}]}
+];
+
+const GROUPS=[
+ {id:'ask',label:'Questions to ask'},
+ {id:'up',label:'Upgrade moments'},
+ {id:'obj',label:'When they say no'},
+ {id:'care',label:'Handle these carefully'}
+];
+
+const out=document.getElementById('out');
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function cardHTML(d,i){
+ const chips=(d.chips||[]).map(c=>`<span class="chip ${d.kind==='stop'?'stop':d.kind==='care'?'':'go'}">${esc(c)}</span>`).join('');
+ const src=d.src?`<span class="chip src">Fiverr official</span>`:'';
+ const turns=(d.turns||[]).map(t=>`
+  <div class="turn">
+   <div class="lbl">Client says</div>
+   <div class="heard">${esc(t.h)}</div>
+   <div class="say"><div class="lbl">You send</div><p>${esc(t.s)}</p>
+   <button class="copy" data-t="${esc(t.s).replace(/"/g,'&quot;')}">Copy message</button></div>
+   ${t.u?`<div class="unlock">→ ${esc(t.u)}</div>`:''}
+   ${t.w?`<div class="warn">${esc(t.w)}</div>`:''}
+  </div>`).join('');
+ return `<div class="card ${d.kind}" data-i="${i}">
+  <div class="head"><div class="t"><div class="chips">${src}${chips}</div>
+  <div class="title">${esc(d.title)}</div><div class="sub">${esc(d.sub)}</div></div>
+  <div class="caret">+</div></div>
+  <div class="body">${turns}</div></div>`;
+}
+
+DATA.forEach(d=>{d._t=JSON.stringify(d).toLowerCase();});
+out.innerHTML=GROUPS.map(g=>{
+ const items=DATA.map((d,i)=>({d,i})).filter(x=>x.d.g===g.id);
+ if(!items.length)return '';
+ return `<h2 class="grp" id="${g.id}" data-g="${g.id}">${g.label}</h2>`+items.map(x=>cardHTML(x.d,x.i)).join('');
+}).join('');
+
+let stage='all',term='';
+const status=document.getElementById('status'),none=document.getElementById('none');
+function apply(){
+ let n=0;
+ DATA.forEach((d,i)=>{
+  const el=out.querySelector(`[data-i="${i}"]`); if(!el)return;
+  const ok=(stage==='all'||d.stage.includes('all')||d.stage.includes(stage))&&(!term||d._t.includes(term));
+  el.classList.toggle('hide',!ok); if(ok)n++;
+ });
+ GROUPS.forEach(g=>{
+  const h=out.querySelector(`[data-g="${g.id}"]`); if(!h)return;
+  let any=false,s=h.nextElementSibling;
+  while(s&&!s.classList.contains('grp')){if(!s.classList.contains('hide'))any=true;s=s.nextElementSibling;}
+  h.classList.toggle('hide',!any);
+ });
+ const b=[`Showing <b>${n}</b> ${n===1?'card':'cards'}`];
+ if(stage!=='all')b.push(`Step: <b>${S[stage]}</b>`);
+ if(term)b.push(`Search: <b>${esc(term)}</b>`);
+ status.innerHTML=b.join(' &nbsp;·&nbsp; ')+((stage!=='all'||term)?' <button class="clear" id="clr">Reset</button>':'');
+ none.classList.toggle('on',n===0);
+}
+apply();
+
+document.getElementById('rail').addEventListener('click',e=>{
+ const b=e.target.closest('button'); if(!b)return;
+ document.querySelectorAll('#rail button').forEach(x=>x.classList.remove('on'));
+ b.classList.add('on'); stage=b.dataset.s; apply(); window.scrollTo({top:0,behavior:'smooth'});
+});
+const q=document.getElementById('q');
+q.addEventListener('input',()=>{term=q.value.trim().toLowerCase();apply();});
+document.addEventListener('click',e=>{
+ if(e.target.id==='clr'){stage='all';term='';q.value='';
+  document.querySelectorAll('#rail button').forEach(x=>x.classList.remove('on'));
+  document.querySelector('#rail button[data-s="all"]').classList.add('on');apply();return;}
+ const cp=e.target.closest('.copy');
+ if(cp){e.stopPropagation();
+  const txt=cp.dataset.t.replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&lt;/g,'<');
+  navigator.clipboard.writeText(txt).then(()=>{cp.textContent='Copied';cp.classList.add('done');
+   setTimeout(()=>{cp.textContent='Copy message';cp.classList.remove('done');},1500);
+  }).catch(()=>{cp.textContent='Select manually';setTimeout(()=>cp.textContent='Copy message',1800);});
+  return;}
+ const hd=e.target.closest('.head');
+ if(hd){const c=hd.parentElement;c.classList.toggle('open');
+  const ct=c.querySelector('.caret'); if(ct)ct.textContent=c.classList.contains('open')?'−':'+';}
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus();}
+ if(e.key==='Escape')q.blur();
+});
+</script>
+</body>
+</html>

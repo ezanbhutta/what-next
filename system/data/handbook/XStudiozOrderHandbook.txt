@@ -1,0 +1,441 @@
+OH-01
+
+HAS EEB M AD EIT · XS T UD IOZ
+
+
+Order Handbook
+The standard process for every order from receipt to final
+delivery, including revisions, additional work and shift
+continuity.
+
+
+
+V ER S I O N                     1.0
+
+I S S U E D AT E                 4 August 2026
+
+O W N ER                         Head of Customer Success
+
+R EV I EW                        Monthly
+
+C L A S S I F I C AT I O N       Internal
+
+
+
+
+OH-01 · v1.0                                                 Page 1 of 10
+O H - 0 1 · O R DER H A N DB O O K   CO N T EN T S
+
+
+
+
+Contents
+
+
+1       Purpose and Scope                       3
+
+
+2       Receipt of Orders                       4
+
+
+3       Confirming the Brief                    5
+
+
+4       Delivery Scope                          6
+
+
+5       Design and Initial Draft                7
+
+
+6       Revisions                               8
+
+
+7       Final Delivery                          9
+
+
+8       Shift Continuity                       10
+
+
+
+
+OH-01 · v1.0                         Page 2 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                S ECT I O N 1
+
+
+
+
+S EC TION 1
+
+Purpose and Scope
+
+This document defines the standard process for handling an order on the XStudioz profile. It applies
+to every order without exception, including controlled orders.
+
+1.1        The process is identical for all orders. No distinction is made in the treatment of any client.
+
+1.2        Fiverr collects order requirements through a form that cannot be amended. The form does
+           not gather sufficient information, so the working brief is established by the team in the order
+           chat.
+
+1.3        The purchased package defines what is delivered. Anything beyond it is quoted as additional
+           work.
+
+1.4        Order status, notes and internal records are maintained in ClickUp. Client communication
+           takes place on Fiverr.
+
+
+Process summary
+S TA G E                                         S TA N D A R D
+
+
+1. Brief confirmed                               Within 15 minutes of the order starting
+
+2. Delivery scope stated                         Before design work begins
+
+3. Brief issued to production                    Same day
+
+4. Initial draft shared                          Within 48 hours
+
+5. Feedback collected                            All feedback gathered before revisions are assigned
+
+6. Revisions assigned                            As a single set
+
+7. Final delivery                                On the order page, ahead of the due date
+
+
+
+
+OH-01 · v1.0                                                                                      Page 3 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                     S ECT I O N 2
+
+
+
+
+S EC TION 2
+
+Receipt of Orders
+
+Orders reach the profile by three routes. The process from Section 3 onward is the same in all
+three cases.
+
+ROU TE                                                      I N F O R M AT I O N A L R EA D Y H EL D
+
+
+Client discusses the work, then a custom offer is           Substantial. The brief is largely established.
+accepted
+
+
+Client discusses the work, then selects a package           Partial. The reason for the package
+directly                                                    selected is not known.
+
+
+Client places an order with no prior discussion             None beyond the package purchased.
+
+
+
+2.1         The order clock begins once the client submits the requirements form.
+
+2.2         Where the client has already discussed the work, the brief is confirmed by restating it for
+            approval.
+            Clients who have already explained their requirements should not be asked to explain them a
+            second time.
+
+
+2.3         Where there has been no prior discussion, the brief is established by question.
+
+2.4         The route by which an order arrived is recorded in ClickUp.
+
+
+
+      R EQ U I R EM EN T S F O R M
+
+      The Fiverr requirements form contains five questions, four of which are optional and are
+      routinely left blank. The form cannot be amended. It is treated as supporting information only
+      and never as the brief.
+
+
+
+
+OH-01 · v1.0                                                                                           Page 4 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                       S ECT I O N 3
+
+
+
+
+S EC TION 3
+
+Confirming the Brief
+
+No design work begins until the brief has been confirmed by the client in writing.
+
+3.1       The brief is confirmed within 15 minutes of the order starting.
+
+3.2       Where the client has already provided information, it is restated for their approval rather than
+          requested again.
+          The client is asked to confirm or correct. This is faster for the client and produces a written record.
+
+3.3       Where information has not been provided, it is requested in a single message rather than
+          across several.
+
+3.4       The client's written confirmation constitutes the agreed brief for the duration of the order.
+
+3.5       The confirmed brief is recorded in ClickUp on the same day.
+
+
+Information required before work begins
+I T EM                                                                       A P P L I ES T O
+
+
+Brand name, with the exact spelling and capitalisation                       All orders
+
+Tagline, and the exact wording if one is required                            All orders
+
+What the business does                                                       All orders
+
+Who the business sells to                                                    All orders
+
+Colours preferred and colours to be avoided                                  All orders
+
+Style direction, or examples the client considers close                      All orders
+
+Where the work will principally be used                                      All orders
+
+Anything the client does not want                                            All orders
+
+Who provides final approval                                                  All orders
+
+Items required and the details to appear on them                             Orders including stationery or
+                                                                             social assets
+
+
+   W H ER E I N F O R M AT I O N I S N O T P R O V I D ED
+
+   A single reminder is issued after 12 hours. Where information remains outstanding after 24 hours a
+   delivery extension is requested. Where it remains outstanding after 48 hours the matter is referred to
+   the Head of Customer Success. Design work does not begin on an incomplete brief.
+
+
+
+
+OH-01 · v1.0                                                                                             Page 5 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                               S ECT I O N 4
+
+
+
+
+S EC TION 4
+
+Delivery Scope
+
+The client is told what the delivery will contain before design work begins. This is stated by the team
+and does not require the client to specify anything.
+
+4.1        The contents of the final delivery are stated to the client before design work begins.
+
+4.2        The statement lists the file formats and assets included in the package purchased.
+
+4.3        Where the package purchased does not include vector or source files, this is stated at the
+           outset.
+           It is not left to be discovered at delivery.
+
+4.4        Anything the client requires beyond the stated contents is quoted as additional work at the
+           time.
+
+4.5        The stated contents form the checklist against which the delivery is verified.
+
+
+Package contents
+                                                            BASIC       S TA N D A R D              P R EM I U M
+
+
+Price                                                       $45             $115                      $175
+
+Delivery                                                  3 days           5 days                   7 days
+
+Concepts                                                      1                  2                         3
+
+Vector file                                     Not included            Included                 Included
+
+Source file                                     Not included            Included                 Included
+
+Stationery                                      Not included            Included                 Included
+
+3D mockup                                       Not included        Not included                 Included
+
+Social media kit                                Not included        Not included                 Included
+
+
+   B A S I C PA C KA G E
+
+   The Basic package does not include a vector or source file. Clients requiring files for print or web
+   development are advised of this at the outset and the additional work is quoted. This is a commercial
+   opportunity, not a shortcoming to be concealed.
+
+
+
+
+OH-01 · v1.0                                                                                     Page 6 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                      S ECT I O N 5
+
+
+
+
+S EC TION 5
+
+Design and Initial Draft
+
+5.1          The confirmed brief is issued to production in ClickUp on the day it is agreed.
+
+5.2          The initial draft is shared with the client within 48 hours and serves as the direction
+             check.
+             It is the point at which the client confirms the work is proceeding in the direction they intended.
+
+
+5.3          The initial draft is accompanied by an explanation of the direction taken, referring to the
+             confirmed brief.
+
+5.4          The client is asked what they would change rather than whether they are satisfied.
+             A general question invites a general answer and defers the substantive feedback to a later stage.
+
+
+5.5          The client is asked to provide all feedback together rather than in separate messages.
+
+
+
+      W H Y T H E I N I T I A L D R A F T M AT T ER S
+
+      The initial draft is the only stage at which the direction of the work can be corrected at low
+      cost. It is also the principal opportunity to influence the private feedback the client will later
+      provide, since that feedback is submitted after the order closes and cannot be seen or
+      addressed.
+
+
+
+
+OH-01 · v1.0                                                                                            Page 7 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                      S ECT I O N 6
+
+
+
+
+S EC TION 6
+
+Revisions
+
+The gig provides unlimited revisions. The number of revisions requested is not restricted. This
+section governs how revisions are processed.
+
+6.1        All feedback is collected before revisions are assigned to production.
+
+6.2        Revisions are assigned as a single set. Individual changes are not assigned separately.
+
+6.3        The client is asked at the initial draft stage to provide all feedback together.
+           Requests arriving individually extend the order without adding value for the client.
+
+6.4        Before a set of revisions is assigned, the changes are restated to the client for confirmation.
+
+6.5        Where a request falls outside the purchased package it is quoted. It is not absorbed.
+
+6.6        Where an order reaches a fourth round of revisions the Head of Customer Success is
+           informed.
+           This is a record, not an approval gate. A fourth round indicates a shortcoming earlier in the process.
+
+
+   R ED U C I N G R EV I S I O N S
+
+   Revisions cannot be limited by contract. They are reduced by confirming the brief properly, stating the
+   delivery contents in advance, and using the initial draft to establish direction before the work is
+   refined.
+
+
+
+
+OH-01 · v1.0                                                                                            Page 8 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                                S ECT I O N 7
+
+
+
+
+S EC TION 7
+
+Final Delivery
+
+7.1       The final delivery is made on the order page. Draft work is shared in chat and is not
+          submitted through the delivery function.
+
+7.2       Every file is verified against the delivery contents stated to the client before work began.
+
+7.3       Files are checked for watermarks, correct formats and the fonts used, which are named in
+          the delivery.
+
+7.4       Delivery is made ahead of the due date wherever the work allows.
+
+7.5       The delivery message states what the folder contains.
+
+7.6       Where a client identifies something missing after delivery, it is supplied without dispute if it
+          falls within the stated contents.
+
+
+Additional work
+Additional work is sold as a custom offer within the order. No change to the gig is required.
+I T EM                                                                                                 PRICE
+
+
+Vector file added to a Basic order                                                                $_______
+
+Source file added to a Basic order                                                                $_______
+
+Additional concept                                                                                $_______
+
+Stationery set                                                                                    $_______
+
+Social media kit                                                                                  $_______
+
+Brand guidelines                                                                                  $_______
+
+
+Prices are set by the Head of Customer Success. Additional work above USD 500 requires approval before it
+is quoted.
+
+
+
+
+OH-01 · v1.0                                                                                     Page 9 of 10
+O H - 0 1 · O R DER H A N DB O O K                                                              S ECT I O N 8
+
+
+
+
+S EC TION 8
+
+Shift Continuity
+
+Orders run across shifts. The client should not be able to identify the point at which one shift
+ended and another began.
+
+8.1           The last ten messages on an order are read before any reply is sent.
+
+8.2           A team member taking over an order does not introduce themselves as new to it. The
+              conversation continues.
+
+8.3           Information already provided by the client is not requested again.
+
+8.4           The handover records the order reference, its current stage, the client's most recent
+              request, the next action and any point requiring care.
+
+8.5           The confirmed brief and every material order event are recorded in ClickUp, not held in
+              the Fiverr conversation alone.
+
+
+
+      C O N T I N U I T Y I S A S S ES S ED
+
+      Approximately one client in five identifies that they are dealing with more than one person. This
+      is assessed under effective communication, which is the area currently holding the profile
+      back.
+
+
+
+
+OH-01 · v1.0                                                                                  Page 10 of 10
+

@@ -34,8 +34,14 @@ var SOURCES = [
   { id: 'orders',      fileId: '1kHw1DB7r4RhgBpF4l4CtapBdgtozJwJXtF-egVBZGUE' },
   { id: 'inquiries',   fileId: '1Pp6RhsR96FzGfB3MV--CYj7Idja2-iyF7BNPhJ9Md_A' },
   // Added by createMissingSourceSheets(); paste the ids it logs.
-  { id: 'impressions', fileId: '1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA' },
   { id: 'disputes',    fileId: '' }
+  // RETIRED 2026-08-05, do not add back:
+  //   impressions      -> the hub's Daily entry
+  //   team_review      -> the hub's Team
+  //   resources_upsell -> the hub's Responses and Money
+  // Those numbers are typed into the hub now. Serving the sheet as well puts
+  // the same fact in two places, and the engine refuses the tables anyway
+  // (xstudioz/ingest.py RETIRED_ROLES) and reports what it refused.
 ];
 
 /**
@@ -48,10 +54,18 @@ var SOURCES = [
  * most specific fingerprints are listed first.
  */
 var ROLE_RULES = [
-  // Impressions FIRST. The impressions sheet also carries organic and VVRO
-  // order columns, so a daily_flow rule placed above this would claim it and
-  // double-count every order against the real ledger.
+  // Retired sheets FIRST, and they stay in this list on purpose. Tagging is
+  // not ingestion: the engine refuses every one of these roles. What the rules
+  // buy is an honest label if such a tab ever appears again. The impressions
+  // sheet carries organic and VVRO order columns of its own, so with no rule
+  // to claim it first it falls through to daily_flow and doubles every order
+  // in the real ledger. A retired sheet must come back wearing its own name.
   { role: 'impressions',       all: ['impressions'] },
+  { role: 'impressions',       all: ['clicks', 'organic orders'] },
+  { role: 'team_review',       all: ['self score'] },
+  { role: 'team_review',       all: ['manager score'] },
+  { role: 'resources_upsell',  all: ['when to use'] },
+  { role: 'resources_upsell',  all: ['sell first'] },
   { role: 'daily_flow',        all: ['organic orders', 'vvro orders'] },
   { role: 'automation_health', all: ['timestamp', 'message'] },
   { role: 'disputes',          all: ['dispute type'] },
@@ -250,28 +264,19 @@ function readGigOverrides_() {
 // ---------------------------------------------------------------------------
 
 /**
- * Creates the two workbooks the engine needs but does not yet have, with the
- * exact headers it already knows how to read. Run once, then paste the logged
- * ids into SOURCES above.
+ * Creates the workbook the engine needs but does not yet have, with the exact
+ * headers it already knows how to read. Run once, then paste the logged id
+ * into SOURCES above.
  *
  * The headers are not suggestions — they are the contract. Renaming a column
  * is what schema drift is, and the engine will report it as such.
+ *
+ * It used to create an Impressions workbook too. That sheet is retired: the
+ * numbers are typed into the hub's Daily entry now, and a helper that recreates
+ * a retired sheet in one click is how a retirement quietly undoes itself.
  */
 function createMissingSourceSheets() {
   var made = [];
-
-  var imp = SpreadsheetApp.create('XStudioz — Impressions');
-  var impSheet = imp.getSheets()[0].setName('Impressions');
-  impSheet.getRange(1, 1, 1, 7).setValues([[
-    'Date', 'Profile', 'Gig', 'Impressions', 'Clicks', 'Orders', 'Notes'
-  ]]).setFontWeight('bold');
-  impSheet.setFrozenRows(1);
-  impSheet.getRange('A2').setNote(
-    'One row per gig per day. Impressions and Clicks come from Fiverr Analytics.\n' +
-    'This is the single most valuable missing input: without it the engine can '  +
-    'tell you organic dropped, but not whether reach fell or conversion fell — '  +
-    'and those need opposite responses.');
-  made.push(['impressions', imp.getId(), imp.getUrl()]);
 
   var dis = SpreadsheetApp.create('XStudioz — Disputes & Dead Orders');
   var disSheet = dis.getSheets()[0].setName('Disputes');

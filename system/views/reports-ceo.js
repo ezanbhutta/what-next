@@ -55,6 +55,11 @@ import {
   AUTO_CLEARED,
 } from '../lib/reminders.js';
 
+// The wrap-up items, imported from the CSR page that writes them rather than
+// restated here. The owner edits that list; a second copy would eventually
+// print a shift as having skipped an item that was never on their screen.
+import { CHECKLIST } from './reports.js';
+
 import {
   html,
   join,
@@ -654,10 +659,101 @@ export function render(ctx) {
       )}
     </section>`;
 
+  // ---- the wrap-up each closed shift filed -----------------------------------
+  //
+  // `checklist` and `handoff_note` were being written by the CSR page, stored on
+  // the shift, and read by nobody: the coverage table said "left a note" without
+  // ever showing it, and the ticks were invisible. Both this file's own header
+  // and db/schema.sql describe the behaviour below as if it already existed.
+  //
+  // A BLANK COUNT IS NOT ZERO, and that is the whole reason this renders the way
+  // it does. The store keeps `true` for "ticked but not counted" and a number
+  // for "counted", because "did the briefs, did not count them" and "did none"
+  // are different facts and only the second is a problem. `true` prints MISSING
+  // (house rule 2); an unticked item prints as not done, which is the one honest
+  // zero on the panel. An open shift has not filed a wrap-up yet and is left out
+  // rather than shown as having skipped everything.
+
+  const wrapRows = coverageRows.filter(({ s }) => s.status !== 'open');
+
+  const wrapPanel = html`<section class="panel">
+      ${panelHead(html`Wrap-up filed, ${num(wrapRows.length)}`, 'typed', 'Typed here')}
+      ${!wrapRows.length
+        ? empty(`No shift has filed a wrap-up on ${scope} in this window.`)
+        : html`<div class="tablewrap tablewrap--capped">
+              <table class="table table--wide">
+                <thead>
+                  <tr>
+                    <th>Day</th><th>Shift</th><th>Person</th>
+                    ${join(CHECKLIST.map((item) => html`<th class="r">${item.label}</th>`))}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${join(
+                    wrapRows.map(({ key, s }) => {
+                      const ticked = s.checklist && typeof s.checklist === 'object' ? s.checklist : {};
+                      return html`<tr>
+                        <td>${dateShort(key)}</td>
+                        <td><span class="cell-name">${s.shift}</span></td>
+                        <td>${s.csr_name || missing()}</td>
+                        ${join(
+                          CHECKLIST.map((item) => {
+                            const v = ticked[item.id];
+                            if (v === undefined || v === null || v === false) {
+                              return html`<td class="r"><span class="caption">not done</span></td>`;
+                            }
+                            // Ticked. A number is a count; `true` is a tick with
+                            // no count behind it, and that is MISSING, not 0.
+                            return html`<td class="r cell-figure">${
+                              typeof v === 'number' ? num(v) : item.count ? missing() : pill('ok', 'done')
+                            }</td>`;
+                          })
+                        )}
+                      </tr>`;
+                    })
+                  )}
+                </tbody>
+              </table>
+              <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
+            </div>`}
+      ${join(
+        wrapRows
+          .filter(({ s }) => s.handoff_note)
+          .map(
+            ({ key, s }) => html`<div class="note" style="margin-top:14px">
+              <p class="caption">
+                ${dateShort(key)} · ${s.shift} · ${s.csr_name || missing()}
+                ${Array.isArray(s.note_shifts) && s.note_shifts.length
+                  ? html` · for the ${join(s.note_shifts, ' and ')} shift`
+                  : ''}
+              </p>
+              <p>${s.handoff_note}</p>
+            </div>`
+          )
+      )}
+      ${why(
+        'Why a ticked box can read MISSING',
+        html`<p>
+            The wrap-up stores a tick and a count separately. A CSR who ticked
+            <em>Briefs created</em> without typing how many has told us the work happened and not how much
+            of it. So the cell reads MISSING, because printing <code class="mono">0</code> there would
+            report the opposite of what they said. An item never ticked reads <em>not done</em>, which is
+            the only figure on this panel that is genuinely a zero.
+          </p>
+          <p>
+            Shifts still open are not listed. A wrap-up is filed at the end, so an open shift has not
+            skipped it, it has not reached it.
+          </p>`
+      )}
+    </section>`;
+
   // ---- what was logged -----------------------------------------------------
 
   const kindCounts = {};
-  for (const a of activities) bump(kindCounts, a.type || a.kind);
+  // `type`, not `kind`: the loader selects `a.kind AS type`. The `|| a.kind`
+  // fallback that used to sit here could never fire and only made the aliased
+  // name look optional.
+  for (const a of activities) bump(kindCounts, a.type);
   const totalActs = activities.length;
 
   const kindPanel = html`<section class="panel">
@@ -983,7 +1079,11 @@ export function render(ctx) {
                             ${isSnoozedNow(r, nowMs) ? html` ${pill('info', 'snoozed')}` : ''}
                           </td>
                           <td class="nowrap">${dateTimeShort(r.due_at)}</td>
-                          <td>${r.booked_by || missing()}</td>
+                          ${/* created_by, NOT booked_by: REMINDER_COLS selects
+                                "booked_by AS created_by", so the original name
+                                reads undefined and this column printed MISSING
+                                over a row that records who booked it. */ ''}
+                          <td>${r.created_by || missing()}</td>
                         </tr>`;
                       })
                     )}
@@ -1031,6 +1131,7 @@ export function render(ctx) {
       ${standingPanel}
       ${daysPanel}
       ${coveragePanel}
+      ${wrapPanel}
       ${kindPanel}
       ${peoplePanel}
       ${ledgerPanel}

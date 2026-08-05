@@ -16,6 +16,8 @@
     "test": "node --test",
     "migrate": "node --env-file-if-exists=.env db/migrate.js",
     "seed": "node --env-file-if-exists=.env db/seed.js",
+    "//seed:talk": "Loads the owner's Client Talk Hub (db/client-talk-hub.html) into the `talk` table. Separate from `seed` because it reads a file the owner edits by hand, so it gets re-run on its own after he does. Idempotent: INSERT IGNORE on a stable slug, so a second run inserts nothing and overwrites nothing.",
+    "seed:talk": "node --env-file-if-exists=.env db/seed-talk.js",
     "dev": "node --watch --env-file-if-exists=.env server.js"
   },
   "dependencies": {

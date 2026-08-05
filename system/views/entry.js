@@ -64,10 +64,22 @@ import {
 const SECTIONS = [
   {
     legend: 'Reach',
-    note: 'Straight off the gig analytics page for the day.',
+    note:
+      'Straight off the gig analytics page for the day. Fill these in only when you are not filling ' +
+      'in the per-gig split below, because the split wins when it is there.',
     fields: [
-      { name: 'impressions', label: 'Impressions', mode: 'numeric' },
-      { name: 'clicks', label: 'Clicks', mode: 'numeric' },
+      {
+        name: 'impressions',
+        label: 'Impressions',
+        mode: 'numeric',
+        help: 'Ignored if any per-gig row below is filled in. The gigs are added up instead.',
+      },
+      {
+        name: 'clicks',
+        label: 'Clicks',
+        mode: 'numeric',
+        help: 'Ignored if any per-gig row below is filled in. The gigs are added up instead.',
+      },
     ],
   },
   {
@@ -335,7 +347,7 @@ const LIVE_JS = `
     put('d-aov-done', usd(ratio(cv, oc)), oc == null ? 'Completed value and count needed' : 'Mean across ' + oc + ' completed');
     var comp = ratio(oc, taken);
     put('d-completion', comp == null ? null : comp.toFixed(2) + '\\u00d7',
-        'Completed \\u00f7 taken. Can exceed 1 \\u2014 not a proportion, so no interval applies.');
+        'Completed \\u00f7 taken. Can exceed 1, not a proportion, so no interval applies.');
     putRate('d-cancel', rateOf(cx, closed), 'Completed and cancelled both needed', 'closed orders');
   }
 
@@ -494,6 +506,10 @@ export function render(ctx) {
   const view = derived(values);
 
   const savedGigs = Array.isArray(gigs) ? gigs.filter((r) => String(r.profile) === profile) : [];
+  // Where the reach on this row came from. server.js sums the gig split and
+  // throws the typed total away whenever one gig is named, so a saved split is
+  // proof the stored impressions are a sum and not something anyone typed.
+  const reachSource = savedGigs.length ? `summed from ${savedGigs.length} gig${savedGigs.length === 1 ? '' : 's'}` : 'as typed';
   const suggestedGigs = Array.isArray(previousGigsAll)
     ? previousGigsAll.filter((r) => String(r.profile) === profile).map((r) => String(r.gig))
     : [];
@@ -627,8 +643,15 @@ export function render(ctx) {
           <p class="caption">
             Optional, and only worth filling when the gig-level split is actually visible. Rows are keyed on
             the gig NAME, so retyping a name creates a second row rather than renaming the first. Leave a row
-            blank to ignore it. These figures are stored as typed and are never added into the totals above, 
-            the profile-level impressions box is the number the derived rate uses.
+            blank to ignore it.
+          </p>
+          <p class="caption">
+            <strong>Name one gig here and this becomes the profile's reach.</strong> Impressions and clicks
+            above are then ignored and the rows below are added up instead, because asking for the parts and
+            the total is two copies of one number and two copies drift. So fill in every gig you have, not
+            just the one you were looking at: a partial split silently turns into the whole profile's reach,
+            and the click-through rate starts describing a subset. A row with a name and a blank number makes
+            the total MISSING rather than a partial sum.
           </p>
         </fieldset>
 
@@ -771,8 +794,12 @@ export function render(ctx) {
         value: saved ? 'Saved' : dbUp ? 'Not logged' : missing(),
         sub: saved && saved.entered_by ? String(saved.entered_by) : null,
       },
-      { label: 'Impressions', value: values.impressions === null ? missing() : num(values.impressions), sub: 'as typed' },
-      { label: 'Clicks', value: values.clicks === null ? missing() : num(values.clicks), sub: 'as typed' },
+      // `reachSource` and not a flat 'as typed': the server ignores the typed
+      // reach boxes whenever a per-gig split was saved, so on those days this
+      // figure is the SUM of the rows below and captioning it "as typed" tells
+      // the reader the one thing about it that is not true.
+      { label: 'Impressions', value: values.impressions === null ? missing() : num(values.impressions), sub: reachSource },
+      { label: 'Clicks', value: values.clicks === null ? missing() : num(values.clicks), sub: reachSource },
       { label: 'Orders taken', value: view.stats[0].value, sub: 'derived' },
       { label: 'Value taken', value: view.stats[1].value, sub: 'derived' },
     ],

@@ -623,7 +623,7 @@ const REVIEW_JS = `
       if (!has) mgr.value = '';
       var hint = document.getElementById(mgr.getAttribute('aria-describedby') || '');
       if (hint) hint.textContent = has
-        ? 'Unlocked. Now answer it \\u2014 mark the week you saw, not the one you were told about.'
+        ? 'Unlocked. Now answer it: mark the week you saw, not the one you were told about.'
         : 'Locked until the self score is entered. That is step 1 of the review.';
     }
     self.addEventListener('change', sync);

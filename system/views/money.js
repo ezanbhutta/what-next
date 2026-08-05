@@ -1032,10 +1032,16 @@ function boardPanel(ctx, board, { typical }) {
       : null;
   const leadsWithAttempt = pick(run, 'metrics.funnel.upsell_lift.with_upsell.n');
 
-  const wonExtra = board.ok
-    ? board.won.reduce((acc, r) => acc + (Number(r.extra_earned) || 0), 0)
-    : null;
+  // `sumField`, not a reduce with `|| 0`. This was the exact shape the helper
+  // at the top of this file was written to prevent, sitting a thousand lines
+  // below the comment warning against it: three won rows with one figure typed
+  // summed to that one figure and printed as the total for all three. The
+  // guard underneath only asked whether ANY row carried a number, so one typed
+  // value was enough to present a partial sum as a complete one. A sum with an
+  // unknown term is unknown, and it renders MISSING.
+  const wonExtra = board.ok ? sumField(board.won, 'extra_earned') : null;
   const wonExtraTyped = board.ok ? board.won.filter((r) => known(r.extra_earned)).length : 0;
+  const wonExtraPartial = board.ok && wonExtra === null && wonExtraTyped > 0;
 
   return html`<div class="panel">
       ${panelHead(
@@ -1147,7 +1153,12 @@ function boardPanel(ctx, board, { typical }) {
         ? html`<p class="caption">
             ${num(board.won.length)} won row${board.won.length === 1 ? '' : 's'} carr${
               board.won.length === 1 ? 'ies' : 'y'
-            } ${wonExtraTyped ? money(wonExtra) : missing()} of typed <code class="mono">extra_earned</code>.
+            } ${wonExtra === null ? missing() : money(wonExtra)} of typed
+            <code class="mono">extra_earned</code>.
+            ${wonExtraPartial
+              ? html`Only <b>${num(wonExtraTyped)}</b> of them carries a figure, so there is no total to
+                  print: a sum missing an unknown term is unknown, not the part that happened to be typed.`
+              : ''}
             That figure is somebody's note of a sale, not an engine measurement, and it is never added to
             the ${money(pick(run, 'metrics.economics.revenue'))} above. Revenue has exactly one source and
             this is not it.

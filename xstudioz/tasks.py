@@ -590,7 +590,7 @@ def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
     if d and d.verdict == "stale":
         return [Task(
             id="impressions-stale",
-            title="Bring the impressions sheet up to date — it stops months ago",
+            title="Fill the impression gap in the hub: the series stops months ago",
             category="data_quality",
             owner="Hasnain",
             why=d.explanation + (
@@ -600,10 +600,12 @@ def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
                 "the engine can see that organic fell but not whether reach or "
                 "conversion caused it, and those need opposite responses."),
             steps=[
-                "Append daily rows from Fiverr Analytics from the last logged date "
-                "to today: Date, Account Name, Impressions, Clicks, Organic Orders.",
-                "Keep the existing column names exactly — the engine already reads "
-                "them and a rename is what schema drift is.",
+                "Open the hub's Daily entry and type one row per profile per day "
+                "from Fiverr Analytics: impressions, clicks, organic orders. The "
+                "old impressions sheet is retired; do not reopen it.",
+                "Work backwards from today to the last day that has a row, "
+                "rather than forwards. The recent days are the ones any "
+                "diagnosis needs first.",
                 "Post impressions and the 7-day average every morning at 09:00 PKT. "
                 "It is the one number that says whether the suppression is lifting.",
                 "Once 28 consecutive days exist, the engine attributes any decline "

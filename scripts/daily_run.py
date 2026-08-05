@@ -164,6 +164,20 @@ def main() -> int:
     elif not args.quiet:
         print(art.brief_markdown)
 
+    # Retired sheets get refused silently inside the ingester, which is the
+    # right behaviour for the numbers and the wrong behaviour for the operator.
+    # Say it on stderr every run it happens, next to the snapshot lines.
+    ing = art.ingest_stats
+    if ing.get("retired_tables_total"):
+        print(f"[retired] refused {ing['retired_tables_total']} table(s), "
+              f"{ing['retired_rows_total']} rows from sheets the hub replaced: "
+              + ", ".join(f"{k}={v}" for k, v in
+                          sorted(ing["retired_tables_skipped"].items())),
+              file=sys.stderr)
+        for r in ing.get("retired_tables") or []:
+            print(f"[retired] {r['source_id']}/{r['name']}: {r['rows']} rows "
+                  f"not counted: {r['why']}", file=sys.stderr)
+
     print(f"\n[selfcheck] score={art.check.score:.0f}/100 "
           f"blocking={len(art.check.blocking_failures)} "
           f"emitted={art.emitted}", file=sys.stderr)

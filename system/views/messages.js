@@ -10,7 +10,7 @@
 //     1. who this buyer is, and what is open
 //     2. the triage, we owe work / they owe a reply / dead
 //     3. what may be sent today, in one line
-//     4. only then, the reply library
+//     4. only then, the talk playbook
 //
 // A "just checking in" note to a buyer who is waiting on US tells them, in
 // writing and with a timestamp, that we have not started. That is how a late
@@ -24,18 +24,39 @@
 // silently dropped from the library when the buyer is late or cold, silently
 // dropping it teaches nobody, and the next person writes the message by hand.
 // It is shown, marked, and the refusal states the order, its age and the
-// reason. `reviewGate()` is the whole rule and it fails CLOSED: if the engine
-// run cannot be read, the ask is refused, because "we cannot see a late order"
-// is not "there is no late order".
+// reason. `reviewGate()` is the whole rule and it fails CLOSED on BOTH of its
+// sources: if the engine run cannot be read, or the flag store cannot be read,
+// the ask is refused, because "we cannot see a late order" is not "there is no
+// late order" and "we cannot see a flag" is not "nobody flagged them".
+//
+// Every open order has to clear the gate, not just the ones in the two buckets
+// somebody remembered. A flag, an unrecorded stage and an unmapped status are
+// all refusals, because each of them means the same thing: we cannot show that
+// the work landed well, and that is the only ground a review ask stands on.
+//
+// WHAT THE CSR ACTUALLY BROWSES: THE OWNER'S OWN PLAYBOOK
+//
+// The `talk` table is Ezan's Client Talk Hub, seeded from his own file and
+// edited by him from inside this page. A card is a situation; a turn inside it
+// is one exchange: what the buyer says, and the line that goes back. Two axes,
+// because a CSR arrives at this page from two different directions:
+//
+//   by GROUP  questions to ask · upgrade moments · when they say no ·
+//             handle these carefully
+//   by STAGE  before the order · order starts · while working · they approve ·
+//             after delivery
+//
+// Both are links, not JavaScript. The state of this page is in its URL, so a
+// CSR can send another CSR the exact view they are looking at.
 //
 // THE TWO STORES, AND WHICH HALF FAILS
 //
 //   data/            the order book, the inquiry log, the engine's open-order
 //                    and quote blocks. Read from disk. Survives a DB outage.
 //   client_note      every note, send and flag a human typed here. MySQL.
-//   response         the reply library. MySQL.
+//   talk             the playbook. MySQL, owner-editable.
 //
-// If MySQL is unreachable the history and the library are MISSING and the
+// If MySQL is unreachable the history and the playbook are MISSING and the
 // compose forms are closed, a compose box that cannot save is worse than no
 // compose box. The triage above them still works, because it is engine data.
 //
@@ -256,11 +277,16 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
 const REVIEW_ASK =
   /\breviews?\b|\brating\b|\brate\s+(?:us|your|the|this|our)\b|\b\d\s*stars?\b|\bfive[-\s]star\b|\bleave\s+(?:us\s+)?(?:a|your)\b|\bfeedback\s+on\s+fiverr\b/i;
 
-function asksForReview(response) {
-  const text = [response.name, response.category, response.when_to_use, response.body]
-    .filter(Boolean)
-    .join(', ');
-  return REVIEW_ASK.test(text);
+/**
+ * The one test, applied to whatever text is about to be offered.
+ *
+ * It takes the pieces rather than a row, because the same rule has to cover a
+ * playbook turn (a line and its instruction) and a card's own guidance, and
+ * those are different shapes. A per-shape copy of this regex is a second rule
+ * that would agree with the first only on the day it was written.
+ */
+function asksForReview(...parts) {
+  return REVIEW_ASK.test(parts.filter(Boolean).join(' · '));
 }
 
 /**
@@ -274,7 +300,7 @@ function asksForReview(response) {
  * late"; it is "we cannot see what is late", and the two must not produce the
  * same answer.
  */
-function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasAnyRecord }) {
+function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasAnyRecord, flagged }) {
   const reasons = [];
 
   if (!runOk) {
@@ -285,6 +311,33 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
         sent on a MISSING.`,
     });
     return { allowed: false, reasons };
+  }
+
+  // The flag store, on the same terms as the engine run.
+  //
+  // A flag is the hub's only record that a person looked at this buyer and
+  // called them dead: a dispute, a refund, a buyer nobody wants to hear from
+  // again. It has to be read BEFORE the buckets, because `triage()` rewrites
+  // every open row's bucket to 'dead' as soon as a flag exists. That emptied
+  // the `us` bucket this gate was reading, so flagging a disputed buyer moved
+  // the gate from refused to permitted: the act of recording that a buyer is a
+  // problem was what unlocked the review ask.
+  if (flagged === null) {
+    reasons.push({
+      what: 'Whether this buyer was closed out cannot be read',
+      detail: html`The flag store did not answer, so whether somebody already called this buyer dead is
+        ${missing()}. That is not "nobody flagged them", and a review ask is not sent on a MISSING.`,
+    });
+    return { allowed: false, reasons };
+  }
+
+  if (flagged === true) {
+    reasons.push({
+      what: 'Somebody flagged this buyer in the hub',
+      detail: html`A flag is a person recording, by name and with a time, that this buyer is dead: a
+        dispute, a refund, or a relationship nobody wants reopened. Asking that buyer to rate us in public
+        is the worst available use of the one message they might still read.`,
+    });
   }
 
   if (!hasAnyRecord) {
@@ -313,6 +366,24 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
       what: html`${num(us.length)} order${us.length === 1 ? '' : 's'} still waiting on us`,
       detail: html`There is nothing finished to review. Asking now asks a buyer to rate work they have not
         received.`,
+    });
+  }
+
+  // The stage-not-recorded bucket, on the same footing as the other two.
+  //
+  // `OWES_BY_STATUS` maps three statuses. Anything else, a cancelled order, a
+  // blank status, or a spelling the order book starts using next month, lands
+  // in `unknown`, and the gate used to walk straight past it: `verdict()` said
+  // "establish the stage first" while this said "a review request is
+  // permitted", on the same page, about the same order. An order whose stage
+  // nobody can name is not evidence that the work landed well.
+  const unknown = rows.filter((r) => r.owes === 'unknown');
+  if (unknown.length) {
+    reasons.push({
+      what: html`${num(unknown.length)} open order${unknown.length === 1 ? '' : 's'} with no stage recorded`,
+      detail: html`The order book carries no status this page can place for
+        ${unknown.length === 1 ? 'it' : 'them'}, so whether the work landed is ${missing()}. A review ask
+        needs a finished job behind it, and this cannot be shown to be one.`,
     });
   }
 
@@ -415,13 +486,11 @@ function kindPill(kind) {
   return spec ? pill(spec.glyph, spec.label) : missing();
 }
 
-function composeForm({ ctx, buyer, response = null, prefill = '', open = false }) {
-  const id = response ? `use-${response.id}` : 'compose';
+function composeForm({ ctx, buyer, id = 'compose', back = null, prefill = '', open = false }) {
   return html`<form method="post" action="/messages" class="stack-sm">
       <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
       <input type="hidden" name="buyer" value="${buyer}">
-      <input type="hidden" name="back" value="${buyerHref(buyer)}">
-      ${response ? html`<input type="hidden" name="response_id" value="${String(response.id)}">` : ''}
+      <input type="hidden" name="back" value="${back || buyerHref(buyer)}">
       <div class="field">
         <label for="${id}-body">What was said <span class="req">*</span></label>
         <textarea id="${id}-body" name="body" required rows="7">${prefill}</textarea>
@@ -460,6 +529,590 @@ function composeClosed(notice) {
       The triage above still stands, it reads from <code class="mono">data/</code> and owes the database
       nothing.
     </p>`;
+}
+
+// ============================================================================
+// 5b. THE TALK PLAYBOOK, the owner's own words
+// ============================================================================
+
+/** The stages an order passes through, in order. `all` is not a stage, it is
+ *  "every stage", and a card carrying it is offered at all of them. */
+const STAGES = [
+  { key: 'inquiry', step: 'Step 1', label: 'Before order' },
+  { key: 'kickoff', step: 'Step 2', label: 'Order starts' },
+  { key: 'working', step: 'Step 3', label: 'While working' },
+  { key: 'approved', step: 'Step 4', label: 'They approve' },
+  { key: 'delivered', step: 'Step 5', label: 'After delivery' },
+];
+const STAGE_BY_KEY = Object.fromEntries(STAGES.map((s) => [s.key, s]));
+const STAGE_KEYS = STAGES.map((s) => s.key);
+
+/** How a card reads. NOT derived from its group: one card filed under "when
+ *  they say no" is a buying signal, and painting it red because of where it
+ *  lives would tell the CSR to back off at the moment the buyer said yes. */
+const CARD_KIND = {
+  ask: { glyph: 'ok', word: 'Ask this' },
+  stop: { glyph: 'crit', word: 'They pushed back' },
+  care: { glyph: 'warn', word: 'Careful here' },
+};
+
+/**
+ * A JSON column, whatever mysql2 handed back.
+ *
+ * The driver parses a JSON column into a real value on most builds and returns
+ * the raw string on some. A view that assumed one of those renders an empty
+ * playbook against a full table, at HTTP 200, and looks exactly like a page
+ * whose owner has not written anything yet.
+ */
+function jsonColumn(value, fallback) {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed === null ? fallback : parsed;
+  } catch {
+    return fallback;
+  }
+}
+
+/** One `talk` row into the shape this page renders. */
+function readCard(row) {
+  const stage = jsonColumn(row.stage, []);
+  const stages = (Array.isArray(stage) ? stage : []).map(String);
+  const turns = (Array.isArray(jsonColumn(row.turns, [])) ? jsonColumn(row.turns, []) : []).filter(
+    (t) => t && t.h && t.s
+  );
+  const chips = jsonColumn(row.chips, []);
+
+  return {
+    id: Number(row.id),
+    slug: row.slug ?? null,
+    heading: String(row.heading ?? ''),
+    group: String(row.group ?? ''),
+    kind: CARD_KIND[String(row.kind)] ? String(row.kind) : 'ask',
+    // An empty stage list means every stage, never no stage. A card nobody can
+    // reach through any tab is a card that has been deleted without anyone
+    // deciding to delete it.
+    stages: stages.length ? stages : ['all'],
+    chips: (Array.isArray(chips) ? chips : []).map(String),
+    title: String(row.title ?? ''),
+    sub: row.sub ? String(row.sub) : null,
+    turns,
+    active: Number(row.active) === 1,
+    sort: Number(row.sort) || 0,
+    source: String(row.source ?? ''),
+    author: row.author ?? null,
+    updated_at: row.updated_at ?? null,
+  };
+}
+
+function cardAtStage(card, stage) {
+  return stage === 'all' || card.stages.includes('all') || card.stages.includes(stage);
+}
+
+/** Everything about a card, lowercased once, for the search box. */
+function cardHaystack(card) {
+  return [
+    card.title,
+    card.sub,
+    card.heading,
+    ...card.chips,
+    ...card.turns.flatMap((t) => [t.h, t.s, t.u, t.w]),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+/** The filter state lives in the URL, so a CSR can send another CSR this view. */
+function talkFilters(query) {
+  const stage = STAGE_KEYS.includes(String(query?.stage)) ? String(query.stage) : 'all';
+  const group = String(query?.g ?? '').slice(0, 24);
+  const needle = String(query?.q ?? '').slice(0, 80);
+  return { stage, group, needle };
+}
+
+/**
+ * The URL of one view of the playbook.
+ *
+ * `hash` is FALSE for anything that goes into a form's `back` field, and that
+ * is not cosmetic. Every write redirects with `${back}${sep}ok=<code>`, so a
+ * back value carrying `#talk` produces `/messages/x#talk?ok=logged`: the query
+ * string lands inside the fragment, the server never sees it, and the "Saved"
+ * banner silently never appears. The write succeeded and the page says nothing,
+ * which is the one outcome a form must never produce.
+ */
+function talkHref(buyer, filters, patch = {}, { hash = true } = {}) {
+  const next = { ...filters, ...patch };
+  const params = new URLSearchParams();
+  if (next.stage && next.stage !== 'all') params.set('stage', next.stage);
+  if (next.group) params.set('g', next.group);
+  if (next.needle) params.set('q', next.needle);
+  const qs = params.toString();
+  return `${buyerHref(buyer)}${qs ? `?${qs}` : ''}${hash ? '#talk' : ''}`;
+}
+
+/**
+ * Which stage this buyer is actually at, from the triage rather than a guess.
+ *
+ * It is a SUGGESTION with a link, not a default. Silently pre-filtering the
+ * playbook to one stage would hide the other four behind a decision the page
+ * made on the CSR's behalf, and the buyer in front of them is the one case that
+ * does not fit the pattern often enough to matter.
+ */
+function suggestStage({ rows, coldQuotes, hasOrders }) {
+  if (rows.some((r) => r.owes === 'us')) return 'working';
+  if (rows.some((r) => r.owes === 'them')) return 'delivered';
+  if (coldQuotes.length) return 'inquiry';
+  if (hasOrders) return 'delivered';
+  return 'inquiry';
+}
+
+/** The stage rail and the group rail. Links, so the state is shareable. */
+function talkRails(buyer, filters, groups, counts) {
+  const stageRail = html`<div class="segment" role="group" aria-label="Which stage of the order">
+      <a href="${talkHref(buyer, filters, { stage: 'all' })}"
+         ${safe(filters.stage === 'all' ? 'aria-current="true"' : '')}>Every stage</a>
+      ${join(
+        STAGES.map(
+          (s) => html`<a href="${talkHref(buyer, filters, { stage: s.key })}"
+              ${safe(filters.stage === s.key ? 'aria-current="true"' : '')}>${s.label}</a>`
+        )
+      )}
+    </div>`;
+
+  const groupRail = html`<div class="segment" role="group" aria-label="Which kind of moment">
+      <a href="${talkHref(buyer, filters, { group: '' })}"
+         ${safe(filters.group === '' ? 'aria-current="true"' : '')}>All ${num(counts.total)}</a>
+      ${join(
+        groups.map(
+          (g) => html`<a href="${talkHref(buyer, filters, { group: g.key })}"
+              ${safe(filters.group === g.key ? 'aria-current="true"' : '')}>${g.heading}</a>`
+        )
+      )}
+    </div>`;
+
+  return html`${stageRail}${groupRail}`;
+}
+
+/** One exchange: what the buyer said, and the line that goes back. */
+function turnBlock({ ctx, buyer, card, turn, index, gate, canWrite, backTo }) {
+  const filled = fillTemplate(turn.s, buyer);
+  const isAsk = asksForReview(turn.s, turn.u, turn.w);
+  const refused = isAsk && !gate.allowed;
+
+  return html`<div class="msg talk-turn">
+      <p class="from">They say</p>
+      <p class="snippet-body">${turn.h}</p>
+
+      <p class="from is-us">${refused ? 'You would send, and this one is refused' : 'You send'}</p>
+      <p class="snippet-body">${filled.html}</p>
+
+      ${filled.unresolved.length
+        ? html`<p class="caption">
+            ${num(filled.unresolved.length)} placeholder${filled.unresolved.length === 1 ? '' : 's'}
+            this page cannot fill,
+            ${join(filled.unresolved.map((p) => html`<code class="mono">${p}</code>`), ' · ')}. Fill
+            ${filled.unresolved.length === 1 ? 'it' : 'them'} by hand before sending; a literal brace in a
+            buyer's inbox is the message that gets screenshotted.
+          </p>`
+        : ''}
+
+      ${turn.u ? html`<p class="caption"><b>Opens</b> ${turn.u}</p>` : ''}
+      ${turn.w ? html`<p class="note note--warn">${glyph('warn')} ${turn.w}</p>` : ''}
+
+      ${refused
+        ? html`<p class="note note--neg">
+              ${glyph('crit')} <b>This line asks for a review, and it is refused for ${buyer}.</b>
+              A review ask on a late or cold order is the most reliable way to turn a private three-star
+              into a public one, and a public one cannot be taken back.
+            </p>
+            <ul class="steps">
+              ${join(gate.reasons.map((x) => html`<li><strong>${x.what}</strong>, ${x.detail}</li>`))}
+            </ul>
+            <p class="caption">
+              ${card.turns.length > 1 ? 'The other lines on this card are still fine to send. ' : ''}Clear
+              the order first and this line becomes available on its own, nobody has to override anything.
+            </p>`
+        : canWrite
+          ? why(
+              isAsk ? 'Send this review request, and log it' : 'Send this, and log it',
+              composeForm({
+                ctx,
+                buyer,
+                id: `talk-${card.id}-${index}`,
+                back: backTo,
+                prefill: fillPlain(turn.s, buyer),
+              })
+            )
+          : html`<p class="caption">
+              Logging is closed, the typed-records database is unreachable, so this line can be copied but
+              not recorded.
+            </p>`}
+    </div>`;
+}
+
+function talkCard({ ctx, buyer, card, gate, canWrite, isOwner, filters, groups }) {
+  const spec = CARD_KIND[card.kind];
+  const backTo = talkHref(buyer, filters, {}, { hash: false });
+  // The card's own guidance, as opposed to its lines. "Give it, and ask for the
+  // review in the same message" is an instruction that has to be withheld on a
+  // late order even when not one of the lines underneath mentions a review.
+  const guidanceAsks = asksForReview(card.title, card.sub);
+  const guidanceRefused = guidanceAsks && !gate.allowed;
+  // Whether any LINE on this card is refused, which is a different question
+  // from whether the card's guidance is. "Give it, and ask for the review in
+  // the same message" is an instruction to write a sentence that is not in the
+  // card, so pointing at a refusal underneath would point at nothing and read
+  // as the page contradicting itself.
+  const linesRefused = !gate.allowed && card.turns.some((t) => asksForReview(t.s, t.u, t.w));
+
+  return html`<article class="snippet" id="talk-${String(card.id)}">
+      <div class="snippet-head">
+        <h4>${card.title}</h4>
+        ${pill(spec.glyph, spec.word)}
+        ${join(card.chips.map((c) => pill('idle', c)), ' ')}
+        ${card.active ? '' : pill('idle', 'Switched off')}
+        ${card.turns.length ? '' : pill('crit', 'No line in it')}
+        <span class="uses">${num(card.turns.length)} ${card.turns.length === 1 ? 'reply' : 'replies'}</span>
+      </div>
+
+      ${card.sub ? html`<p class="caption">${card.sub}</p>` : ''}
+
+      ${card.turns.length
+        ? ''
+        : html`<p class="note note--warn">
+            ${glyph('warn')} <b>This card carries no exchange, so there is nothing to send from it.</b>
+            Nobody but you is shown it. A turn needs both halves, what the buyer says and the line that
+            goes back; one without the other is not stored.
+          </p>`}
+
+      ${guidanceRefused
+        ? html`<p class="note note--neg">
+            ${glyph('crit')} <b>The note on this card tells you to ask for a review. Do not, for
+            ${buyer}.</b> The rest of the card stands, and the ask does not.
+            ${linesRefused
+              ? html`The reasons are printed on the refused line below.`
+              : html`No line here carries the ask, so nothing below is blocked, this is a warning about the
+                  sentence you would have added yourself.
+                  ${num(gate.reasons.length)} reason${gate.reasons.length === 1 ? '' : 's'}:
+                  ${join(gate.reasons.map((x) => x.what), '; ')}.`}
+          </p>`
+        : ''}
+
+      ${join(
+        card.turns.map((turn, i) =>
+          turnBlock({ ctx, buyer, card, turn, index: i, gate, canWrite, backTo })
+        )
+      )}
+
+      <p class="caption">
+        Offered at ${card.stages.includes('all')
+          ? 'every stage'
+          : join(
+              card.stages.map((s) => html`<b>${STAGE_BY_KEY[s]?.label ?? s}</b>`),
+              ', '
+            )}.
+        ${card.source === 'playbook'
+          ? 'From the Client Talk Hub.'
+          : html`Written here by ${card.author ?? missing()}.`}
+        Last changed ${card.updated_at ? dateTimeShort(card.updated_at) : missing()}.
+      </p>
+
+      ${isOwner ? talkOwnerTools({ ctx, card, back: backTo, groups }) : ''}
+    </article>`;
+}
+
+// ---- the owner's editor ----------------------------------------------------
+//
+// Rendered for role `owner` and for nobody else. That is the courtesy; the
+// rule is in server.js, which refuses the POST whatever the page rendered. A
+// hidden form has never been a permission.
+
+const TURN_SLOTS = 2; // blank rows offered under whatever the card already has
+
+// Every input id is scoped by the card it belongs to. Several editors are open
+// on one page, and a duplicated id points every `for=` at the first one on the
+// page: the label reads correctly, and tapping it focuses somebody else's box.
+function turnFields(turn, index, scope) {
+  const n = `${scope}-${index}`;
+  return html`<fieldset class="field">
+      <legend class="field-label">Exchange ${String(index + 1)}</legend>
+      <div class="form-grid form-grid--two">
+        <div class="field">
+          <label for="th-${safe(n)}">What the buyer says</label>
+          <input id="th-${safe(n)}" name="turn_h" maxlength="400" value="${turn?.h ?? ''}">
+        </div>
+        <div class="field">
+          <label for="tu-${safe(n)}">What it opens</label>
+          <input id="tu-${safe(n)}" name="turn_u" maxlength="200" value="${turn?.u ?? ''}">
+        </div>
+      </div>
+      <div class="field">
+        <label for="ts-${safe(n)}">The line that goes back</label>
+        <textarea id="ts-${safe(n)}" name="turn_s" rows="4" maxlength="4000">${turn?.s ?? ''}</textarea>
+        <p class="field-hint">
+          Leave <code class="mono">{username}</code> exactly as it is. This page fills it from whichever
+          buyer is open. Typing a name makes the line usable for one person only.
+        </p>
+      </div>
+      <div class="field">
+        <label for="tw-${safe(n)}">The warning on this line</label>
+        <input id="tw-${safe(n)}" name="turn_w" maxlength="600" value="${turn?.w ?? ''}">
+        <p class="field-hint">Shown in amber under the line. Blank for most.</p>
+      </div>
+    </fieldset>`;
+}
+
+function talkForm({ ctx, card, back, groups }) {
+  const id = card ? String(card.id) : 'new';
+  const turns = [...(card?.turns ?? []), ...Array.from({ length: TURN_SLOTS }, () => null)];
+
+  return html`<form method="post" action="/messages/talk" class="stack-sm">
+      <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
+      <input type="hidden" name="back" value="${back}">
+      ${card ? html`<input type="hidden" name="id" value="${id}">` : ''}
+
+      <div class="field">
+        <label for="tt-${safe(id)}">The situation <span class="req">*</span></label>
+        <input id="tt-${safe(id)}" name="title" maxlength="200" required value="${card?.title ?? ''}">
+        <p class="field-hint">What the CSR is looking for. Write it the way they would think of it.</p>
+      </div>
+
+      <div class="field">
+        <label for="ts2-${safe(id)}">Why it works</label>
+        <textarea id="ts2-${safe(id)}" name="sub" rows="2" maxlength="2000">${card?.sub ?? ''}</textarea>
+      </div>
+
+      <div class="form-grid form-grid--two">
+        <div class="field">
+          <label for="tg-${safe(id)}">Group key <span class="req">*</span></label>
+          <input id="tg-${safe(id)}" name="group" maxlength="24" required
+                 list="talk-groups-${safe(id)}" value="${card?.group ?? ''}">
+          <datalist id="talk-groups-${safe(id)}">
+            ${join(groups.map((g) => html`<option value="${g.key}">${g.heading}</option>`))}
+          </datalist>
+          <p class="field-hint">
+            ${groups.length
+              ? html`Existing: ${join(groups.map((g) => html`<code class="mono">${g.key}</code>`), ' · ')}.
+                  A new key starts a new section.`
+              : 'A short key such as ask or obj. A new key starts a new section.'}
+          </p>
+        </div>
+        <div class="field">
+          <label for="thd-${safe(id)}">Section heading <span class="req">*</span></label>
+          <input id="thd-${safe(id)}" name="heading" maxlength="80" required value="${card?.heading ?? ''}">
+          <p class="field-hint">The words above the group, such as "When they say no".</p>
+        </div>
+      </div>
+
+      <div class="form-grid form-grid--two">
+        <div class="field">
+          <label for="tk-${safe(id)}">How it reads</label>
+          <select id="tk-${safe(id)}" name="kind">
+            ${join(
+              Object.entries(CARD_KIND).map(
+                ([k, s]) => html`<option value="${k}" ${safe(k === (card?.kind ?? 'ask') ? 'selected' : '')}>
+                    ${s.word}
+                  </option>`
+              )
+            )}
+          </select>
+          <p class="field-hint">
+            Not the same as the group. A buying signal filed under objections still reads as go.
+          </p>
+        </div>
+        <div class="field">
+          <label for="tc-${safe(id)}">Chips</label>
+          <input id="tc-${safe(id)}" name="chips" maxlength="160"
+                 value="${(card?.chips ?? []).join(', ')}">
+          <p class="field-hint">Comma separated, up to four. Where it came from, or why it matters.</p>
+        </div>
+      </div>
+
+      <fieldset class="field">
+        <legend class="field-label">When it is offered</legend>
+        ${join(
+          STAGES.map(
+            (s) => html`<label class="check-row">
+              <input type="checkbox" name="stage" value="${s.key}"
+                     ${safe((card?.stages ?? []).includes(s.key) ? 'checked' : '')}>
+              <span class="check-label">${s.step}, ${s.label}</span>
+            </label>`
+          )
+        )}
+        <p class="field-hint">
+          None ticked means every stage, never none. A card behind no tab at all is one nobody can find.
+        </p>
+      </fieldset>
+
+      <div class="field">
+        <label for="tso-${safe(id)}">Sort</label>
+        <input id="tso-${safe(id)}" name="sort" inputmode="numeric" maxlength="6"
+               value="${card ? String(card.sort) : ''}">
+        <p class="field-hint">Low first. The import numbers in tens, so there is room between any two.</p>
+      </div>
+
+      ${join(turns.map((t, i) => turnFields(t, i, id)))}
+
+      <div class="form-actions">
+        <button class="btn" type="submit">${card ? 'Save this card' : 'Add this card'}</button>
+        <span class="form-status">
+          Written with your name against it, in one transaction with the audit row.
+        </span>
+      </div>
+    </form>`;
+}
+
+function talkOwnerTools({ ctx, card, back, groups }) {
+  return html`<div class="btnrow snippet-actions">
+      <form method="post" action="/messages/talk/toggle">
+        <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
+        <input type="hidden" name="id" value="${String(card.id)}">
+        <input type="hidden" name="active" value="${card.active ? '0' : '1'}">
+        <input type="hidden" name="back" value="${back}">
+        <button class="btn btn--sm ${safe(card.active ? 'btn--danger' : '')}" type="submit">
+          ${card.active ? 'Switch this card off' : 'Switch it back on'}
+        </button>
+      </form>
+      <span class="form-status">Kept either way. Nothing here is ever deleted.</span>
+    </div>
+    ${why('Edit this card', talkForm({ ctx, card, back, groups }))}`;
+}
+
+function talkPanel({ ctx, buyer, cards, gate, canWrite, isOwner, filters, dbNotice, suggested }) {
+  if (!cards) {
+    return html`<section class="panel" id="talk">
+        ${panelHead('What to say', 'missing', 'talk table unreadable')}
+        <div class="figure">
+          <span class="cap">Lines available</span>
+          <strong class="mid">${missing()}</strong>
+          <p class="sub">
+            The typed-records database is unreachable, so the playbook cannot be listed and nothing can be
+            logged. It is MISSING, not empty. Writing a message from memory because the list did not load
+            is exactly the failure this hub exists to stop.
+          </p>
+        </div>
+        ${composeClosed(dbNotice)}
+      </section>`;
+  }
+
+  // Switched-off cards are readable by the owner, because he is the one who
+  // switches them back on. Nobody else is offered a line somebody withdrew.
+  // A card with no usable exchange has nothing to send and is not offered. The
+  // owner still sees it, marked, because he is the only person who can put a
+  // line back into it, and hiding a broken card from him is how it stays broken.
+  const visible = cards.filter((c) => (c.active && c.turns.length > 0) || isOwner);
+  // Only ever non-zero for the owner, and it is why his count of cards is
+  // higher than the number on the "all" tab. Saying it is cheaper than letting
+  // him wonder which figure is wrong.
+  const offCount = visible.filter((c) => !c.active).length;
+  // Built from what is VISIBLE, not from what is active. A group whose every
+  // card the owner switched off would otherwise vanish from the rail, and the
+  // cards inside it would be unreachable by the only person who can switch
+  // them back on.
+  const groups = [];
+  for (const card of visible) {
+    let g = groups.find((x) => x.key === card.group);
+    if (!g) groups.push((g = { key: card.group, heading: card.heading, n: 0 }));
+    g.n += 1;
+  }
+
+  const needle = filters.needle.trim().toLowerCase();
+  const shown = visible.filter(
+    (c) =>
+      cardAtStage(c, filters.stage) &&
+      (!filters.group || c.group === filters.group) &&
+      (!needle || cardHaystack(c).includes(needle))
+  );
+
+  const byGroup = [];
+  for (const card of shown) {
+    let g = byGroup.find((x) => x.key === card.group);
+    if (!g) byGroup.push((g = { key: card.group, heading: card.heading, cards: [] }));
+    g.cards.push(card);
+  }
+
+  const stageLabel = filters.stage === 'all' ? 'every stage' : STAGE_BY_KEY[filters.stage].label;
+  const turnsShown = shown.reduce((n, c) => n + c.turns.length, 0);
+
+  return html`<section class="panel" id="talk">
+      ${panelHead(
+        html`What to say to ${buyer}, ${num(turnsShown)} line${turnsShown === 1 ? '' : 's'} at ${stageLabel}`,
+        'typed',
+        'Typed · talk · the owner writes these'
+      )}
+
+      <p class="caption">
+        This buyer looks like <b>${STAGE_BY_KEY[suggested].step}, ${STAGE_BY_KEY[suggested].label}</b> from
+        the triage above.
+        ${filters.stage === suggested
+          ? 'That is the stage you are on.'
+          : html`<a href="${talkHref(buyer, filters, { stage: suggested })}">Show that stage</a>.`}
+        It is a suggestion, not a filter, the buyer in front of you is the one who does not fit.
+      </p>
+
+      ${talkRails(buyer, filters, groups, { total: visible.length })}
+
+      <form class="toolbar" method="get" action="${buyerHref(buyer)}">
+        ${filters.stage !== 'all' ? html`<input type="hidden" name="stage" value="${filters.stage}">` : ''}
+        ${filters.group ? html`<input type="hidden" name="g" value="${filters.group}">` : ''}
+        <span class="search">
+          <label class="sr-only" for="tq">Search what the buyer just said</label>
+          <input type="search" id="tq" name="q" value="${filters.needle}"
+                 placeholder="Type what they just said: vector, expensive, later, free, print">
+        </span>
+        <button class="btn btn--sm" type="submit">Find</button>
+        ${filters.needle || filters.group || filters.stage !== 'all'
+          ? html`<a class="btn btn--ghost btn--sm" href="${buyerHref(buyer)}#talk">Reset</a>`
+          : ''}
+        <span class="count">${String(shown.length)} of ${String(visible.length)} cards${
+          offCount ? `, ${offCount} switched off` : ''
+        }</span>
+      </form>
+
+      ${gate.allowed || shown.length === 0
+        ? ''
+        : html`<p class="note note--neg">
+            ${glyph('crit')} <b>Any line here that asks for a review is refused for ${buyer}.</b> It is
+            shown rather than hidden, with the reason and the evidence printed on it, because a line that
+            quietly disappears gets written from memory next time and gets it wrong.
+          </p>`}
+
+      ${byGroup.length === 0
+        ? empty(
+            visible.length === 0
+              ? 'The playbook is empty. That is the table answering none, not a failure to read it. Run npm run seed:talk to load the Client Talk Hub.'
+              : 'Nothing in the playbook matches that stage, group and search together. The playbook is not empty, this selection is.'
+          )
+        : join(
+            byGroup.map(
+              (g) => html`<h3 class="eyebrow talk-group">${g.heading}</h3>
+                ${join(
+                  g.cards.map((card) =>
+                    talkCard({ ctx, buyer, card, gate, canWrite, isOwner, filters, groups })
+                  )
+                )}`
+            )
+          )}
+
+      ${isOwner
+        ? why(
+            'Add a card to the playbook',
+            html`<p class="caption">
+                Owner only. It goes live on every buyer the moment you save it, and it is stored as written
+                here rather than in the file, so re-importing the Client Talk Hub cannot overwrite it.
+              </p>
+              ${talkForm({ ctx, card: null, back: talkHref(buyer, filters, {}, { hash: false }), groups })}`
+          )
+        : ''}
+
+      <div class="provenance-bar">
+        <span>Every line, typed by the owner, stored in <code class="mono">talk</code>.</span>
+        <span><code class="mono">{username}</code> filled live from the join key.</span>
+        <span>Nothing is sent from here. Sending is logged, by name, underneath.</span>
+      </div>
+    </section>`;
 }
 
 // ============================================================================
@@ -566,7 +1219,35 @@ function directoryRow(row, { notesKnown, staleAfter }) {
     </li>`;
 }
 
-function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, needle, badBuyer }) {
+/**
+ * What is waiting behind a buyer, said on the picker.
+ *
+ * Counts only. No line from the playbook appears here, because no line can be
+ * chosen before a buyer is, and a page that showed one would be inviting
+ * somebody to send it blind.
+ */
+function playbookNote(groups) {
+  if (!groups) {
+    return html`<p class="note note--warn">
+        The talk playbook is ${missing()}. The typed-records database is unreachable, so how many lines are
+        waiting behind a buyer cannot be read. It is not zero lines.
+      </p>`;
+  }
+  if (!groups.length) {
+    return html`<p class="note note--warn">
+        The talk playbook is empty. That is the table answering none, not a failure to read it. Load the
+        Client Talk Hub with <code class="mono">npm run seed:talk</code>.
+      </p>`;
+  }
+  const total = groups.reduce((n, g) => n + toNumber(g.cards), 0);
+  return html`<p class="note">
+      ${glyph('info')} <b>${num(total)} cards</b> in the talk playbook, across
+      ${join(groups.map((g) => html`<b>${g.heading}</b>`), ', ')}. Open a buyer to browse them by stage,
+      with <code class="mono">{username}</code> filled in.
+    </p>`;
+}
+
+function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, needle, badBuyer, talkGroups }) {
   const filtered = needle
     ? directory.filter((r) => r.key.includes(normaliseBuyer(needle)) || r.display.toLowerCase().includes(needle.toLowerCase()))
     : directory;
@@ -618,15 +1299,16 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
           <span class="cap">Before any message</span>
           <strong class="mid">Triage first</strong>
           <p class="sub">
-            Open a buyer and the page leads with their triage. The reply library sits underneath it, and a
-            review request is refused, with the order and its age printed, whenever that buyer is late or
-            cold.
+            Open a buyer and the page leads with their triage. The talk playbook sits underneath it, and a
+            line that asks for a review is refused, with the order and its age printed, whenever that buyer
+            is late or cold.
           </p>
         </div>
         <p class="note note--neg">
           ${glyph('crit')} <b>No review ask rides on a late or cold order.</b> It is the most reliable way
           to turn a private three-star into a public one, and it is not recoverable once it is public.
         </p>
+        ${playbookNote(talkGroups)}
       </div>
     </div>
 
@@ -809,109 +1491,6 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
             many days have passed since the run.
           </p>`
       )}
-    </section>`;
-}
-
-function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
-  if (!responses) {
-    return html`<section class="panel">
-        ${panelHead('The reply library', 'missing', 'response table unreadable')}
-        <div class="figure">
-          <span class="cap">Replies available</span>
-          <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            The typed-records database is unreachable, so the library cannot be listed and nothing can be
-            logged. It is MISSING, not empty, writing a reply from memory because the list did not load is
-            exactly the failure this hub exists to stop.
-          </p>
-        </div>
-        ${composeClosed(dbNotice)}
-      </section>`;
-  }
-
-  if (responses.length === 0) {
-    return html`<section class="panel">
-        ${panelHead('The reply library', 'typed', 'Typed · response · 0 active')}
-        ${empty('The library has no active replies. That is the table saying none, add one on the Responses page.')}
-      </section>`;
-  }
-
-  const blocked = responses.filter((r) => asksForReview(r)).length;
-
-  return html`<section class="panel">
-      ${panelHead(
-        html`The reply library, ${num(responses.length)} active, ${buyer} substituted`,
-        'typed',
-        'Typed · response'
-      )}
-
-      ${blocked && !gate.allowed
-        ? html`<p class="note note--neg">
-            ${glyph('crit')} <b>${num(blocked)} of these ask for a review, and none of them is offered for
-            ${buyer}.</b> They are shown rather than hidden, with the reason and the evidence, because a
-            reply that quietly disappears gets rewritten by hand next time.
-          </p>`
-        : ''}
-
-      ${join(
-        responses.map((r) => {
-          const filled = fillTemplate(r.body, buyer);
-          const isReviewAsk = asksForReview(r);
-          const refused = isReviewAsk && !gate.allowed;
-
-          return html`<article class="snippet">
-              <div class="snippet-head">
-                <h4>${r.name}</h4>
-                ${r.category ? pill('idle', String(r.category)) : ''}
-                ${isReviewAsk ? pill(refused ? 'crit' : 'warn', refused ? 'Not offered' : 'Review ask') : ''}
-                <span class="uses">${num(r.uses)} sent</span>
-              </div>
-
-              <p class="snippet-body">${filled.html}</p>
-
-              ${filled.unresolved.length
-                ? html`<p class="caption">
-                    ${num(filled.unresolved.length)} placeholder${filled.unresolved.length === 1 ? '' : 's'}
-                    this page cannot fill, 
-                    ${join(filled.unresolved.map((p) => html`<code class="mono">${p}</code>`), ' · ')}. Fill
-                    them by hand before sending; a literal brace in a buyer's inbox is the message that gets
-                    screenshotted.
-                  </p>`
-                : ''}
-
-              ${r.when_to_use ? html`<p class="caption">When to use, ${r.when_to_use}</p>` : ''}
-
-              ${refused
-                ? html`<p class="note note--neg">
-                    ${glyph('crit')} <b>This is a review request and it is refused for ${buyer}.</b>
-                    A review ask on a late or cold order is the most reliable way to turn a private
-                    three-star into a public one, and a public one cannot be taken back.
-                  </p>
-                  <ul class="steps">
-                    ${join(gate.reasons.map((x) => html`<li><strong>${x.what}</strong>, ${x.detail}</li>`))}
-                  </ul>
-                  <p class="caption">
-                    Clear the order first. When nothing is late, nothing is owed and the delivery is recent,
-                    this reply becomes available on its own, nobody has to override anything.
-                  </p>`
-                : canWrite
-                  ? why(
-                      isReviewAsk ? 'Send this review request, and log it' : 'Use this reply',
-                      composeForm({ ctx, buyer, response: r, prefill: fillPlain(r.body, buyer) })
-                    )
-                  : html`<p class="caption">
-                      Logging is closed, the typed-records database is unreachable, so this reply can be
-                      copied but not recorded.
-                    </p>`}
-            </article>`;
-        })
-      )}
-
-      <p class="caption">
-        <code class="mono">{username}</code> is substituted live from the join key, so what is shown here is
-        what would go out. Logging a send is the only thing that moves a reply's count, which is why "sent"
-        means times actually sent rather than times opened.
-      </p>
     </section>`;
 }
 
@@ -1154,7 +1733,7 @@ export function render(ctx) {
   const key = ctx.data?.buyerKey || normaliseBuyer(buyerRaw);
 
   const notesQ = ctx.data?.notes ?? null;
-  const responsesQ = ctx.data?.responses ?? null;
+  const talkQ = ctx.data?.talk ?? null;
   const directoryQ = ctx.data?.directory ?? null;
 
   // ---- no buyer chosen: the picker, and nothing that could be sent ---------
@@ -1173,6 +1752,7 @@ export function render(ctx) {
       staleAfter,
       needle: typeof ctx.query?.q === 'string' ? ctx.query.q.slice(0, 80) : '',
       badBuyer: Boolean(buyerRaw) && !key,
+      talkGroups: talkQ?.ok ? talkQ.rows : null,
     });
   }
 
@@ -1180,8 +1760,13 @@ export function render(ctx) {
   const bookOrders = ctx.data?.orders ?? MISSING;
   const bookLeads = ctx.data?.leads ?? MISSING;
   const notes = notesQ?.ok ? notesQ.rows : null;
-  const responses = responsesQ?.ok ? responsesQ.rows : null;
-  const canWrite = Boolean(notesQ?.ok && responsesQ?.ok);
+  // The playbook is null when the table could not be read, which is MISSING,
+  // and an empty array when the table answered none, which is a fact. The
+  // panel prints those two differently and must never conflate them.
+  const cards = talkQ?.ok ? talkQ.rows.map(readCard) : null;
+  const canWrite = Boolean(notesQ?.ok);
+  const isOwner = ctx.user?.role === 'owner';
+  const filters = talkFilters(ctx.query);
 
   // The display spelling: the first one a source actually used, never the
   // normalised join key, that key is a join artefact and no CSR should ever
@@ -1226,6 +1811,7 @@ export function render(ctx) {
     staleAfter,
     lastDeliveryAge,
     hasAnyRecord,
+    flagged,
   });
   const call = verdict({ rows, coldQuotes, flagsKnown: flagged !== null });
 
@@ -1368,7 +1954,21 @@ export function render(ctx) {
               </p>
             </div>
           </section>`,
-      libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice: ctx.dbNotice }),
+      talkPanel({
+        ctx,
+        buyer,
+        cards,
+        gate,
+        canWrite,
+        isOwner,
+        filters,
+        dbNotice: ctx.dbNotice,
+        suggested: suggestStage({
+          rows,
+          coldQuotes,
+          hasOrders: Array.isArray(orderList) && orderList.length > 0,
+        }),
+      }),
       composePanel,
       historyPanel({ notes, buyer, dbNotice: ctx.dbNotice }),
       ordersPanel({ orders: orderList, buyer }),

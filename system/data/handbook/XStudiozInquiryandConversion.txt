@@ -1,0 +1,360 @@
+IC-01
+
+HAS EEB M AD EIT · XS T UD IOZ
+
+
+Inquiry and Conversion
+Standards for handling inquiries from first contact to order
+or closure, including qualification, quotation, follow up and
+recovery of open quotations.
+
+
+
+V ER S I O N                     1.0
+
+I S S U E D AT E                 4 August 2026
+
+O W N ER                         Intake and Conversion
+
+R EV I EW                        Monthly
+
+C L A S S I F I C AT I O N       Internal
+
+
+
+
+IC-01 · v1.0                                                    Page 1 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N   CO N T EN T S
+
+
+
+
+Contents
+
+
+1        Purpose and Scope                                    3
+
+
+2        Response Standards                                   4
+
+
+3        Qualification                                        5
+
+
+4        Quotation                                            6
+
+
+5        Follow Up and Closure                                7
+
+
+6        Open Quotations                                      8
+
+
+7        Platform Rules                                       9
+
+
+
+
+IC-01 · v1.0                                        Page 2 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                                 S ECT I O N 1
+
+
+
+
+S EC TION 1
+
+Purpose and Scope
+
+This document governs the handling of inquiries from first contact until an order is placed or the
+inquiry is closed. Once an order exists, OH-01 Order Handbook applies.
+
+1.1        Follow up applies to inquiries only. Clients holding an active order are not followed up; their
+           order is progressed under OH-01.
+
+1.2        Message content and phrasing are already established and are not governed by this
+           document. This document sets the standards, not the wording.
+
+1.3        Every inquiry is recorded in the inquiry log, including the price quoted and the date of each
+           follow up.
+
+
+Current position
+M EA S U R E                                                             C U R R EN T            S TA N D A R D
+
+
+Quotations recorded in the inquiry log                                      26%                     100%
+
+Inquiries receiving a second follow up                                      26%                     100%
+
+Inquiries receiving a third follow up                                         4%                    100%
+
+Value quoted and not converted                                           $5,722             Below $2,000
+
+
+
+
+IC-01 · v1.0                                                                                      Page 3 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                                S ECT I O N 2
+
+
+
+
+S EC TION 2
+
+Response Standards
+
+2.1          A first response is issued within 10 minutes at any hour.
+
+2.2          The team member on shift responds. Response is not restricted by role.
+
+2.3          No price is provided before the requirements are understood.
+
+2.4          Messages identified as spam are reported as spam within 24 hours.
+
+2.5          No shift ends with an inquiry unanswered.
+
+
+Conversion by period
+
+P ER I O D                                            I N Q U I R I ES   C O N V ER T ED              R AT E
+
+
+09:00 to 17:00                                                   20                   1              5.0%
+
+
+17:00 to 01:00                                                   20                   4             20.0%
+
+
+01:00 to 09:00                                                   14                   4             28.6%
+
+
+
+      N I G H T O P ER AT I O N S
+
+      The overnight period produces the highest conversion rate on the profile. Night Operations
+      qualifies inquiries and hands them over. Quotation, negotiation and declining are not carried out
+      overnight.
+
+
+
+
+IC-01 · v1.0                                                                                    Page 4 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                               S ECT I O N 3
+
+
+
+
+S EC TION 3
+
+Qualification
+
+No quotation is issued before qualification is complete.
+
+3.1          Four points are established before a price is provided: budget range, deadline, who
+             provides approval, and what the client requires.
+
+3.2          Where a budget range is discussed, a range is offered rather than requested. This allows
+             the client to confirm or decline without negotiation.
+
+3.3          Qualification is recorded in the inquiry log at the time it is obtained.
+
+3.4          An inquiry handed from one shift to another carries all four points. An inquiry handed over
+             incomplete is returned.
+
+
+
+      P U R P O S E O F Q U A L I F I C AT I O N
+
+      An order sold without a clear understanding of the requirement cannot be recovered later in
+      production. The quality of the handover from inquiry to order determines the number of
+      revisions that follow.
+
+
+
+
+IC-01 · v1.0                                                                                   Page 5 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                              S ECT I O N 4
+
+
+
+
+S EC TION 4
+
+Quotation
+
+4.1        Quotations are drawn from the published package structure. Prices are not constructed
+           for individual inquiries.
+
+4.2        A package above the level indicated by the client is presented alongside the level
+           requested, with the difference expressed in deliverables.
+
+4.3        The price quoted is recorded in the inquiry log at the time it is sent.
+
+4.4        Quotations above USD 500 require the approval of the Head of Customer Success before
+           they are issued.
+
+4.5        Where a client indicates the price is beyond their budget, the scope is reduced.
+           The price is not reduced for unchanged scope.
+
+
+4.6        No commitment to a delivery date is given before designer availability has been
+           confirmed.
+
+
+Reference values
+
+M EA S U R E                                                                                      VA L U E
+
+
+Published packages                                                                   $45 · $115 · $175
+
+
+Average order, organic clients                                                                     $201
+
+
+Average order, all sources                                                                           $89
+
+
+Approval threshold                                                                                 $500
+
+
+
+
+IC-01 · v1.0                                                                                  Page 6 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                              S ECT I O N 5
+
+
+
+
+S EC TION 5
+
+Follow Up and Closure
+
+5.1        Every inquiry receives three follow ups before it is closed.
+
+5.2        Follow ups are issued on day one, day three and day seven from the date the quotation
+           was sent.
+
+5.3        Each follow up addresses a different point. A quotation is not simply restated.
+
+5.4        The date of each follow up is recorded in the inquiry log.
+
+5.5        No fourth follow up is issued.
+
+5.6        An inquiry is closed only after three recorded follow ups, with a reason recorded.
+
+5.7        An inquiry closed without three recorded follow ups is reopened and reassigned.
+
+
+Declining an inquiry
+
+5.1        Inquiries are declined only on commercial grounds.
+
+5.2        Commercial grounds are limited to: budget below the operating threshold, scope the
+           profile does not deliver, a timeline that cannot be met, or an indication that the work is
+           being purchased for resale.
+
+5.3        No other ground is recorded, communicated or applied.
+
+5.4        A decline is approved by the Head of Customer Success and the ground is recorded in
+           the inquiry log.
+
+
+
+
+IC-01 · v1.0                                                                                    Page 7 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                                S ECT I O N 6
+
+
+
+
+S EC TION 6
+
+Open Quotations
+
+Quotations issued and not converted represent $5,722. These clients have already stated a
+requirement and received a price. Recovery requires no additional traffic.
+
+                                                                                             FOLLOW U P S
+C L I EN T                                           Q U O T ED                 AGE            R EC O R D ED
+
+
+rztwerk                                                 $250                 5 days                        1
+
+
+selmaprof                                               $950               29 days                         2
+
+
+bobzinos                                                $900              136 days                         1
+
+
+farida_ism                                              $700              169 days                         1
+
+
+getgwoppa                                               $700               95 days                         2
+
+
+ryan_wonders                                            $350               95 days                         1
+
+
+chupetes                                                $200              144 days                         1
+
+
+A further five inquiries received no follow up: akhilkpfxx $160, architpatel497 $147, kai_utzinger
+$85, zain_qw $75 and Mohamed L $60.
+
+6.1          Open quotations are worked in order of value, with the most recent given priority where
+             values are comparable.
+
+6.2          Each client is contacted individually. Identical messages are not sent to multiple clients.
+
+6.3          Where a client does not respond to a third contact, the quotation is closed with a reason
+             recorded.
+
+
+
+
+IC-01 · v1.0                                                                                     Page 8 of 9
+I C- 0 1 · I N Q UI R Y A N D CO N V E R S I O N                                                S ECT I O N 7
+
+
+
+
+S EC TION 7
+
+Platform Rules
+
+These rules take precedence over any commercial consideration.
+
+7.1        No conversation is moved outside the Fiverr platform before an order exists.
+
+7.2        No payment is taken or proposed outside the Fiverr platform.
+
+7.3        Clients are not asked to provide public reviews or private feedback at any stage.
+
+7.4        Client messages are not answered in kind where the tone is adverse. Adverse exchanges
+           are referred to the Head of Customer Success.
+
+7.5        Inquiries are declined only on the commercial grounds set out in Section 5.
+
+
+Measures
+ROLE                                               P R I M A R Y M EA S U R E
+
+
+Intake and Conversion                              Inquiries converted to orders
+
+
+Night Operations                                   First response time and completeness of handover
+
+
+Systems and Retention                              Accuracy of the inquiry log
+
+
+Head of Customer Success                           Value recovered from open quotations
+
+
+
+
+IC-01 · v1.0                                                                                     Page 9 of 9
+

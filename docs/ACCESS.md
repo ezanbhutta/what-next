@@ -56,10 +56,11 @@ about these every day until they exist, so the gap stays visible rather than bei
 quietly forgotten.
 
 - **Disputes / dead / conflicted orders sheet** — dispute-risk scoring and refund exposure.
-- **Impression system** — the analytically most valuable of the three. Without impressions
-  the engine cannot separate *falling reach* from *falling conversion*, and those two need
-  opposite responses. Right now, when organic drops, the engine can say it dropped but not
-  reliably why.
+- **A reader for the hub's Daily entry** — the analytically most valuable of the three.
+  The impressions sheet was retired on 2026-08-05 and those numbers are typed into the hub
+  now, but nothing feeds them back to the engine. Without impressions the engine cannot
+  separate *falling reach* from *falling conversion*, and those two need opposite
+  responses. Right now, when organic drops, the engine can say it dropped but not why.
 - **Daily team activity report** — attribute outcome changes to team actions rather than
   to Fiverr's algorithm.
 

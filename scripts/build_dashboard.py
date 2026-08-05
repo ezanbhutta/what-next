@@ -716,6 +716,20 @@ def view_health(run: dict) -> str:
                     for r in results],
                    "m-m"))
 
+    retired = ing.get("retired_tables") or []
+    if retired:
+        o.append(section(
+            "Retired sheets that turned up anyway",
+            f'{ing.get("retired_tables_total", len(retired))} '
+            f'{plural(ing.get("retired_tables_total", len(retired)), "table")} '
+            f'and {num(ing.get("retired_rows_total"))} rows were refused. These '
+            f'sheets were replaced by the hub, so nothing here was counted. '
+            f'While they keep arriving, the same fact exists in two places.'))
+        o.append(table(["Table", "From", "Rows refused", "Why"],
+                       [[e(r.get("name") or "—"), e(r.get("source_id") or "—"),
+                         num(r.get("rows")), e(r.get("why") or "")]
+                        for r in retired], "mnnl"))
+
     if ing.get("unmapped_columns"):
         o.append(section("Columns the parser did not recognise",
                          "Each one is signal the engine is not using. Add it to the alias table "

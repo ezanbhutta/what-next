@@ -1321,12 +1321,22 @@ details > summary:focus-visible{ outline-offset:-2px; }
   padding:10px 12px; min-height:var(--tap); width:100%; max-width:100%;
   transition:border-color .14s ease, box-shadow .14s ease;
 }
-/* numeric fields get the mono face and tabular figures — they are money */
+/* numeric fields get the mono face and tabular figures, they are money.
+   FACE AND WEIGHT ONLY. This block used to set font-size:var(--t-md), which is
+   15px, and it sits below the global 16px rule at equal specificity, so it won
+   silently: every field on Daily entry carries inputmode="numeric" or
+   "decimal", which meant the whole form, and every per-gig impressions and
+   clicks box, rendered at 15px. iOS Safari zooms on any focused control under
+   16px and does not zoom back out, so the one page whose entire job is typing
+   numbers on a phone was the one page that fought the phone. Nothing in the
+   source said 15: --t-md is the body step, and it read like a face choice.
+   If a figure needs to look heavier here, use weight or letter-spacing.
+   Never the size. */
 .field input[type="number"],
 .field input[inputmode="numeric"],
 .field input[inputmode="decimal"],
 .field input.is-figure{
-  font-family:var(--mono); font-size:var(--t-md); font-weight:600;
+  font-family:var(--mono); font-size:var(--t-input); font-weight:600;
   letter-spacing:-.03em;
   font-variant-numeric:tabular-nums lining-nums;
 }
@@ -1584,6 +1594,29 @@ html[data-theme="dark"] .field select{
 .snippet-actions form{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
 .snippet-actions .form-status{ max-width:40ch; text-transform:none; letter-spacing:0; }
 
+/* The talk playbook on Messages — the owner's own words, grouped by the moment
+   they belong to.
+
+   `.talk-group` is an `.eyebrow` that has to survive sitting in a run of
+   `.snippet` cards. A bare eyebrow carries no margin, so "When they say no"
+   printed hard against the bottom of the card above it and read as that card's
+   last line; a CSR scanning for a group landed one card early every time. The
+   rule underneath is the same hairline the cards use, so the heading belongs to
+   what follows it instead of floating between the two.
+
+   `.talk-turn` is one exchange, and it is a `.msg` with the gaps tightened.
+   `.msg` already draws the line between one turn and the next; this only pulls
+   the buyer's line and the reply close enough together to read as a pair.
+   Added for views/messages.js. */
+.talk-group{
+  margin-top:var(--s6); padding-bottom:var(--s2);
+  border-bottom:1px solid var(--rule-2);
+}
+.talk-group:first-of-type{ margin-top:var(--s4); }
+.talk-turn > .snippet-body{ margin-top:var(--s1); }
+.talk-turn > .caption,
+.talk-turn > .note{ margin-top:var(--s3); }
+
 /* team scoring — self vs manager, the gap is the signal */
 .score{ display:inline-flex; gap:3px; vertical-align:middle; }
 .score i{ width:9px; height:14px; border:1px solid var(--rule-3); border-radius:3px; display:block; }
@@ -1646,6 +1679,248 @@ html[data-theme="dark"] .field select{
 .banner--crit{ border-color:var(--bad-line); border-left-color:var(--neg); background:var(--bad-bg); }
 .banner strong{ color:var(--ink); }                /* 16.98:1 on tint PASS */
 
+
+/* =============================================================================
+   17b. HANDBOOK: six reference documents, read on a phone mid-shift
+   =============================================================================
+   Different job from every other section in this file. Everywhere else the
+   reader is scanning figures and the type is set for scanning: short measure,
+   tight leading, tabular numerals. Here they are READING, one paragraph at a
+   time, standing up, with a client waiting. So the reading column is capped
+   at 62ch and set at 1.75 leading, which is looser than anything else here
+   and is the point.
+
+   The size stays on the scale. 15px with generous leading and a short measure
+   reads better than 17px crammed edge to edge, and stepping outside 12/15/24
+   for one section would put a fourth size on a page that already has three.
+
+   All colour comes from the tokens, so both themes are covered by the theme
+   block and there is nothing here for a colour-scheme media query to do.
+   ============================================================================= */
+
+/* ---- the index: one card per document ---- */
+.doc-grid{
+  display:grid; gap:var(--s5);
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+}
+.doc-card{
+  min-width:0; padding:var(--s4);
+  background:var(--paper-2);
+  border:1px solid var(--rule); border-radius:var(--r-md);
+}
+.doc-card--missing{ border-color:var(--bad-line); }
+.doc-code{
+  font-family:var(--mono); font-size:var(--t-xs); font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent);                             /* 5.44:1 on paper-2 PASS */
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.doc-card h3{
+  margin-top:6px;
+  font-family:var(--disp); font-size:var(--t-md); font-weight:600;
+  line-height:1.3; letter-spacing:-.024em;
+  color:var(--ink);                                /* 16.82:1 PASS         */
+}
+.doc-card h3 a{ color:inherit; text-decoration:none; }
+.doc-card h3 a:hover{ color:var(--accent); text-decoration:underline; }
+.doc-answer{
+  margin-top:var(--s2); font-size:var(--t-base); line-height:1.6;
+  color:var(--ink-2);                              /* 7.23:1 on paper-2 PASS */
+}
+.doc-summary{
+  margin-top:var(--s2); font-size:var(--t-xs); line-height:1.6;
+  color:var(--ink-3);                              /* 4.76:1 on paper-2 PASS */
+}
+.doc-facts{
+  display:flex; flex-wrap:wrap; gap:6px 10px; margin-top:var(--s3);
+  font-size:var(--t-xs); letter-spacing:.06em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 4.76:1 PASS          */
+}
+.doc-facts span + span::before{ content:"· "; color:var(--rule-3); }
+
+/* The search box is the whole toolbar here, so it takes the room a row of
+   filters would have used. */
+.doc-search .field{ flex:1 1 320px; }
+/* Safari draws type="search" as its own rounded control and ignores the border
+   and padding set on .field input until the appearance is reset. */
+.doc-search input[type="search"]{ -webkit-appearance:none; appearance:none; }
+
+/* ---- the issue block under a document's title ---- */
+.doc-meta{
+  display:grid; gap:var(--s3) var(--s5);
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  padding:var(--s3) var(--card-pad); margin-bottom:var(--s4);
+  background:var(--paper-2);
+  border:1px solid var(--rule); border-radius:var(--radius);
+}
+.doc-meta dt{
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-3);             /* 4.76:1 PASS          */
+}
+.doc-meta dd{ margin-top:2px; font-size:var(--t-base); color:var(--ink-2); }
+
+/* ---- document = contents rail + reading column ---- */
+.doc-layout{
+  display:grid; gap:var(--gut);
+  grid-template-columns:minmax(0,230px) minmax(0,1fr);
+  align-items:start;
+}
+.doc-toc{
+  position:sticky; top:var(--s5);
+  padding:var(--s4); min-width:0;
+  background:var(--paper-2);
+  border:1px solid var(--rule); border-radius:var(--r-md);
+  max-height:calc(100vh - var(--s7)); overflow-y:auto;
+}
+.doc-toc ol{ list-style:none; margin-top:var(--s2); }
+.doc-toc a{
+  display:flex; align-items:center; gap:10px;
+  min-height:var(--tap); padding:0 8px; border-radius:8px;
+  font-size:var(--t-base); line-height:1.35; text-decoration:none;
+  color:var(--ink-2);                              /* 7.23:1 on paper-2 PASS */
+  transition:background-color .16s ease, color .16s ease;
+}
+.doc-toc a:hover{ background:var(--accent-w); color:var(--ink); }
+.doc-toc-n{
+  flex:0 0 auto; min-width:1.6ch;
+  font-family:var(--mono); font-size:var(--t-xs); font-weight:700;
+  color:var(--ink-3); font-variant-numeric:tabular-nums;
+}
+.doc-toc .caption{ margin-top:var(--s3); }
+
+.doc-body{ min-width:0; }
+/* The measure cap goes on the TEXT, not on the column. Capping the column
+   caps the tables inside it too, so a four column table would scroll
+   sideways on a 1400px laptop with 300px of empty card beside it. */
+.doc-prose{ line-height:1.75; }
+.doc-para,.doc-sub,ul.doc-list,.clause,.standfirst{ max-width:62ch; }
+
+.doc-section{ margin-top:var(--s7); scroll-margin-top:var(--s5); }
+.doc-section:first-child{ margin-top:0; }
+.doc-h{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:var(--s4); flex-wrap:wrap;
+  padding-bottom:var(--s2); margin-bottom:var(--s4);
+  border-bottom:1px solid var(--rule-2);
+}
+.doc-h h3{
+  display:flex; align-items:baseline; gap:12px; min-width:0;
+  font-family:var(--disp); font-size:var(--t-lg); font-weight:700;
+  line-height:1.15; letter-spacing:-.03em; text-wrap:balance;
+  color:var(--ink);                                /* 18.66:1 PASS         */
+}
+.doc-h-n{
+  flex:0 0 auto;
+  font-family:var(--mono); font-size:var(--t-md); font-weight:700;
+  color:var(--accent); font-variant-numeric:tabular-nums;  /* 6.04:1 PASS  */
+}
+.doc-up{
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-3); text-decoration:none;  /* 5.28:1 PASS */
+}
+.doc-up:hover{ color:var(--accent); }
+
+.doc-sub{
+  margin-top:var(--s5); margin-bottom:var(--s2);
+  font-size:var(--t-base); font-weight:700; letter-spacing:-.01em;
+  color:var(--ink);                                /* 18.66:1 PASS         */
+}
+.doc-para{ margin-top:var(--s3); color:var(--ink-2); }   /* 8.02:1 PASS    */
+
+/* A numbered clause. The reference is set beside the text rather than inside
+   it, so a column of 3.1 3.2 3.3 runs down the margin and the eye finds the
+   one it was sent to without reading any of the others. */
+.clause{
+  display:grid; grid-template-columns:3.6rem minmax(0,1fr); gap:var(--s3);
+  margin-top:var(--s4); scroll-margin-top:var(--s5);
+}
+.clause-ref{
+  font-family:var(--mono); font-size:var(--t-sm); font-weight:700;
+  color:var(--accent); font-variant-numeric:tabular-nums;  /* 6.04:1 PASS  */
+  letter-spacing:-.02em; padding-top:2px;
+}
+.clause-text{ min-width:0; color:var(--ink-2); }   /* 8.02:1 PASS          */
+.clause-text > p + p{ margin-top:.6em; }
+.clause-note{
+  font-size:var(--t-sm); color:var(--ink-3);       /* 5.28:1 PASS          */
+  border-left:2px solid var(--rule-2); padding-left:var(--s3);
+}
+
+/* `ul[class]` in the reset strips the marker and outranks a bare class, so
+   the selector has to carry the same weight to put the bullets back. */
+ul.doc-list{ list-style:disc; padding-left:20px; margin-top:var(--s3); color:var(--ink-2); }
+.doc-list li{ margin-top:.45em; }
+
+.doc-callout{ margin-top:var(--s5); }
+.doc-callout .eyebrow{ display:block; margin-bottom:6px; }
+
+/* Name at the left margin, covered hours set hard right. This is the shape
+   the printed document uses to open each role, and flattening it into a
+   sentence puts the hours in the middle of the person's job title. */
+.standfirst{
+  display:flex; justify-content:space-between; gap:var(--s4); flex-wrap:wrap;
+  padding-bottom:var(--s4); margin-bottom:var(--s4);
+  border-bottom:1px solid var(--rule-2);
+}
+.standfirst-left{ min-width:0; }
+.standfirst-left p{ color:var(--ink-2); }
+.standfirst-left .standfirst-name{
+  font-size:var(--t-md); font-weight:700; letter-spacing:-.02em;
+  color:var(--ink);                                /* 18.66:1 PASS         */
+}
+.standfirst-right{
+  min-width:0; text-align:right;
+  font-family:var(--mono); font-size:var(--t-sm); line-height:1.6;
+  color:var(--ink-2); font-variant-numeric:tabular-nums;   /* 8.02:1 PASS  */
+}
+
+.doc-table{ margin-top:var(--s4); }
+
+/* The fallback. A document that will not parse is still readable, and that is
+   worth more than a tidy page: a blank one reads as "no such rule". */
+.doc-plain{
+  white-space:pre-wrap; overflow-wrap:anywhere;
+  font-family:var(--mono); font-size:var(--t-sm); line-height:1.7;
+  color:var(--ink-2);                              /* 8.02:1 PASS         */
+}
+
+/* ---- search results ---- */
+.hits{ list-style:none; }
+.hit{ border-top:1px solid var(--rule); padding:var(--s4) 0; }
+.hit:first-child{ border-top:0; padding-top:0; }
+.hit-head{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  min-height:var(--tap); text-decoration:none; color:inherit;
+}
+.hit-doc{
+  font-family:var(--mono); font-size:var(--t-xs); font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  color:var(--accent);                             /* 5.32:1 on chip PASS  */
+  background:var(--accent-w);
+  border:1px solid var(--accent-line); border-radius:var(--r-pill);
+  padding:2px 9px; white-space:nowrap;
+}
+.hit-where{
+  font-size:var(--t-base); font-weight:600; letter-spacing:-.01em;
+  color:var(--ink);                                /* 18.66:1 PASS         */
+}
+.hit-head:hover .hit-where{ color:var(--accent); text-decoration:underline; }
+.hit-ref{
+  font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
+  font-variant-numeric:tabular-nums;               /* 5.28:1 PASS          */
+}
+.hit-text{
+  margin-top:4px; max-width:78ch; line-height:1.7;
+  color:var(--ink-2);                              /* 8.02:1 PASS          */
+}
+
+/* A searched word, where it was found. --accent-w2 is the STRONG tint and
+   only --ink and --ink-2 are permitted on it; this uses --ink. */
+mark{
+  background:var(--accent-w2);
+  color:var(--ink);                                /* 13.86:1 light · 11.14:1 dark PASS */
+  border-radius:4px; padding:0 3px; font-weight:600;
+}
 
 /* --- 44px floor on touch ---------------------------------------------------
    Four things are denser than --tap. Three are deliberate, so a laptop toolbar
@@ -1710,6 +1985,10 @@ html[data-theme="dark"] .field select{
   .tick:nth-child(-n+3){ border-top:0; }
   .tick:nth-child(3n+1){ border-left:0; }
   .cols--three{ grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+  /* The contents rail gives way to the reading column first. Below this the
+     prose would drop under 50 characters a line, which is where a paragraph
+     stops reading and starts stacking. */
+  .doc-layout{ grid-template-columns:minmax(0,180px) minmax(0,1fr); }
 }
 
 @media (max-width:900px){
@@ -1777,6 +2056,18 @@ html[data-theme="dark"] .field select{
   .col-rule{ border-left:0; padding-left:0; border-top:1px solid var(--rule); padding-top:18px; }
   .tablehint{ display:block; }             /* sideways scroll is likely   */
   .form-grid--two{ grid-template-columns:minmax(0,1fr); }
+
+  /* The contents list stops being a rail and becomes the top of the page.
+     It must NOT stay sticky here: the section rail is already sticky at the
+     top of the viewport, and two sticky blocks leave about a third of a phone
+     screen for the text they exist to get you to.
+     `scroll-margin-top` is what makes a deep link land correctly under that
+     rail. Without it the heading the link named scrolls to y=0 and sits
+     underneath the tab strip, so the reader arrives at the paragraph AFTER
+     the one they asked for and has no way to tell. */
+  .doc-layout{ grid-template-columns:minmax(0,1fr); }
+  .doc-toc{ position:static; max-height:none; }
+  .doc-section,.clause,.doc-toc{ scroll-margin-top:118px; }
 }
 
 @media (max-width:520px){
@@ -1797,6 +2088,10 @@ html[data-theme="dark"] .field select{
   .lede{ padding:var(--card-pad); }
   .btn{ flex:1 1 auto; }
   .toolbar{ gap:8px; }
+  /* A right-aligned column of hours against a left-aligned name reads as two
+     columns at 375px and as a ragged mess. One column, one alignment. */
+  .standfirst-right{ text-align:left; }
+  .clause{ grid-template-columns:2.9rem minmax(0,1fr); gap:var(--s2); }
   /* Axis ticks collide below ~420px: at a 311px track, a label centred on
      88.7% and one right-aligned at 100% overlap. Views mark the droppable
      ones — normally the axis bounds, never the interval edges, because the
@@ -1845,6 +2140,11 @@ html[data-theme="dark"] .field select{
   details > summary{ min-height:0; }
   details > summary::after{ display:none; }
   details:not([open]) .details-body{ display:block; }   /* reasoning prints */
+
+  /* One column on paper. A sticky contents rail is meaningless printed, and
+     the reading column should have the whole page. */
+  .doc-layout{ display:block; }
+  .doc-toc{ position:static; max-height:none; margin-bottom:var(--s5); }
 
   .tablewrap{ overflow:visible; background:none; border:0; padding:0; }
   .tablewrap--capped{ max-height:none; overflow:visible; }

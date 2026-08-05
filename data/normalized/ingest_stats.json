@@ -4,23 +4,46 @@
   "flow_rows": 378,
   "flow_aggregate_rows": 54,
   "active_orders": 8,
-  "impressions": 98,
+  "impressions": 0,
   "disputes": 0,
   "automation_errors": 334,
   "blocks_seen": 28,
-  "blocks_used": 26,
-  "header_cells_seen": 415,
+  "blocks_used": 25,
+  "header_cells_seen": 408,
   "unmapped_columns": {
     "Upsell": 5,
     "Public Review": 1,
     "Order type": 1,
     "Public review": 1,
     "Service Demand": 1,
-    "Reply": 1,
-    "<unclassified tab: Daily Data Sheet Profiles>": 1
+    "Reply": 1
   },
-  "unmapped_rate": 0.0265,
+  "unmapped_rate": 0.0245,
   "coercion_misses": {
     "order_date": 9
-  }
+  },
+  "retired_tables_skipped": {
+    "impressions": 2
+  },
+  "retired_rows_skipped": {
+    "impressions": 3383
+  },
+  "retired_tables_total": 2,
+  "retired_rows_total": 3383,
+  "retired_tables": [
+    {
+      "retired": "impressions",
+      "name": "Daily Data Sheet Profiles",
+      "source_id": "impressions",
+      "rows": 3221,
+      "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+    },
+    {
+      "retired": "impressions",
+      "name": "Impressions Daily Data Sheet Profiles",
+      "source_id": "impressions",
+      "rows": 162,
+      "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+    }
+  ]
 }

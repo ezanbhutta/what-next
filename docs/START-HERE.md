@@ -211,27 +211,30 @@ the file and pushes it, and Vercel republishes automatically.
 
 # One more thing, and it matters most
 
-**Your impressions sheet stops on 12 December 2025.**
+**The engine has no impressions at all.**
 
-That's over 200 days ago. Impressions are the single most important number in
-the whole system right now — it's the one that tells you whether Fiverr is
-showing your gig to people again.
+The impressions sheet stopped on 12 December 2025 and was retired on 5 August
+2026. Those numbers are typed into the hub's Daily entry now. Nothing reads
+that table back into the engine yet, so the brief says "no impression data"
+and will keep saying it until someone builds the reader.
 
-Without current impressions, the system can tell you organic orders fell. It
-**cannot** tell you whether that's because:
+Impressions are the single most important number in the system: they say
+whether Fiverr is showing your gig to people again. Without them the system can
+tell you organic orders fell. It **cannot** tell you whether that's because:
 
-- fewer people are seeing the gig → that's a **ranking** problem
-- people see it but don't click → that's a **thumbnail/title/price** problem
-- people click but don't buy → that's a **gig page** problem
+- fewer people are seeing the gig, that's a **ranking** problem
+- people see it but don't click, that's a **thumbnail/title/price** problem
+- people click but don't buy, that's a **gig page** problem
 
 Those three need completely opposite fixes. Guessing between them wastes weeks.
 
-**What to do:** open the impressions sheet and add a row per profile per day
-from Fiverr Analytics, from 13 December to today. Keep the column names exactly
-as they are — the system already knows how to read them.
+**What to do:** type the daily numbers into the hub's Daily entry, one row per
+profile per day from Fiverr Analytics. Do not reopen the old sheet. The engine
+refuses its tables now, and two places holding the same number is the problem
+the hub was built to end.
 
-Once 28 days in a row exist, every morning's brief will tell you which of those
-three it is, automatically, in plain English.
+Once 28 days in a row exist and the engine can read them, every morning's brief
+will tell you which of those three it is, automatically, in plain English.
 
 ---
 

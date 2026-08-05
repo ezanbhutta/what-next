@@ -86,7 +86,7 @@ export function safe(value) {
  * written. No English word contains either substring, so a blanket replace is
  * safe and a bounded one is not.
  */
-const RETIRED = /vvro|inorganic/gi;
+const RETIRED = /vvro|inorganic/gi; // scrubs-output: the one line allowed to name them
 
 export function scrub(text) {
   return String(text).replace(RETIRED, (match) => {
@@ -456,6 +456,12 @@ export const SECTIONS = Object.freeze([
   { key: 'errors', href: '/errors', label: 'Errors', group: 'People & money',
     question: 'Rows in the order sheet that cannot be true',
     icon: '<path d="M9 2.8 16.2 15H1.8z"/><path d="M9 7v3.4M9 12.6v.1"/>' },
+  // The six owner-written documents. Last because it is the only section that
+  // is not about today: nothing here changes when the engine runs, and nobody
+  // opens it as part of a shift. They come to it when they need one rule.
+  { key: 'handbook', href: '/handbook', label: 'Handbook', group: 'People & money',
+    question: 'What the rule is, in the owner’s own words',
+    icon: '<path d="M3.5 3.5h5A2.5 2.5 0 0 1 11 6v9a2 2 0 0 0-2-1.6H3.5z"/><path d="M14.5 3.5h-3A2.5 2.5 0 0 0 9 6v9a2 2 0 0 1 2-1.6h3.5z"/>' },
 ]);
 
 // The keycap is PRINTED on every rail link, so every keycap has to work. The

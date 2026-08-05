@@ -243,6 +243,33 @@ takes a minute and has caught every one of these.
 3. Add a schema-drift test in `tests/test_engine.py`.
 4. Run `python3 -m pytest tests/ -q`. All tests must pass before the source goes live.
 
+## Retiring a data source
+
+The hub replaced three sheets on 2026-08-05: impressions, team review, and
+resources + upsell. Deleting a source from `config/sources.yml` does **not**
+stop it being read. Tables are detected by header fingerprint, so a retired
+sheet still present in a snapshot keeps being classified, and a sheet whose own
+rule is gone does not go unclassified: it falls through to the next fingerprint
+that fits. The impressions sheet carries its own organic and directed order
+columns, so unclaimed it becomes the daily ledger and doubles every order in it.
+
+To retire a sheet:
+
+1. Add it to `RETIRED_ROLES` in `xstudioz/ingest.py`, with where the data lives
+   now. Add a header fingerprint to `RETIRED_FINGERPRINTS` that no live table
+   could match, so the sheet is refused even without its id or its role tag.
+2. Move it from `sources` to `retired` in `config/sources.yml`.
+3. Take its `fileId` out of `SOURCES` in `automation/Snapshot.gs`, and leave
+   its `ROLE_RULES` entry in place so a returning tab arrives under its own
+   name rather than the ledger's.
+4. Add a test that fails if one of its tables is ingested.
+
+What the ingester refuses it counts. The count reaches the run JSON, the Health
+view and the `retired_sources_refused` self-check, and `daily_run.py` prints a
+`[retired]` line. That check is a warning, not a block: refusing the rows keeps
+the numbers right, and the warning exists so nobody has to notice on their own
+that the same fact is being kept in two places.
+
 ## Changing policy
 
 Numbers live in `config/profile.yml`, not in code. To change the risk appetite, edit

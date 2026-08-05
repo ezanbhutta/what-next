@@ -106,31 +106,26 @@ environment in your Claude settings.
 
 ---
 
-## 7. Create the two missing sheets
+## 7. Create the missing sheet
 
-Run `createMissingSourceSheets` once. It creates two workbooks with the exact
+Run `createMissingSourceSheets` once. It creates one workbook with the exact
 headers the engine already reads, plus dropdown validation on the categorical
-columns. The logs print their file ids — paste those into `SOURCES` at the top
-of the script, then share both with the team.
+columns. The log prints its file id. Paste that into `SOURCES` at the top of
+the script, then share the sheet with the team.
 
-### Impressions — the one that matters most
+### Impressions live in the hub now
 
-| Date | Profile | Gig | Impressions | Clicks | Orders | Notes |
-|---|---|---|---|---|---|---|
+There used to be an impressions sheet here. It was retired on 2026-08-05: the
+daily numbers are typed into the hub's Daily entry instead, and this script no
+longer serves the workbook. Do not add it back to `SOURCES`. The engine refuses
+every table belonging to a retired sheet (`RETIRED_ROLES` in
+`xstudioz/ingest.py`) and reports the count of what it refused, so a sheet that
+reappears shows up in the brief rather than quietly doubling the ledger.
 
-One row per gig per day, from Fiverr Analytics.
-
-This is worth more than the other two sources combined. Orders decompose as
-`impressions × CTR × close-rate`, so without it a fall in organic orders is
-ambiguous between three causes that need **opposite** responses:
-
-- **impressions fell** → a ranking problem → review velocity, on-time delivery
-- **CTR fell** → a listing problem → thumbnail, title, price
-- **close rate fell** → a page/handling problem → copy, packages, response time
-
-Right now the engine can tell you organic dropped 14.3%. With 28 days of this
-sheet it can tell you *which of those three it was*, and the daily brief will
-say so in plain language.
+The classification rules for those tabs are still in `ROLE_RULES` on purpose. A
+returning tab has to arrive wearing its own name: the impressions sheet carries
+its own organic and directed order columns, so with no rule to claim it first
+it lands on the daily ledger and doubles every order in it.
 
 ### Disputes & dead orders
 
@@ -165,7 +160,8 @@ concentration test meaningful.
 | `snapshot is not valid JSON` | Usually a Google sign-in page — same as the 302 case. |
 | `schema_version 2, engine understands 1` | The script is newer than the engine. Pull the repo. |
 | A tab is missing from the brief | It classified as `unknown`. Run `testSnapshot` and check. |
-| `cannot open "impressions"` | `fileId` still empty in `SOURCES`, or not shared with you. |
+| `cannot open "<id>"` | `fileId` still empty in `SOURCES`, or not shared with you. |
+| `[retired] refused N table(s)` | A sheet the hub replaced is still being served. Take it out of `SOURCES`. |
 
 ## Security
 

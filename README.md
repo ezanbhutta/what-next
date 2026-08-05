@@ -113,8 +113,10 @@ decline has exactly three possible sources, and they need **opposite** responses
 `metrics.decompose_funnel` attributes the movement using a log decomposition (exact
 for a product), names the dominant factor, and emits a task pointing at the right
 kind of work. It refuses to attribute when no single factor reaches 45% of the swing,
-and says "unknown" loudly when the impression sheet does not exist yet — which today
-it does not. That sheet is worth more than the other two missing sources combined.
+and says "unknown" loudly when it has no impression series, which today it does not.
+The impressions sheet was retired on 2026-08-05 and those numbers are typed into the
+hub's Daily entry; until something reads that table back, this stays unanswerable.
+It is worth more than the other two missing sources combined.
 
 ## How it self-improves
 

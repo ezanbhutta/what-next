@@ -287,7 +287,7 @@ const FLASH_ERR = {
   notfound: 'That record no longer exists.',
   forbidden: 'Only Ezan can change the talk playbook. Nothing was written.',
   talk:
-    'A card needs a heading, a group, a title and at least one full exchange — what the buyer says AND ' +
+    'A card needs a heading, a group, a title and at least one full exchange: what the buyer says AND ' +
     'the line that goes back. Nothing was written.',
   db: 'The typed-records database could not be written to. Nothing was saved.',
   noshift: 'You have no shift open, so there is nothing to log against. Nothing was written.',
@@ -1744,7 +1744,7 @@ app.post(
 // It is a code check rather than a `section_access` row for the same reason
 // /reports/ceo is: a section absent from that table is OPEN, so forgetting one
 // row would hand every CSR the ability to rewrite what everybody says to every
-// buyer — silently, with the page looking completely normal.
+// buyer, silently, with the page looking completely normal.
 
 const TALK_STAGES = ['all', 'inquiry', 'kickoff', 'working', 'approved', 'delivered'];
 const TALK_KINDS = ['ask', 'stop', 'care'];

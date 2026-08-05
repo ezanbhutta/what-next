@@ -180,13 +180,13 @@ export async function migrate({ dryRun = false, log = console.log } = {}) {
     // Refuse the whole file, not just the statement. A schema file that has
     // grown a DROP needs a person to look at it.
     throw new Error(
-      `schema.sql contains ${destructive.length} destructive statement(s) — refusing to run.\n` +
+      `schema.sql contains ${destructive.length} destructive statement(s), refusing to run.\n` +
         destructive.map((s) => `  ${s.split('\n')[0].slice(0, 90)}`).join('\n')
     );
   }
 
   if (dryRun) {
-    log(`[migrate] dry run — ${statements.length} statement(s), nothing executed:`);
+    log(`[migrate] dry run, ${statements.length} statement(s), nothing executed:`);
     for (const s of statements) log(`  · ${s.split('\n')[0].slice(0, 90)}${s.includes('\n') ? ' …' : ''}`);
     return { created: [], existing: [], drift: [], statements: statements.length, dryRun: true };
   }
@@ -259,13 +259,13 @@ export async function migrate({ dryRun = false, log = console.log } = {}) {
     log(`[migrate] created ${created.length} table(s):`);
     for (const t of created) log(`             + ${t}`);
   } else {
-    log('[migrate] created 0 tables — everything was already there');
+    log('[migrate] created 0 tables, everything was already there');
   }
   if (existing.length) log(`[migrate] already present: ${existing.join(', ')}`);
 
   if (drift.length) {
     log('');
-    log('[migrate] SCHEMA DRIFT — these columns are in schema.sql but not in the database.');
+    log('[migrate] SCHEMA DRIFT. These columns are in schema.sql but not in the database.');
     log('          CREATE TABLE IF NOT EXISTS skipped them silently. Add them with an');
     log('          explicit ALTER TABLE once you have decided what happens to existing rows:');
     for (const d of drift) {
@@ -284,7 +284,7 @@ if (invokedDirectly) {
   const dryRun = process.argv.includes('--dry') || process.argv.includes('--dry-run');
   if (!dryRun && !dbConfigured()) {
     console.error(
-      `[migrate] not configured — missing ${missingEnv().join(', ')}. ` +
+      `[migrate] not configured, missing ${missingEnv().join(', ')}. ` +
         'Copy .env.example to .env and fill it in (placeholders only in the example file).'
     );
     process.exit(2);

@@ -1,0 +1,480 @@
+RR-01
+
+HAS EEB M AD EIT · XS T UD IOZ
+
+
+Roles and Responsibilities
+The five roles operating the XStudioz profile, one vacant
+position, and the decision authority applying to each.
+
+
+
+V ER S I O N                     1.0
+
+I S S U E D AT E                 4 August 2026
+
+O W N ER                         Head of Customer Success
+
+R EV I EW                        Weekly review, formal at 30 days
+
+C L A S S I F I C AT I O N       Internal
+
+
+
+
+RR-01 · v1.0                                                        Page 1 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES   CO N T EN T S
+
+
+
+
+Contents
+
+
+1        Structure                                              3
+
+
+2        Head of Customer Success                               4
+
+
+3        Intake and Conversion                                  5
+
+
+4        Order Management                                       6
+
+
+5        Systems and Retention                                  7
+
+
+6        Night Operations                                       8
+
+
+7        Decision Authority                                     9
+
+
+
+
+RR-01 · v1.0                                          Page 2 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                                  S ECT I O N 1
+
+
+
+
+S EC TION 1
+
+Structure
+
+The profile is operated by five roles. A sixth position is vacant.
+ROLE                             H EL D B Y          HOU RS                    P R I M A R Y M EA S U R E
+
+
+Head of Customer                 Ezan                11:00–23:00 Mon–Fri       Success Score
+Success                                              09:00–21:00 Sat, Sun
+
+Intake and Conversion            Hasnain             17:00–01:00               Inquiries converted
+                                                     Friday 21:00–09:00
+
+Order Management                 Amrah               09:00–17:00               Delivery within date
+                                                     Friday 07:00–18:00
+
+Systems and Retention            Zaheen              09:00–18:00 Mon to Sat    Accuracy of records
+
+Night Operations                 Nadir               21:00–09:00, six nights   First response time
+
+Night Operations                 Vacant              01:00–09:00, six nights   Overnight cover
+Support
+
+
+Principles
+
+1.1        The team member on shift handles all client messages. Message handling is not restricted by
+           role.
+
+1.2        Accountability for outcomes remains with the role owner whether or not they were on shift.
+
+1.3        Where two team members are on shift simultaneously, the person on shift acts and the role
+           owner decides.
+
+1.4        A responsibility that can be performed more reliably by a system is removed from the role.
+
+
+   VA C A N T P O S I T I O N
+
+   Five roles cover 168 hours a week with no reserve. The period from 01:00 to 09:00 is covered by one
+   person for 56 hours a week and produces the highest conversion rate on the profile. The vacant
+   position provides a second person during that period.
+
+
+
+
+RR-01 · v1.0                                                                                         Page 3 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                              S ECT I O N 2
+
+
+
+
+S EC TION 2
+
+Head of Customer Success
+
+
+Ezan                                                                         11:00–23:00 Monday to Friday
+                                                                          09:00–21:00 Saturday and Sunday
+Head of Customer Success
+
+Accountable for the performance of the profile and for every decision with a financial
+consequence.
+
+Accountable for
+
+—          The Success Score and the selection of which performance area is addressed
+
+—          All refunds, cancellations and disputes, at any value
+
+—          All matters above USD 500
+
+—          The volume of controlled orders entering the queue
+
+—          Weekly review of each team member
+
+Responsibilities
+
+—          Reviews the daily position and confirms priorities at 11:00
+
+—          Reviews five client conversations each day, selected at random
+
+—          Conducts one review conversation with each team member each week, addressing the two
+           measures furthest from standard
+
+—          Works exceptions. Does not review the full order queue
+
+—          Maintains the change log recording every change made, the date and the person responsible
+
+—          Approves quotations and additional work above USD 500
+
+Outside the role
+
+—          Routine client correspondence and inbox clearance
+
+—          Taking over a conversation in place of coaching the team member handling it
+
+
+    M EA S U R ES
+
+    Success Score · cancellations and disputes · impressions trend · weekly reviews completed
+
+
+
+
+RR-01 · v1.0                                                                                    Page 4 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                              S ECT I O N 3
+
+
+
+
+S EC TION 3
+
+Intake and Conversion
+
+
+Hasnain                                                                        17:00–01:00 Mon–Thu and Sat
+                                                                                         Friday 21:00–09:00
+Intake and Conversion
+
+Accountable for every inquiry from first contact until an order is placed or the inquiry is closed with
+a recorded reason.
+
+Accountable for
+
+—          Conversion of inquiries to orders
+
+—          Three recorded follow ups on every inquiry
+
+—          Recovery of the $5,722 in open quotations
+
+—          Accuracy of every price recorded in the inquiry log
+
+Responsibilities
+
+—          Issues a first response within 10 minutes
+
+—          Completes qualification before any price is provided
+
+—          Records the price in the inquiry log at the time it is sent
+
+—          Follows up on day one, day three and day seven, addressing a different point each time
+
+—          Works open quotations in order of value, contacting each client individually
+
+—          Quotes additional work within the approval threshold
+
+—          Reports spam within 24 hours
+
+Outside the role
+
+—          Quotations above USD 500 without approval
+
+—          Reducing price for unchanged scope
+
+—          Closing an inquiry without three recorded follow ups and a reason
+
+—          Moving a conversation outside the platform
+
+
+    M EA S U R ES
+
+    First response time · inquiries converted · follow ups recorded · open quotations worked
+
+
+
+
+RR-01 · v1.0                                                                                     Page 5 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                                    S ECT I O N 4
+
+
+
+
+S EC TION 4
+
+Order Management
+
+
+Amrah                                                                           09:00–17:00 Mon–Thu and Sat
+                                                                                          Friday 07:00–18:00
+Order Management
+
+Accountable for every active order from the point it starts until final delivery.
+
+Accountable for
+
+—          Delivery within the committed date
+
+—          Confirmation of the brief on every order
+
+—          The statement of delivery contents given to the client
+
+—          Verification of files before delivery
+
+—          Allocation of work against designer availability
+
+Responsibilities
+
+—          Confirms the brief within 15 minutes of an order starting
+
+—          States the delivery contents to the client before design work begins
+
+—          Issues the confirmed brief to production in ClickUp the same day
+
+—          Shares the initial draft within 48 hours with an explanation of the direction taken
+
+—          Collects all feedback before assigning revisions, and restates the changes before assigning
+           them
+
+—          Verifies every file against the stated contents before delivery
+
+—          Works the exception list rather than the full queue
+
+Outside the role
+
+—          Committing a delivery date before confirming designer availability
+
+—          Delivering files that have not been verified
+
+—          Cancelling an order on the platform in order to close it
+
+—          Allowing an order to reach day seven without escalation
+
+
+    M EA S U R ES
+
+    Delivery within date · briefs confirmed · revision rounds per order · orders reaching day seven
+
+
+
+
+RR-01 · v1.0                                                                                          Page 6 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                                 S ECT I O N 5
+
+
+
+
+S EC TION 5
+
+Systems and Retention
+
+
+Zaheen                                                                         09:00–18:00 Monday to Saturday
+Systems and Retention
+
+Accountable for the accuracy of the records on which the profile is managed, and for identifying
+further work from existing clients.
+
+Accountable for
+
+—          Daily reconciliation of the order tracker against the inquiry log
+
+—          Completeness of the additional work and revenue records
+
+—          The exception list used by Order Management
+
+—          Identification of further work from clients already served
+
+Responsibilities
+
+—          Reconciles the order tracker against the inquiry log each morning and reports any discrepancy
+           the same day
+
+—          Records impressions and the seven day average at 09:15
+
+—          Prepares the exception list for the following day at 17:30
+
+—          Maintains the additional work record with no blank entries
+
+—          Maintains the revenue record in the daily ledger
+
+—          Records orders where the client accepted delivery without comment, requested more
+           revisions than agreed, or did not respond
+
+—          Identifies further work available from clients already served and refers it to Intake and
+           Conversion
+
+Outside the role
+
+—          Requesting public reviews or private feedback from clients
+
+—          Reporting a discrepancy at the end of the week rather than the same day
+
+
+    M EA S U R ES
+
+    Accuracy of records · discrepancies reported same day · further work identified · repeat orders
+
+
+
+
+RR-01 · v1.0                                                                                          Page 7 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                                      S ECT I O N 6
+
+
+
+
+S EC TION 6
+
+Night Operations
+
+
+Nadir                                                                                             21:00–09:00
+                                                                                Saturday to Thursday, six nights
+Night Operations
+
+Accountable for coverage of the overnight period, which produces the highest conversion rate on
+the profile and is covered by one person.
+
+Accountable for
+
+—          First response time throughout the overnight period
+
+—          Completeness of every inquiry handed to Intake and Conversion
+
+—          Identification of adverse client sentiment overnight
+
+—          The 09:00 handover
+
+Responsibilities
+
+—          Issues a first response within 10 minutes at any hour
+
+—          Completes qualification on all four points before handing an inquiry over
+
+—          Records qualification in the inquiry log
+
+—          Answers factual questions on active orders and refers matters requiring a decision
+
+—          Refers adverse client sentiment to the Head of Customer Success immediately, at any hour
+
+—          Reports spam within 24 hours
+
+—          Issues the full handover before 09:00
+
+Outside the role
+
+—          Issuing offers, quoting or negotiating price
+
+—          Declining an inquiry
+
+—          Approving a refund or a cancellation
+
+
+    M EA S U R ES
+
+    First response time · completeness of qualification · inquiries handed over · quality of handover
+
+
+
+    R ES T P ER I O D
+
+    Friday 09:00 to Saturday 21:00. This period is not used for cover, training or delivery.
+
+
+
+
+RR-01 · v1.0                                                                                            Page 8 of 9
+R R - 0 1 · R OL ES A N D R ES P ON S IB IL IT IES                                                                S ECT I O N 7
+
+
+
+
+S EC TION 7
+
+Decision Authority
+
+The following matrix applies at all times. Where the Head of Customer Success is unreachable for
+more than two hours, the delegated authority in CP-01 Section 6 applies.
+
+M AT T ER                                            EZ A N       HASNAIN     AMRAH          Z A H EEN            NAD IR
+
+
+Respond to a client                                   Yes           Yes         Yes              Yes               Yes
+
+Qualify an inquiry                                    Yes           Yes          —               Yes               Yes
+
+Quote at or below USD 500                             Yes           Yes          —               —                  —
+
+Quote above USD 500                                   Yes          Refer         —               —                  —
+
+Quote additional work in an order                     Yes           Yes         Yes              —                  —
+
+Decline an inquiry                                    Yes          Refer         —               —                  —
+
+Allocate a designer                                   Yes            —          Yes              —                  —
+
+Commit a delivery date                                Yes          Refer        Yes              —                  —
+
+Release a delivery                                    Yes            —          Yes              —                  —
+
+Approve a refund, any value                           Yes            —           —               —                  —
+
+Accept a cancellation, any value                      Yes            —           —               —                  —
+
+
+Yes indicates the matter may be decided without reference. Refer indicates approval is required from the
+Head of Customer Success. — indicates the matter falls outside the role.
+
+Acknowledgement
+I confirm that I have read and understood my role, the matters I may decide, the matters falling
+outside my role and the measures against which my performance is assessed.
+
+
+
+EZA N                     H A S NA I N                 A M RA H             ZA H EEN                   NA D I R
+
+
+
+
+Signature and date        Signature and date           Signature and date   Signature and date         Signature and date
+
+
+
+
+RR-01 · v1.0                                                                                                      Page 9 of 9
+

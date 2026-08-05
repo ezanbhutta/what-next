@@ -590,8 +590,11 @@ class FunnelDecomposition:
     *order_rate down* — a **page or handling** problem. People click and do
         not buy. Fixes are gig copy, packages, response speed, CSR quality.
 
-    Without impressions data all three are indistinguishable, which is why
-    the engine nags for this source every single day until it exists.
+    Without impressions data all three are indistinguishable. The engine has
+    no impression series at all since the impressions sheet was retired: those
+    numbers are typed into the hub's Daily entry now, and nothing reads that
+    table back into the engine yet. So this says "no data" rather than
+    guessing, and will keep saying it until a hub reader exists.
     """
     have_data: bool
     days: int = 0
@@ -635,9 +638,12 @@ def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
         return FunnelDecomposition(
             have_data=False,
             explanation=("No impression data. A fall in organic orders cannot be "
-                         "attributed to reach, click-through or closing rate — "
-                         "and those three need opposite responses. This is the "
-                         "single most valuable missing input."))
+                         "attributed to reach, click-through or closing rate, "
+                         "and those three need opposite responses. The daily "
+                         "numbers are typed into the hub's Daily entry since the "
+                         "impressions sheet was retired; the engine cannot read "
+                         "that table yet, so this stays unanswerable until it "
+                         "can. It is the most valuable missing input."))
 
     cur_lo = as_of - _dt.timedelta(days=window - 1)
     pri_hi = cur_lo - _dt.timedelta(days=1)
@@ -668,9 +674,9 @@ def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
                     f"Impression data exists but stops at {latest}, {gap} days "
                     f"before today. The last {window * 2} days carry no rows, so "
                     f"the current decline cannot be attributed to reach, "
-                    f"click-through or closing rate. Update the impressions sheet "
-                    f"to the present and this becomes answerable immediately — "
-                    f"the engine already reads it."))
+                    f"click-through or closing rate. Fill the gap in the hub's "
+                    f"Daily entry and this becomes answerable immediately. The "
+                    f"maths is already here, it is the rows that are missing."))
         return FunnelDecomposition(
             have_data=True, days=window,
             impressions_now=i_now, impressions_prior=i_pri,

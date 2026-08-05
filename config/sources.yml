@@ -67,23 +67,6 @@ sources:
     role: shift_reports
     freshness_sla_days: 1
 
-  - id: impressions
-    name: Impressions / Daily Data Sheet
-    kind: google_sheet
-    file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
-    url: https://docs.google.com/spreadsheets/d/1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA/edit
-    tables:
-      - id: impressions
-        detect_all: ["Impressions"]
-        role: impressions
-    # NOTE: the profile column reads "XStudioz" here and "X Studioz" in the
-    # orders ledger. contracts.normalise_profile collapses them; without that
-    # every impressions row belongs to a profile with no orders.
-    # NOTE: this table also carries Organic/VVRO order columns. It must classify
-    # as `impressions`, never `daily_flow`, or every order is counted twice.
-    coverage_as_of_2026_07_29: "2025-11-30 .. 2025-12-12 — 228 days stale"
-    freshness_sla_days: 1
-
   - id: snapshot_endpoint
     name: Apps Script snapshot web app
     kind: https_json
@@ -103,6 +86,36 @@ sources:
     # Scraped for: level, review count, star histogram, orders in queue,
     # avg response time, last delivery.
     freshness_sla_days: 1
+
+# Sheets the management hub replaced on 2026-08-05. The engine does not read
+# them any more and must not start again by accident.
+#
+# Deleting a source from this file does NOT stop ingestion. Tables are detected
+# by header fingerprint, so a retired sheet still present in a snapshot goes on
+# being classified, and its rows would be counted next to the hub's typed ones.
+# The refusal that actually holds is xstudioz.ingest.RETIRED_ROLES, which drops
+# any table matching a retired source id, role tag or header fingerprint and
+# counts what it dropped. This list is documentation; that code is the gate.
+retired:
+  - id: impressions
+    name: Impressions / Daily Data Sheet
+    file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
+    replaced_by: "the hub's Daily entry (daily_entry, daily_entry_gig)"
+    retired_on: 2026-08-05
+    # It was 228 days stale on 2026-07-29 and nobody noticed, which is most of
+    # the argument for typing the numbers into a form instead.
+    # Two traps this sheet carried, kept here because they explain the guard:
+    # its profile column read "XStudioz" against "X Studioz" in the orders
+    # ledger, and it carried its own Organic and directed order columns, so
+    # anything classifying it as the daily ledger doubled every order in it.
+  - id: team_review
+    name: Team review sheet
+    replaced_by: "the hub's Team (team_week: weekly 1-5, self against manager)"
+    retired_on: 2026-08-05
+  - id: resources_upsell
+    name: Resources + upsell sheet
+    replaced_by: "the hub's Responses (response, talk) and Money (upsell)"
+    retired_on: 2026-08-05
 
 # Sources the user mentioned but has not yet wired up. The engine reports
 # these as MISSING every day until they exist, so gaps stay visible.

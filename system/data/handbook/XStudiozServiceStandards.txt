@@ -1,0 +1,347 @@
+SS-01
+
+HAS EEB M AD EIT · XS T UD IOZ
+
+
+Service Standards
+The standards of service the client receives at each stage
+of an order, how performance is assessed, and how
+dissatisfaction is handled.
+
+
+
+V ER S I O N                     1.0
+
+I S S U E D AT E                 4 August 2026
+
+O W N ER                         Head of Customer Success
+
+R EV I EW                        Monthly
+
+C L A S S I F I C AT I O N       Internal
+
+
+
+
+SS-01 · v1.0                                                 Page 1 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S   CO N T EN T S
+
+
+
+
+Contents
+
+
+1        Purpose and Scope                             3
+
+
+2        Stages of an Order                            4
+
+
+3        Communication Standards                       5
+
+
+4        Order Standards                               6
+
+
+5        Delivery Standards                            7
+
+
+6        Handling Dissatisfaction                      8
+
+
+
+
+SS-01 · v1.0                                 Page 2 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                             S ECT I O N 1
+
+
+
+
+S EC TION 1
+
+Purpose and Scope
+
+This document sets out the standards of service the client receives. OH-01 Order Handbook governs
+how the work is carried out. This document governs what the client experiences while it is being
+carried out.
+
+1.1        These standards apply to every order without exception.
+
+1.2        Where a standard cannot be met, the client is informed before the standard is missed rather
+           than afterwards.
+
+1.3        Standards are measured and reported weekly.
+
+
+How performance is assessed
+The profile is assessed through two channels. Only one of them is visible.
+C H A N N EL                                   VISIBLE        A S S ES S M EN T W EI G H T
+
+
+Public review and star rating                     Yes         Contributes to the displayed rating
+
+Private questionnaire                             No          Carries significant weight in the Success
+                                                              Score
+
+
+1.1        The private questionnaire is issued to the client 24 hours after the order concludes and
+           remains open for 60 days.
+
+1.2        It covers the quality of the work, whether the work met the client's expectations, and
+           whether the work was useful.
+
+1.3        Responses are not visible to the seller and cannot be identified, addressed or corrected.
+
+1.4        First time buyers and higher value orders carry greater weight.
+
+1.5        Clients are not asked to provide public reviews or private feedback at any stage.
+           Performance in this channel is influenced only by the standard of service delivered during the order.
+
+
+   T H E C O N S EQ U EN C E
+
+   The only period during which the client's assessment can be influenced is while the order is open.
+   Once the order concludes, the assessment is submitted privately and cannot be recovered. This is
+   why the standards in Sections 3 and 4 are treated as mandatory rather than advisory.
+
+
+
+
+SS-01 · v1.0                                                                                           Page 3 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                                    S ECT I O N 2
+
+
+
+
+S EC TION 2
+
+Stages of an Order
+
+The client passes through six stages. At each stage there is a specific concern to be addressed.
+S TA G E                                    T H E C L I EN T ' S P R I N C I PA L C O N C ER N
+
+
+1. First contact                            Whether anyone is available, and whether their message has
+                                            been read
+
+2. Considering the purchase                 Whether the price is justified and what happens if the work is not
+                                            right
+
+3. Order placed                             What happens next, and whether they explained themselves
+                                            adequately
+
+4. Initial draft                            Whether the work reflects what they asked for
+
+5. Revisions                                Whether the work is moving toward what they wanted
+
+6. Delivery                                 Whether everything is present and whether the files will work
+
+
+Indicators of a stage not being met
+O B S ER V ED                                                PROBABLE CAU SE
+
+
+The client does not respond to the delivery                  The initial draft did not establish direction
+
+Revision requests continue beyond three                      The brief was not confirmed adequately
+rounds
+
+The client requests a file after delivery                    The delivery contents were not stated in advance
+
+The client accepts delivery without comment                  No dissatisfaction was expressed and none was
+                                                             invited
+
+
+   S I L EN T A C C EP TA N C E
+
+   A client who accepts a delivery without comment provides no indication of their assessment. These
+   orders are recorded so that patterns can be identified over time.
+
+
+
+
+SS-01 · v1.0                                                                                                 Page 4 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                         S ECT I O N 3
+
+
+
+
+S EC TION 3
+
+Communication Standards
+
+3.1        A first response to a new inquiry is issued within 10 minutes at any hour.
+
+3.2        A response to a message on an active order is issued within 30 minutes during covered
+           hours.
+
+3.3        A revision request is acknowledged within 15 minutes.
+
+3.4        Where a client's tone becomes adverse, the Head of Customer Success is informed within
+           15 minutes.
+
+3.5        The team member on shift responds. Responses are not deferred to a particular role.
+
+3.6        A message received outside covered hours is the first action of the following shift.
+
+3.7        The client is not asked to repeat information already provided.
+
+3.8        A team member taking over an order does not introduce themselves as new to it.
+
+
+   A S S ES S M EN T O F C O M M U N I C AT I O N
+
+   Fiverr assesses effective communication on five components: availability, the clarity of expectations
+   set at the outset, explanation of the process, progress shared during the order, and issues addressed
+   as they arise. Speed of response is one of five. The remaining four are governed by Section 4.
+
+
+
+
+SS-01 · v1.0                                                                                      Page 5 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                             S ECT I O N 4
+
+
+
+
+S EC TION 4
+
+Order Standards
+
+4.1        The brief is confirmed with the client within 15 minutes of the order starting.
+
+4.2        The contents of the final delivery are stated to the client before design work begins.
+
+4.3        Where the package purchased does not include vector or source files, the client is informed
+           at the outset.
+
+4.4        The initial draft is shared within 48 hours and serves as the direction check.
+
+4.5        The initial draft is accompanied by an explanation of the direction taken.
+
+4.6        The client is asked what they would change, rather than whether they are satisfied.
+
+4.7        All feedback is collected before revisions are assigned.
+
+4.8        Changes are restated to the client before a set of revisions is assigned.
+
+4.9        Work outside the purchased package is quoted at the time it is requested.
+
+4.10       Where a delivery date is at risk, the client is informed before the date rather than after it.
+
+
+   THE INITIAL D RAFT
+
+   The initial draft is the principal point at which the direction of the work can be corrected at low cost,
+   and the principal opportunity to influence the client's eventual assessment. It is shared in the order
+   conversation. Final delivery is made separately on the order page.
+
+
+
+
+SS-01 · v1.0                                                                                           Page 6 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                         S ECT I O N 5
+
+
+
+
+S EC TION 5
+
+Delivery Standards
+
+5.1        Final delivery is made on the order page. Draft work is not submitted through the delivery
+           function.
+
+5.2        Every file is verified against the delivery contents stated before work began.
+
+5.3        Files are checked for watermarks and correct formats, and the fonts used are named.
+
+5.4        Delivery is made ahead of the due date wherever the work allows.
+
+5.5        The delivery message states what the folder contains.
+
+5.6        Where a client identifies an omission falling within the stated contents, it is supplied without
+           dispute.
+
+
+Summary of standards
+POINT                                                                                            S TA N D A R D
+
+
+New inquiry received                                                     First response within 10 minutes
+
+Message on an active order                                                   Response within 30 minutes
+
+Revision requested                                                      Acknowledged within 15 minutes
+
+Client tone becomes adverse                                                   Escalated within 15 minutes
+
+Order starts                                                           Brief confirmed within 15 minutes
+
+Before design begins                                                              Delivery contents stated
+
+Initial draft                                                                     Shared within 48 hours
+
+Revisions                                                                        Assigned as a single set
+
+Final delivery                                                 Verified and issued ahead of the due date
+
+Order reaches day seven                                                           Escalated the same day
+
+
+
+
+SS-01 · v1.0                                                                                       Page 7 of 8
+S S - 0 1 · S E R V I CE S TA N D A R D S                                                           S ECT I O N 6
+
+
+
+
+S EC TION 6
+
+Handling Dissatisfaction
+
+A client whose dissatisfaction is resolved is of greater value than a client replaced. Dissatisfaction is
+addressed while the order remains open.
+O B S ER V ED                                    FIRST A C TION
+
+
+The client's tone becomes short or               The specific point of dissatisfaction is acknowledged. The
+adverse                                          work is not defended.
+
+Revisions continue without progress              Work stops. The client is asked what the correct outcome
+                                                 would be.
+
+A refund is raised                               The full order history is reviewed before any response is
+                                                 issued.
+
+The client does not respond after                A single message is issued offering to address anything
+delivery                                         outstanding.
+
+
+Where a client wishes to withdraw
+
+6.1        Two options are offered. A senior designer produces a fresh direction at no additional cost
+           against a stated date, or a partial refund is issued and the order concluded.
+
+6.2        Where the first option is offered, the designer and the date are stated. General assurances
+           are not given.
+
+6.3        Both options require the approval of the Head of Customer Success.
+
+6.4        The decision and its reason are recorded.
+
+
+   M EA S U R ES T H AT D O N O T A F F EC T T H E S U C C ES S S C O R E
+
+   Fiverr confirms that the following are not penalised: clients who cease responding, revisions, delivery
+   extensions, partial refunds, and cancellations arising from a misunderstanding or an order placed in
+   error. Reluctance to use these measures leads to disagreement, which is assessed under conflict free
+   orders.
+
+
+
+
+SS-01 · v1.0                                                                                         Page 8 of 8
+

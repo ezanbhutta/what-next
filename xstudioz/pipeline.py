@@ -278,6 +278,8 @@ def run_daily(
         bundle=bundle, plan=plan, tasks=task_list, predictions=preds,
         config=config, today=today, latest_data=latest,
         unmapped_rate=data.unmapped_rate, unmapped=dict(data.unmapped_columns),
+        retired_tables=dict(data.retired_tables_skipped),
+        retired_rows=dict(data.retired_rows_skipped),
         ledger_orders=bundle.flow_28d.total, crm_orders=crm_window,
         window_rows_before=len(all_orders), window_rows_after=len(w_orders),
         window_start=win_start,

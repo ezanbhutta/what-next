@@ -961,19 +961,20 @@ def test_profile_canon_matches_the_spellings_the_sheets_actually_use():
 
 def test_impressions_table_does_not_double_count_as_flow():
     """The impressions sheet also carries Organic/VVRO order columns. If it
-    were classified as daily_flow it would double every order in the ledger."""
+    were classified as daily_flow it would double every order in the ledger.
+
+    It is retired now, so the stronger statement holds: it is not counted as
+    anything at all."""
     snap = S.parse(_snap_payload(tables=[{
         "name": "Impressions", "role": "impressions", "source_id": "impressions",
         "header": ["Date", "Account Name", "Impressions", "Clicks",
                    "Organic Orders", "VVRO Orders", "Totol Order"],
         "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2", "5", "7"]]}]))
     res = ingest.ingest_snapshot(snap)
-    assert len(res.impressions) == 1
     assert res.flow == []                      # not counted as flow
-    imp = res.impressions[0]
-    assert imp.profile == "X Studioz"          # normalised
-    assert imp.impressions == 5397
-    assert imp.orders == 2                     # ORGANIC only, not the total of 7
+    assert res.impressions == []               # not counted at all
+    assert res.retired_tables_skipped["impressions"] == 1
+    assert res.retired_rows_skipped["impressions"] == 1
 
 
 def test_diagnosis_task_only_fires_on_a_real_decline():
@@ -1277,35 +1278,33 @@ def test_unrecognised_tab_is_left_unattributed_not_assumed():
 
 def test_merged_date_cells_are_forward_filled():
     """Google returns a merged range's value only in its top-left cell. The
-    impressions sheet merges the date across seven profile rows, so 134 of
-    162 rows arrived dateless and were dropped."""
+    impressions sheet merged the date across seven profile rows, so 134 of 162
+    rows arrived dateless and were dropped. That sheet is retired; the daily
+    ledger is hand-maintained the same way and merges the same column."""
     snap = S.parse(_snap_payload(tables=[{
-        "name": "Impressions", "role": "impressions", "source_id": "impressions",
-        "header": ["Date", "Account Name", "Impressions", "Clicks",
-                   "Organic Orders"],
-        "rows": [["30-Nov-2025", "Carpicon", "1015", "11", "0"],
-                 ["", "Grid Designs", "21841", "312", "4"],
-                 ["", "XStudioz", "3858", "65", "2"]]}]))
+        "name": "Monthly - Nov 2025", "role": "daily_flow", "source_id": "orders",
+        "header": ["Date", "Profile", "Organic Orders", "Total Revenue ($)"],
+        "rows": [["30-Nov-2025", "Carpicon", "1", "200"],
+                 ["", "Grid Designs", "4", "800"],
+                 ["", "X Studioz", "2", "400"]]}]))
     res = ingest.ingest_snapshot(snap)
-    assert len(res.impressions) == 3
-    assert all(i.date == dt.date(2025, 11, 30) for i in res.impressions)
-    assert {i.profile for i in res.impressions} == {
+    assert len(res.flow) == 3
+    assert all(f.date == dt.date(2025, 11, 30) for f in res.flow)
+    assert {f.profile for f in res.flow} == {
         "Carpicon", "Grid Designs", "X Studioz"}
 
 
 def test_repeated_header_rows_are_not_read_as_data():
-    """The impressions sheet re-prints its header every seventh row."""
+    """These sheets re-print their header every seventh row."""
     snap = S.parse(_snap_payload(tables=[{
-        "name": "Impressions", "role": "impressions", "source_id": "impressions",
-        "header": ["Date", "Account Name", "Impressions", "Clicks",
-                   "Organic Orders"],
-        "rows": [["30-Nov-2025", "XStudioz", "3858", "65", "2"],
-                 ["Date", "Account Name", "Impressions", "Clicks",
-                  "Organic Orders"],
-                 ["1-Dec-2025", "XStudioz", "5397", "88", "2"]]}]))
+        "name": "Monthly - Nov 2025", "role": "daily_flow", "source_id": "orders",
+        "header": ["Date", "Profile", "Organic Orders", "Total Revenue ($)"],
+        "rows": [["30-Nov-2025", "X Studioz", "2", "400"],
+                 ["Date", "Profile", "Organic Orders", "Total Revenue ($)"],
+                 ["1-Dec-2025", "X Studioz", "3", "600"]]}]))
     res = ingest.ingest_snapshot(snap)
-    assert len(res.impressions) == 2
-    assert all(i.profile == "X Studioz" for i in res.impressions)
+    assert len(res.flow) == 2
+    assert all(f.profile == "X Studioz" for f in res.flow)
 
 
 def test_forward_fill_never_invents_a_measurement():
@@ -1316,6 +1315,178 @@ def test_forward_fill_never_invents_a_measurement():
         [["30-Nov-2025", "XStudioz", "3858"], ["", "Carpicon", ""]])
     assert rows[1][0] == "30-Nov-2025"     # date carried down
     assert rows[1][2] == ""                # impressions did NOT
+
+
+# =========================================================================
+# Retired sheets. The hub owns these now, and they must not come back
+# =========================================================================
+#
+# The order workbook and the inquiry workbook stay live. Three sheets were
+# replaced by the hub on 2026-08-05 and must stop being read. Dropping them
+# from config/sources.yml is not enough: tables are detected by header
+# fingerprint, so a retired sheet still present in a snapshot keeps being
+# classified and its rows would be counted next to the hub's typed ones. These
+# tests fail if any of them is ingested again.
+
+_RETIRED_TABLES = [
+    ({"name": "Impressions", "role": "impressions", "source_id": "impressions",
+      "header": ["Date", "Account Name", "Impressions", "Clicks",
+                 "Organic Orders"],
+      "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2"]]}, "impressions"),
+    ({"name": "Team Review", "role": "team_review", "source_id": "team_review",
+      "header": ["Week Ending", "Person", "Self Score", "Manager Score", "Note"],
+      "rows": [["2026-08-02", "Amrah", "4", "3", "good week"]]}, "team_review"),
+    ({"name": "Upsell Pipeline", "role": "resources_upsell",
+      "source_id": "resources_upsell",
+      "header": ["Client Name", "Business", "Gap", "Sell First", "Extra Earned"],
+      "rows": [["acme", "bakery", "no menu", "menu design", "120"]]},
+     "resources_upsell"),
+]
+
+
+@pytest.mark.parametrize("table,key", _RETIRED_TABLES)
+def test_a_retired_sheet_is_refused_and_counted(table, key):
+    res = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[table])))
+    assert res.orders == [] and res.leads == [] and res.flow == []
+    assert res.impressions == [] and res.active == []
+    assert res.retired_tables_skipped[key] == 1
+    assert res.retired_rows_skipped[key] == 1
+    assert res.blocks_used == 0, "a refused table must not count as used"
+    assert res.retired_seen[0]["name"] == table["name"]
+
+
+def test_a_retired_sheet_is_refused_even_when_tagged_as_a_live_role():
+    """The trap. Remove a sheet's own classification rule and it does not stop
+    being classified: it falls through to the next fingerprint that fits. The
+    impressions sheet carries its own organic and directed order columns, so
+    it lands on the daily ledger and doubles every order in it."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Daily Data Sheet", "role": "daily_flow",
+        "source_id": "impressions",
+        "header": ["Date", "Profiles", "Impressions", "Clicks",
+                   "Organic Orders", "VVRO Orders"],
+        "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2", "5"]]}]))
+    res = ingest.ingest_snapshot(snap)
+    assert res.flow == [], "a retired sheet must never become the daily ledger"
+    assert res.retired_tables_skipped["impressions"] == 1
+
+
+def test_a_retired_sheet_is_refused_on_its_headers_alone():
+    """Belt and braces: no retired source id, no retired role tag, nothing but
+    the shape of the header. This is the case where someone deletes the source
+    from sources.yml and the snapshot keeps serving the tab anyway."""
+    snap = S.parse(_snap_payload(tables=[{
+        "name": "Sheet1", "role": "daily_flow", "source_id": "orders",
+        "header": ["Date", "Profile", "Clicks", "Organic Orders"],
+        "rows": [["1-Dec-2025", "X Studioz", "88", "2"]]}]))
+    res = ingest.ingest_snapshot(snap)
+    assert res.flow == []
+    assert res.retired_tables_skipped["impressions"] == 1
+
+
+def test_the_markdown_fallback_refuses_retired_sheets_too():
+    """The snapshot endpoint is not the only way in. The legacy export path
+    splits blocks by header fingerprint, which is exactly the mechanism that
+    keeps a retired sheet alive."""
+    text = (
+        "| Date | Client Name | Order Amount |\n"
+        "| --- | --- | --- |\n"
+        "| 01-Nov-2025 | acme | $200.00 |\n"
+        "\n"
+        "| Date | Account Name | Impressions | Clicks | Organic Orders |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| 30-Nov-2025 | XStudioz | 3858 | 65 | 2 |\n")
+    res = ingest.ingest_orders_workbook(text)
+    assert [o.client for o in res.orders] == ["acme"]
+    assert res.impressions == []
+    assert res.retired_tables_skipped["impressions"] == 1
+    assert res.retired_rows_skipped["impressions"] == 1
+
+
+def test_a_reappearing_retired_sheet_is_reported_not_swallowed():
+    """Refusing quietly is how two systems end up holding the same fact with
+    nobody aware. The count has to reach the self-check and the run JSON."""
+    res = ingest.ingest_snapshot(S.parse(_snap_payload(
+        tables=[_RETIRED_TABLES[0][0], _RETIRED_TABLES[1][0]])))
+    stats = res.stats()
+    assert stats["retired_tables_total"] == 2
+    assert stats["retired_rows_total"] == 2
+    assert set(stats["retired_tables_skipped"]) == {"impressions", "team_review"}
+
+    rep = selfcheck.SelfCheckReport()
+    selfcheck.check_ingest(rep, unmapped_rate=0.0, max_rate=0.15, unmapped={},
+                           retired_tables=stats["retired_tables_skipped"],
+                           retired_rows=stats["retired_rows_skipped"])
+    r = next(x for x in rep.results if x.name == "retired_sources_refused")
+    assert not r.passed and r.severity == "warn"
+    assert "impressions" in r.detail and "team_review" in r.detail
+    assert not rep.blocking_failures, "a refused sheet is visible, not fatal"
+
+
+def test_a_clean_run_says_no_retired_sheet_arrived():
+    rep = selfcheck.SelfCheckReport()
+    selfcheck.check_ingest(rep, unmapped_rate=0.0, max_rate=0.15, unmapped={},
+                           retired_tables={}, retired_rows={})
+    r = next(x for x in rep.results if x.name == "retired_sources_refused")
+    assert r.passed
+
+
+def test_retiring_a_sheet_does_not_eat_the_live_ones():
+    """The failure mode on the other side. Both live workbooks carry an Upsell
+    column and the ledger carries Organic Orders, so a fingerprint written one
+    token too loose would silently delete the funnel."""
+    snap = S.parse(_snap_payload(tables=[
+        {"name": "X Studioz", "role": "funnel", "source_id": "inquiries",
+         "header": ["Date", "Client Name", "Country", "Order Status",
+                    "Order Price", "Upsell"],
+         "rows": [["01-Jul-2026", "acme", "US", "Placed", "$200", "No"]]},
+        {"name": "X Studioz", "role": "crm_orders", "source_id": "orders",
+         "header": ["Date of Order", "Client Name", "Order Amount", "Upsell"],
+         "rows": [["01-Jul-2026", "acme", "$200.00", "No"]]},
+        {"name": "Monthly - July 2026", "role": "daily_flow",
+         "source_id": "orders",
+         "header": ["Date", "Profile", "Organic Orders", "VVRO Orders"],
+         "rows": [["01-Jul-2026", "X Studioz", "2", "1"]]},
+    ]))
+    res = ingest.ingest_snapshot(snap)
+    assert len(res.leads) == 1 and len(res.orders) == 1 and len(res.flow) == 1
+    assert res.retired_tables_total == 0
+
+
+def test_no_ingester_can_still_build_an_impression():
+    """The reader was deleted, not just gated. A branch that can never run is
+    a branch someone re-enables by accident."""
+    assert not hasattr(ingest, "IMPRESSION_ALIASES")
+
+
+def test_the_retired_list_agrees_across_the_engine():
+    """Three places name these sheets: the ingester (the gate), the snapshot
+    contract (the tags), and config/sources.yml (the documentation). A
+    retirement that is only true in one of them is not a retirement."""
+    import yaml
+    keys = set(ingest.RETIRED_ROLES)
+    assert keys == {"impressions", "team_review", "resources_upsell"}
+    assert keys == set(S.RETIRED_ROLES)
+    assert keys <= S.ROLES
+
+    cfg = yaml.safe_load((ROOT / "config" / "sources.yml").read_text())
+    live = {s["id"] for s in cfg["sources"]}
+    assert keys.isdisjoint(live), f"a retired sheet is live again: {keys & live}"
+    assert {r["id"] for r in cfg["retired"]} == keys
+    assert live >= {"orders", "inquiries"}, "the two live workbooks stay"
+
+
+def test_the_snapshot_producer_does_not_serve_retired_workbooks():
+    """The engine refuses them, but the cheapest fix is not sending them. The
+    Apps Script keeps its classification rules so a returning tab arrives
+    wearing its own name rather than the daily ledger's."""
+    gs = (ROOT / "automation" / "Snapshot.gs").read_text()
+    sources = gs.split("var SOURCES = [", 1)[1].split("];", 1)[0]
+    for key in ingest.RETIRED_ROLES:
+        assert f"id: '{key}'" not in sources, f"{key} is still being served"
+    rules = gs.split("var ROLE_RULES = [", 1)[1].split("];", 1)[0]
+    for key in ingest.RETIRED_ROLES:
+        assert f"role: '{key}'" in rules, f"{key} has no rule to claim it back"
 
 
 # =========================================================================

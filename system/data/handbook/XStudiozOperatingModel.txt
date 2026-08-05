@@ -1,0 +1,449 @@
+OM-01
+
+HAS EEB M AD EIT · XS T UD IOZ
+
+
+Operating Model
+How the XStudioz profile is run: objectives, performance
+areas, responsibilities, decision authority and operating
+rules.
+
+
+
+V ER S I O N                     1.0
+
+I S S U E D AT E                 4 August 2026
+
+O W N ER                         Head of Customer Success
+
+R EV I EW                        Monthly
+
+C L A S S I F I C AT I O N       Internal
+
+
+
+
+OM-01 · v1.0                                                Page 1 of 9
+O M- 0 1 · O P E R AT I N G MO D E L   CO N T EN T S
+
+
+
+
+Contents
+
+
+1        Purpose and Scope                        3
+
+
+2        Current Position                         4
+
+
+3        Objectives                               5
+
+
+4        Performance Areas                        6
+
+
+5        Coverage and Responsibility              7
+
+
+6        Decision Authority                       8
+
+
+7        Operating Rules                          9
+
+
+
+
+OM-01 · v1.0                            Page 2 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                                  S ECT I O N 1
+
+
+
+
+S EC TION 1
+
+Purpose and Scope
+
+This document defines how the XStudioz seller profile is operated. It applies to every member of the
+Customer Success team and takes precedence over any earlier operating document.
+
+Scope
+
+1.1        This document covers objectives, the performance areas the profile is scored on, coverage,
+           decision authority and the operating rules that apply at all times.
+
+1.2        Order handling is covered separately in OH-01 Order Handbook. Inquiry handling is covered
+           in IC-01 Inquiry and Conversion.
+
+1.3        The gig itself is not modified under this document. Packages, pricing, delivery times and
+           revision terms remain as published.
+
+1.4        The team does not amend the Fiverr gig or its requirements form.
+           A gig carrying 1,565 reviews is returned for review when edited, which places its search position at
+           risk. All improvement is achieved through process.
+
+
+   D O C U M EN T S I N T H I S S ET
+
+   OM-01 Operating Model · OH-01 Order Handbook · IC-01 Inquiry and Conversion · SS-01
+   Service Standards · RR-01 Roles and Responsibilities · CP-01 Capability Programme
+
+
+
+
+OM-01 · v1.0                                                                                           Page 3 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                            S ECT I O N 2
+
+
+
+
+S EC TION 2
+
+Current Position
+
+Recorded 4 August 2026. These figures form the baseline against which progress is measured.
+
+Profile
+M EA S U R E                                                             C U R R EN T              TA R G ET
+
+
+Success Score                                                                   8                         9
+
+Rating                                                                        4.8               Maintain
+
+Response rate                                                              100%                 Maintain
+
+Profile strength                                                       10 of 14                 14 of 14
+
+Daily impressions, 7 day average                                           2,835                   6,000
+
+Cancellations                                                                   0                         0
+
+
+Trading
+P ER I O D                                                      M O N T H LY S A L ES              O R D ER S
+
+
+January to May 2026, average                                           $12,939                      ~145
+
+June 2026                                                                $3,700                      ~45
+
+July 2026                                                                $3,962                        52
+
+August 2026, projected                                                   $4,216                        —
+
+
+    THE POSITION IN ONE LINE
+
+    Sales fell 69 per cent in June 2026 and have remained flat for three months. Impressions have since
+    risen 89 per cent while sales have not moved. August 2026 is the test of whether the recovery in
+    visibility converts into revenue.
+
+
+Value held
+I T EM                                                                                              VA L U E
+
+
+Active orders in progress                                                                        $4,875
+
+Quotes issued and not converted                                                                  $5,722
+
+Total                                                                                           $10,597
+
+
+
+
+OM-01 · v1.0                                                                                     Page 4 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                                S ECT I O N 3
+
+
+
+
+S EC TION 3
+
+Objectives
+
+3.1        Grow revenue and organic orders.
+           No other outcome is treated as an objective. Every measure in this document exists to serve one of
+           these two.
+
+
+3.2        Raise the Success Score from 8 to 9.
+           This is the remaining requirement for Top Rated status.
+
+
+3.3        Convert the recovery in impressions into orders.
+           Visibility has improved. Revenue has not. Closing that gap is the priority for August 2026.
+
+
+3.4        Reduce the value of work held and not moving.
+           Currently $10,597 across active orders and unconverted quotes.
+
+
+Excluded
+
+3.1        Order count in place of order value.
+           Higher value orders and more recent orders carry greater weight in the Success Score.
+
+
+3.2        Queue depth as a target.
+           Work in progress is stock, not revenue. It is monitored, never pursued.
+
+
+3.3        Paid promotion.
+           Not used while the Success Score remains below 9.
+
+
+3.4        Additional gigs.
+           The profile continues to operate its existing gigs only.
+
+
+Limits
+
+LIMIT                                           T H R ES H O L D A C T I O N I F B R EA C H ED
+
+
+Success Score                                   Not below 7All controlled volume stops immediately
+
+
+Rating                                        Not below 4.7Escalate to the owner
+
+
+Cancellations                                            ZeroWritten review the same day
+
+
+
+
+OM-01 · v1.0                                                                                         Page 5 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                                                        S ECT I O N 4
+
+
+
+
+S EC TION 4
+
+Performance Areas
+
+Fiverr scores the profile across six areas. Performance is assessed relative to other sellers in the
+same category and price range.
+A R EA                                                                                                                   A S S ES S M EN T
+
+
+1. Client satisfaction                                                                                                      Positive
+
+2. Effective communication                                                                                      Room for growth
+
+3. Conflict free orders                                                                                                   Monitored
+
+4. Order cancellations                                                                                                      Positive
+
+5. Delivery time                                                                                                          Monitored
+
+6. Value for money                                                                                                   Strong positive
+
+
+   EF F EC T I V E C O M M U N I C AT I O N I S T H E S I N G L E A R EA H O L D I N G T H E P R O F I L E B A C K
+
+   This is confirmed by Fiverr on the gig performance panel. Client satisfaction and value for money are
+   both assessed positively.
+
+
+What the area measures
+Effective communication is not measured by tone or friendliness. Fiverr assesses five components:
+
+4.1        Availability and speed of response.
+
+4.2        Clarity of the expectations set with the client at the outset.
+
+4.3        Explanation of the process and the stages the client should expect.
+
+4.4        Progress shared during the order rather than only at delivery.
+
+4.5        Issues addressed as they arise rather than at the end.
+
+
+   U N S EEN F EED B A C K
+
+   Twenty four hours after each order the client completes a private questionnaire covering quality,
+   whether the work met expectations and whether it was useful. Responses are not visible to the seller.
+   First time buyers and higher value orders carry greater weight. This is why the profile can hold a 4.8
+   public rating alongside a Success Score of 8.
+
+
+
+
+OM-01 · v1.0                                                                                                                 Page 6 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                                S ECT I O N 5
+
+
+
+
+S EC TION 5
+
+Coverage and Responsibility
+
+Roles are defined in full in RR-01. This section states how coverage and accountability interact.
+
+5.1        The team member on shift handles all client messages.
+           Message handling is not restricted by role. Whoever is on shift responds.
+
+5.2        Accountability for outcomes remains with the role owner at all times.
+           A role owner answers for their measures whether or not they were on shift when an event occurred.
+
+5.3        Where two team members are on shift simultaneously, the person on shift acts and the role
+           owner decides.
+
+5.4        No shift ends with an unanswered client message.
+
+5.5        No shift ends without a written handover recording actions taken and actions outstanding.
+
+
+Coverage
+ROLE                                        HOU RS
+
+
+Head of Customer Success                    11:00–23:00 Mon to Fri · 09:00–21:00 Sat and Sun
+
+Intake and Conversion                       17:00–01:00 · Friday 21:00–09:00
+
+Order Management                            09:00–17:00 · Friday 07:00–18:00
+
+Systems and Retention                       09:00–18:00 Monday to Saturday
+
+Night Operations                            21:00–09:00, six nights
+
+
+Daily sequence
+TIME                   ACTION
+
+
+09:00                  Night handover reviewed. Order tracker reconciled against the inquiry log.
+
+09:15                  Impressions and seven day average recorded.
+
+11:00                  Daily position reviewed and priorities confirmed.
+
+17:30                  Exception list prepared for the following day.
+
+Shift end              Written handover issued.
+
+
+
+
+OM-01 · v1.0                                                                                         Page 7 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                              S ECT I O N 6
+
+
+
+
+S EC TION 6
+
+Decision Authority
+
+6.1         All matters with a value above USD 500 are decided by the Head of Customer Success.
+            This applies to order value, quoted price and any refund or credit.
+
+
+6.2         All refunds, cancellations and disputes are decided by the Head of Customer Success at
+            any value.
+
+6.3         Every decision taken under this section is recorded in writing with the reason.
+
+6.4         Where the Head of Customer Success is unreachable for more than two hours, the
+            delegated authority in CP-01 Section 6 applies.
+
+M AT T ER                                                                                       D EC I D ED B Y
+
+
+Reply to a client                                                                     Team member on shift
+
+
+Quotation at or below USD 500                                                         Intake and Conversion
+
+
+Quotation above USD 500                                                           Head of Customer Success
+
+
+Additional work priced within an order                                       Team member handling the order
+
+
+Additional work above USD 500                                                     Head of Customer Success
+
+
+Designer allocation                                                                      Order Management
+
+
+Delivery date commitment                                                                 Order Management
+
+
+Refund or credit, any value                                                       Head of Customer Success
+
+
+Cancellation, any value                                                           Head of Customer Success
+
+
+Declining an inquiry                                                              Head of Customer Success
+
+
+
+      M AT T ER S T H AT D O N O T A F F EC T T H E S U C C ES S S C O R E
+
+      Fiverr confirms the following are not penalised: clients who cease responding; revisions;
+      delivery extensions; partial refunds; and cancellations arising from a misunderstanding or an
+      order placed in error. Avoidance of these measures leads to disagreement with clients, which
+      is assessed under conflict free orders.
+
+
+
+
+OM-01 · v1.0                                                                                       Page 8 of 9
+O M- 0 1 · O P E R AT I N G MO D E L                                                                S ECT I O N 7
+
+
+
+
+S EC TION 7
+
+Operating Rules
+
+These rules apply at all times and are not subject to shift discretion.
+
+7.1        No shift ends with an unanswered client message.
+
+7.2        No shift ends without a written handover.
+
+7.3        Every shift report records the actions taken during that shift.
+
+7.4        Every material order event is recorded as an internal note.
+
+7.5        No delivery date is committed before designer availability has been confirmed.
+
+7.6        Work outside the purchased package is quoted. It is not absorbed.
+
+7.7        Inquiries are declined only on commercial grounds. Grounds are limited to budget, scope,
+           timeline, or an indication that the work is being purchased for resale.
+
+7.8        Refunds, cancellations and disputes are referred to the Head of Customer Success.
+
+7.9        No conversation or payment is moved outside the Fiverr platform.
+
+7.10       Clients are not asked to provide public reviews or private feedback at any stage.
+
+
+Acknowledgement
+I confirm that I have read and understood this document, the responsibilities of my role and the
+operating rules set out above.
+
+
+EZA N                     H A S NA I N         A M RA H             ZA H EEN             NA D I R
+
+
+
+Signature and date        Signature and date   Signature and date   Signature and date   Signature and date
+
+
+
+
+OM-01 · v1.0                                                                                        Page 9 of 9
+

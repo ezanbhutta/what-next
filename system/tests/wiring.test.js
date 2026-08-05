@@ -378,3 +378,171 @@ test('both rule tables state the same delay, buttons and cancel for all thirteen
     );
   }
 });
+
+/**
+ * 4. A VIEW MUST NOT READ A COLUMN NAME THE LOADER ALIASED AWAY.
+ *
+ * server.js selects the reports tables through REPORT_COLS / ACTIVITY_COLS /
+ * REMINDER_COLS, and several columns are renamed on the way out:
+ * `opened_at AS started_at`, `person AS csr_name`, `kind AS type`,
+ * `order_ref AS project`, `body AS note`, `booked_by AS created_by`. The row a
+ * view receives has the ALIAS. Reading the original name yields `undefined`,
+ * and `undefined` is exactly the kind of nothing this file exists to catch: it
+ * does not throw, it does not blank the page, it takes the empty branch.
+ *
+ * That is not hypothetical. views/reports-ceo.js grouped shifts into days with
+ * `pktDay(s.opened_at)`. Every key came back null, no shift matched any day,
+ * and the page rendered "Day by day: 0 shifts, covered by nobody" and "Who
+ * covered what: no shift was opened in this window" directly beneath a masthead
+ * reading "Shifts 1 · People 1 · Entries 19". HTTP 200, nothing in the log, and
+ * an owner being told the shift in front of him did not happen.
+ *
+ * Checks 1-3 could not see it: the route exists, the loader supplies `shifts`,
+ * and the view does read `ctx.data.shifts`. The drift is one level down, inside
+ * the row, which is why this check reads for the aliased-away name directly.
+ */
+test('no reports view reads a column its loader renamed', async () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+
+  // `<expr> AS <alias>` out of the three column lists — the aliases actually
+  // in force, read from server.js rather than restated here, so adding one to
+  // a SELECT brings it under this check with no edit to the test.
+  const renamed = new Map();
+  for (const list of ['REPORT_COLS', 'ACTIVITY_COLS', 'REMINDER_COLS']) {
+    const block = new RegExp(`const ${list} = \\[([\\s\\S]*?)\\]\\.join`).exec(server);
+    if (!block) continue;
+    for (const m of block[1].matchAll(/["'`]?([`\w]+)\s+AS\s+(\w+)["'`]?/gi)) {
+      renamed.set(m[1].replace(/`/g, ''), m[2]);
+    }
+  }
+  assert.ok(renamed.size > 0, 'found no AS aliases in the reports column lists — has the seam moved?');
+
+  // `rule` is put BACK by server.js. inViewVocabulary() rewrites every reminder
+  // row as `{...row, rule: <the view's spelling of rule_key>}` precisely so the
+  // CSR page can look its rule up by name, and views/reports-ceo.js also reads
+  // `def.rule` off a rule DEFINITION from lib/reminders.js, which is not a row
+  // at all. It is the one alias whose original name is legitimately present, so
+  // it is exempt here rather than silently unchecked.
+  const restored = new Set(['rule']);
+
+  const problems = [];
+  for (const view of ['reports', 'reports-ceo']) {
+    const src = fs.readFileSync(path.join(ROOT, 'views', `${view}.js`), 'utf8');
+    // Strip comments: these names are discussed in prose all over both files,
+    // and the prose is how the rule is explained rather than a use of it.
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const [original, alias] of renamed) {
+      if (restored.has(original)) continue;
+      // A property read of the pre-alias name: `.opened_at`, never `x_opened_at`.
+      if (new RegExp(`\\.${original}\\b`).test(code)) {
+        problems.push(`views/${view}.js reads .${original} — the loader supplies .${alias}`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    problems,
+    [],
+    `A reports view reads a column name its loader aliased away, so the value is always undefined:\n  ${problems.join('\n  ')}`
+  );
+});
+
+/**
+ * 5. THE CSR PAGE SHOWS THE HEADING THAT WAS BOOKED.
+ *
+ * lib/reminders.js writes `heading` at booking time from the entry's own
+ * detail; that string is what REMINDER-LOGICS.md specifies and what the audit
+ * row and the owner's ledger carry. views/reports.js keeps a second rule table
+ * with its own `title()` functions, and rendering those instead produced a
+ * different sentence on four of the thirteen rules — most damagingly rule 2,
+ * where the engine books "Send the 2nd follow-up" and the re-derived title said
+ * "Send the 1st follow-up logged": the wrong follow-up, on the one rule whose
+ * entire content is which follow-up comes next.
+ *
+ * So the card renders the stored heading and `title()` is only the fallback.
+ */
+test('the CSR page renders the stored reminder heading, not a re-derived one', async () => {
+  const src = fs.readFileSync(path.join(ROOT, 'views', 'reports.js'), 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  assert.match(
+    code,
+    /function titleOf\s*\(/,
+    'views/reports.js has no titleOf() — the card is re-deriving its title instead of showing the booked one'
+  );
+  assert.doesNotMatch(
+    code,
+    /\$\{rule\.title\(rem\)\}/,
+    'a reminder is still rendered with rule.title(rem); it must go through titleOf(rem) so the stored heading wins'
+  );
+
+  const { RULES: engineRules } = await import('../lib/reminders.js');
+  const { RULES: viewRules } = await import('../views/reports.js');
+  const { RULE_KEY_TO_VIEW } = await import('../server.js');
+
+  // Rule 2 is the specific regression: the engine names the NEXT attempt.
+  const booked = engineRules.lead_followup_next.heading({
+    client: 'bravo_buyer',
+    detail: { attempt: '1st' },
+  });
+  assert.equal(booked, 'Send the 2nd follow-up to bravo_buyer');
+
+  // And the view's own fallback title for that same row says something else —
+  // which is precisely why the stored heading has to win.
+  const viewKey = RULE_KEY_TO_VIEW.lead_followup_next;
+  const fallback = viewRules[viewKey].title({ client: 'bravo_buyer', note: '1st follow-up logged' });
+  assert.notEqual(
+    fallback,
+    booked,
+    'the fallback now matches the booked heading; if the two tables were merged, this test can go'
+  );
+});
+
+/**
+ * 6. EVERY VIEW MODULE ACTUALLY LOADS.
+ *
+ * server.js imports views DYNAMICALLY, one per request:
+ *
+ *     mod = await import(new URL(`./views/${key}.js`, import.meta.url).href);
+ *
+ * which is right for boot time and means a broken view is invisible to
+ * everything else. Nothing in this suite imported a view module: the checks
+ * above read the files as TEXT to find the keys and links they mention, and
+ * server.js imports cleanly whether or not any view parses. So a syntax error
+ * in views/money.js — an unbalanced brace, a stray backtick inside an html``
+ * template — left the whole suite green and turned exactly one route into a
+ * 500 that only a human clicking it would find.
+ *
+ * That is not hypothetical either: it happened while this file was being
+ * written. An HTML comment added inside an html`` template quoted a column name
+ * in backticks, the backtick closed the template, and `npm test` reported
+ * 94/94 passing over a module Node could not compile.
+ *
+ * Importing each view is the cheapest possible guard and it covers all of them.
+ */
+test('every view module imports and exports render()', async () => {
+  const dir = path.join(ROOT, 'views');
+  const views = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.js') && !f.endsWith('.test.js'))
+    .sort();
+
+  assert.ok(views.length >= 10, `expected the section views to be present, found ${views.length}`);
+
+  for (const file of views) {
+    let mod;
+    try {
+      mod = await import(new URL(`../views/${file}`, import.meta.url).href);
+    } catch (err) {
+      assert.fail(`views/${file} does not load: ${err.message}`);
+    }
+    // layout.js is the shared toolkit rather than a section, and errors.js
+    // renders failures; neither is reached through the render(ctx) contract.
+    if (file === 'layout.js' || file === 'errors.js') continue;
+    assert.equal(
+      typeof mod.render,
+      'function',
+      `views/${file} must export render(ctx) — server.js calls it for every request to that section`
+    );
+  }
+});

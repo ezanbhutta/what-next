@@ -351,7 +351,7 @@
       "orders_prior": 0.0,
       "attribution": {},
       "verdict": "no_data",
-      "explanation": "No impression data. A fall in organic orders cannot be attributed to reach, click-through or closing rate \u2014 and those three need opposite responses. This is the single most valuable missing input."
+      "explanation": "No impression data. A fall in organic orders cannot be attributed to reach, click-through or closing rate, and those three need opposite responses. The daily numbers are typed into the hub's Daily entry since the impressions sheet was retired; the engine cannot read that table yet, so this stays unanswerable until it can. It is the most valuable missing input."
     },
     "disputes": {
       "have_data": false,
@@ -870,7 +870,14 @@
         "name": "schema_drift",
         "passed": true,
         "severity": "warn",
-        "detail": "unmapped column rate 2.7% (limit 15%); unrecognised: ['<unclassified tab: Daily Data Sheet Profiles>', 'Order type', 'Public Review', 'Public review', 'Reply', 'Service Demand']",
+        "detail": "unmapped column rate 2.5% (limit 15%); unrecognised: ['Order type', 'Public Review', 'Public review', 'Reply', 'Service Demand', 'Upsell']",
+        "repaired": false
+      },
+      {
+        "name": "retired_sources_refused",
+        "passed": false,
+        "severity": "warn",
+        "detail": "2 table(s) from retired sheets were refused and not counted: impressions (2 tables, 3383 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.",
         "repaired": false
       },
       {
@@ -1380,25 +1387,48 @@
     "flow_rows": 378,
     "flow_aggregate_rows": 54,
     "active_orders": 8,
-    "impressions": 98,
+    "impressions": 0,
     "disputes": 0,
     "automation_errors": 334,
     "blocks_seen": 28,
-    "blocks_used": 26,
-    "header_cells_seen": 415,
+    "blocks_used": 25,
+    "header_cells_seen": 408,
     "unmapped_columns": {
       "Upsell": 5,
       "Public Review": 1,
       "Order type": 1,
       "Public review": 1,
       "Service Demand": 1,
-      "Reply": 1,
-      "<unclassified tab: Daily Data Sheet Profiles>": 1
+      "Reply": 1
     },
-    "unmapped_rate": 0.0265,
+    "unmapped_rate": 0.0245,
     "coercion_misses": {
       "order_date": 9
-    }
+    },
+    "retired_tables_skipped": {
+      "impressions": 2
+    },
+    "retired_rows_skipped": {
+      "impressions": 3383
+    },
+    "retired_tables_total": 2,
+    "retired_rows_total": 3383,
+    "retired_tables": [
+      {
+        "retired": "impressions",
+        "name": "Daily Data Sheet Profiles",
+        "source_id": "impressions",
+        "rows": 3221,
+        "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+      },
+      {
+        "retired": "impressions",
+        "name": "Impressions Daily Data Sheet Profiles",
+        "source_id": "impressions",
+        "rows": 162,
+        "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+      }
+    ]
   },
   "validation": {
     "checked": 1780,

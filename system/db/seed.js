@@ -153,7 +153,7 @@ export function normaliseResponses(parsed) {
 
 async function seedResponses(log, { refresh = false } = {}) {
   if (!fs.existsSync(RESPONSES_PATH)) {
-    log(`[seed] response: skipped — no ${path.relative(process.cwd(), RESPONSES_PATH)}`);
+    log(`[seed] response: skipped, no ${path.relative(process.cwd(), RESPONSES_PATH)}`);
     return { skipped: true };
   }
 
@@ -161,7 +161,7 @@ async function seedResponses(log, { refresh = false } = {}) {
   try {
     parsed = JSON.parse(fs.readFileSync(RESPONSES_PATH, 'utf8'));
   } catch (err) {
-    log(`[seed] response: SKIPPED — ${path.basename(RESPONSES_PATH)} is not valid JSON (${err.message})`);
+    log(`[seed] response: SKIPPED, ${path.basename(RESPONSES_PATH)} is not valid JSON (${err.message})`);
     return { skipped: true, error: err.message };
   }
 
@@ -214,7 +214,7 @@ const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === pa
 
 if (invokedDirectly) {
   if (!dbConfigured()) {
-    console.error(`[seed] not configured — missing ${missingEnv().join(', ')}.`);
+    console.error(`[seed] not configured, missing ${missingEnv().join(', ')}.`);
     process.exit(2);
   }
   try {

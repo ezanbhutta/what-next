@@ -228,11 +228,28 @@ def check_window(rep: SelfCheckReport, *, rows_before: int, rows_after: int,
 
 
 def check_ingest(rep: SelfCheckReport, *, unmapped_rate: float, max_rate: float,
-                 unmapped: dict[str, int]) -> None:
+                 unmapped: dict[str, int],
+                 retired_tables: dict[str, int] | None = None,
+                 retired_rows: dict[str, int] | None = None) -> None:
     ok = unmapped_rate <= max_rate
     rep.add("schema_drift", ok, "block" if unmapped_rate > max_rate * 2 else "warn",
             f"unmapped column rate {unmapped_rate:.1%} (limit {max_rate:.0%})"
             + (f"; unrecognised: {sorted(unmapped)[:6]}" if unmapped else ""))
+
+    # A retired sheet still being served is not a bad number, so it does not
+    # block. It is a sign that two systems hold the same fact and one of them
+    # is being typed by a person, which is worth saying out loud every day
+    # until the sheet stops arriving.
+    tables = dict(retired_tables or {})
+    rows = dict(retired_rows or {})
+    n = sum(tables.values())
+    rep.add("retired_sources_refused", n == 0, "warn",
+            "no retired sheet reached the ingester" if not n else
+            f"{n} table(s) from retired sheets were refused and not counted: "
+            + ", ".join(f"{k} ({tables[k]} tables, {rows.get(k, 0)} rows)"
+                        for k in sorted(tables))
+            + ". That data is typed into the hub now. Stop serving the sheet "
+              "or the same fact lives in two places.")
 
 
 # --------------------------------------------------------------------------
@@ -358,6 +375,8 @@ def run(
     latest_data: _dt.date | None,
     unmapped_rate: float,
     unmapped: dict[str, int],
+    retired_tables: dict[str, int] | None = None,
+    retired_rows: dict[str, int] | None = None,
     ledger_orders: float = 0.0,
     crm_orders: float = 0.0,
     window_rows_before: int = 0,
@@ -384,7 +403,8 @@ def run(
                               .get("min_rows", 1)))
     check_ingest(rep, unmapped_rate=unmapped_rate,
                  max_rate=float(scfg.get("max_unmapped_column_rate", 0.15)),
-                 unmapped=unmapped)
+                 unmapped=unmapped, retired_tables=retired_tables,
+                 retired_rows=retired_rows)
     score_rubric(rep, tasks=tasks, predictions=predictions, config=config)
 
     return rep, tasks, predictions

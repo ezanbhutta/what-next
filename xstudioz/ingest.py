@@ -16,6 +16,11 @@ The ingester therefore:
 
 Adding a new tab to a source sheet should require no code change. If it does,
 ``UNMAPPED_COLUMN`` fires in the daily self-check and says so.
+
+The same fingerprinting is why retiring a sheet takes more than a config edit.
+See ``RETIRED_ROLES`` below: a sheet dropped from ``config/sources.yml`` but
+still present in a snapshot keeps being classified and counted. Every table
+passes ``retired_reason`` before anything can map it.
 """
 
 from __future__ import annotations
@@ -128,19 +133,6 @@ FLOW_ALIASES: dict[str, tuple[str, ...]] = {
     "total_revenue": ("total revenue",),
 }
 
-IMPRESSION_ALIASES: dict[str, tuple[str, ...]] = {
-    "date": ("date", "day"),
-    "profile": ("profile", "seller", "account", "account name", "profiles"),
-    "gig": ("gig", "gig name", "gig title"),
-    "impressions": ("impressions", "impression"),
-    "clicks": ("clicks", "click"),
-    # ORGANIC orders, deliberately. VVRO orders are self-placed and never came
-    # from an impression, so counting them would inflate the close rate and
-    # make a reach problem look like a conversion win.
-    "orders": ("organic orders", "orders", "orders placed"),
-    "notes": ("notes", "note"),
-}
-
 DISPUTE_ALIASES: dict[str, tuple[str, ...]] = {
     "date": ("date", "date of order", "order date"),
     "client": ("client name", "client", "buyer"),
@@ -173,6 +165,90 @@ IGNORED_HEADERS: frozenset[str] = frozenset({
     "click ratio", "conversion rate", "total reviews", "msg ratio",
     "cancellation", "cancel price", "profile rating", "update", "success score",
 })
+
+# --------------------------------------------------------------------------
+# Retired sheets
+# --------------------------------------------------------------------------
+#
+# Three workbooks were replaced by the management hub on 2026-08-05. They are
+# now typed by people into MySQL, and the engine must stop reading the sheet
+# versions of the same facts. Two systems each holding a version of the truth,
+# neither aware of the other, is the failure this project exists to catch.
+#
+# Taking a source out of config/sources.yml is NOT enough. Tables are detected
+# by header fingerprint, so a retired sheet still sitting in a snapshot keeps
+# being classified and its rows keep being counted. Worse, a retired sheet
+# whose own rule is gone does not stop being classified: it falls through to
+# the next fingerprint that fits. The impressions sheet carries Organic and
+# directed order columns of its own, so with nothing to claim it first it
+# becomes the daily ledger and doubles every order in it.
+#
+# So the refusal is here, at the one place every path passes through, and it
+# fires on three independent signals: the source id, the role tag, and the
+# header fingerprint. Any one of them is enough. What is refused is counted
+# and reported, so a retired sheet coming back is loud rather than silent.
+
+#: Retired role -> where that data lives now. The keys double as retired
+#: source ids, because the sheet and its single role share a name.
+RETIRED_ROLES: dict[str, str] = {
+    "impressions": "the hub's Daily entry",
+    "team_review": "the hub's Team",
+    "resources_upsell": "the hub's Responses and Money",
+}
+
+#: Source ids that must not be read, whatever their tables look like.
+RETIRED_SOURCE_IDS: frozenset[str] = frozenset(RETIRED_ROLES)
+
+#: Header fingerprints that identify a retired table on its own. Each entry is
+#: (retired key, tokens that must ALL be present). These have to be columns no
+#: live table carries: "upsell" is not here, because both the order and the
+#: inquiry sheet have an Upsell column and refusing on it would delete the
+#: funnel. Where the retired sheet shares columns with a live one, the pair is
+#: what identifies it: the daily ledger has Organic Orders but no Clicks.
+RETIRED_FINGERPRINTS: tuple[tuple[str, frozenset[str]], ...] = (
+    ("impressions", frozenset({"impressions"})),
+    ("impressions", frozenset({"impression"})),
+    ("impressions", frozenset({"clicks", "organic orders"})),
+    ("impressions", frozenset({"clicks", "profiles"})),
+    ("team_review", frozenset({"self score"})),
+    ("team_review", frozenset({"manager score"})),
+    ("team_review", frozenset({"week ending", "score"})),
+    ("team_review", frozenset({"team member", "score"})),
+    ("resources_upsell", frozenset({"when to use"})),
+    ("resources_upsell", frozenset({"response name"})),
+    ("resources_upsell", frozenset({"template", "category"})),
+    ("resources_upsell", frozenset({"sell first"})),
+    ("resources_upsell", frozenset({"extra earned"})),
+    ("resources_upsell", frozenset({"upsell stage"})),
+)
+
+
+def retired_reason(header: Iterable[str] = (), *, role: str | None = None,
+                   source_id: str | None = None) -> tuple[str, str] | None:
+    """Why this table must not be ingested, or ``None`` if it is live.
+
+    Returns ``(retired key, one-line reason)``. Checked in this order so the
+    reason names the strongest signal available: an id, then a tag, then the
+    shape of the header.
+    """
+    if source_id and source_id in RETIRED_SOURCE_IDS:
+        return (source_id,
+                f"source {source_id!r} is retired; that data is typed into "
+                f"{RETIRED_ROLES[source_id]} now")
+    if role and role in RETIRED_ROLES:
+        return (role,
+                f"role {role!r} is retired; that data is typed into "
+                f"{RETIRED_ROLES[role]} now")
+    toks = {_tok(h) for h in header}
+    toks.discard("")
+    for key, fingerprint in RETIRED_FINGERPRINTS:
+        if fingerprint <= toks:
+            return (key,
+                    f"header carries {sorted(fingerprint)}, which belongs to the "
+                    f"retired {key} sheet; that data is typed into "
+                    f"{RETIRED_ROLES[key]} now")
+    return None
+
 
 #: A profile name matching this is a spreadsheet aggregate row, not a seller.
 _AGGREGATE_PROFILE = re.compile(r"^[\s\-—–─_=*]*(total|sum|grand total)[\s\-—–─_=*]*$", re.I)
@@ -280,13 +356,21 @@ def classify_and_map(
     required: Iterable[str],
     min_rows: int = 1,
 ) -> list[MappedBlock]:
-    """Keep only blocks whose header resolves all ``required`` fields."""
+    """Keep only blocks whose header resolves all ``required`` fields.
+
+    A block belonging to a retired sheet is never returned, whatever it
+    resolves to. The refusal lives here rather than at each call site so it
+    also covers the paths nobody has written yet, the same reasoning as
+    scrubbing in one renderer instead of at every call.
+    """
     required = set(required)
     out: list[MappedBlock] = []
     for i, block in enumerate(blocks):
         if len(block) <= min_rows:
             continue
         header, rows = block[0], block[1:]
+        if retired_reason(header):
+            continue
         f2c, unmapped = map_columns(header, aliases)
         if required <= set(f2c):
             out.append(MappedBlock(i, f2c, unmapped, header, rows))
@@ -303,6 +387,11 @@ class IngestResult:
     leads: list[C.Lead] = field(default_factory=list)
     flow: list[C.DailyFlow] = field(default_factory=list)
     active: list[C.ActiveOrder] = field(default_factory=list)
+    #: Always empty since the impressions sheet was retired. No ingester fills
+    #: it: impressions are typed into the hub's Daily entry now, and until a
+    #: reader for that exists the engine has no impression series. Kept because
+    #: the shape downstream expects has not changed, and an empty list is what
+    #: makes ``decompose_funnel`` say so rather than guess.
     impressions: list[C.Impression] = field(default_factory=list)
     disputes: list[C.Dispute] = field(default_factory=list)
     automation_errors: list[dict[str, str]] = field(default_factory=list)
@@ -314,6 +403,30 @@ class IngestResult:
     blocks_used: int = 0
     header_cells_seen: int = 0
     coercion_misses: Counter = field(default_factory=Counter)
+    #: Tables from retired sheets that turned up anyway: retired key -> count.
+    #: Zero is the expected reading. Anything else means a sheet the hub
+    #: replaced is still being served, and someone is typing the same fact in
+    #: two places.
+    retired_tables_skipped: Counter = field(default_factory=Counter)
+    retired_rows_skipped: Counter = field(default_factory=Counter)
+    #: One entry per refused table, so the report can name it.
+    retired_seen: list[dict[str, Any]] = field(default_factory=list)
+
+    def note_retired(self, key: str, why: str, *, name: str = "",
+                     source_id: str = "", rows: int = 0) -> None:
+        self.retired_tables_skipped[key] += 1
+        self.retired_rows_skipped[key] += max(rows, 0)
+        self.retired_seen.append({"retired": key, "name": name,
+                                  "source_id": source_id, "rows": max(rows, 0),
+                                  "why": why})
+
+    @property
+    def retired_tables_total(self) -> int:
+        return sum(self.retired_tables_skipped.values())
+
+    @property
+    def retired_rows_total(self) -> int:
+        return sum(self.retired_rows_skipped.values())
 
     @property
     def unmapped_rate(self) -> float:
@@ -341,6 +454,11 @@ class IngestResult:
             "unmapped_columns": dict(self.unmapped_columns.most_common(20)),
             "unmapped_rate": round(self.unmapped_rate, 4),
             "coercion_misses": dict(self.coercion_misses),
+            "retired_tables_skipped": dict(self.retired_tables_skipped),
+            "retired_rows_skipped": dict(self.retired_rows_skipped),
+            "retired_tables_total": self.retired_tables_total,
+            "retired_rows_total": self.retired_rows_total,
+            "retired_tables": self.retired_seen[:20],
         }
 
 
@@ -348,11 +466,29 @@ class IngestResult:
 # Per-source ingesters
 # --------------------------------------------------------------------------
 
+def _note_retired_blocks(res: IngestResult, blocks: list[list[list[str]]],
+                         source_id: str) -> None:
+    """Count the retired tables in a markdown export, once each.
+
+    ``classify_and_map`` already refuses them, but it runs several times over
+    the same blocks. Counting there would report one reappearing sheet three
+    times, so the count is taken in a single pass here.
+    """
+    for i, block in enumerate(blocks):
+        if not block:
+            continue
+        hit = retired_reason(block[0], source_id=source_id)
+        if hit:
+            res.note_retired(hit[0], hit[1], name=f"block {i}",
+                             source_id=source_id, rows=max(len(block) - 1, 0))
+
+
 def ingest_orders_workbook(text: str, source_id: str = "orders") -> IngestResult:
     """Parse the order/CRM workbook: order history + daily ledger + error log."""
     res = IngestResult()
     blocks = split_blocks(text)
     res.blocks_seen = len(blocks)
+    _note_retired_blocks(res, blocks, source_id)
 
     # --- daily Organic/VVRO ledger ------------------------------------------
     for mb in classify_and_map(blocks, FLOW_ALIASES,
@@ -440,6 +576,7 @@ def ingest_inquiries_workbook(text: str, source_id: str = "inquiries") -> Ingest
     res = IngestResult()
     blocks = split_blocks(text)
     res.blocks_seen = len(blocks)
+    _note_retired_blocks(res, blocks, source_id)
     for mb in classify_and_map(blocks, LEAD_ALIASES, required=("client", "status")):
         res.blocks_used += 1
         res.header_cells_seen += len([h for h in mb.header if h.strip()])
@@ -479,10 +616,16 @@ def ingest_tracker_rows(rows: list[dict[str, Any]], source_id: str = "order_trac
     """
     res = IngestResult()
     res.blocks_seen = 1
-    res.blocks_used = 1
     if not rows:
+        res.blocks_used = 1
         return res
     header = list(rows[0].keys())
+    hit = retired_reason(header, source_id=source_id)
+    if hit:
+        res.note_retired(hit[0], hit[1], name="tracker", source_id=source_id,
+                         rows=len(rows))
+        return res
+    res.blocks_used = 1
     f2c_names, unmapped = map_columns(header, TRACKER_ALIASES)
     res.unmapped_columns.update(unmapped)
     idx_to_field = {i: f for f, i in f2c_names.items()}
@@ -598,12 +741,22 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
     res.blocks_seen = len(snap.tables)
 
     for t_i, table in enumerate(snap.tables):
+        # Retired first, before anything can classify it. A retired sheet that
+        # is still in the snapshot arrives looking completely normal; the only
+        # thing that stops it is refusing it before the alias tables run.
+        hit = retired_reason(table.header, role=table.role,
+                             source_id=table.source_id)
+        if hit:
+            res.note_retired(hit[0], hit[1], name=table.name,
+                             source_id=table.source_id or source_id,
+                             rows=len(table.rows))
+            continue
+
         aliases = {
             "crm_orders": ORDER_ALIASES,
             "funnel": LEAD_ALIASES,
             "daily_flow": FLOW_ALIASES,
             "active_orders": TRACKER_ALIASES,
-            "impressions": IMPRESSION_ALIASES,
             "disputes": DISPUTE_ALIASES,
         }.get(table.role)
         if aliases is None:
@@ -726,20 +879,6 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                     last_updated=C.to_date(mb.get(row, "last_updated")),
                     handoff_notes=mb.get(row, "handoff_notes")))
 
-        elif table.role == "impressions":
-            for r_i, row in enumerate(mb.rows):
-                d = C.to_date(mb.get(row, "date"))
-                if not d:
-                    continue
-                res.impressions.append(C.Impression(
-                    date=d, provenance=prov(r_i),
-                    profile=C.normalise_profile(mb.get(row, "profile")),
-                    gig=mb.get(row, "gig"),
-                    impressions=C.to_money(mb.get(row, "impressions")) or 0.0,
-                    clicks=C.to_money(mb.get(row, "clicks")) or 0.0,
-                    orders=C.to_money(mb.get(row, "orders")) or 0.0,
-                    notes=mb.get(row, "notes")))
-
         elif table.role == "disputes":
             for r_i, row in enumerate(mb.rows):
                 client = mb.get(row, "client")
@@ -773,6 +912,9 @@ def merge(*results: IngestResult) -> IngestResult:
         out.automation_errors += r.automation_errors
         out.unmapped_columns.update(r.unmapped_columns)
         out.coercion_misses.update(r.coercion_misses)
+        out.retired_tables_skipped.update(r.retired_tables_skipped)
+        out.retired_rows_skipped.update(r.retired_rows_skipped)
+        out.retired_seen += r.retired_seen
         out.blocks_seen += r.blocks_seen
         out.blocks_used += r.blocks_used
         out.header_cells_seen += r.header_cells_seen

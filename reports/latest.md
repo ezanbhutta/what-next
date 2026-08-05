@@ -330,6 +330,7 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - priority_spread: 10
 
 **Checks not passing**
+- `warn` **retired_sources_refused** — 2 table(s) from retired sheets were refused and not counted: impressions (2 tables, 3383 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 
 **Data sources still missing**

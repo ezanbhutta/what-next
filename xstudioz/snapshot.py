@@ -48,11 +48,22 @@ ROLES = {
     "daily_flow",      # the Organic vs VVRO daily ledger
     "funnel",          # inquiry / lead log
     "active_orders",   # CSR handoff tracker
-    "impressions",     # gig impressions / clicks / views
     "disputes",        # disputed, dead and conflicted orders
     "automation_health",
+    # Retired: replaced by the hub, refused by xstudioz.ingest. They stay
+    # listed so a tab that still carries one keeps its real name in the
+    # snapshot instead of arriving as "unknown". The ingester needs to say
+    # "the impressions sheet is back", not "there is a tab I can't place".
+    "impressions",
+    "team_review",
+    "resources_upsell",
     "unknown",
 }
+
+#: Roles the engine will not ingest. The authority is
+#: ``xstudioz.ingest.RETIRED_ROLES``; this mirror exists so a reader of the
+#: snapshot contract sees which tags are dead on arrival.
+RETIRED_ROLES = frozenset({"impressions", "team_review", "resources_upsell"})
 
 
 class SnapshotError(RuntimeError):
