@@ -7,8 +7,9 @@
    A soft violet dawn high on the page settling into paper white; content
    lives on CARDS with a hairline border, a generous radius and a DIFFUSE
    AMBIENT shadow that reads as light in a room, never a hard drop shadow.
-   Inter for text, Space Grotesk for display, JetBrains Mono with tabular
-   figures for every number.
+   Inter for everything — body, headings and numbers alike. One family, with
+   hierarchy carried by size and weight on a golden-ratio scale, and figures
+   aligned by tabular-nums rather than by a monospace face.
 
    This file replaced an editorial-broadsheet skin. Every selector from that
    skin survives unchanged — only colour, type, radius, shadow, spacing and
@@ -89,32 +90,6 @@
   font-family:"Inter"; font-style:normal; font-weight:700; font-display:swap;
   src:url('/fonts/inter-700.woff2') format('woff2');
 }
-@font-face{
-  font-family:"Space Grotesk"; font-style:normal; font-weight:500; font-display:swap;
-  src:url('/fonts/space-grotesk-500.woff2') format('woff2');
-}
-@font-face{
-  font-family:"Space Grotesk"; font-style:normal; font-weight:600; font-display:swap;
-  src:url('/fonts/space-grotesk-600.woff2') format('woff2');
-}
-@font-face{
-  font-family:"Space Grotesk"; font-style:normal; font-weight:700; font-display:swap;
-  src:url('/fonts/space-grotesk-700.woff2') format('woff2');
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-style:normal; font-weight:400; font-display:swap;
-  src:url('/fonts/jetbrains-mono-400.woff2') format('woff2');
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-style:normal; font-weight:500; font-display:swap;
-  src:url('/fonts/jetbrains-mono-500.woff2') format('woff2');
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-style:normal; font-weight:600; font-display:swap;
-  src:url('/fonts/jetbrains-mono-600.woff2') format('woff2');
-}
-
-
 /* =============================================================================
    1. TOKENS
    ============================================================================= */
@@ -202,28 +177,38 @@
   --shadow-edge: rgba(22,10,51,.13);   /* table scroll-shadow · NON-TEXT    */
   --ring: 0 0 0 3px rgba(114,41,255,.14);
 
-  /* --- type ---
-     Inter body · Space Grotesk display (--disp) · JetBrains Mono numerals.
-     --serif is the OLD name for the figure/display face and is kept because
-     views already set class="serif" on headings and figures. It now points
-     at Space Grotesk; there is no serif anywhere in this design.           */
-  --disp:  "Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  --serif: "Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  /* --- type — ONE family ---
+     Inter, everywhere, and nothing else.
+     Three families (Inter body · Space Grotesk display · JetBrains Mono
+     numerals) is what made the page read as "tech" and is half of what made
+     it read as cluttered: a heading, a number and a caption sitting together
+     were three different typefaces arguing. Hierarchy now comes from size and
+     weight, which is all it ever needed.
+     --disp / --serif / --mono are kept as names because views already carry
+     class="serif" and class="mono"; they all resolve to Inter now. Numbers
+     stay aligned through font-variant-numeric:tabular-nums, which Inter has
+     properly, rather than through a monospace face.                        */
+  --disp:  "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
+  --serif: "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
   --sans:  "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
-  --mono:  "JetBrains Mono",ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,monospace;
+  --mono:  "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
 
-  /* Type. Six steps, not eight — a scale you can hold in your head.
-     Raised across the board: 11px labels and 14px body read as a dense
-     admin tool no matter how much padding sits around them. The smallest
-     size on the page is now 12px and it is used for one thing (labels). */
-  --t-xs:   .75rem;     /* 12px · labels, the smallest on the page */
-  --t-sm:   .8125rem;   /* 13px · captions under a figure          */
+  /* Type scale on the golden ratio, 15px body × 1.618.
+       9  ·  12  ·  15  ·  24  ·  39  ·  63
+     Six steps with a real relationship between them, instead of eight chosen
+     by eye. The gaps are wide on purpose: when two sizes are close (14 and 16,
+     21 and 24) the eye reads them as the same level and the hierarchy stops
+     working, which is what "no hierarchy" looked like on the last pass.
+     There is no step between 15 and 24 — if something needs to sit between
+     body and a heading it is a weight change, not a size.                   */
+  --t-xs:   .75rem;     /* 12px · labels · the smallest on the page */
+  --t-sm:   .75rem;     /* 12px · captions — same step, φ has no room here */
   --t-base: .9375rem;   /* 15px · body                             */
-  --t-md:   1.0625rem;  /* 17px · lead paragraph                   */
-  --t-lg:  1.5rem;      /* 24px · section heading                  */
-  --t-xl:  2rem;        /* 32px · view heading                     */
-  --t-2xl: 2.75rem;     /* 44px · the one figure that matters      */
-  --t-3xl: 3.5rem;      /* 56px · deck headline                    */
+  --t-md:   .9375rem;   /* 15px · lead paragraph, heavier not bigger */
+  --t-lg:  1.5rem;      /* 24px · section heading  (15 × φ)         */
+  --t-xl:  1.5rem;      /* 24px · view heading                      */
+  --t-2xl: 2.4375rem;   /* 39px · the one figure that matters (× φ²) */
+  --t-3xl: 3.9375rem;   /* 63px · deck headline (× φ³)              */
 
   /* iOS zooms the viewport on focus for any control under 16px. Every input,
      select and textarea in this file is pinned to this token. It is 1rem,

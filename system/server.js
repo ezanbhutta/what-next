@@ -1275,7 +1275,9 @@ app.post(
 // it for one.
 
 function loginPage(req, res, { error = null } = {}) {
-  const ctx = buildCtx(req, res, null, { headline: 'Sign in', chrome: 'minimal' });
+  // headline stays empty: layout()'s title prints it, and setting both
+  // rendered "Sign in" twice, once above the other.
+  const ctx = buildCtx(req, res, null, { headline: '', chrome: 'minimal' });
   const cfg = authConfig();
   const nextTo = safeNext(req.query.next, '/');
 
@@ -1310,7 +1312,7 @@ function loginPage(req, res, { error = null } = {}) {
 // again — but not optional, because an unsigned tick is a tick nobody can be
 // asked about, and that is the failure this whole hub was built to fix.
 function claimPage(req, res, { error = null, users = null, usersError = null } = {}) {
-  const ctx = buildCtx(req, res, null, { headline: 'Who is on this device?', chrome: 'minimal' });
+  const ctx = buildCtx(req, res, null, { headline: '', chrome: 'minimal' });
   const nextTo = safeNext(req.query.next, '/');
 
   const picker =
