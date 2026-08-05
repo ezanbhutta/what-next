@@ -250,8 +250,33 @@ def retired_reason(header: Iterable[str] = (), *, role: str | None = None,
     return None
 
 
+#: The "Management Sheet" tab is a hand-kept DUPLICATE of the live order
+#: history in the same workbook: on the 2026-08-05 snapshot, 392 of its 393
+#: clients also sit on the per-profile boards, and ingesting both counted the
+#: same $38,668 of earned revenue twice. The role tag cannot be trusted to
+#: catch it — the Apps Script exports it as plain ``crm_orders``, and the
+#: markdown export carries no tab names at all — so the only identity that
+#: survives both paths is its header spellings. These two exist nowhere else:
+#: every live board says "CSR" and "Branding Designer", the duplicate alone
+#: says "CSR PROJECT" and "BRANDINGS". Requiring both keeps a live board that
+#: adopts one of them from being refused by accident.
+LEGACY_BOARD_FINGERPRINT: frozenset[str] = frozenset({"csr project", "brandings"})
+
+
+def is_legacy_board(header: Iterable[str]) -> bool:
+    """True when this header can only be the duplicate management board."""
+    return LEGACY_BOARD_FINGERPRINT <= {_tok(h) for h in header}
+
+
 #: A profile name matching this is a spreadsheet aggregate row, not a seller.
-_AGGREGATE_PROFILE = re.compile(r"^[\s\-—–─_=*]*(total|sum|grand total)[\s\-—–─_=*]*$", re.I)
+#: Wide on purpose: "Totals", "Grand-Total", "TOTAL:", "Sub Total", "Overall"
+#: and "All Profiles" are all one CSR's habit away, and a totals row that
+#: slips through becomes a phantom profile that doubles any future
+#: cross-profile sum.
+_AGGREGATE_PROFILE = re.compile(
+    r"^[\s\-—–─_=*:]*("
+    r"(grand|sub|net|running)?[\s\-]*totals?|sum|overall|all\s+profiles?"
+    r")[\s\-—–─_=*:]*$", re.I)
 
 
 #: Tabs named after a seller profile. Anything else is not a profile tab.
@@ -411,6 +436,14 @@ class IngestResult:
     retired_rows_skipped: Counter = field(default_factory=Counter)
     #: One entry per refused table, so the report can name it.
     retired_seen: list[dict[str, Any]] = field(default_factory=list)
+    #: Duplicate boards refused: tables that copy rows a live table already
+    #: carries, so ingesting them counts the same order twice. Kept apart
+    #: from the retired channel on purpose — a retired sheet reappearing is
+    #: an anomaly worth a warning, but the duplicate management board sits in
+    #: the workbook every day by design, and refusing it is routine.
+    duplicate_tables_skipped: Counter = field(default_factory=Counter)
+    duplicate_rows_skipped: Counter = field(default_factory=Counter)
+    duplicates_seen: list[dict[str, Any]] = field(default_factory=list)
 
     def note_retired(self, key: str, why: str, *, name: str = "",
                      source_id: str = "", rows: int = 0) -> None:
@@ -419,6 +452,14 @@ class IngestResult:
         self.retired_seen.append({"retired": key, "name": name,
                                   "source_id": source_id, "rows": max(rows, 0),
                                   "why": why})
+
+    def note_duplicate(self, key: str, why: str, *, name: str = "",
+                       source_id: str = "", rows: int = 0) -> None:
+        self.duplicate_tables_skipped[key] += 1
+        self.duplicate_rows_skipped[key] += max(rows, 0)
+        self.duplicates_seen.append({"duplicate": key, "name": name,
+                                     "source_id": source_id,
+                                     "rows": max(rows, 0), "why": why})
 
     @property
     def retired_tables_total(self) -> int:
@@ -459,6 +500,9 @@ class IngestResult:
             "retired_tables_total": self.retired_tables_total,
             "retired_rows_total": self.retired_rows_total,
             "retired_tables": self.retired_seen[:20],
+            "duplicate_tables_skipped": dict(self.duplicate_tables_skipped),
+            "duplicate_rows_skipped": dict(self.duplicate_rows_skipped),
+            "duplicate_tables": self.duplicates_seen[:20],
         }
 
 
@@ -522,6 +566,17 @@ def ingest_orders_workbook(text: str, source_id: str = "orders") -> IngestResult
             continue
         # The Apps Script error log also has a "Client" column; skip it.
         if {_tok(h) for h in mb.header} >= {"timestamp", "tab", "row", "message"}:
+            continue
+        # The duplicate management board maps ORDER_ALIASES perfectly, which
+        # is exactly the problem: nothing but its header spellings says it is
+        # a copy. Refuse it here, counted, or every order on it exists twice.
+        if is_legacy_board(mb.header):
+            res.note_duplicate(
+                "legacy_board",
+                "copies the live order history; ingesting it would count "
+                "the same orders twice",
+                name=f"block {mb.index}", source_id=source_id,
+                rows=len(mb.rows))
             continue
         res.blocks_used += 1
         res.header_cells_seen += len([h for h in mb.header if h.strip()])
@@ -752,6 +807,19 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                              rows=len(table.rows))
             continue
 
+        # The duplicate management board arrives tagged ``crm_orders`` — the
+        # Apps Script has no way to know it is a copy — so the role check
+        # below would ingest it as real order history. Its header is the only
+        # identity that survives transport; refuse on that, before dispatch.
+        if is_legacy_board(table.header) or table.role == "crm_orders_legacy":
+            res.note_duplicate(
+                "legacy_board",
+                "copies the live order history; ingesting it would count "
+                "the same orders twice",
+                name=table.name, source_id=table.source_id or source_id,
+                rows=len(table.rows))
+            continue
+
         aliases = {
             "crm_orders": ORDER_ALIASES,
             "funnel": LEAD_ALIASES,
@@ -768,7 +836,11 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                         res.automation_errors.append(
                             {"timestamp": d.get("timestamp", ""),
                              "message": d["message"]})
-            elif table.role == "unknown":
+            else:
+                # "unknown" and any role this dispatcher has no branch for
+                # both land here. Falling off the end silently is how a
+                # dropped table gets "fixed" into double counting later, so
+                # every skipped tab is named in the drift report instead.
                 res.unmapped_columns[f"<unclassified tab: {table.name}>"] += 1
             continue
 
@@ -915,6 +987,9 @@ def merge(*results: IngestResult) -> IngestResult:
         out.retired_tables_skipped.update(r.retired_tables_skipped)
         out.retired_rows_skipped.update(r.retired_rows_skipped)
         out.retired_seen += r.retired_seen
+        out.duplicate_tables_skipped.update(r.duplicate_tables_skipped)
+        out.duplicate_rows_skipped.update(r.duplicate_rows_skipped)
+        out.duplicates_seen += r.duplicates_seen
         out.blocks_seen += r.blocks_seen
         out.blocks_used += r.blocks_used
         out.header_cells_seen += r.header_cells_seen

@@ -165,6 +165,30 @@ test('the engine being unreadable refuses, and says so rather than going quiet',
   assert.equal(verdictOf(html), 'refused');
 });
 
+test('an unreadable quotes block refuses, it does not read as "no cold quotes"', () => {
+  // `runOk` only vouches for recovery.open_orders. The cold-quote check reads
+  // recovery.quotes, and an absent block coerced to [] passed it silently: the
+  // clean case below stayed permitted with the quotes file gone, even though
+  // whether this buyer had a dead quote was unknowable.
+  const ctx = {
+    run: {
+      recovery: {
+        open_orders: { as_of: '2026-08-05', stale_after_days: 60, orders: [] },
+        followup_benchmark: { followed_n: 50, followed_placed: 20 },
+        // no `quotes` key at all: the engine did not write it
+      },
+    },
+    nonce: 'n', query: {}, user: { name: 'Ezan', role: 'owner' }, csrfToken: 'c',
+    data: {
+      buyer: 'testbuyer', buyerKey: 'testbuyer',
+      orders: [{ client: 'testbuyer', status: 'completed', amount: 200,
+                 order_date: '2026-07-20', delivered_date: '2026-07-31' }],
+      leads: [], notes: ok([]), talk: ok([]),
+    },
+  };
+  assert.equal(verdictOf(String(render(ctx).html)), 'refused');
+});
+
 test('the one clean case still clears, so the gate is a gate and not a wall', () => {
   // Nothing open, one delivery inside the stale line, no flag. This is the only
   // combination the page claims will pass, and it has to actually pass: a rule

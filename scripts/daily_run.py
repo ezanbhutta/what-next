@@ -178,6 +178,14 @@ def main() -> int:
             print(f"[retired] {r['source_id']}/{r['name']}: {r['rows']} rows "
                   f"not counted: {r['why']}", file=sys.stderr)
 
+    # Same voice for duplicate boards. Expected every run — the management
+    # board lives in the workbook by design — so this is a receipt, not an
+    # alarm: the operator can see the refusal happened and how many rows it
+    # kept out of the book.
+    for d in ing.get("duplicate_tables") or []:
+        print(f"[duplicate] {d['source_id']}/{d['name']}: {d['rows']} rows "
+              f"refused: {d['why']}", file=sys.stderr)
+
     print(f"\n[selfcheck] score={art.check.score:.0f}/100 "
           f"blocking={len(art.check.blocking_failures)} "
           f"emitted={art.emitted}", file=sys.stderr)

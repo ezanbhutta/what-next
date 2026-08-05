@@ -850,6 +850,113 @@ def test_unclassified_tab_is_reported_not_silently_dropped():
 
 
 # =========================================================================
+# The duplicate management board
+# =========================================================================
+#
+# The workbook carries a hand-kept "Management Sheet" that copies the live
+# per-profile order boards: on the 2026-08-05 snapshot, 392 of its 393
+# clients also sat on a live board, and ingesting both counted $38,668 of
+# earned revenue twice. Neither transport identifies it — the Apps Script
+# tags it plain crm_orders, and the markdown export has no tab names — so
+# the refusal keys on the two header spellings only that board uses.
+
+_LEGACY_HEADER = ["CLIENT NAME", "PROJECT NAME", "ORDER TYPE", "STATUS",
+                  "LOGO", "BRANDINGS", "CSR PROJECT", "DUE DATE",
+                  "AMOUNT", "TIP", "NOTES", "ORDER DATE"]
+
+
+def test_the_duplicate_board_is_refused_on_the_markdown_path():
+    md = ("| Date of Order | Client Name | Order Amount | Status |\n"
+          "| :-: | :-: | :-: | :-: |\n"
+          "| 01-Jul-2026 | acme | $500.00 | Completed |\n"
+          "| 02-Jul-2026 | beta | $250.00 | Completed |\n"
+          "\n"
+          "| " + " | ".join(_LEGACY_HEADER) + " |\n"
+          "| " + " | ".join([":-:"] * len(_LEGACY_HEADER)) + " |\n"
+          "| acme | Logo | Logo | Completed |  |  | Iqra |  | $500.00 |  |  | 01-Jul-2026 |\n"
+          "| beta | Brand | Logo | Completed |  |  | Iqra |  | $250.00 |  |  | 02-Jul-2026 |\n")
+    res = ingest.ingest_orders_workbook(md)
+    assert len(res.orders) == 2, "the copy was ingested as real order history"
+    assert sum(o.amount or 0 for o in res.orders) == 750.0
+    assert res.duplicate_tables_skipped["legacy_board"] == 1
+    assert res.duplicate_rows_skipped["legacy_board"] == 2
+
+
+def test_the_duplicate_board_is_refused_on_the_snapshot_path_despite_its_role():
+    """The Apps Script tags the copy plain crm_orders; the role cannot save us."""
+    res = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[
+        {"name": "X Studioz", "role": "crm_orders", "source_id": "orders",
+         "header": ["Date of Order", "Client Name", "Order Amount", "Status"],
+         "rows": [["01-Jul-2026", "acme", "$500.00", "Completed"]]},
+        {"name": "Management Sheet", "role": "crm_orders", "source_id": "orders",
+         "header": _LEGACY_HEADER,
+         "rows": [["acme", "Logo", "Logo", "Completed", "", "", "Iqra", "",
+                   "$500.00", "", "", "01-Jul-2026"]]},
+    ])))
+    assert len(res.orders) == 1
+    assert res.duplicate_tables_skipped["legacy_board"] == 1
+    assert res.duplicates_seen[0]["name"] == "Management Sheet"
+
+
+def test_both_paths_agree_on_a_workbook_that_carries_the_duplicate_board():
+    """The founding rule of the two intakes: same workbook, same numbers."""
+    md = ("| Date of Order | Client Name | Order Amount | Status |\n"
+          "| :-: | :-: | :-: | :-: |\n"
+          "| 01-Jul-2026 | acme | $500.00 | Completed |\n"
+          "\n"
+          "| " + " | ".join(_LEGACY_HEADER) + " |\n"
+          "| " + " | ".join([":-:"] * len(_LEGACY_HEADER)) + " |\n"
+          "| acme | Logo | Logo | Completed |  |  | Iqra |  | $500.00 |  |  | 01-Jul-2026 |\n")
+    from_md = ingest.ingest_orders_workbook(md)
+    from_snap = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[
+        {"name": "X Studioz", "role": "crm_orders", "source_id": "orders",
+         "header": ["Date of Order", "Client Name", "Order Amount", "Status"],
+         "rows": [["01-Jul-2026", "acme", "$500.00", "Completed"]]},
+        {"name": "Management Sheet", "role": "crm_orders", "source_id": "orders",
+         "header": _LEGACY_HEADER,
+         "rows": [["acme", "Logo", "Logo", "Completed", "", "", "Iqra", "",
+                   "$500.00", "", "", "01-Jul-2026"]]},
+    ])))
+    a = metrics.economics(from_md.orders)
+    b = metrics.economics(from_snap.orders)
+    assert a.as_dict() == b.as_dict()
+
+
+def test_a_live_board_using_one_legacy_spelling_is_not_refused():
+    """The fingerprint needs BOTH spellings; one alone stays live."""
+    md = ("| Date of Order | Client Name | Order Amount | CSR PROJECT |\n"
+          "| :-: | :-: | :-: | :-: |\n"
+          "| 01-Jul-2026 | acme | $500.00 | Iqra |\n")
+    res = ingest.ingest_orders_workbook(md)
+    assert len(res.orders) == 1
+    assert not res.duplicate_tables_skipped
+
+
+def test_merge_carries_the_duplicate_refusal_through():
+    """The pipeline merges parts before writing stats; a refusal that fires
+    inside one part must survive into the merged report, or the receipt
+    vanishes and the refusal looks like it never happened."""
+    md = ("| " + " | ".join(_LEGACY_HEADER) + " |\n"
+          "| " + " | ".join([":-:"] * len(_LEGACY_HEADER)) + " |\n"
+          "| acme | Logo | Logo | Completed |  |  | Iqra |  | $500.00 |  |  | 01-Jul-2026 |\n")
+    part = ingest.ingest_orders_workbook(md)
+    merged = ingest.merge(part, ingest.IngestResult())
+    assert merged.duplicate_tables_skipped["legacy_board"] == 1
+    assert merged.duplicate_rows_skipped["legacy_board"] == 1
+    assert merged.stats()["duplicate_tables"][0]["duplicate"] == "legacy_board"
+
+
+def test_aggregate_profile_catches_real_world_totals_spellings():
+    for label in ("Total", "Totals", "TOTALS", "Grand Total", "Grand Totals",
+                  "Grand-Total", "TOTAL:", "Sub Total", "Subtotal",
+                  "Net Total", "Overall", "All Profiles", "— total —"):
+        assert ingest.is_aggregate_profile(label), label
+    for label in ("X Studioz", "Storm", "Summit", "Carpicon", "Totally Rad",
+                  "Subtotal Designs"):
+        assert not ingest.is_aggregate_profile(label), label
+
+
+# =========================================================================
 # Reach vs conversion
 # =========================================================================
 

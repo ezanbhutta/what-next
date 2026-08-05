@@ -45,12 +45,13 @@ const RESPONSES_PATH = path.join(HERE, '..', 'data', 'responses.json');
 // in the sheets, or has left, is a question for Ezan — not something a seed
 // script should decide by omitting a row.
 //
-// SEEDED: the five reviewed names plus Iqra, Salman, Shahzaib, because they
-// demonstrably do the work and every write needs an attributable author.
-// NOT SEEDED: Zubair, Swaid, Tanzeel, Fatima, Tayyab. They appear in the
-// order book but in neither the review sheet nor the brief, so they may be
-// former staff or another team. Add them by hand once someone confirms; do
-// not invent team members from a column.
+// SEEDED ACTIVE: the five reviewed names below.
+// SEEDED INACTIVE: Iqra, Salman, Shahzaib, in FORMER further down, because
+// 681 orders are attributed to them and the past has to stay explainable.
+// NOT SEEDED AT ALL: Zubair, Swaid, Tanzeel, Fatima, Tayyab. They appear in
+// the order book but in neither the review sheet nor the brief, so they may
+// be former staff or another team. Add them by hand once someone confirms;
+// do not invent team members from a column.
 //
 // SPELLING: the brief writes "ShahZaib", the engine's data writes "Shahzaib".
 // The engine's spelling wins here, because `person` and `entered_by` have to
@@ -74,31 +75,70 @@ export const TEAM = [
 //   Shahzaib   14
 //
 // Deleting them would orphan 681 orders' worth of attribution and make every
-// historical conversion figure unexplainable — "who handled this?" would
-// answer "nobody", which is a lie about the past. Deactivating removes them
-// from the device-claim picker and the review programme while leaving every
-// row that names them intact and readable.
+// historical conversion figure unexplainable. "Who handled this?" would answer
+// "nobody", which is a lie about the past. Deactivating removes them from the
+// device-claim picker and the review programme while leaving every row that
+// names them intact and readable.
+//
+// THEY ARE INSERTED, THEN DEACTIVATED, and the insert half was missing.
+//
+// This list only ever ran an UPDATE, and nothing ever created the rows for it
+// to update, so all three matched nothing on every run since the file was
+// written. The Team page draws exactly this distinction: "Retired here" for a
+// name in app_user with active = 0, "Not known here" for one that was never
+// added. With no rows, Iqra sat under "Not known here" beside Zubair and
+// Tayyab, and 585 orders looked like they had been handled by a stranger.
+//
+// The insert is guarded and cannot promote anybody: `active = 0` is set on
+// insert and the UPDATE below only touches a row that is still active, so a
+// name Ezan reactivates by hand stays active through every later run.
 export const FORMER = ['Iqra', 'Salman', 'Shahzaib'];
 
 async function seedUsers(log) {
+  // WHO IS ALREADY HERE, ASKED BEFORE ANYTHING IS WRITTEN.
+  //
+  // This used to read affectedRows and call 1 an insert, on the documented
+  // MySQL rule that an ON DUPLICATE KEY UPDATE changing nothing returns 0.
+  // The server this actually runs on returns 1 for that case, so a row that
+  // was already there and already correct counted as a fresh insert, and both
+  // `npm run seed` and every boot announced "added 5 user(s)" forever. The
+  // count was never once right after the first run.
+  //
+  // That is worse than a cosmetic wrong number. This line is how anyone would
+  // notice a name genuinely appearing, and a message that says five every
+  // morning cannot carry that signal. So the question is asked in SQL that
+  // means one thing on every server, before the write rather than after it.
+  const before = new Set((await query('SELECT name FROM app_user')).map((r) => String(r.name)));
+
   const inserted = [];
   const skipped = [];
   for (const person of TEAM) {
-    const result = await run(
+    await run(
       'INSERT INTO app_user (name, role, active) VALUES (?, ?, 1) ' +
         'ON DUPLICATE KEY UPDATE role = VALUES(role), active = 1',
       [person.name, person.role]
     );
-    // affectedRows is 1 for a fresh insert, 2 for an update that changed a row,
-    // 0 when the row already matched exactly.
-    (result.affectedRows === 1 ? inserted : skipped).push(person.name);
+    (before.has(person.name) ? skipped : inserted).push(person.name);
   }
   log(
     `[seed] app_user: ${inserted.length} inserted${inserted.length ? ` (${inserted.join(', ')})` : ''}` +
       `, ${skipped.length} already present`
   );
 
-  // Retire the former team. UPDATE, never DELETE — see FORMER above.
+  // The former team: create the row if it is missing, then make sure it is
+  // inactive. INSERT IGNORE, never a plain INSERT, so a name Ezan has already
+  // added by hand keeps whatever role he gave it.
+  const recorded = [];
+  for (const name of FORMER) {
+    await run("INSERT IGNORE INTO app_user (name, role, active) VALUES (?, 'csr', 0)", [name]);
+    if (!before.has(name)) recorded.push(name);
+  }
+  if (recorded.length) {
+    log(`[seed] app_user: ${recorded.length} former member(s) recorded as retired (${recorded.join(', ')})`);
+  }
+
+  // Retire anyone on that list who is still marked active. UPDATE, never
+  // DELETE, see FORMER above.
   let retired = 0;
   for (const name of FORMER) {
     const result = await run('UPDATE app_user SET active = 0 WHERE name = ? AND active = 1', [name]);
@@ -106,7 +146,7 @@ async function seedUsers(log) {
   }
   if (retired) log(`[seed] app_user: ${retired} former member(s) deactivated (${FORMER.join(', ')})`);
 
-  // Report anyone else in the table rather than removing them — a colleague
+  // Report anyone else in the table rather than removing them. A colleague
   // added by hand is data, and a seed script does not delete people.
   const rows = await query('SELECT name FROM app_user');
   const known = new Set([...TEAM.map((t) => t.name), ...FORMER]);

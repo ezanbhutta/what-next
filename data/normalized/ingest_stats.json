@@ -8,8 +8,8 @@
   "disputes": 0,
   "automation_errors": 334,
   "blocks_seen": 28,
-  "blocks_used": 25,
-  "header_cells_seen": 408,
+  "blocks_used": 24,
+  "header_cells_seen": 396,
   "unmapped_columns": {
     "Upsell": 5,
     "Public Review": 1,
@@ -18,9 +18,9 @@
     "Service Demand": 1,
     "Reply": 1
   },
-  "unmapped_rate": 0.0245,
+  "unmapped_rate": 0.0253,
   "coercion_misses": {
-    "order_date": 9
+    "order_date": 8
   },
   "retired_tables_skipped": {
     "impressions": 2
@@ -44,6 +44,21 @@
       "source_id": "impressions",
       "rows": 162,
       "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+    }
+  ],
+  "duplicate_tables_skipped": {
+    "legacy_board": 1
+  },
+  "duplicate_rows_skipped": {
+    "legacy_board": 477
+  },
+  "duplicate_tables": [
+    {
+      "duplicate": "legacy_board",
+      "name": "Management Sheet",
+      "source_id": "orders",
+      "rows": 477,
+      "why": "copies the live order history; ingesting it would count the same orders twice"
     }
   ]
 }

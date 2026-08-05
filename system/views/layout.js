@@ -88,8 +88,24 @@ export function safe(value) {
  */
 const RETIRED = /vvro|inorganic/gi; // scrubs-output: the one line allowed to name them
 
+/**
+ * Em dashes, same chokepoint. The hub's own templates were cleaned by hand,
+ * but engine prose arrives through data paths (task titles, rationales,
+ * steps in latest-run.json) and CSR-typed sheet notes, and both use the em
+ * dash freely. Two jobs for one character, handled separately:
+ *
+ *   - a value that IS just the dash is a placeholder meaning "no value";
+ *     converting it to punctuation once broke seven table cells, so it
+ *     renders as "None"
+ *   - a dash inside prose is a clause break, and reads as a comma
+ */
+const DASH_ONLY = /^\s*—+\s*$/; // reads-input: matches the character to remove it
+const DASH_IN_PROSE = /\s*—\s*/g; // reads-input: matches the character to remove it
+
 export function scrub(text) {
-  return String(text).replace(RETIRED, (match) => {
+  const s = String(text);
+  const dashless = DASH_ONLY.test(s) ? 'None' : s.replace(DASH_IN_PROSE, ', ');
+  return dashless.replace(RETIRED, (match) => {
     if (match === match.toUpperCase()) return 'DIRECTED';
     if (match[0] === match[0].toUpperCase()) return 'Directed';
     return 'directed';

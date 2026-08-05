@@ -10,11 +10,13 @@
 //
 // WHAT IS CHECKED AND WHAT IS NOT
 //
-// Source that the team READS, not data the hub QUOTES. The six handbook
-// documents are Ezan's own words and are rendered verbatim, em dashes and
-// all; rewriting somebody's document to fit our house style would be the hub
-// editing a source, which is the one thing it never does. Engine output in
-// data/ is the same: the hub reads it, it does not rewrite it.
+// This file checks SOURCE. Strings that arrive through data, engine task
+// prose in latest-run.json, CSR-typed notes, the handbook extractions, do
+// not exist until runtime and cannot be checked here, so those are handled
+// at the render chokepoint: views/layout.js scrub() converts their em
+// dashes on the way to the screen, exactly as it already converts raw
+// engine keys. The stored files stay untouched, the hub never edits a
+// source; it just does not repeat the character to the team.
 //
 // Comments are stripped before every check. A comment explaining a trap can
 // say whatever it needs to; it never reaches a screen.
@@ -112,6 +114,19 @@ test('no em dash reaches a screen or a terminal', () => {
     `An em dash reads as machine-written and the house style bans it.\n` +
       `Use a full stop, a comma or a colon:\n${at(hits)}`
   );
+});
+
+test('the chokepoint converts em dashes arriving through data', async () => {
+  // The check above only sees source. Engine task prose and CSR-typed sheet
+  // notes carry em dashes in DATA, so the same chokepoint that scrubs raw
+  // engine keys converts those too. Two jobs for one character: a lone dash
+  // is a placeholder meaning "no value" (converting it to punctuation once
+  // broke seven table cells), a dash inside prose is a clause break.
+  const { esc } = await import('../views/layout.js');
+  assert.equal(esc('Rescue order #71 — acme'), 'Rescue order #71, acme');
+  assert.equal(esc('over 60 days — see playbook'), 'over 60 days, see playbook');
+  assert.equal(esc('—'), 'None');
+  assert.equal(esc(' — '), 'None');
 });
 
 // ------------------------------------------------------- the retired names

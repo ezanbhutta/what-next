@@ -300,7 +300,7 @@ function asksForReview(...parts) {
  * late"; it is "we cannot see what is late", and the two must not produce the
  * same answer.
  */
-function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasAnyRecord, flagged }) {
+function reviewGate({ runOk, quotesKnown, rows, coldQuotes, staleAfter, lastDeliveryAge, hasAnyRecord, flagged }) {
   const reasons = [];
 
   if (!runOk) {
@@ -309,6 +309,20 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
       detail: html`Without <code class="mono">recovery.open_orders</code> there is no way to tell whether
         this buyer has a late order. That is ${missing()}, not "nothing is late", and a review ask is not
         sent on a MISSING.`,
+    });
+    return { allowed: false, reasons };
+  }
+
+  // The quotes block, on the same terms. `runOk` only vouches for
+  // open_orders; the cold-quote check below reads recovery.quotes, and an
+  // absent quotes block turned into an empty array reads as "no cold
+  // quotes" when the truth is "we cannot tell".
+  if (!quotesKnown) {
+    reasons.push({
+      what: 'Whether this buyer has a dead quote cannot be read',
+      detail: html`<code class="mono">recovery.quotes</code> is ${missing()}, so whether this buyer was
+        quoted and went cold is unknowable. That is not "no cold quotes", and a review ask is not sent on
+        a MISSING.`,
     });
     return { allowed: false, reasons };
   }
@@ -1726,7 +1740,11 @@ export function render(ctx) {
 
   const runOk = !isMissing(open) && open && Array.isArray(open.orders);
   const openRows = runOk ? open.orders : [];
-  const quoteRows = !isMissing(quotes) && quotes && Array.isArray(quotes.quotes) ? quotes.quotes : [];
+  // Known and empty are different answers: [] from a readable block means
+  // "no quotes", [] standing in for an unreadable one would mean the gate
+  // below treats MISSING as "no cold quotes" and fails open.
+  const quotesKnown = !isMissing(quotes) && Boolean(quotes) && Array.isArray(quotes.quotes);
+  const quoteRows = quotesKnown ? quotes.quotes : [];
   const staleAfter = runOk ? open.stale_after_days : null;
 
   const buyerRaw = String(ctx.data?.buyer ?? '').trim();
@@ -1806,6 +1824,7 @@ export function render(ctx) {
 
   const gate = reviewGate({
     runOk,
+    quotesKnown,
     rows,
     coldQuotes,
     staleAfter,
