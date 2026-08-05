@@ -28,55 +28,105 @@ import {
 } from './data.js';
 
 // ------------------------------------------------------- the ground truth
+//
+// These used to assert against the LIVE files: orders().length === 1053,
+// $3,628, 29.4%. That is a data assertion wearing a test's clothes. The
+// engine refreshes data/ every morning, so the suite went red the first time
+// real numbers arrived, and the only ways out were to re-pin the constants to
+// whatever the sheet said today (which tests nothing and quietly launders a
+// bad parse into "verified") or to stop refreshing the data.
+//
+// So the LOGIC is pinned to a fixture, and the LIVE files are checked against
+// invariants that must hold whatever the sheet says. A join bug still fails
+// the suite. A busy Tuesday does not.
 
-test('engine data loads at the expected size', () => {
-  assert.equal(orders().length, 1053);
-  assert.equal(leads().length, 319);
+/** A hand-built book that exercises every branch of the join. */
+const FIXTURE = {
+  leads: [
+    { client: 'alpha', status: 'placed' },      // said won, and did order
+    { client: 'Beta_One', status: 'placed' },   // said won, never ordered
+    { client: 'gamma', status: 'not_placed' },  // written off, and DID order
+    { client: 'delta', status: 'not_placed' },  // written off, correctly
+    { client: 'epsilon', status: 'unknown' },   // no verdict either way
+  ],
+  orders: [
+    { client: 'alpha', amount: 100, order_date: '2026-07-01' },
+    // Same buyer, different spelling and case. The join normalises, so these
+    // must land on `gamma`, not invent a sixth buyer.
+    { client: 'Gamma', amount: 200, order_date: '2026-07-02' },
+    { client: 'g-a-m-m-a', amount: 300, order_date: '2026-07-03' },
+    { client: 'zeta', amount: 400, order_date: '2026-07-04' },   // never inquired
+  ],
+};
+
+test('the join is case and punctuation insensitive on the buyer username', () => {
+  const r = reconcile(FIXTURE);
+  assert.equal(r.available, true);
+
+  // "Gamma" and "g-a-m-m-a" are one buyer with two orders, $200 + $300.
+  const lost = r.findings.marked_lost_but_ordered;
+  assert.equal(lost.length, 1);
+  assert.equal(r.summary.not_placed_but_ordered, 1);
+  assert.equal(r.summary.not_placed_but_ordered_orders, 2);
+  assert.equal(Math.round(r.summary.not_placed_but_ordered_value), 500);
 });
 
-test('reconcile reproduces the verified counts exactly', () => {
+test('a lead marked won with no order behind it is reported separately', () => {
+  const r = reconcile(FIXTURE);
+  assert.equal(r.summary.placed_no_order, 1);
+  assert.equal(r.findings.marked_won_no_order[0].buyer.toLowerCase().startsWith('beta'), true);
+});
+
+test('an order from a buyer who never inquired is its own finding', () => {
+  const r = reconcile(FIXTURE);
+  const none = r.findings.order_without_inquiry.map((f) => f.buyer);
+  assert.deepEqual(none, ['zeta']);
+});
+
+test('true conversion counts buyers who ordered, claimed counts the sheet’s verdict', () => {
+  const { conversion } = reconcile(FIXTURE);
+  // 5 leads. alpha and gamma actually ordered -> 2/5 = 40%.
+  // The sheet claims alpha and Beta_One -> 2/5 = 40% as well, but the SET is
+  // different: it credits a sale that never landed and misses one that did.
+  assert.equal(conversion.denominator, 5);
+  assert.equal(conversion.true_converted, 2);
+  assert.equal(conversion.claimed_placed, 2);
+  // Rates are not pre-rounded to display width. If they were, formatting them
+  // would round a second time and move the number.
+  assert.equal((conversion.true_rate * 100).toFixed(2), '40.00');
+});
+
+test('the live files still hold every invariant the findings depend on', () => {
   const r = reconcile();
   assert.equal(r.available, true);
 
-  assert.equal(r.summary.leads, 319);
-  assert.equal(r.summary.orders, 1053);
+  // Sizes move daily. That they are plausible does not.
+  assert.ok(r.summary.orders > 0, 'no orders loaded');
+  assert.ok(r.summary.leads > 0, 'no leads loaded');
 
-  assert.equal(r.summary.marked_placed, 71);
-  assert.equal(r.summary.actually_ordered, 91);
-  assert.equal(r.summary.placed_and_ordered, 66);
-  assert.equal(r.summary.placed_no_order, 5);
-  assert.equal(r.summary.not_placed_but_ordered, 25);
-});
+  // Arithmetic that cannot be false unless the join is broken.
+  assert.equal(
+    r.summary.placed_and_ordered + r.summary.placed_no_order,
+    r.summary.marked_placed,
+    'marked-placed does not split into ordered + not-ordered'
+  );
+  assert.equal(
+    r.summary.placed_and_ordered + r.summary.not_placed_but_ordered,
+    r.summary.actually_ordered,
+    'actually-ordered does not split by what the sheet claimed'
+  );
+  assert.ok(
+    r.summary.actually_ordered >= r.summary.marked_placed,
+    'the sheet claims more conversions than the order book can support'
+  );
+  assert.equal(r.findings.marked_lost_but_ordered.length, r.summary.not_placed_but_ordered);
 
-test('the buyers written off as lost are worth 27 orders and $3,628', () => {
-  const r = reconcile();
-  assert.equal(r.summary.not_placed_but_ordered_orders, 27);
-  assert.equal(Math.round(r.summary.not_placed_but_ordered_value), 3628);
-
-  // The finding set is the same 25 buyers the summary counts.
-  assert.equal(r.findings.marked_lost_but_ordered.length, 25);
-  assert.equal(r.counts.marked_lost_but_ordered.buyers, 25);
-  assert.equal(r.counts.marked_lost_but_ordered.orders, 27);
-  assert.equal(Math.round(r.counts.marked_lost_but_ordered.total_value), 3628);
-});
-
-test('true conversion is 29.4% against the sheet-claimed 22.9%', () => {
-  const { conversion } = reconcile();
-  assert.equal(conversion.denominator, 310);
-  assert.equal(conversion.true_converted, 91);
-  assert.equal(conversion.claimed_placed, 71);
-
-  assert.equal((conversion.true_rate * 100).toFixed(1), '29.4');
-  assert.equal((conversion.claimed_rate * 100).toFixed(1), '22.9');
-
-  // The gap is the point of the whole module: 6.45 points of conversion the
-  // inquiry sheet does not know it earned.
-  assert.equal(conversion.gap_points.toFixed(2), '6.45');
-  assert.ok(conversion.gap > 0);
-
-  // Rates are not pre-rounded to display width. If they were, formatting them
-  // would round a second time and move the number, 29.4% would print 29.3%.
-  assert.equal((conversion.true_rate * 100).toFixed(2), '29.35');
+  // The finding this hub exists for. Its size changes; its direction does not.
+  assert.ok(
+    r.summary.not_placed_but_ordered > 0,
+    'no buyers marked lost who actually ordered: verify before believing this'
+  );
+  assert.ok(r.conversion.gap_points > 0, 'true conversion is no longer above claimed');
 });
 
 test('the three finding sets partition cleanly and none overlap', () => {
@@ -85,22 +135,26 @@ test('the three finding sets partition cleanly and none overlap', () => {
   const won = new Set(r.findings.marked_won_no_order.map((f) => f.buyer));
   const none = new Set(r.findings.order_without_inquiry.map((f) => f.buyer));
 
-  assert.equal(won.size, 5);
-  assert.equal(lost.size + won.size, 30);
   for (const b of lost) assert.ok(!won.has(b), `${b} is in two finding sets`);
   for (const b of lost) assert.ok(!none.has(b), `${b} is in two finding sets`);
   for (const b of won) assert.ok(!none.has(b), `${b} is in two finding sets`);
 
   // Every lead buyer is accounted for: placed-and-ordered, or one of the two
-  // inquiry-side findings, or genuinely lost.
-  assert.equal(r.summary.lead_buyers, 310);
+  // inquiry-side findings, or genuinely lost. Counts move daily; the
+  // relationship between them does not, which is the part worth pinning.
+  assert.ok(r.summary.lead_buyers > 0, 'no lead buyers loaded');
+  assert.ok(
+    r.summary.lead_buyers <= r.summary.leads,
+    'more distinct buyers than lead rows, which the join cannot produce'
+  );
   assert.equal(r.summary.order_buyers, none.size + r.summary.actually_ordered);
 });
 
 test('order_without_inquiry covers every order buyer with no inquiry logged', () => {
   const r = reconcile();
   const set = r.findings.order_without_inquiry;
-  assert.equal(set.length, 821);
+  // The size is whatever the sheets say today. That it equals order buyers
+  // minus the ones who did inquire is arithmetic, and arithmetic is testable.
   assert.equal(set.length, r.summary.order_buyers - r.summary.actually_ordered);
   for (const f of set) {
     assert.equal(f.lead_rows, 0);
@@ -193,7 +247,7 @@ test('a missing source refuses to reconcile rather than inventing findings', () 
 
 test('every rate carries an interval, and small denominators say so', () => {
   const big = reconcile().conversion;
-  assert.equal(big.too_few_to_call, false, '310 is a callable denominator');
+  assert.equal(big.too_few_to_call, false, 'a denominator in the hundreds is callable');
   assert.ok(big.true_ci[0] < big.true_rate && big.true_rate < big.true_ci[1]);
 
   const small = reconcile({
@@ -258,9 +312,19 @@ test('MISSING renders as MISSING everywhere a value goes', () => {
 });
 
 test('pick yields MISSING for an absent path and preserves a real null', () => {
-  assert.equal(pick(run(), 'metrics.health.verdict'), 'SOFTENING');
+  // The verdict itself moves with the data; that pick REACHES it does not.
+  // This asserted 'SOFTENING' and went red the day organic actually breached,
+  // which is the one day the suite should have stayed quiet and let the
+  // finding speak.
+  const verdict = pick(run(), 'metrics.health.verdict');
+  assert.ok(!isMissing(verdict), 'pick could not reach a path that exists');
+  assert.equal(typeof verdict, 'string');
+
   assert.ok(isMissing(pick(run(), 'metrics.nothing.here')));
   assert.ok(isMissing(pick(MISSING, 'anything')));
+
+  // A real null must survive as null. If pick turned it into MISSING the page
+  // would print "MISSING" for a value the engine deliberately set to nothing.
   assert.equal(pick(run(), 'metrics.decomposition.ctr_now'), null);
 });
 
@@ -300,15 +364,20 @@ test('an absent data directory yields MISSING, never zero or an empty list', () 
 });
 
 test('staleness measures the run date, not the file mtime', () => {
-  const s = staleness({ now: new Date('2026-08-04T09:00:00Z') });
-  assert.equal(s.ok, true);
-  assert.equal(s.run_date, '2026-08-01');
-  assert.equal(s.age_days, 3);
-  assert.equal(s.label, '3 days old');
-  assert.equal(s.fresh, false, 'a 3-day-old run is not fresh however new the file is');
+  // Anchor on whatever run is committed, then measure FROM it. Hard-coding
+  // 2026-08-01 meant the test broke the moment a fresher run landed, which is
+  // the opposite of what a staleness test should do.
+  const runDate = staleness().run_date;
+  const today = staleness({ now: new Date(`${runDate}T12:00:00Z`) });
+  assert.equal(today.ok, true);
+  assert.equal(today.age_days, 0);
+  assert.equal(today.fresh, true);
+  assert.equal(today.label, "today's run");
 
-  const sameDay = staleness({ now: new Date('2026-08-01T23:00:00Z') });
-  assert.equal(sameDay.age_days, 0);
-  assert.equal(sameDay.fresh, true);
-  assert.equal(sameDay.label, "today's run");
+  const base = new Date(`${runDate}T00:00:00Z`);
+  const threeDaysOn = new Date(base.getTime() + 3 * 86400000);
+  const later = staleness({ now: threeDaysOn });
+  assert.equal(later.age_days, 3);
+  assert.equal(later.label, '3 days old');
+  assert.equal(later.fresh, false, 'a 3-day-old run is not fresh however new the file is');
 });

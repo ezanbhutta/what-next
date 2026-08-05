@@ -668,9 +668,13 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
   gap:var(--s4); flex-wrap:wrap;
   padding-bottom:var(--s2); margin-bottom:var(--s5);
 }
+/* The section heading names the page. It is not the point of the page.
+   Kept deliberately modest so the figure below it is unambiguously the
+   largest thing in view: heading 24px, figure 36-48px. A heading that
+   competes with its own data is a heading nobody needed. */
 .slug h2{
-  font-family:var(--disp); font-weight:700; font-size:var(--t-xl);
-  line-height:1.12; letter-spacing:-.03em; text-wrap:balance;
+  font-family:var(--disp); font-weight:650; font-size:var(--t-lg);
+  line-height:1.2; letter-spacing:-.02em; text-wrap:balance;
 }
 .slug .kicker{
   font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
@@ -680,12 +684,18 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
 /* G4 — the deck states the finding, not the section name.
    "$6,952 earned. $8,007 waiting." not "Money".
    Views own the words; this only sets them. */
+/* The deck supports the heading. It does not compete with it.
+   It was clamp(20px, 3vw, 26px) under a 24px heading, so the paragraph was
+   BIGGER than the thing it sat beneath, and a reader met two headline-sized
+   blocks of words before reaching a single number. On a page whose whole job
+   is "here is the figure, here is what to do", prose should be the quietest
+   thing on screen and the figure the loudest. */
 .deck{
-  font-family:var(--disp); font-weight:600;
-  font-size:clamp(1.25rem,3vw,1.625rem); line-height:1.25;
-  letter-spacing:-.028em; text-wrap:balance;
-  color:var(--ink);                                /* 17.93:1 PASS        */
-  margin-bottom:var(--s5); max-width:36ch;
+  font-family:var(--sans); font-weight:450;
+  font-size:var(--t-md); line-height:1.55;
+  letter-spacing:0; text-wrap:pretty;
+  color:var(--ink-2);                              /* 8.02:1 PASS         */
+  margin-bottom:var(--s5); max-width:56ch;
 }
 .deck em{ font-style:normal; color:var(--accent); }  /* 5.80:1 PASS       */
 .deck .num{ font-family:var(--mono); font-variant-numeric:tabular-nums lining-nums; letter-spacing:-.04em; }
