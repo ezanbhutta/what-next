@@ -103,15 +103,28 @@ export const CHECKLIST = [
 // Field types: text · textarea · segment · multiselect · select · designer ·
 // date · datetime · stars.
 
+// `tone` drives the dot on every chip and every timeline row. It is grouped,
+// not per-activity, so a new activity inherits its family's colour and no one
+// has to pick one. Colour is never the only signal: the label is always there,
+// and problems additionally carry a filled dot rather than a hollow one.
 const GROUPS = [
-  { key: 'inquiries', label: 'Inquiries' },
-  { key: 'orders', label: 'Orders and projects' },
-  { key: 'revisions', label: 'Revisions' },
-  { key: 'deliveries', label: 'Sharing and deliveries' },
-  { key: 'followups', label: 'Follow-ups and sales' },
-  { key: 'meetings', label: 'Meetings' },
-  { key: 'problems', label: 'Problems and other' },
+  { key: 'inquiries', label: 'Inquiries', tone: 'info' },
+  { key: 'orders', label: 'Orders and projects', tone: 'pos' },
+  { key: 'revisions', label: 'Revisions', tone: 'accent' },
+  { key: 'deliveries', label: 'Sharing and deliveries', tone: 'info' },
+  { key: 'followups', label: 'Follow-ups and sales', tone: 'warn' },
+  { key: 'meetings', label: 'Meetings', tone: 'accent' },
+  { key: 'problems', label: 'Problems and other', tone: 'neg' },
 ];
+
+const TONE_OF = Object.fromEntries(GROUPS.map((g) => [g.key, g.tone]));
+
+/** The dot beside an activity label. */
+function activityDot(key) {
+  const a = ACTIVITY_BY_KEY[key];
+  const tone = a ? TONE_OF[a.group] || 'accent' : 'accent';
+  return `<span class="act-dot act-dot--${tone}" aria-hidden="true"></span>`;
+}
 
 const SERVICES = [
   'Logo Design',
@@ -1004,7 +1017,7 @@ function activityChooser(open) {
         QUICK.map((key) => {
           const a = ACTIVITY_BY_KEY[key];
           if (!a) return '';
-          return html`<a href="${safe(link(key))}" ${safe(open === key ? 'aria-current="true"' : '')}>${a.label}</a>`;
+          return html`<a href="${safe(link(key))}" ${safe(open === key ? 'aria-current="true"' : '')}>${safe(activityDot(key))}${a.label}</a>`;
         })
       )}
     </div>`;
@@ -1017,7 +1030,7 @@ function activityChooser(open) {
         <div class="segment" role="group" aria-label="${g.label}">
           ${join(
             items.map(
-              (a) => html`<a href="${safe(link(a.key))}" ${safe(open === a.key ? 'aria-current="true"' : '')}>${a.label}</a>`
+              (a) => html`<a href="${safe(link(a.key))}" ${safe(open === a.key ? 'aria-current="true"' : '')}>${safe(activityDot(a.key))}${a.label}</a>`
             )
           )}
         </div>`;
