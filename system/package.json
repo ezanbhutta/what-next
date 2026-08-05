@@ -8,6 +8,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "//build": "Nothing to compile — the app is server-rendered with no bundler. This exists because Hostinger's Express preset runs `npm run build` during deploy, and a missing script exits non-zero and fails the deployment with npm install as the last thing in the log.",
+    "build": "node -e \"console.log('no build step: server-rendered, no bundler')\"",
     "start": "node server.js",
     "test": "node --test \"lib/*.test.js\"",
     "migrate": "node db/migrate.js",
