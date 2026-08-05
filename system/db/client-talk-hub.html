@@ -318,7 +318,84 @@ const DATA=[
 {g:'care',kind:'care',stage:['working'],chips:['Say nothing here'],
  title:'While you are still designing, sell nothing',
  sub:'Send updates, reply fast, mention no extras. Every message in this window that is not about the design lowers your chance at the end.',
- turns:[{h:'(mid project check in)',s:"Just a quick update, the first concepts are coming along well and I'll have them with you shortly. Shout if anything changes on your side in the meantime."}]}
+ turns:[{h:'(mid project check in)',s:"Just a quick update, the first concepts are coming along well and I'll have them with you shortly. Shout if anything changes on your side in the meantime."}]},
+
+/* ===== ADDED: the questions buyers actually open with ===== */
+{g:'ask',kind:'ask',stage:['inquiry'],chips:['First message'],
+ title:'"How much for a logo?"',
+ sub:'The opener on most inquiries. A number with no context starts a haggle; a question starts an order.',
+ turns:[
+  {h:'How much for a logo?',s:"Hey, depends on what you need it for. What's the brand name and what does the business do?",u:'Nothing yet, this is the qualifying question'},
+  {h:'Just something simple.',s:"Simple is usually the hardest to get right, so that's fine by me. Where will you use it first, online or in print? That decides which files you actually need.",u:'Standard if print comes up'},
+  {h:'I have a budget of $X.',s:"That works for {package}. You'd get {concepts} concepts, {revisions} revisions and the full file set. Want me to send it over?",u:'Whatever their budget genuinely reaches',w:'Do not quote under the floor. A cheap order that turns into six revisions costs more than the one you refused.'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['inquiry'],chips:['Ask before quoting'],
+ title:'"Do you have anything like my industry?"',
+ sub:'They are asking whether you understand them, not whether you have a sample. Answer the real question.',
+ turns:[
+  {h:'Have you done anything for a {industry} brand?',s:"Yes, and the portfolio has a few. More useful than samples though: what do you want someone to think in the first second they see it? That is what I design toward.",u:'Nothing yet'},
+  {h:'Can you send those examples?',s:"They're all on the gig page, that's the full set. If you tell me the two you like most I'll tell you what I'd do differently for yours.",u:'Nothing yet',w:'Never make something new to win the order. Free concepts are how a buyer leaves with a logo and no order.'}
+ ]},
+
+{g:'ask',kind:'ask',stage:['kickoff'],chips:['Saves a revision round'],
+ title:'"Who is your customer?"',
+ sub:'The question that prevents the most expensive revision: the one where they say it feels wrong and cannot say why.',
+ turns:[
+  {h:'Everyone, really.',s:"Fair, but every logo leans somewhere. If you had to pick, is this aimed more at someone paying premium, or someone comparing prices?",u:'Nothing, this is direction'},
+  {h:'Mostly younger people online.',s:"Good, that changes things. I'll keep it clean enough to read at a small size and give you the social sizes so it isn't cropped in a circle.",u:'Social Media Kit'}
+ ]},
+
+/* ===== ADDED: upgrade moments ===== */
+{g:'up',kind:'up',stage:['working','approved'],chips:['Highest-converting moment'],
+ title:'They just approved a concept',
+ sub:'The one moment a buyer is most likely to say yes to more. They are happy and the work is proven.',
+ turns:[
+  {h:'This one is perfect!',s:"Glad it landed. While it's fresh, do you want the social sizes and the stationery set done to match? Everything stays consistent if it's done in the same pass.",u:'Premium, or the Social Media Kit as an extra'},
+  {h:'Maybe later.',s:"No problem, it'll be here. One thing worth knowing: matching it later means re-opening the source files, so it costs a little more than adding it now.",u:'Leave it open, do not push twice',w:'Say this once. A second push on the same order reads as pressure and it is what turns a 5 into a 4.'}
+ ]},
+
+{g:'up',kind:'up',stage:['delivered'],chips:['Repeat business'],
+ title:'The order is done and they are happy',
+ sub:'Half the revenue in this book comes from people who already bought. Nobody is asking them.',
+ turns:[
+  {h:'Thanks, this is great!',s:"Glad you're happy with it. If the site or the cards come up later, message me here and I'll match everything to the logo.",u:'A future order, not this one'},
+  {h:'Actually we do need a website soon.',s:"Good timing. I can do the brand side of it so the site matches the logo properly. Want me to put together what that looks like?",u:'Website design'}
+ ]},
+
+/* ===== ADDED: when they say no ===== */
+{g:'obj',kind:'obj',stage:['inquiry'],chips:['Most common objection'],
+ title:'"That is too expensive"',
+ sub:'Usually means the value is unclear, not that the number is wrong. Answer with scope, never with a discount.',
+ turns:[
+  {h:'That is more than I wanted to spend.',s:"Understood. I can fit your budget by trimming scope rather than quality, fewer concepts or no stationery. Which matters least to you?",u:'A smaller package, same rate',w:'Cut scope, not price. Discounting teaches the next buyer to ask.'},
+  {h:'Someone else quoted me half.',s:"That happens. Different sellers include different things, so it's worth checking whether vector files and revisions are in theirs. If budget is the deciding factor I completely understand.",u:'Nothing, let them choose',w:'Never criticise the other seller. It reads as insecurity and buyers repeat it in reviews.'}
+ ]},
+
+{g:'obj',kind:'obj',stage:['working'],chips:['Scope creep'],
+ title:'"Can you just also do..."',
+ sub:'The request that quietly doubles the work. Say yes to the work and no to it being free.',
+ turns:[
+  {h:'Can you also do a business card while you are at it?',s:"Happy to, it just sits outside this order. I can add it for {price} and deliver it with the logo. Want me to send the extra?",u:'The add-on they just asked for'},
+  {h:'I thought that was included.',s:"I can see why it reads that way. This order covers {included}. The card is a separate item, and I'd rather say that now than surprise you at delivery.",u:'The add-on',w:'Check the gig description before saying it is not included. If the wording is genuinely ambiguous, do it once and fix the wording.'}
+ ]},
+
+/* ===== ADDED: handle carefully ===== */
+{g:'care',kind:'care',stage:['working','delivered'],chips:['Dispute risk'],
+ title:'They are unhappy and it is going badly',
+ sub:'The first reply decides whether this becomes a revision or a refund request. Do not defend the work.',
+ turns:[
+  {h:'This is not what I asked for at all.',s:"Sorry it missed. Tell me the one thing that is furthest off and I'll fix that first rather than guessing at the rest.",u:'Nothing. Do not sell into a complaint.',w:'Never explain why the design is good. They are not asking for reasons, they are asking to be heard.'},
+  {h:'I want a refund.',s:"I'd rather get it right than end it here. Give me one round to fix the specific thing that is wrong, and if it still misses I'll sort it out with you properly.",u:'Nothing',w:'Do not attach a review request to this order, whatever happens. A review ask on a rescued order is how a private 3 becomes a public one.'}
+ ]},
+
+{g:'care',kind:'care',stage:['working'],chips:['Late delivery'],
+ title:'The order is late and they have noticed',
+ sub:'A dated commitment ends this. A vague apology extends it.',
+ turns:[
+  {h:'Any update? This is taking a while.',s:"You're right, and I'm sorry. It'll be with you by {date}. If anything changes before then I'll tell you rather than let the date pass quietly.",u:'Nothing',w:'Give a date you will actually hit. A second missed date is what turns a late order into a dispute.'},
+  {h:'You said that last time.',s:"Fair. {date}, and if I miss it I'll cancel it myself rather than hold your money.",u:'Nothing',w:'Only say this if you mean it. Then hit the date.'}
+ ]}
 ];
 
 const GROUPS=[
@@ -372,7 +449,7 @@ function apply(){
   while(s&&!s.classList.contains('grp')){if(!s.classList.contains('hide'))any=true;s=s.nextElementSibling;}
   h.classList.toggle('hide',!any);
  });
- const b=[`Showing <b>${n}</b> ${n===1?'card':'cards'}`];
+ const b=[`Showing <b>${n}</b> ${n===1?'card':'cards'}`
  if(stage!=='all')b.push(`Step: <b>${S[stage]}</b>`);
  if(term)b.push(`Search: <b>${esc(term)}</b>`);
  status.innerHTML=b.join(' &nbsp;·&nbsp; ')+((stage!=='all'||term)?' <button class="clear" id="clr">Reset</button>':'');

@@ -44,6 +44,7 @@ import compression from 'compression';
 import {
   tryQuery,
   transaction,
+  query,
   ping,
   dbStatus,
   dbHealth,
@@ -271,6 +272,8 @@ const FLASH_OK = {
   decision: 'Decision recorded.',
   upsell: 'Upsell row updated.',
   access: 'Section access updated.',
+  in_fiverr: 'Marked as saved in Fiverr. The team will see that badge everywhere this reply appears.',
+  hub_only: 'Marked as living only in this hub. Paste it rather than looking for it in Fiverr.',
   due_set: 'Promised date recorded. The order sheet was not touched.',
   due_cleared: 'Promised date removed. That order now reads as no promise recorded, which is not the same as on time.',
 
@@ -1773,6 +1776,56 @@ app.post(
       }
     });
     return { ok: 'note' };
+  })
+);
+
+// ---- the quick replies, available on every page ----------------------------
+//
+// The library is one tap away wherever a CSR happens to be, because the moment
+// they need a line is the moment they are looking at an order or an inquiry,
+// not at the Responses page.
+//
+// Fetched lazily by the drawer rather than loaded into every render: most page
+// loads never open it, engine-only pages would pay a database round trip for
+// nothing, and an outage here should close the drawer rather than break the
+// page behind it.
+app.get(
+  '/api/replies',
+  requireAuth,
+  gate('responses'),
+  wrap(async (req, res) => {
+    try {
+      const rows = await query(
+        'SELECT id, name, body, when_to_use, category, source, uses FROM response ' +
+          'WHERE active = 1 ORDER BY source = \'fiverr\' DESC, category IS NULL, category, name'
+      );
+      res.set('Cache-Control', 'no-store').json({ ok: true, replies: rows });
+    } catch (err) {
+      // The drawer says "could not be read" rather than showing an empty list.
+      // An empty library and an unreadable one look identical otherwise, and
+      // the first tells a CSR to go and write the line themselves.
+      res.status(503).json({ ok: false, error: 'unavailable' });
+    }
+  })
+);
+
+// Mark whether a reply also exists in Fiverr's saved quick-replies. It is the
+// one thing the hub cannot know for itself: Fiverr has no API for it, so a
+// person says so, and everything downstream reads the answer instead of
+// guessing.
+app.post(
+  '/responses/:id/where',
+  ...write('responses', '/responses', async (req) => {
+    const id = intOrNull(req.params.id);
+    const where = oneOf(req.body.where, ['fiverr', 'extra']);
+    if (id === null || !where) return { error: 'invalid' };
+    await auditedWrite(req, 'response_where', { id, where }, async (t) => {
+      // 'hub' means somebody typed it here; saying it is in Fiverr moves it to
+      // 'fiverr', and saying it is not returns it to 'extra' rather than to
+      // 'hub', because where it came from is not what this field records.
+      await t.run('UPDATE response SET source = ? WHERE id = ?', [where, id]);
+    });
+    return { ok: where === 'fiverr' ? 'in_fiverr' : 'hub_only' };
   })
 );
 

@@ -60,28 +60,28 @@
   "body": "That helps a lot. To get your launch covered in one go, Premium includes three to four concepts plus the social media kit and stationery. Works out better than adding those separately later.",
   "when_to_use": "When they say: Yes, I am launching a whole new brand. · Opens: Straight to Premium · Fiverr recommends this exact question. A logo is often one piece of a launch, and this finds the rest of the launch in one line.",
   "category": "Questions to ask",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "Is this order part of a bigger project?, No, just the logo for now.",
   "body": "No problem, I'll keep it focused on the logo. We keep your files saved on our side, so anything you need later is easy to add.",
   "when_to_use": "When they say: No, just the logo for now. · Opens: Close cleanly. Come back after delivery. · Fiverr recommends this exact question. A logo is often one piece of a launch, and this finds the rest of the launch in one line.",
   "category": "Questions to ask",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "How do you plan to use this long term?, On everything. This is my main business.",
   "body": "Then I'd go with Standard at minimum. The vector and source files are what you'll need for print, signage and any edits as the business grows.",
   "when_to_use": "When they say: On everything. This is my main business. · Opens: Standard, aiming at Premium · Also recommended by Fiverr. It reads as a design question so nobody puts their guard up.",
   "category": "Questions to ask",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "How do you plan to use this long term?, Just online for now.",
   "body": "Fair enough, Basic covers that. Just so you know, the day you print anything you'll need the vector files, and they're easiest to add while I still have the artwork open.",
   "when_to_use": "When they say: Just online for now. · Opens: Soft Standard · Also recommended by Fiverr. It reads as a design question so nobody puts their guard up.",
   "category": "Questions to ask",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "Is anyone else going to be working with this logo?, Yes, I have a printer and a web guy.",
@@ -151,7 +151,7 @@
   "body": "Really glad you like it. Your files stay saved with us, so just message me any time you need them again or want to add animation, brand guidelines or stationery. And if the work helped, a review would mean a lot.",
   "when_to_use": "When they say: Thank you, this looks great. · Opens: Review plus repeat order in one message · Fiverr recommends leaving a door open rather than pushing. This one message earns the review and sets up the next order.",
   "category": "Questions to ask",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "Basic to Standard: the vector question, (any Basic order, before you begin)",
@@ -179,14 +179,14 @@
   "body": "Before we start, is this logo part of a bigger launch or more of a standalone piece?",
   "when_to_use": "When they say: (before the order starts) · Opens: Fiverr recommends asking this · Premium already contains the social media kit and the stationery kit. Never sell those as two separate add-ons to someone launching.",
   "category": "Upgrade moments",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "Standard to Premium: the launch question, Yes, I am launching soon.",
   "body": "Premium would suit you better in that case. It includes three to four concepts plus the social media kit and stationery kit, so the whole launch is covered in one order instead of three.",
   "when_to_use": "When they say: Yes, I am launching soon. · Opens: Straight to Premium · Premium already contains the social media kit and the stationery kit. Never sell those as two separate add-ons to someone launching.",
   "category": "Upgrade moments",
-  "source": "extra"
+  "source": "fiverr"
  },
  {
   "name": "When revisions keep coming on the same concept, Can we try another version of this?",
@@ -325,6 +325,139 @@
   "name": "While you are still designing, sell nothing, (mid project check in)",
   "body": "Just a quick update, the first concepts are coming along well and I'll have them with you shortly. Shout if anything changes on your side in the meantime.",
   "when_to_use": "When they say: (mid project check in) · Send updates, reply fast, mention no extras. Every message in this window that is not about the design lowers your chance at the end.",
+  "category": "Handle these carefully",
+  "source": "extra"
+ },
+ {
+  "name": "How much for a logo?, How much for a logo?",
+  "body": "Hey, depends on what you need it for. What's the brand name and what does the business do?",
+  "when_to_use": "When they say: How much for a logo? · Opens: Nothing yet, this is the qualifying question · The opener on most inquiries. A number with no context starts a haggle; a question starts an order.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "How much for a logo?, Just something simple.",
+  "body": "Simple is usually the hardest to get right, so that's fine by me. Where will you use it first, online or in print? That decides which files you actually need.",
+  "when_to_use": "When they say: Just something simple. · Opens: Standard if print comes up · The opener on most inquiries. A number with no context starts a haggle; a question starts an order.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "How much for a logo?, I have a budget of $X.",
+  "body": "That works for {package}. You'd get {concepts} concepts, {revisions} revisions and the full file set. Want me to send it over?",
+  "when_to_use": "When they say: I have a budget of $X. · Opens: Whatever their budget genuinely reaches · Careful: Do not quote under the floor. A cheap order that turns into six revisions costs more than the one you refused. · The opener on most inquiries. A number with no context starts a haggle; a question starts an order.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "Do you have anything like my industry?, Have you done anything for a {industry} brand?",
+  "body": "Yes, and the portfolio has a few. More useful than samples though: what do you want someone to think in the first second they see it? That is what I design toward.",
+  "when_to_use": "When they say: Have you done anything for a {industry} brand? · Opens: Nothing yet · They are asking whether you understand them, not whether you have a sample. Answer the real question.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "Do you have anything like my industry?, Can you send those examples?",
+  "body": "They're all on the gig page, that's the full set. If you tell me the two you like most I'll tell you what I'd do differently for yours.",
+  "when_to_use": "When they say: Can you send those examples? · Opens: Nothing yet · Careful: Never make something new to win the order. Free concepts are how a buyer leaves with a logo and no order. · They are asking whether you understand them, not whether you have a sample. Answer the real question.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "Who is your customer?, Everyone, really.",
+  "body": "Fair, but every logo leans somewhere. If you had to pick, is this aimed more at someone paying premium, or someone comparing prices?",
+  "when_to_use": "When they say: Everyone, really. · Opens: Nothing, this is direction · The question that prevents the most expensive revision: the one where they say it feels wrong and cannot say why.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "Who is your customer?, Mostly younger people online.",
+  "body": "Good, that changes things. I'll keep it clean enough to read at a small size and give you the social sizes so it isn't cropped in a circle.",
+  "when_to_use": "When they say: Mostly younger people online. · Opens: Social Media Kit · The question that prevents the most expensive revision: the one where they say it feels wrong and cannot say why.",
+  "category": "Questions to ask",
+  "source": "extra"
+ },
+ {
+  "name": "They just approved a concept, This one is perfect!",
+  "body": "Glad it landed. While it's fresh, do you want the social sizes and the stationery set done to match? Everything stays consistent if it's done in the same pass.",
+  "when_to_use": "When they say: This one is perfect! · Opens: Premium, or the Social Media Kit as an extra · The one moment a buyer is most likely to say yes to more. They are happy and the work is proven.",
+  "category": "Upgrade moments",
+  "source": "extra"
+ },
+ {
+  "name": "They just approved a concept, Maybe later.",
+  "body": "No problem, it'll be here. One thing worth knowing: matching it later means re-opening the source files, so it costs a little more than adding it now.",
+  "when_to_use": "When they say: Maybe later. · Opens: Leave it open, do not push twice · Careful: Say this once. A second push on the same order reads as pressure and it is what turns a 5 into a 4. · The one moment a buyer is most likely to say yes to more. They are happy and the work is proven.",
+  "category": "Upgrade moments",
+  "source": "extra"
+ },
+ {
+  "name": "The order is done and they are happy, Thanks, this is great!",
+  "body": "Glad you're happy with it. If the site or the cards come up later, message me here and I'll match everything to the logo.",
+  "when_to_use": "When they say: Thanks, this is great! · Opens: A future order, not this one · Half the revenue in this book comes from people who already bought. Nobody is asking them.",
+  "category": "Upgrade moments",
+  "source": "extra"
+ },
+ {
+  "name": "The order is done and they are happy, Actually we do need a website soon.",
+  "body": "Good timing. I can do the brand side of it so the site matches the logo properly. Want me to put together what that looks like?",
+  "when_to_use": "When they say: Actually we do need a website soon. · Opens: Website design · Half the revenue in this book comes from people who already bought. Nobody is asking them.",
+  "category": "Upgrade moments",
+  "source": "extra"
+ },
+ {
+  "name": "That is too expensive, That is more than I wanted to spend.",
+  "body": "Understood. I can fit your budget by trimming scope rather than quality, fewer concepts or no stationery. Which matters least to you?",
+  "when_to_use": "When they say: That is more than I wanted to spend. · Opens: A smaller package, same rate · Careful: Cut scope, not price. Discounting teaches the next buyer to ask. · Usually means the value is unclear, not that the number is wrong. Answer with scope, never with a discount.",
+  "category": "When they say no",
+  "source": "extra"
+ },
+ {
+  "name": "That is too expensive, Someone else quoted me half.",
+  "body": "That happens. Different sellers include different things, so it's worth checking whether vector files and revisions are in theirs. If budget is the deciding factor I completely understand.",
+  "when_to_use": "When they say: Someone else quoted me half. · Opens: Nothing, let them choose · Careful: Never criticise the other seller. It reads as insecurity and buyers repeat it in reviews. · Usually means the value is unclear, not that the number is wrong. Answer with scope, never with a discount.",
+  "category": "When they say no",
+  "source": "extra"
+ },
+ {
+  "name": "Can you just also do..., Can you also do a business card while you are at it?",
+  "body": "Happy to, it just sits outside this order. I can add it for {price} and deliver it with the logo. Want me to send the extra?",
+  "when_to_use": "When they say: Can you also do a business card while you are at it? · Opens: The add-on they just asked for · The request that quietly doubles the work. Say yes to the work and no to it being free.",
+  "category": "When they say no",
+  "source": "extra"
+ },
+ {
+  "name": "Can you just also do..., I thought that was included.",
+  "body": "I can see why it reads that way. This order covers {included}. The card is a separate item, and I'd rather say that now than surprise you at delivery.",
+  "when_to_use": "When they say: I thought that was included. · Opens: The add-on · Careful: Check the gig description before saying it is not included. If the wording is genuinely ambiguous, do it once and fix the wording. · The request that quietly doubles the work. Say yes to the work and no to it being free.",
+  "category": "When they say no",
+  "source": "extra"
+ },
+ {
+  "name": "They are unhappy and it is going badly, This is not what I asked for at all.",
+  "body": "Sorry it missed. Tell me the one thing that is furthest off and I'll fix that first rather than guessing at the rest.",
+  "when_to_use": "When they say: This is not what I asked for at all. · Opens: Nothing. Do not sell into a complaint. · Careful: Never explain why the design is good. They are not asking for reasons, they are asking to be heard. · The first reply decides whether this becomes a revision or a refund request. Do not defend the work.",
+  "category": "Handle these carefully",
+  "source": "extra"
+ },
+ {
+  "name": "They are unhappy and it is going badly, I want a refund.",
+  "body": "I'd rather get it right than end it here. Give me one round to fix the specific thing that is wrong, and if it still misses I'll sort it out with you properly.",
+  "when_to_use": "When they say: I want a refund. · Opens: Nothing · Careful: Do not attach a review request to this order, whatever happens. A review ask on a rescued order is how a private 3 becomes a public one. · The first reply decides whether this becomes a revision or a refund request. Do not defend the work.",
+  "category": "Handle these carefully",
+  "source": "extra"
+ },
+ {
+  "name": "The order is late and they have noticed, Any update? This is taking a while.",
+  "body": "You're right, and I'm sorry. It'll be with you by {date}. If anything changes before then I'll tell you rather than let the date pass quietly.",
+  "when_to_use": "When they say: Any update? This is taking a while. · Opens: Nothing · Careful: Give a date you will actually hit. A second missed date is what turns a late order into a dispute. · A dated commitment ends this. A vague apology extends it.",
+  "category": "Handle these carefully",
+  "source": "extra"
+ },
+ {
+  "name": "The order is late and they have noticed, You said that last time.",
+  "body": "Fair. {date}, and if I miss it I'll cancel it myself rather than hold your money.",
+  "when_to_use": "When they say: You said that last time. · Opens: Nothing · Careful: Only say this if you mean it. Then hit the date. · A dated commitment ends this. A vague apology extends it.",
   "category": "Handle these carefully",
   "source": "extra"
  }

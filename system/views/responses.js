@@ -69,21 +69,32 @@ import { pick } from '../lib/data.js';
 // ============================================================================
 
 /** Where a reply came from. The enum is fiverr | extra | hub, see db/schema.sql. */
+// WHERE THE REPLY LIVES, which is not the same question as where it came from.
+//
+// The old labels answered provenance: Fiverr, Extra, Hub. A CSR mid-conversation
+// does not need to know where a line was born; they need to know whether it is
+// two taps away inside Fiverr's own reply box or has to be copied out of here.
+// Getting that wrong costs either a hunt through Fiverr for something that was
+// never saved, or retyping something that was.
+//
+// Fiverr has no API for its saved replies, so this is typed by a person and
+// read by everything else. `extra` and `hub` are both "only here" and are kept
+// apart only so an import can still tell what it wrote.
 const SOURCE = {
   fiverr: {
-    label: 'Fiverr',
-    glyph: 'info',
-    what: "imported from Fiverr's own saved quick-replies",
+    label: 'In Fiverr',
+    glyph: 'ok',
+    what: "also saved in Fiverr's quick-replies, so it can be sent from there",
   },
   extra: {
-    label: 'Extra',
+    label: 'Hub only',
     glyph: 'idle',
-    what: 'imported from the extra-responses sheet the team keeps beside Fiverr',
+    what: 'lives only in this hub, so it has to be copied from here',
   },
   hub: {
-    label: 'Hub',
-    glyph: 'ok',
-    what: 'written here, with a name against it in the audit log',
+    label: 'Hub only',
+    glyph: 'idle',
+    what: 'written here, with a name against it in the audit log, and not saved in Fiverr',
   },
 };
 
@@ -362,6 +373,17 @@ function snippet(row, { ctx, back }) {
       </div>
 
       ${why('Edit this reply', editForm({ ctx, row, back }))}
+
+      <form method="post" action="/responses/${safe(id)}/where" class="where-toggle">
+        <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
+        <input type="hidden" name="back" value="${back}">
+        <input type="hidden" name="where" value="${String(row.source) === 'fiverr' ? 'extra' : 'fiverr'}">
+        <button class="btn btn--ghost btn--sm" type="submit">
+          ${String(row.source) === 'fiverr'
+            ? 'Not saved in Fiverr after all'
+            : 'This one is saved in Fiverr'}
+        </button>
+      </form>
 
       <p class="caption">
         ${spec ? html`${spec.label}, ${spec.what}.` : html`This reply carries no source.`}

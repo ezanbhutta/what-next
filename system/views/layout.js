@@ -564,6 +564,96 @@ const SHELL_JS = `
     b.hidden = true;
   });
 })();
+
+/* ---- quick replies drawer ------------------------------------------------
+   Loads once, on first open. A failure closes with a sentence rather than an
+   empty list: an empty library and an unreadable one are different facts, and
+   only one of them means "write it yourself". */
+(function(){
+  var openBtn=document.getElementById('replies-open'),
+      panel=document.getElementById('replies-panel'),
+      closeBtn=document.getElementById('replies-close'),
+      list=document.getElementById('replies-list'),
+      q=document.getElementById('replies-q');
+  if(!openBtn||!panel||!list) return;
+  var all=null, where='', loaded=false;
+
+  function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
+
+  function badge(src){
+    return src==='fiverr'
+      ? '<span class="rep-badge rep-badge--fiverr">In Fiverr</span>'
+      : '<span class="rep-badge">Hub only</span>';
+  }
+
+  function draw(){
+    var needle=(q&&q.value||'').trim().toLowerCase();
+    var rows=(all||[]).filter(function(r){
+      if(where==='fiverr' && r.source!=='fiverr') return false;
+      if(where==='hub' && r.source==='fiverr') return false;
+      if(!needle) return true;
+      return ((r.name||'')+' '+(r.when_to_use||'')+' '+(r.body||'')+' '+(r.category||''))
+        .toLowerCase().indexOf(needle)>=0;
+    });
+    if(!rows.length){ list.innerHTML='<p class="caption">Nothing matches that.</p>'; return; }
+    list.innerHTML=rows.map(function(r){
+      return '<article class="rep">'
+        +'<div class="rep-top">'+badge(r.source)+'<span class="rep-cat">'+esc(r.category||'')+'</span></div>'
+        +'<h4>'+esc(r.name)+'</h4>'
+        +(r.when_to_use?'<p class="rep-when">'+esc(r.when_to_use)+'</p>':'')
+        +'<p class="rep-body">'+esc(r.body)+'</p>'
+        +'<button class="btn btn--sm rep-copy" type="button" data-body="'+esc(r.body)+'">Copy</button>'
+        +'</article>';
+    }).join('');
+  }
+
+  function load(){
+    if(loaded) return;
+    loaded=true;
+    fetch('/api/replies',{credentials:'same-origin',headers:{'x-requested-with':'XMLHttpRequest'}})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){ all=d.replies||[]; draw(); })
+      .catch(function(){
+        loaded=false;
+        list.innerHTML='<p class="note note--neg">The reply library could not be read. '
+          +'That is unknown, not empty, so do not assume there is no saved line for this.</p>';
+      });
+  }
+
+  function show(on){
+    panel.hidden=!on;
+    openBtn.setAttribute('aria-expanded',on?'true':'false');
+    document.body.classList.toggle('replies-on',on);
+    if(on){ load(); if(q) q.focus(); }
+  }
+  openBtn.addEventListener('click',function(){ show(panel.hidden); });
+  if(closeBtn) closeBtn.addEventListener('click',function(){ show(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!panel.hidden) show(false); });
+  if(q) q.addEventListener('input',draw);
+
+  panel.addEventListener('click',function(e){
+    var seg=e.target.closest('[data-where]');
+    if(seg){
+      where=seg.getAttribute('data-where')||'';
+      panel.querySelectorAll('[data-where]').forEach(function(b){
+        b.setAttribute('aria-current', b===seg ? 'true' : 'false');
+      });
+      draw(); return;
+    }
+    var copy=e.target.closest('.rep-copy');
+    if(copy){
+      var text=copy.getAttribute('data-body')||'';
+      var done=function(){ var was=copy.textContent; copy.textContent='Copied';
+        setTimeout(function(){ copy.textContent=was; },1200); };
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done,function(){});
+      } else {
+        var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+        ta.select(); try{ document.execCommand('copy'); done(); }catch(err){} ta.remove();
+      }
+    }
+  });
+})();
 `;
 
 const FAVICON =
@@ -712,6 +802,52 @@ function noticeStack(ctx) {
  * @param {string|Safe|{html,title,kicker,deck,slug,ticker,head}} result
  * @returns {string} a complete HTML document
  */
+/**
+ * The quick replies, on every page.
+ *
+ * The moment a CSR needs a line is the moment they are looking at an order or
+ * an inquiry, not at the Responses page. So the library follows them, one tap
+ * from anywhere, searchable, with the body ready to copy.
+ *
+ * EVERY REPLY SAYS WHERE IT LIVES, and that is the point of the badge. A line
+ * saved in Fiverr can be reached from Fiverr's own reply box in two taps; a
+ * line that exists only here has to be copied from here. Without the mark a
+ * CSR either hunts for something in Fiverr that was never there, or retypes
+ * something that was. Fiverr has no API for its saved replies, so the answer
+ * is typed by a person and read by everything else.
+ *
+ * The list loads on first open, not on page render. Most loads never open it.
+ */
+function repliesDrawer(ctx) {
+  return html`<button class="replies-open" id="replies-open" type="button"
+      aria-controls="replies-panel" aria-expanded="false"
+      title="Quick replies">
+      <span aria-hidden="true">&#9998;</span><span>Replies</span>
+    </button>
+    <aside class="replies" id="replies-panel" hidden aria-label="Quick replies">
+      <header class="replies-head">
+        <strong>Quick replies</strong>
+        <button class="replies-close" id="replies-close" type="button" aria-label="Close">&times;</button>
+      </header>
+      <div class="replies-tools">
+        <label class="sr-only" for="replies-q">Search replies</label>
+        <input id="replies-q" type="search" placeholder="Search what they asked" autocomplete="off">
+        <div class="segment segment--sm" role="group" aria-label="Where the reply lives">
+          <button type="button" data-where="" aria-current="true">All</button>
+          <button type="button" data-where="fiverr">In Fiverr</button>
+          <button type="button" data-where="hub">Hub only</button>
+        </div>
+      </div>
+      <div class="replies-list" id="replies-list">
+        <p class="caption">Loading the library…</p>
+      </div>
+      <p class="caption replies-foot">
+        Sending from a buyer's page logs it against them. Copying from here does not, so log the decision
+        if it changes what happens next.
+      </p>
+    </aside>`;
+}
+
 export function layout(ctx, result) {
   const view = result instanceof Safe || typeof result === 'string' ? { html: result } : result || {};
 
@@ -790,6 +926,7 @@ ${navRail(ctx)}
 </main>
 </div>
 <div class="grain" aria-hidden="true"></div>
+${ctx.user ? repliesDrawer(ctx) : ''}
 <script nonce="${ctx.nonce}">${safe(SHELL_JS)}</script>
 </body>
 </html>`;

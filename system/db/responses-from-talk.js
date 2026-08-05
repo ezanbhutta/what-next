@@ -53,12 +53,18 @@ export function build() {
         turn.w ? `Careful: ${String(turn.w).trim()}` : null,
         card.sub ? String(card.sub).trim() : null,
       ].filter(Boolean).join(' · ') || null;
+      // The playbook already answers "is this saved in Fiverr": `src:true` on
+      // the card, which seed-talk normalises into a "Fiverr official" chip.
+      // Reading it here means the badge is right on import instead of waiting
+      // for somebody to tick 47 toggles by hand.
+      const inFiverr = card.src === true
+        || (card.chips || []).some((c) => String(c).toLowerCase().includes('fiverr'));
       out.push({
         name: nameFor(card, turn, seen),
         body,
         when_to_use: when,
         category: card.heading || null,
-        source: 'extra',
+        source: inFiverr ? 'fiverr' : 'extra',
       });
     }
   }
