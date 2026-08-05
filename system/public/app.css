@@ -2252,3 +2252,24 @@ mark{
 }
 .due-form input[type="date"]{ flex:0 0 auto; }
 .due-form input[type="text"]{ flex:1 1 140px; min-width:0; }
+
+/* ---------------------------------------------------------------------------
+   The shift picker (/who).
+
+   A trusted laptop asking who sat down. The roster puts the people who should
+   be on duty right now in the grid and folds everyone else away, so the normal
+   case is one tap and an unusual one is visibly unusual.
+   -------------------------------------------------------------------------*/
+.who-grid{
+  display:grid; gap:12px;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  margin:20px 0 8px;
+}
+.who-pick{ display:flex; flex-direction:column; gap:8px; }
+.who-pick .btn{ width:100%; justify-content:center; min-height:56px; font-size:var(--t-base); }
+.who-pw{ width:100%; }
+.who-others{ margin-top:20px; }
+.who-others > summary{
+  font-size:var(--t-sm); color:var(--ink-2); font-weight:600;
+}
+.stack--tight{ margin-top:20px; padding-top:20px; border-top:1px solid var(--rule); }

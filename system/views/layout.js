@@ -596,11 +596,24 @@ function navRail(ctx) {
   // Signed out on the login page itself, the footer would offer a link to the
   // page you are already on. `chrome:'minimal'` is how a route says "frame
   // only": flag, no nav, no footer.
+  // On a SHARED laptop the person is the volatile part, so it says whose shift
+  // it is and offers the switch first. "Sign out" there means "my shift is
+  // over", it clears the person and leaves the laptop trusted, so the next
+  // CSR taps their name instead of fetching Ezan to type the password.
+  const shared = ctx.device?.shared === true;
   const who = ctx.user
-    ? html`<p class="caption">Signed in as <strong>${ctx.user.name}</strong> · ${ctx.user.role}</p>
+    ? html`<p class="caption">
+          ${shared ? html`This shift: <strong>${ctx.user.name}</strong>` : html`Signed in as <strong>${ctx.user.name}</strong>`}
+          · ${ctx.user.role}
+        </p>
+        ${shared
+          ? html`<a class="btn btn--ghost btn--sm btn--block" href="/who">Not you? Switch</a>`
+          : ''}
         <form method="post" action="/logout">
           <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
-          <button class="btn btn--ghost btn--sm btn--block" type="submit">Sign out</button>
+          <button class="btn btn--ghost btn--sm btn--block" type="submit">
+            ${shared ? 'End my shift' : 'Sign out'}
+          </button>
         </form>`
     : ctx.chrome === 'minimal'
       ? ''
@@ -764,7 +777,7 @@ ${navRail(ctx)}
       <p class="dateline">
         <span>${ctx.runDateLabel}</span><span class="dot">·</span>
         <span>${ctx.engineLabel}</span><span class="dot">·</span>
-        <span>${ctx.user ? ctx.user.name : 'not signed in'}</span>
+        <span>${ctx.user ? ctx.user.name : 'not signed in'}</span>${ctx.device?.shared && ctx.user ? html`<span class="dot">·</span><a href="/who">not you?</a>` : ''}
       </p>
       ${deskLine(ctx)}
     </div>

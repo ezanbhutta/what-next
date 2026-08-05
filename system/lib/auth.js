@@ -168,8 +168,12 @@ export function checkPassword(candidate) {
 // ----------------------------------------------------------------- tokens
 
 /** Sign a session payload into a cookie value. */
-export function signSession({ name, role, sid, iat, exp }) {
-  const payload = { n: name, r: role, s: sid, i: iat, e: exp };
+export function signSession({ name, role, sid, iat, exp, shift }) {
+  // `f` (for "shift") rides along because attachUser must know NOT to slide a
+  // shift-scoped session. Recomputing it from the device cookie would be
+  // wrong: the device can be re-enrolled under Ezan while an old session
+  // cookie is still in flight, and the session's own scope is what matters.
+  const payload = { n: name, r: role, s: sid, i: iat, e: exp, f: shift ? 1 : 0 };
   const body = b64url(JSON.stringify(payload));
   const sig = b64url(crypto.createHmac('sha256', subkey('session')).update(body).digest());
   return `${TOKEN_VERSION}.${body}.${sig}`;
@@ -207,6 +211,7 @@ export function verifySessionToken(token) {
     sid: String(payload.s || ''),
     issuedAt: Number(payload.i || 0),
     expiresAt: Number(payload.e),
+    shift: payload.f === 1,
   };
 }
 
@@ -237,16 +242,48 @@ export function verifySessionToken(token) {
 export const DEVICE_COOKIE = 'xs_device';
 
 const DEVICE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // a quarter
-const DEVICE_VERSION = 'd1';
+const DEVICE_VERSION = 'd2';
 
-function signDevice({ name, role, did, exp }) {
-  const payload = { n: name, r: role, d: did, e: exp };
+// TRUST AND IDENTITY ARE TWO DIFFERENT FACTS, AND THIS COOKIE CARRIES ONE
+//
+// The first version of this cookie bound a laptop to a person: prove the
+// password once, pick your name once, and every request after that is signed
+// with that name until the cookie expires. That is right for a laptop one
+// person uses.
+//
+// Amrah, Zaheen, Nadir and Hasnain share one. Under that shape whoever
+// claimed it first owned it, and the other three spent every shift writing
+// rows signed with her name. Every note, every entry, every tick attributed
+// to the wrong person, and wrong in a way nothing on screen would show.
+//
+// So this cookie now answers only "is this laptop allowed in". WHO is at the
+// keyboard is a separate and shorter question, answered by the session cookie
+// and re-asked every shift.
+//
+//   shared: true   trusted laptop, nobody bound to it. Whoever sits down says
+//                  who they are, and that lasts one shift.
+//   name: 'Nadir'  one person's laptop. Resumed silently, as before.
+//
+// The password is still typed exactly once per laptop, by Ezan. What changed
+// is that on a shared laptop it stops doubling as an answer to "who are you".
+//
+// The version bump from d1 to d2 is deliberate: every existing device cookie
+// stops verifying, so the four of them re-enrol under the new shape instead of
+// carrying yesterday's single-name binding forward invisibly.
+
+function signDevice({ name, role, did, exp, shared }) {
+  const payload = { n: name ?? null, r: role ?? null, d: did, e: exp, s: shared ? 1 : 0 };
   const body = b64url(JSON.stringify(payload));
   const sig = b64url(crypto.createHmac('sha256', subkey('device')).update(body).digest());
   return `${DEVICE_VERSION}.${body}.${sig}`;
 }
 
-/** Verify a device cookie. Returns {name, role, did} or null, never partial. */
+/**
+ * Verify a device cookie. Returns {name, role, did, shared} or null.
+ *
+ * `name` is null on a shared device. That is not a partial answer, it is the
+ * answer: the laptop is trusted and does not know who is typing.
+ */
 export function verifyDeviceToken(token) {
   if (typeof token !== 'string') return null;
   const parts = token.split('.');
@@ -269,12 +306,19 @@ export function verifyDeviceToken(token) {
   } catch {
     return null;
   }
-  if (!payload?.n || !payload?.e || Date.now() > Number(payload.e)) return null;
+  if (!payload?.e || Date.now() > Number(payload.e)) return null;
+
+  const shared = payload.s === 1;
+  // Neither shared nor named is not a usable answer. Refuse it rather than
+  // guess, so a malformed cookie sends somebody back to the password instead
+  // of into a session signed by nobody.
+  if (!shared && !payload.n) return null;
 
   return {
-    name: String(payload.n),
-    role: String(payload.r || 'csr'),
+    name: shared ? null : String(payload.n),
+    role: shared ? null : String(payload.r || 'csr'),
     did: String(payload.d || ''),
+    shared,
     expiresAt: Number(payload.e),
   };
 }
@@ -283,11 +327,18 @@ export function readDevice(req) {
   return verifyDeviceToken(readCookie(req, DEVICE_COOKIE));
 }
 
-/** Bind this browser to a person. Called once, after the name step. */
-export function rememberDevice(res, { name, role = 'csr' }) {
+/**
+ * Trust this browser for a quarter.
+ *
+ * `{shared: true}` trusts the laptop and binds nobody to it, which is what a
+ * desk four people share needs. `{name, role}` makes it one person's laptop
+ * and their session resumes silently.
+ */
+export function rememberDevice(res, { name = null, role = 'csr', shared = false } = {}) {
   const device = {
-    name,
-    role,
+    name: shared ? null : name,
+    role: shared ? null : role,
+    shared,
     did: crypto.randomBytes(12).toString('base64url'),
     exp: Date.now() + DEVICE_TTL_MS,
   };
@@ -316,18 +367,34 @@ function readCookie(req, name) {
 
 // ---------------------------------------------------------------- sessions
 
-/** Issue a cookie for this person. */
-export function startSession(res, { name, role = 'csr' }) {
+/**
+ * How long a session lasts on a SHARED laptop: one shift.
+ *
+ * The longest shift on the roster is twelve hours (Nadir 9 PM to 9 AM, Ezan
+ * 11 AM to 11 PM), so fourteen covers any shift plus a handover that runs
+ * over. It must not be longer: the whole point of a shared desk is that
+ * Amrah's session is dead by the time Hasnain sits down at 5 PM, so the
+ * system asks him who he is instead of filing his work under her name.
+ *
+ * On a laptop bound to one person this does not apply and SESSION_TTL_MS
+ * stands, because there is nobody else it could be.
+ */
+export const SHIFT_TTL_MS = 14 * 60 * 60 * 1000;
+
+/** Issue a cookie for this person. `shift: true` scopes it to one shift. */
+export function startSession(res, { name, role = 'csr', shift = false }) {
   const now = Date.now();
+  const ttl = shift ? SHIFT_TTL_MS : SESSION_TTL_MS;
   const session = {
     name,
     role,
     sid: crypto.randomBytes(16).toString('base64url'),
     iat: now,
-    exp: now + SESSION_TTL_MS,
+    exp: now + ttl,
   };
-  res.cookie(COOKIE_NAME, signSession(session), cookieOptions(SESSION_TTL_MS));
-  return { name, role, sid: session.sid, issuedAt: session.iat, expiresAt: session.exp };
+  session.shift = shift;
+  res.cookie(COOKIE_NAME, signSession(session), cookieOptions(ttl));
+  return { name, role, sid: session.sid, issuedAt: session.iat, expiresAt: session.exp, shift };
 }
 
 /** The current session, or null. Cookie is the authority: a database outage
@@ -553,16 +620,97 @@ export async function claimDevice({ req, res, name }) {
   return { ok: true, user: session };
 }
 
-export async function logout({ req, res }) {
+/**
+ * Enrol a SHARED laptop. Ezan does this once, at the desk, after the password.
+ *
+ * The device is trusted for a quarter and nobody is bound to it. No session is
+ * started, on purpose: the next thing that has to happen is somebody saying
+ * who they are, and starting a session here would file the first shift's work
+ * under whoever happened to be standing there during setup.
+ */
+export async function shareDevice({ req, res }) {
+  if (!verifyPending(readCookie(req, PENDING_COOKIE))) {
+    return { ok: false, reason: 'expired', message: 'That took too long, enter the password again.' };
+  }
+  const device = rememberDevice(res, { shared: true });
+  res.clearCookie(PENDING_COOKIE, { ...cookieOptions(0), maxAge: undefined });
+  endSession(res);
+  await recordAudit(null, 'device_shared', { ip: req?.ip ?? null, device: device.did });
+  return { ok: true, device };
+}
+
+/**
+ * Say who is at the keyboard of an already-trusted shared laptop.
+ *
+ * THE PASSWORD RULE, AND WHY IT IS NOT UNIFORM
+ *
+ * A CSR picks their name and that is all: the laptop already proved it is
+ * ours, and the cost of a wrong pick is a misattributed note, which the
+ * activity log shows and a person can correct.
+ *
+ * The owner is different. Ezan's role unlocks the sections only he may see,
+ * so if picking "Ezan" from a list were enough, the section lock would be
+ * decoration: anyone at that desk could read what it protects by choosing a
+ * name. So claiming the owner role costs the password, every time, on a
+ * shared device. That is the one place the one-time-unlock promise does not
+ * hold, and it is the place where holding it would give away the thing the
+ * lock exists for.
+ */
+export async function switchPerson({ req, res, name, password = null }) {
+  const device = readDevice(req);
+  if (!device) {
+    return { ok: false, reason: 'untrusted', message: 'This device is not set up yet. Enter the password.' };
+  }
+
+  let user;
+  try {
+    user = await findUser(name);
+  } catch (error) {
+    if (error instanceof DbError) {
+      return { ok: false, reason: 'db_unavailable', message: unavailableNotice(error) };
+    }
+    throw error;
+  }
+
+  if (!user || !user.active) {
+    return { ok: false, reason: 'unknown_name', message: 'Pick your name from the list.' };
+  }
+
+  // The owner role costs the password on a shared laptop, every time.
+  if (user.role === 'owner' && device.shared && !checkPassword(password)) {
+    await recordAudit(null, 'owner_switch_refused', { ip: req?.ip ?? null, device: device.did });
+    return {
+      ok: false,
+      reason: 'owner_password',
+      message: 'Being Ezan needs the password on a shared laptop, because his sections are locked to him.',
+    };
+  }
+
+  const session = startSession(res, { name: user.name, role: user.role, shift: device.shared });
+  await recordAudit(user.name, 'person_switched', {
+    ip: req?.ip ?? null,
+    device: device.did,
+    shared: device.shared,
+  });
+  return { ok: true, user: session };
+}
+
+export async function logout({ req, res, keepDevice = false }) {
   const session = readSession(req);
   endSession(res);
-  // The device must go too. attachUser resumes a session from a valid device
-  // cookie, so clearing only the session would sign the person back in on
-  // their very next request and make the logout button do nothing visible.
-  // Logging out is the one deliberate way to hand a laptop to someone else.
-  forgetDevice(res);
-  if (session?.name) await recordAudit(session.name, 'logout', null);
-  return { ok: true };
+  // On a laptop bound to ONE person the device must go too: attachUser resumes
+  // a session from a valid device cookie, so clearing only the session would
+  // sign them back in on the very next request and make the button do nothing.
+  //
+  // On a SHARED laptop the opposite is right. "I am done" at the end of a
+  // shift means the next person says who they are, not that Ezan has to walk
+  // over and re-enter the password. The device stays trusted; only the person
+  // is cleared.
+  const device = readDevice(req);
+  const shared = keepDevice || device?.shared === true;
+  if (!shared) forgetDevice(res);
+  if (session?.name) await recordAudit(session.name, 'logout', { shared });
+  return { ok: true, shared };
 }
 
 // -------------------------------------------------------------- middleware
@@ -582,15 +730,23 @@ export function attachUser(req, res, next) {
   // Safe because the device cookie is HMAC-signed with the same secret as the
   // session and carries its own expiry; an unsigned or stale one verifies to
   // null and this does nothing.
-  if (!session) {
-    const device = readDevice(req);
-    if (device) session = startSession(res, { name: device.name, role: device.role });
+  const device = readDevice(req);
+  if (!session && device && !device.shared) {
+    session = startSession(res, { name: device.name, role: device.role });
   }
 
   req.user = session;
+  req.device = device;
   res.locals.user = session;
+  // The layout needs both to render the masthead honestly: a shared laptop
+  // says whose shift it is with a switch beside it, a personal one does not.
+  res.locals.device = device;
   res.locals.csrfToken = session ? csrfToken(req) : '';
-  if (session && Date.now() - session.issuedAt > SESSION_REFRESH_AFTER_MS) {
+
+  // A shift-scoped session must NOT slide. Sliding it would keep Amrah signed
+  // in all the way through Hasnain's evening simply because the laptop stayed
+  // busy, which is the exact failure the shift scope exists to stop.
+  if (session && !session.shift && Date.now() - session.issuedAt > SESSION_REFRESH_AFTER_MS) {
     // Re-sign in place, keeping the same sid. A fresh sid would invalidate the
     // CSRF token already rendered into whatever form the person has open, so
     // the refresh would silently break the page they are typing into.
@@ -629,6 +785,14 @@ export function requireAuth(req, res, next) {
     (req.get?.('accept') || '').includes('application/json');
   if (wantsJson) return res.status(401).json({ error: 'not_authenticated' });
   const next_ = encodeURIComponent(req.originalUrl || '/');
+
+  // A trusted shared laptop with nobody signed in needs a NAME, not the
+  // password. Sending it to /login would make the team ask Ezan to come and
+  // unlock the desk at every handover, which is the thing the shared device
+  // exists to avoid.
+  const device = req.device ?? readDevice(req);
+  if (device?.shared) return res.redirect(302, `/who?next=${next_}`);
+
   return res.redirect(302, `/login?next=${next_}`);
 }
 

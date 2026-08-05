@@ -67,6 +67,9 @@ import {
   passwordShape,
   authConfigured,
   safeNext,
+  shareDevice,
+  switchPerson,
+  SHIFT_TTL_MS,
 } from './lib/auth.js';
 
 import {
@@ -389,6 +392,10 @@ function buildCtx(req, res, sectionKey, { access = null, headline = null, chrome
   const ctx = {
     // --- who and where -----------------------------------------------------
     user: req.user || null,
+    // The layout renders the masthead differently on a shared desk: whose
+    // shift it is, and a switch, because on a shared laptop "who am I" is the
+    // part that changes seven times a day.
+    device: req.device || null,
     section: sectionKey,
     path: req.path,
     params: { ...req.params },
@@ -2691,13 +2698,25 @@ function claimPage(req, res, { error = null, users = null, usersError = null } =
             ${picker}
             <p class="field-error">${error || ''}</p>
             <p class="field-hint">
-              Asked once for this browser. Your name signs every tick, note and score you write, 
+              Asked once for this browser. Your name signs every tick, note and score you write,
               it is attribution, not a second password.
             </p>
           </div>
           <div class="form-actions">
-            <button class="btn" type="submit">Remember this device</button>
+            <button class="btn" type="submit">This laptop is mine</button>
           </div>
+        </form>
+
+        <form method="post" action="/share" class="stack stack--tight">
+          <input type="hidden" name="next" value="${nextTo}">
+          <div class="form-actions">
+            <button class="btn btn--ghost" type="submit">The team shares this laptop</button>
+          </div>
+          <p class="field-hint">
+            Pick this for a desk more than one person sits at. The password is not asked again on this
+            laptop, and whoever sits down taps their own name at the start of their shift, so their work
+            is signed by them and not by whoever set it up.
+          </p>
         </form>
       </div>
       <div class="lede-side">
@@ -2707,6 +2726,73 @@ function claimPage(req, res, { error = null, users = null, usersError = null } =
     </div>`;
 
   return layout(ctx, { title: 'Who is on this device?', kicker: 'XStudioz hub', html: body });
+}
+
+// The shift picker: a trusted laptop asking who is at the keyboard.
+//
+// The roster does the work here. At 10 AM on a Tuesday it knows Amrah and
+// Zaheen are on, so those two are the buttons and everybody else is folded
+// away. One tap for the normal case, and a wrong tap is visible because the
+// person who should be on duty is the one shown first.
+function whoPage(req, res, { error = null, users = null, usersError = null, needPassword = null } = {}) {
+  const ctx = buildCtx(req, res, null, { headline: '', chrome: 'minimal' });
+  const nextTo = safeNext(req.query.next || req.body?.next, '/');
+  const desk = deskNow();
+  const onDuty = new Set(desk.names);
+
+  const all = users || [];
+  const rostered = all.filter((u) => onDuty.has(u.name));
+  const others = all.filter((u) => !onDuty.has(u.name));
+
+  const personButton = (u) => html`<form method="post" action="/who" class="who-pick">
+      <input type="hidden" name="next" value="${nextTo}">
+      <input type="hidden" name="name" value="${u.name}">
+      ${u.role === 'owner'
+        ? html`<label class="sr-only" for="pw-${u.name}">Password for ${u.name}</label>
+            <input class="who-pw" id="pw-${u.name}" name="password" type="password"
+                   autocomplete="current-password" placeholder="Password"
+                   ${safe(needPassword === u.name ? 'autofocus' : '')} required>`
+        : ''}
+      <button class="btn ${safe(u.role === 'owner' ? 'btn--ghost' : '')}" type="submit">
+        ${u.name}${u.role === 'owner' ? ' (needs the password)' : ''}
+      </button>
+    </form>`;
+
+  const body = html`<div class="lede">
+      <div class="lede-main">
+        <div class="figure">
+          <span class="cap">${desk.uncovered ? 'Nobody is rostered right now' : 'On the roster right now'}</span>
+          <strong class="mid">${desk.names.length ? desk.names.join(', ') : missing()}</strong>
+          <p class="sub">${desk.label}, ${desk.day}. Tap your name to start your shift.</p>
+        </div>
+
+        ${error ? html`<p class="note note--neg">${error}</p>` : ''}
+
+        <div class="who-grid">${join(rostered.map(personButton))}</div>
+
+        ${others.length
+          ? html`<details class="who-others">
+              <summary>Somebody else is at this desk</summary>
+              <div class="who-grid">${join(others.map(personButton))}</div>
+            </details>`
+          : ''}
+
+        ${usersError ? html`<p class="note note--warn">${usersError}</p>` : ''}
+      </div>
+      <div class="lede-side">
+        <p class="caption">
+          This laptop is already trusted, so there is no password for a CSR. Your name signs every note,
+          entry and tick you write for the next ${String(Math.round(SHIFT_TTL_MS / 3_600_000))} hours, then
+          the hub asks again so the next shift does not write under your name.
+        </p>
+        <p class="caption">
+          Ezan is the exception. His sections are locked to him, so choosing him needs the password every
+          time, otherwise the lock would be a label rather than a lock.
+        </p>
+      </div>
+    </div>`;
+
+  return layout(ctx, { title: 'Who is at this desk?', kicker: 'Start of shift', html: body });
 }
 
 async function usersOrNotice() {
@@ -2750,6 +2836,55 @@ app.post(
     }
     res.status(result.reason === 'db_unavailable' ? 503 : 401)
       .send(claimPage(req, res, { error: result.message, users, usersError }));
+  })
+);
+
+// Enrol a shared laptop: trusted, nobody bound to it.
+app.post(
+  '/share',
+  wrap(async (req, res) => {
+    const result = await shareDevice({ req, res });
+    const to = encodeURIComponent(safeNext(req.body.next, '/'));
+    if (result.ok) return res.redirect(303, `/who?next=${to}`);
+    return res.status(401).send(loginPage(req, res, { error: result.message }));
+  })
+);
+
+// Who is at the keyboard of an already-trusted laptop.
+app.get(
+  '/who',
+  wrap(async (req, res) => {
+    // A laptop nobody has trusted yet has to do the password first.
+    if (!req.device) {
+      const to = encodeURIComponent(safeNext(req.query.next, '/'));
+      return res.redirect(302, `/login?next=${to}`);
+    }
+    res.send(whoPage(req, res, await usersOrNotice()));
+  })
+);
+
+app.post(
+  '/who',
+  loginLimiter,
+  wrap(async (req, res) => {
+    const name = String(req.body.name || '').slice(0, 80);
+    const result = await switchPerson({ req, res, name, password: req.body.password });
+    if (result.ok) return res.redirect(303, safeNext(req.body.next, '/'));
+
+    if (result.reason === 'untrusted') {
+      return res.status(401).send(loginPage(req, res, { error: result.message }));
+    }
+    const { users, usersError } = await usersOrNotice();
+    res
+      .status(result.reason === 'db_unavailable' ? 503 : 401)
+      .send(
+        whoPage(req, res, {
+          error: result.message,
+          users,
+          usersError,
+          needPassword: result.reason === 'owner_password' ? name : null,
+        })
+      );
   })
 );
 
