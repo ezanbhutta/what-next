@@ -84,7 +84,7 @@ import {
 } from './lib/data.js';
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
-import { deskNow, shiftBand } from './lib/roster.js';
+import { deskNow, shiftBand, entryDay } from './lib/roster.js';
 import { loadDueDates, setDueDate, clearDueDate } from './lib/duedates.js';
 
 // The six owner-written documents. Read from data/handbook/, parsed out of
@@ -720,11 +720,15 @@ export const loaders = {
   },
 
   async entry(ctx, q) {
-    // Yesterday, not today. Fiverr publishes a day's reach the day after, so
-    // the numbers on screen when someone opens this form describe yesterday.
-    const date = isoDateParam(ctx.query.date) || entryDefaultIso();
+    // Fiverr publishes a day's figures around midday the NEXT day, so before
+    // noon PKT yesterday's numbers do not exist to be typed. `window` carries
+    // that to the view, which says it rather than silently offering a form for
+    // a day nobody can fill in.
+    const window = entryDay();
+    const date = isoDateParam(ctx.query.date) || window.date;
     return {
       date,
+      window,
       entries: await q('SELECT * FROM daily_entry WHERE entry_date = ? ORDER BY profile', [date]),
       gigs: await q('SELECT * FROM daily_entry_gig WHERE entry_date = ? ORDER BY profile, gig', [date]),
       recent: await q(
@@ -957,19 +961,55 @@ export const loaders = {
     const open = report.ok && report.rows.length ? report.rows[0] : null;
     if (!open) {
       // Unreadable propagates to every derived list; genuinely-no-shift does
-      // not. The view renders the first as MISSING and the second as the
-      // open-a-shift page, and conflating them is how an outage becomes an
-      // all-clear.
-      const derived = report.ok ? EMPTY : report;
+      // not. Conflating them is how an outage becomes an all-clear.
+      if (!report.ok) {
+        return {
+          ...base, report,
+          due: report, waiting: report, handled: report, activities: report, handoff: report,
+          flagged: null,
+        };
+      }
+
+      // NO SHIFT OPEN IS THE NORMAL CASE NOW, AND THE QUEUE STILL HAS TO LOAD.
+      //
+      // This used to return EMPTY for all of these, which was correct while a
+      // shift was required to reach the page at all. It is not any more: the
+      // hub books reminders from ordinary logging, and returning an empty
+      // queue here meant they were written and then never shown to anybody.
+      //
+      // Reminders are PROFILE-scoped by design ("it pops for whoever is
+      // covering it"), and this hub is one profile, so the queue loads without
+      // a shift. `activities` switches from "this report's rows" to "what this
+      // person logged today", because there is no report to key on.
+      const since = new Date(now.getTime() - 16 * 60 * 60 * 1000);
+      const [queue, mine, handledRows] = await Promise.all([
+        q(
+          `SELECT ${REMINDER_COLS} FROM reminder
+            WHERE profile = ? AND state <> 'resolved'
+            ORDER BY alert DESC, due_at ASC`,
+          [HUB_PROFILE]
+        ),
+        q(
+          `SELECT ${ACTIVITY_COLS} FROM activity WHERE author = ? AND at >= ? ORDER BY at DESC LIMIT 60`,
+          [person, since]
+        ),
+        q(
+          `SELECT ${REMINDER_COLS} FROM reminder
+            WHERE profile = ? AND state = 'resolved' AND resolved_at >= ?
+            ORDER BY resolved_at DESC LIMIT 40`,
+          [HUB_PROFILE, since]
+        ),
+      ]);
+
       return {
         ...base,
         report,
-        due: derived,
-        waiting: derived,
-        handled: derived,
-        activities: derived,
-        handoff: derived,
-        flagged: report.ok ? new Map() : null,
+        due: queue,
+        waiting: queue,
+        handled: handledRows,
+        activities: mine,
+        handoff: EMPTY,
+        flagged: await flaggedBuyers(q, HUB_PROFILE),
       };
     }
 
@@ -1507,12 +1547,12 @@ const todayIso = () => {
  * The date is still editable on the form. This only changes what it opens on,
  * so the common case is right without anyone having to remember.
  */
-const entryDefaultIso = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
+// Which day the entry form opens on. See roster.entryDay: Fiverr publishes a
+// day's figures around midday the NEXT day, so before noon PKT there is
+// nothing to type for yesterday. This also fixes a second bug the old version
+// had: it used the SERVER clock, which is UTC in the container, so between
+// 19:00 and 24:00 UTC it was already a day ahead of the team.
+const entryDefaultIso = () => entryDay().date;
 
 /** Post/Redirect/Get. `back` is validated so a form cannot bounce off-site,
  *  and the message is a CODE, not free text, nothing a client sends is ever

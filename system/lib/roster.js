@@ -198,7 +198,7 @@ export function deskNow(now = new Date()) {
   };
 }
 
-export default { ROSTER, HANDOVERS, PKT_OFFSET_MINUTES, pktNow, onDutyAt, nextHandover, clock, deskNow, shiftBand };
+export default { ROSTER, HANDOVERS, PKT_OFFSET_MINUTES, pktNow, onDutyAt, nextHandover, clock, deskNow, shiftBand, entryDay };
 
 /**
  * Which shift band an hour falls in, using the hub's own three names.
@@ -227,4 +227,42 @@ export function shiftBand(hour) {
   if (h >= 9 && h < 17) return 'Morning';
   if (h >= 17 && h < 21) return 'Evening';
   return 'Night';
+}
+
+/**
+ * Which day the Daily entry form should open on, and whether it is complete.
+ *
+ * Fiverr's figures for a day land the NEXT day, around midday. Ezan: "at 12 PM
+ * morning Aug 5, I have all data for Aug 4 to be inserted into system."
+ *
+ * So before noon PKT, yesterday's numbers do not exist yet. Defaulting to
+ * yesterday all day, which is what this replaced, put a CSR in front of a form
+ * for a day Fiverr had not published. The honest options at 9 AM are to type
+ * guesses or to type zeros, and zeros are worse: they are indistinguishable
+ * from a real zero and they poison every average downstream.
+ *
+ * Returns the date to open on plus why, so the form can say it rather than
+ * silently choosing.
+ */
+export function entryDay(now = new Date()) {
+  const at = pktNow(now);
+  const ready = at.hour >= 12;
+  const back = ready ? 1 : 2;
+  const d = new Date(now.getTime() + PKT_OFFSET_MINUTES * 60_000);
+  d.setUTCDate(d.getUTCDate() - back);
+  const iso = d.toISOString().slice(0, 10);
+
+  const y = new Date(now.getTime() + PKT_OFFSET_MINUTES * 60_000);
+  y.setUTCDate(y.getUTCDate() - 1);
+
+  return {
+    date: iso,
+    ready,
+    yesterday: y.toISOString().slice(0, 10),
+    hour: at.hour,
+    why: ready
+      ? "Yesterday's figures are published, so this opens on yesterday."
+      : "Yesterday's figures are not published until about midday, so this opens "
+        + 'on the day before. Yesterday can still be picked once Fiverr has them.',
+  };
 }

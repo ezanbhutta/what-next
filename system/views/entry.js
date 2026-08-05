@@ -464,6 +464,7 @@ function engineSide(run) {
 export function render(ctx) {
   const d = ctx.data || {};
   const date = d.date || null;
+  const win = d.window || null;
   const entries = rowsOf(d.entries);
   const gigs = rowsOf(d.gigs);
   const recent = rowsOf(d.recent);
@@ -533,8 +534,19 @@ export function render(ctx) {
     </form>
     <p class="caption">
       Everything on this page is for ${dateShort(date, { year: true })}, not today.
-      Fiverr publishes a day's impressions the following day, so the form opens on yesterday.
-    </p>`;
+      ${win ? win.why : "Fiverr publishes a day's impressions the following day."}
+    </p>
+    ${win && !win.ready && date === win.date
+      ? html`<p class="note note--warn">
+          ${glyph('warn')} <b>${dateShort(win.yesterday, { year: true })} is not ready yet.</b>
+          Fiverr publishes a day's figures around midday the next day, and it is
+          ${String(win.hour).padStart(2, '0')}:00 PKT. Typing zeros for it now is worse than leaving it
+          blank: a real zero and a not-published-yet look identical afterwards, and every average built
+          on it is wrong. Come back after noon, or
+          <a href="/entry?date=${safe(encodeURIComponent(win.yesterday))}">open it anyway</a> if you have
+          the numbers from somewhere else.
+        </p>`
+      : ''}`;
 
   const profileNav =
     profiles.length > 1

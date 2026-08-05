@@ -1223,7 +1223,7 @@ export function render(ctx) {
   // is and who should be on it, and the signed-in name says who actually is,
   // so nothing here needs to be typed or chosen first.
   if (!report) {
-    return logOnlyView(ctx, { csrfToken, date: d.date });
+    return logOnlyView(ctx, { csrfToken, date: d.date, d });
   }
 
   // ---- a shift is open ----------------------------------------------------
@@ -1639,12 +1639,54 @@ export function render(ctx) {
  * error, because covering somebody else's shift is a normal Tuesday and the
  * log should record it rather than argue about it.
  */
-function logOnlyView(ctx, { csrfToken, date }) {
+function logOnlyView(ctx, { csrfToken, date, d }) {
   const desk = deskNow();
   const me = ctx.user?.name || null;
   const rostered = desk.names || [];
   const onRoster = me ? rostered.includes(me) : false;
   const openLog = ctx.query?.log ? ACTIVITY_BY_KEY[String(ctx.query.log)] : null;
+  const backTo = '/reports';
+  const now = d?.now || new Date();
+
+  // THE QUEUE IS THE OTHER HALF OF LOGGING, AND IT NEARLY SHIPPED WITHOUT IT.
+  //
+  // Logging an inquiry books a follow-up. If the page that does the logging
+  // does not also show what is due, reminders are written and never seen, and
+  // the system quietly becomes a write-only log. Reminders are profile-scoped
+  // on purpose, so they belong to whoever is at the desk, shift or no shift.
+  const dueRows = rowsOf(d?.due);
+  const dueUnknown = dueRows === null;
+  const due = Array.isArray(dueRows) ? dueRows : [];
+  const alerts = due.filter((r) => ruleFor(r).alert);
+  const queue = due.filter((r) => !ruleFor(r).alert);
+  const flagged =
+    d?.flagged === null || d?.flagged === undefined
+      ? null
+      : d.flagged instanceof Map
+        ? d.flagged
+        : new Map(Object.entries(d.flagged));
+
+  const queueBlock = html`<section class="panel">
+      ${panelHead(
+        html`Due now, ${dueUnknown ? missing() : num(queue.length)}`,
+        dueUnknown ? 'missing' : 'typed',
+        dueUnknown ? 'Queue unreadable' : 'Typed here'
+      )}
+      ${dueUnknown
+        ? html`<p class="note note--neg">
+            ${glyph('crit')} <strong>The reminder queue could not be read.</strong> There may be reminders
+            due right now and the hub cannot see them. Treat this as unknown, not as clear.
+          </p>`
+        : queue.length
+          ? html`<ul class="stack-sm">
+              ${join(queue.map((rem) => reminderCard(rem, { csrfToken, backTo, now, flagged })))}
+            </ul>`
+          : empty(
+              alerts.length
+                ? 'No ordinary reminders due. The cautions above still stand.'
+                : 'Nothing due. Enjoy the calm.'
+            )}
+    </section>`;
 
   const context = html`<div class="figure">
       <span class="cap">On the desk now</span>
@@ -1675,6 +1717,8 @@ function logOnlyView(ctx, { csrfToken, date }) {
           hour is. Both are recorded on the row.
         </p>`
     )}
+    ${alerts.length ? alertBlock(alerts, { csrfToken, backTo }) : ''}
+    ${queueBlock}
     <h2 class="sec">Log what you just did</h2>
     ${activityChooser(openLog?.key || null)}
     ${openLog
@@ -1685,8 +1729,9 @@ function logOnlyView(ctx, { csrfToken, date }) {
     title: 'Log',
     kicker: 'Reports',
     ticker: [
+      { label: 'Due now', value: dueUnknown ? missing() : String(queue.length),
+        sub: alerts.length ? `${alerts.length} need care` : 'reminders' },
       { label: 'On the desk', value: String(desk.depth), sub: desk.alone ? 'one person' : 'people' },
-      { label: 'Now', value: desk.label, sub: desk.day },
       { label: 'Next handover', value: desk.next ? clock(desk.next.hour) : missing(),
         sub: desk.next ? desk.next.what : 'PKT' },
     ],
