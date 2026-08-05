@@ -164,6 +164,95 @@ export function verifySessionToken(token) {
   };
 }
 
+// ----------------------------------------------------------------- devices
+//
+// The password is typed ONCE per device. After that the device carries a
+// long-lived signed token and the team walks straight in.
+//
+// Why a second cookie rather than simply a longer session: the two answer
+// different questions. The session says "this browser is signed in right now"
+// and expires in a week. The device says "this laptop belongs to Nadir and has
+// already proved it knows the password" and lasts a quarter. Keeping them
+// separate lets the session refresh on its own cadence, lets the audit trail
+// tell a fresh login from a resumed one, and keeps the name out of the weekly
+// re-sign. Logging out clears BOTH — see logout() for why it must.
+//
+// The name is asked once, at device claim, and never again. It is not
+// decoration: every tick, note and score is written with an author, and the
+// question that started this whole project — "who marked this inquiry Not
+// Placed?" — is unanswerable without it.
+//
+// REVOCATION: the device token is a bearer credential. Anyone holding the
+// laptop is inside, which is the trade being asked for and is reasonable for
+// an internal tool. To invalidate every device at once — someone leaves, a
+// laptop is lost — rotate SESSION_SECRET in the Hostinger environment panel.
+// Every device token and every session dies with it.
+
+export const DEVICE_COOKIE = 'xs_device';
+
+const DEVICE_TTL_MS = 90 * 24 * 60 * 60 * 1000; // a quarter
+const DEVICE_VERSION = 'd1';
+
+function signDevice({ name, role, did, exp }) {
+  const payload = { n: name, r: role, d: did, e: exp };
+  const body = b64url(JSON.stringify(payload));
+  const sig = b64url(crypto.createHmac('sha256', subkey('device')).update(body).digest());
+  return `${DEVICE_VERSION}.${body}.${sig}`;
+}
+
+/** Verify a device cookie. Returns {name, role, did} or null — never partial. */
+export function verifyDeviceToken(token) {
+  if (typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== DEVICE_VERSION) return null;
+  const [, body, sig] = parts;
+
+  let expected;
+  try {
+    expected = crypto.createHmac('sha256', subkey('device')).update(body).digest();
+  } catch {
+    return null; // SESSION_SECRET missing — no device is trusted
+  }
+  const given = Buffer.from(sig, 'base64url');
+  if (given.length !== expected.length) return null;
+  if (!crypto.timingSafeEqual(given, expected)) return null;
+
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+  if (!payload?.n || !payload?.e || Date.now() > Number(payload.e)) return null;
+
+  return {
+    name: String(payload.n),
+    role: String(payload.r || 'csr'),
+    did: String(payload.d || ''),
+    expiresAt: Number(payload.e),
+  };
+}
+
+export function readDevice(req) {
+  return verifyDeviceToken(readCookie(req, DEVICE_COOKIE));
+}
+
+/** Bind this browser to a person. Called once, after the name step. */
+export function rememberDevice(res, { name, role = 'csr' }) {
+  const device = {
+    name,
+    role,
+    did: crypto.randomBytes(12).toString('base64url'),
+    exp: Date.now() + DEVICE_TTL_MS,
+  };
+  res.cookie(DEVICE_COOKIE, signDevice(device), cookieOptions(DEVICE_TTL_MS));
+  return device;
+}
+
+export function forgetDevice(res) {
+  res.clearCookie(DEVICE_COOKIE, { ...cookieOptions(0), maxAge: undefined });
+}
+
 function readCookie(req, name) {
   if (req.cookies && typeof req.cookies[name] === 'string') return req.cookies[name];
   // Works whether or not cookie-parser is mounted.
@@ -303,7 +392,7 @@ export async function recordAudit(who, action, detail = null) {
  * The route must respond with a 4xx status on ok:false so `loginLimiter`
  * counts the attempt.
  */
-export async function attemptLogin({ req, res, name, password }) {
+export async function attemptLogin({ req, res, password }) {
   const cfg = authConfig();
   if (!cfg.ok) {
     return {
@@ -313,10 +402,71 @@ export async function attemptLogin({ req, res, name, password }) {
     };
   }
 
-  // Check the password first and always, whatever the name is. Doing it after
-  // the name lookup would make "unknown name" measurably faster than "wrong
-  // password" and turn the picker into a roster oracle.
-  const passwordOk = checkPassword(password);
+  if (!checkPassword(password)) {
+    // The event, never the attempt. No password material reaches a log.
+    console.warn(`[auth] failed login from ${req?.ip ?? 'unknown ip'}`);
+    await recordAudit(null, 'login_failed', { reason: 'bad_password', ip: req?.ip ?? null });
+    return { ok: false, reason: 'bad_password', message: 'That password was not accepted.' };
+  }
+
+  // Known device: straight in, no second step, no name asked. This is the path
+  // almost every login takes after the first one.
+  const device = readDevice(req);
+  if (device) {
+    const session = startSession(res, { name: device.name, role: device.role });
+    await recordAudit(device.name, 'login', { ip: req?.ip ?? null, device: device.did });
+    return { ok: true, user: session };
+  }
+
+  // New device. The password is proven; carry that proof in a short-lived
+  // signed cookie so the name step does not have to re-post the password in a
+  // hidden field, and so a stale name form cannot be replayed tomorrow.
+  res.cookie(PENDING_COOKIE, signPending(), cookieOptions(PENDING_TTL_MS));
+  return { ok: true, needsName: true };
+}
+
+const PENDING_COOKIE = 'xs_pending';
+const PENDING_TTL_MS = 5 * 60 * 1000;
+
+function signPending() {
+  const exp = Date.now() + PENDING_TTL_MS;
+  const body = b64url(JSON.stringify({ e: exp }));
+  const sig = b64url(crypto.createHmac('sha256', subkey('pending')).update(body).digest());
+  return `p1.${body}.${sig}`;
+}
+
+function verifyPending(token) {
+  if (typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== 'p1') return false;
+  let expected;
+  try {
+    expected = crypto.createHmac('sha256', subkey('pending')).update(parts[1]).digest();
+  } catch {
+    return false;
+  }
+  const given = Buffer.from(parts[2], 'base64url');
+  if (given.length !== expected.length) return false;
+  if (!crypto.timingSafeEqual(given, expected)) return false;
+  try {
+    const { e } = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    return Date.now() <= Number(e);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Second and final step on a new device: say who is using it.
+ *
+ * Asked exactly once per device, then never again. Without it every row this
+ * person writes is signed by nobody, and "who marked this inquiry Not Placed"
+ * — the question that produced the $3,628 finding — has no answer.
+ */
+export async function claimDevice({ req, res, name }) {
+  if (!verifyPending(readCookie(req, PENDING_COOKIE))) {
+    return { ok: false, reason: 'expired', message: 'That took too long — enter the password again.' };
+  }
 
   let user;
   try {
@@ -332,28 +482,25 @@ export async function attemptLogin({ req, res, name, password }) {
     throw error;
   }
 
-  if (!passwordOk || !user || !user.active) {
-    const reason = !passwordOk ? 'bad_password' : 'unknown_name';
-    // The event, never the attempt. No password material reaches a log.
-    console.warn(`[auth] failed login (${reason}) from ${req?.ip ?? 'unknown ip'}`);
-    await recordAudit(user?.name ?? null, 'login_failed', { reason, ip: req?.ip ?? null });
-    return {
-      ok: false,
-      reason,
-      // One message for both cases: which half was wrong is not the user's
-      // business, and telling them turns the form into a name-guessing tool.
-      message: 'That password or name was not accepted.',
-    };
+  if (!user || !user.active) {
+    return { ok: false, reason: 'unknown_name', message: 'Pick your name from the list.' };
   }
 
+  const device = rememberDevice(res, { name: user.name, role: user.role });
+  res.clearCookie(PENDING_COOKIE, { ...cookieOptions(0), maxAge: undefined });
   const session = startSession(res, { name: user.name, role: user.role });
-  await recordAudit(user.name, 'login', { ip: req?.ip ?? null });
+  await recordAudit(user.name, 'device_claimed', { ip: req?.ip ?? null, device: device.did });
   return { ok: true, user: session };
 }
 
 export async function logout({ req, res }) {
   const session = readSession(req);
   endSession(res);
+  // The device must go too. attachUser resumes a session from a valid device
+  // cookie, so clearing only the session would sign the person back in on
+  // their very next request and make the logout button do nothing visible.
+  // Logging out is the one deliberate way to hand a laptop to someone else.
+  forgetDevice(res);
   if (session?.name) await recordAudit(session.name, 'logout', null);
   return { ok: true };
 }
@@ -365,7 +512,21 @@ export async function logout({ req, res }) {
  * the expiry once a day so an active person is not thrown out mid-week.
  */
 export function attachUser(req, res, next) {
-  const session = readSession(req);
+  let session = readSession(req);
+
+  // No session, but this device already proved the password and said who it
+  // belongs to — resume silently. This is what makes the password a one-time
+  // thing: the session lasts a week, the device lasts a quarter, and only the
+  // device expiring ever puts the login form back in front of anyone.
+  //
+  // Safe because the device cookie is HMAC-signed with the same secret as the
+  // session and carries its own expiry; an unsigned or stale one verifies to
+  // null and this does nothing.
+  if (!session) {
+    const device = readDevice(req);
+    if (device) session = startSession(res, { name: device.name, role: device.role });
+  }
+
   req.user = session;
   res.locals.user = session;
   res.locals.csrfToken = session ? csrfToken(req) : '';

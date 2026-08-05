@@ -58,6 +58,7 @@ import {
   requireAuth,
   requireCsrf,
   attemptLogin,
+  claimDevice,
   logout as endLogin,
   loginLimiter,
   listUsers,
@@ -1157,38 +1158,20 @@ app.post(
 // and lib/auth.js says so in as many words — do not let a later reader mistake
 // it for one.
 
-function loginPage(req, res, { error = null, name = '', users = null, usersError = null } = {}) {
+function loginPage(req, res, { error = null } = {}) {
   const ctx = buildCtx(req, res, null, { headline: 'Sign in', chrome: 'minimal' });
   const cfg = authConfig();
   const nextTo = safeNext(req.query.next, '/');
-
-  const picker =
-    users && users.length
-      ? html`<select id="name" name="name" required>
-          <option value="">Choose your name…</option>
-          ${join(
-            users.map(
-              (u) => html`<option value="${u.name}" ${safe(u.name === name ? 'selected' : '')}>${u.name} · ${u.role}</option>`
-            )
-          )}
-        </select>`
-      : html`<input id="name" name="name" value="${name}" autocomplete="username" required>`;
 
   const body = html`<div class="lede">
       <div class="lede-main">
         <form method="post" action="/login" class="stack">
           <input type="hidden" name="next" value="${nextTo}">
           <div class="field">
-            <label for="name">Who are you</label>
-            ${picker}
-            <p class="field-hint">
-              Your name signs every tick, note and score you write. It is attribution, not a password.
-            </p>
-          </div>
-          <div class="field">
             <label for="password">Team password <span class="req">*</span></label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <input id="password" name="password" type="password" autocomplete="current-password" autofocus required>
             <p class="field-error">${error || ''}</p>
+            <p class="field-hint">Asked once on this device. After that it remembers you.</p>
           </div>
           <div class="form-actions">
             <button class="btn" type="submit">Sign in</button>
@@ -1197,7 +1180,6 @@ function loginPage(req, res, { error = null, name = '', users = null, usersError
       </div>
       <div class="lede-side">
         <p class="caption">This page carries client names, revenue and the dead pipeline. It is not indexed and it is not public.</p>
-        ${usersError ? html`<p class="note note--warn">${usersError}</p>` : ''}
         ${!cfg.ok
           ? html`<p class="note note--neg">Login is not configured on this server — ${cfg.missing.join(' and ')} not set. Nobody can sign in until they are.</p>`
           : ''}
@@ -1208,20 +1190,89 @@ function loginPage(req, res, { error = null, name = '', users = null, usersError
   return layout(ctx, { title: 'Sign in', kicker: 'XStudioz hub', html: body });
 }
 
+// Step two, on a new device only: who is holding it. Asked once, then never
+// again — but not optional, because an unsigned tick is a tick nobody can be
+// asked about, and that is the failure this whole hub was built to fix.
+function claimPage(req, res, { error = null, users = null, usersError = null } = {}) {
+  const ctx = buildCtx(req, res, null, { headline: 'Who is on this device?', chrome: 'minimal' });
+  const nextTo = safeNext(req.query.next, '/');
+
+  const picker =
+    users && users.length
+      ? html`<select id="name" name="name" required autofocus>
+          <option value="">Choose your name…</option>
+          ${join(users.map((u) => html`<option value="${u.name}">${u.name} · ${u.role}</option>`))}
+        </select>`
+      : html`<input id="name" name="name" autocomplete="username" required autofocus>`;
+
+  const body = html`<div class="lede">
+      <div class="lede-main">
+        <form method="post" action="/claim" class="stack">
+          <input type="hidden" name="next" value="${nextTo}">
+          <div class="field">
+            <label for="name">Your name <span class="req">*</span></label>
+            ${picker}
+            <p class="field-error">${error || ''}</p>
+            <p class="field-hint">
+              Asked once for this browser. Your name signs every tick, note and score you write —
+              it is attribution, not a second password.
+            </p>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Remember this device</button>
+          </div>
+        </form>
+      </div>
+      <div class="lede-side">
+        <p class="caption">Sign out at any time to hand this device to someone else — that is the one thing that makes it ask again.</p>
+        ${usersError ? html`<p class="note note--warn">${usersError}</p>` : ''}
+      </div>
+    </div>`;
+
+  return layout(ctx, { title: 'Who is on this device?', kicker: 'XStudioz hub', html: body });
+}
+
+async function usersOrNotice() {
+  try {
+    return { users: await listUsers(), usersError: null };
+  } catch (err) {
+    if (!(err instanceof DbError)) throw err;
+    // An empty dropdown reads as "nobody works here". Say what happened.
+    return { users: null, usersError: `${unavailableNotice(err)} You can still type your name.` };
+  }
+}
+
 app.get(
   '/login',
   wrap(async (req, res) => {
+    // attachUser has already resumed the session from a remembered device, so
+    // reaching this page at all means this browser is genuinely new.
     if (req.user) return res.redirect(302, safeNext(req.query.next, '/'));
-    let users = null;
-    let usersError = null;
-    try {
-      users = await listUsers();
-    } catch (err) {
-      if (!(err instanceof DbError)) throw err;
-      // An empty dropdown reads as "nobody works here". Say what happened.
-      usersError = `${unavailableNotice(err)} You can still type your name.`;
+    res.send(loginPage(req, res, {}));
+  })
+);
+
+app.get(
+  '/claim',
+  wrap(async (req, res) => {
+    if (req.user) return res.redirect(302, safeNext(req.query.next, '/'));
+    res.send(claimPage(req, res, await usersOrNotice()));
+  })
+);
+
+app.post(
+  '/claim',
+  wrap(async (req, res) => {
+    const result = await claimDevice({ req, res, name: String(req.body.name || '').slice(0, 80) });
+    if (result.ok) return res.redirect(303, safeNext(req.body.next, '/'));
+    const { users, usersError } = await usersOrNotice();
+    // Expired proof means the password must be typed again — do not leave them
+    // on a form that cannot succeed.
+    if (result.reason === 'expired') {
+      return res.status(401).send(loginPage(req, res, { error: result.message }));
     }
-    res.send(loginPage(req, res, { users, usersError }));
+    res.status(result.reason === 'db_unavailable' ? 503 : 401)
+      .send(claimPage(req, res, { error: result.message, users, usersError }));
   })
 );
 
@@ -1229,20 +1280,19 @@ app.post(
   '/login',
   loginLimiter,
   wrap(async (req, res) => {
-    const name = String(req.body.name || '').slice(0, 80);
-    const result = await attemptLogin({ req, res, name, password: req.body.password });
+    const result = await attemptLogin({ req, res, password: req.body.password });
+
+    // Password accepted on a device nobody has claimed yet — one more step.
+    if (result.ok && result.needsName) {
+      const to = encodeURIComponent(safeNext(req.body.next, '/'));
+      return res.redirect(303, `/claim?next=${to}`);
+    }
     if (result.ok) return res.redirect(303, safeNext(req.body.next, '/'));
 
     // 4xx so the limiter counts the attempt — it skips successful requests.
-    let users = null;
-    try {
-      users = await listUsers();
-    } catch {
-      users = null;
-    }
     res
-      .status(result.reason === 'not_configured' || result.reason === 'db_unavailable' ? 503 : 401)
-      .send(loginPage(req, res, { error: result.message, name, users }));
+      .status(result.reason === 'not_configured' ? 503 : 401)
+      .send(loginPage(req, res, { error: result.message }));
   })
 );
 
