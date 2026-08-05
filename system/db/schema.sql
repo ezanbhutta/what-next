@@ -207,3 +207,182 @@ CREATE TABLE IF NOT EXISTS section_access (
   locked_at  TIMESTAMP   NULL,
   reason     VARCHAR(200) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================== REPORTS (10)
+--
+-- The shift logger, brought inside the hub. Three tables: the shift a person
+-- opened, what they logged during it, and the follow-throughs that logging
+-- booked. `lib/reminders.js` owns all thirteen booking rules; this file owns
+-- only where the rows live.
+--
+-- WHY IT MOVED. The original ran on Supabase with anon RLS of `using (true)`
+-- on every table, and the publishable key shipped inside the browser bundle.
+-- Anyone who opened devtools could DELETE every report the team had ever
+-- filed. Here the writes are server-side through auditedWrite() and the
+-- credentials never reach a browser — the same removal-of-the-class-of-problem
+-- that made the whole hub server-rendered.
+--
+-- SCOPE. These tables ARE the source of truth for shift activity: nobody else
+-- computes it, so this is not a second copy of an engine number. Money,
+-- conversion and order state still come from data/ and are never recomputed
+-- from here.
+--
+-- TIME. due_at and snoozed_until are DATETIME holding UTC. They are DATETIME
+-- rather than TIMESTAMP because a custom reminder may legitimately be set past
+-- 2038, and TIMESTAMP silently cannot hold that. Write them with
+-- reminders.toSqlUtc() and read them back with reminders.parseAt() — a
+-- 'YYYY-MM-DD HH:MM:SS' string handed to `new Date()` is parsed as LOCAL time,
+-- which on a PKT box would move every reminder five hours.
+
+-- THE WRAP-UP IS PART OF THE SHIFT, NOT A SECOND RECORD. `handoff_note`,
+-- `note_shifts` and `checklist` live on the shift they describe because all
+-- three are answers to "how did this shift go" and splitting them into their
+-- own table would let a shift exist with a note that points at no shift.
+--
+-- `note_shifts` is the JSON array of shift names the note was aimed at, and
+-- `checklist` the JSON map of wrap-up items ticked (plus their optional
+-- counts). Both are JSON rather than columns because the checklist is a list
+-- the owner changes — views/reports.js CHECKLIST is the authority — and a
+-- schema migration is the wrong price for adding a line to it. Nothing joins
+-- on either, so nothing needs them indexed.
+--
+-- A BLANK COUNT IS NOT ZERO. `{"briefs_created": true}` means ticked but not
+-- counted; `{"briefs_created": 4}` means four. The CEO view prints the first
+-- as MISSING and never as 0 — see house rule 2.
+CREATE TABLE IF NOT EXISTS shift_report (
+  id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+  person       VARCHAR(80) NOT NULL,
+  profile      VARCHAR(80) NOT NULL,
+  shift        ENUM('Morning','Evening','Night') NOT NULL,
+  opened_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  closed_at    TIMESTAMP   NULL,
+  status       ENUM('open','closed') NOT NULL DEFAULT 'open',
+  notes        TEXT        NULL,
+  handoff_note TEXT        NULL,
+  note_shifts  JSON        NULL,
+  checklist    JSON        NULL,
+
+  -- One OPEN report per person per profile. MySQL has no partial index, so the
+  -- slot is NULL for closed rows and a unique index ignores NULLs — closed
+  -- history stays unbounded while a second open report cannot be created.
+  open_slot  VARCHAR(170) GENERATED ALWAYS AS
+             (IF(status = 'open', CONCAT(person, '|', profile), NULL)) STORED,
+  UNIQUE KEY uq_shift_open (open_slot),
+  INDEX idx_shift_profile (profile, status, opened_at),
+  INDEX idx_shift_opened (opened_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Who has read a handoff note.
+--
+-- A note aimed at two shifts has to be read by BOTH, and "read" is per shift,
+-- not per note: marking it read on Evening must not make it disappear from
+-- Night's page before anyone on Night has seen it. So the key is
+-- (report_id, shift) and the Evening row says nothing about the Night one.
+--
+-- It is a table rather than a `read_at` column on shift_report for exactly
+-- that reason — one column can only record one reader, and the first one to
+-- tap it would silently close the note for everybody else.
+CREATE TABLE IF NOT EXISTS shift_handoff_read (
+  report_id  BIGINT      NOT NULL,
+  shift      ENUM('Morning','Evening','Night') NOT NULL,
+  read_by    VARCHAR(80) NULL,
+  read_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (report_id, shift),
+  CONSTRAINT fk_handoff_report FOREIGN KEY (report_id)
+    REFERENCES shift_report(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- What a CSR logged during a shift. `kind` is the activity catalogue; the same
+-- list is ACTIVITY_KIND_KEYS in lib/reminders.js and a test fails if the two
+-- drift. It is an ENUM rather than a VARCHAR because a misspelt kind books no
+-- reminder at all, and that failure is invisible — the entry saves, the shift
+-- looks logged, and the follow-through simply never appears.
+--
+-- `client` is the buyer (Fiverr username where there is one) and `client_key`
+-- is its join form — lowercased, non-alphanumerics stripped, exactly as
+-- lib/reconcile.js normalises a buyer. Write it with reminders.buyerKey(); it
+-- is a stored column rather than a generated one so that one function defines
+-- the normalisation for both the SQL and the engine.
+--
+-- `order_ref` is the project/order this entry is about. The original overloaded
+-- one field for both — "Order Assigned to Designer" put the project name in the
+-- column called `client` — which is why its reminders could only ever be
+-- matched by project. Here they are two columns.
+CREATE TABLE IF NOT EXISTS activity (
+  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+  report_id   BIGINT NOT NULL,
+  kind        ENUM('inquiry','lead_followup','client_conversation',
+                   'new_order','order_assigned','files_assigned','order_completed',
+                   'revision_assigned',
+                   'project_delivered','shared',
+                   'followup_client','followup_designer','update_followup',
+                   'upsell','offer','custom_reminder',
+                   'review_request','review_received',
+                   'meeting',
+                   'frustrated','disputed','extension','spam') NOT NULL,
+  client      VARCHAR(120) NULL,
+  client_key  VARCHAR(120) NULL,
+  order_ref   VARCHAR(160) NULL,
+  detail      JSON         NULL,
+  at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  author      VARCHAR(80)  NULL,
+  CONSTRAINT fk_activity_report FOREIGN KEY (report_id)
+    REFERENCES shift_report(id) ON DELETE CASCADE,
+  INDEX idx_activity_report (report_id, at),
+  INDEX idx_activity_kind (kind, at),
+  INDEX idx_activity_client (client_key, at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- A booked follow-through.
+--
+-- PROFILE-SCOPED, NOT PERSON-SCOPED. The spec is explicit: a reminder belongs
+-- to the profile and pops for whoever is covering it at the time, any shift,
+-- any CSR. So the queue index leads with `profile` and never mentions the
+-- person who booked it; `report_id` records which shift booked it, and is
+-- evidence, not routing.
+--
+-- `rule` is the numbered logic in REMINDER-LOGICS.md (1-13). `rule_key` is the
+-- exact stage within it, because rule 9 is a three-step chain and rule 10 is
+-- reachable from two different activities. `chain_step` is 1 unless the rule
+-- chains.
+--
+-- There is deliberately NO unique key on (activity_id, rule_key). "One
+-- reminder per entry per rule" is enforced in reminders.alreadyBooked(),
+-- because it has one exception a constraint cannot express: a reminder that
+-- was AUTO-CLEARED may be booked again if editing the entry makes the rule
+-- true once more, while one a human resolved must never come back.
+CREATE TABLE IF NOT EXISTS reminder (
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  report_id     BIGINT       NULL,
+  activity_id   BIGINT       NULL,
+  `rule`        TINYINT      NOT NULL,
+  rule_key      VARCHAR(40)  NOT NULL,
+  chain_step    TINYINT      NOT NULL DEFAULT 1,
+  profile       VARCHAR(80)  NOT NULL,
+  client        VARCHAR(120) NULL,
+  client_key    VARCHAR(120) NULL,
+  order_ref     VARCHAR(160) NULL,
+  due_at        DATETIME     NOT NULL,
+  heading       VARCHAR(200) NOT NULL,
+  body          TEXT         NULL,
+  alert         TINYINT(1)   NOT NULL DEFAULT 0,
+  state         ENUM('pending','snoozed','resolved') NOT NULL DEFAULT 'pending',
+  resolution    VARCHAR(40)  NULL,
+  snoozed_until DATETIME     NULL,
+  resolved_by   VARCHAR(80)  NULL,
+  resolved_at   TIMESTAMP    NULL,
+  booked_by     VARCHAR(80)  NULL,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT chk_reminder_rule CHECK (`rule` BETWEEN 1 AND 13),
+  CONSTRAINT fk_reminder_activity FOREIGN KEY (activity_id)
+    REFERENCES activity(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reminder_report FOREIGN KEY (report_id)
+    REFERENCES shift_report(id) ON DELETE SET NULL,
+  -- The query the CSR page runs on every load: what is due for THIS profile.
+  INDEX idx_reminder_queue (profile, state, due_at),
+  -- Auto-clear: "an upsell for this buyer was logged — drop the nudge."
+  INDEX idx_reminder_clear (profile, client_key, rule_key, state),
+  -- "Has this entry already booked this rule?" and the FK cascade.
+  INDEX idx_reminder_entry (activity_id, rule_key),
+  INDEX idx_reminder_ledger (state, resolved_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

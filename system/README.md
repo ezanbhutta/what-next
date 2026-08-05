@@ -108,6 +108,35 @@ registered. Run it before believing a section works because it loaded.
 | `/responses` | The reply library, searchable |
 | `/team` | Weekly 1–5 scoring, self vs manager, promises kept |
 | `/money` | Revenue, money sitting still, upsell pipeline |
+| `/reports` | My shift: what is due on this profile, and logging what happens |
+| `/reports/ceo` | What the shifts produced, and what they left owed — manager and owner only |
+
+### Reports, in two halves
+
+One rail entry, one section lock, one set of tables, two pages — because "log
+my shift" and "read what the shifts produced" are two jobs, not two modes of
+one. It replaces the standalone shift logger, whose Supabase anon policy was
+`using (true)` on every table with the publishable key inside the browser
+bundle: anyone who opened devtools could delete every report the team had ever
+filed. Here every write is a server-side POST through `auditedWrite`.
+
+The thirteen reminder logics live in `lib/reminders.js`, ported from the
+owner-written `REMINDER-LOGICS.md`. Two things about them are load-bearing:
+
+- **A reminder belongs to the profile, not the person.** It pops for whoever is
+  covering that profile when it falls due, on any shift.
+- **Reminders are booked in the same transaction as the activity that caused
+  them.** If the booking fails the entry rolls back with it. An entry that
+  saved and booked nothing is invisible from the outside — the CSR sees
+  "saved", the timeline shows the entry, and the buyer is simply never
+  contacted again. That failure is the reason this feature exists.
+
+House rule 5 meets the spec's rule 5 here. Rule 5 books a public-review ask
+thirty minutes after an order completes; where the buyer has a stale order or a
+standing frustrated/disputed caution, **nothing is booked at all** — a
+suppression, not a delay. The CSR page holds the ask a second time for buyers
+flagged after it was booked, and records that close as `held_no_ask` so the
+owner's page can count how often the rule fired.
 
 ## Local development
 

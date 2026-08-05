@@ -209,3 +209,94 @@ for (const key of VIEW_KEYS) {
     );
   });
 }
+
+// ---------------------------------------------------------------- check 4
+
+/**
+ * Views that are NOT the whole of a section.
+ *
+ * Reports is one rail entry and two pages: `/reports` is the CSR's shift and
+ * `/reports/ceo` is what the shifts produced. The loop above walks SECTIONS,
+ * so the second file is invisible to it — and a view nothing checks is a view
+ * that drifts. Same three questions, asked by hand.
+ */
+const EXTRA_VIEWS = [
+  { view: 'reports-ceo', loader: 'reportsCeo', at: '/reports/ceo' },
+];
+
+for (const extra of EXTRA_VIEWS) {
+  test(`views/${extra.view}.js is wired at ${extra.at} and handed every key it reads`, async () => {
+    assert.ok(resolves('GET', extra.at), `${extra.at} has no GET route — views/${extra.view}.js is unreachable`);
+
+    const wanted = keysReadBy(extra.view);
+    const supplied = new Set(await keysSuppliedBy(extra.loader));
+    const absent = wanted.filter((k) => !supplied.has(k));
+    assert.deepEqual(
+      absent,
+      [],
+      `views/${extra.view}.js reads ctx.data.${absent.join(', ctx.data.')} — loaders.${extra.loader} ` +
+        `never sets ${absent.length === 1 ? 'it' : 'them'}. Supplied: ${[...supplied].sort().join(', ')}`
+    );
+
+    const source = viewSource(extra.view);
+    for (const target of literalTargets(source, 'href')) {
+      assert.ok(resolves('GET', target), `views/${extra.view}.js -> GET ${target} is a dead link`);
+    }
+    for (const target of literalTargets(source, 'action')) {
+      assert.ok(
+        resolves('POST', target) || resolves('GET', target),
+        `views/${extra.view}.js -> ${target} has no handler`
+      );
+    }
+  });
+}
+
+// ---------------------------------------------------------------- check 5
+
+/**
+ * The two spellings of the thirteen reminder logics.
+ *
+ * `lib/reminders.js` names the stage that books a follow-up `order_assign`;
+ * `views/reports.js`, ported from the shift logger on a different day, calls
+ * the same stage `new_order`. The stored value is the engine's, so every read
+ * for the CSR page translates through `RULE_KEY_TO_VIEW` in server.js.
+ *
+ * Nothing about that drift is visible at runtime. An unmapped key does not
+ * throw — the view falls through to its ORPHAN rule and renders a card with
+ * the wrong title and no working buttons, on a page that otherwise looks
+ * completely normal, and the CSR taps a button that resolves nothing. So the
+ * map is checked here, in both directions, and a rename on either side fails
+ * the suite instead of shipping.
+ */
+test('every reminder rule maps between the engine and the CSR view, both ways', async () => {
+  const { RULE_KEY_TO_VIEW } = await import('../server.js');
+  const { RULE_KEYS } = await import('../lib/reminders.js');
+  const { RULES: VIEW_RULES } = await import('../views/reports.js');
+
+  const unmapped = RULE_KEYS.filter((k) => !RULE_KEY_TO_VIEW[k]);
+  assert.deepEqual(
+    unmapped,
+    [],
+    `lib/reminders.js rule${unmapped.length === 1 ? '' : 's'} ${unmapped.join(', ')} ` +
+      'have no entry in RULE_KEY_TO_VIEW — a reminder booked by them renders on the CSR page as an ' +
+      'uninterpretable card with buttons that do nothing'
+  );
+
+  const viewKeys = Object.keys(VIEW_RULES);
+  const dangling = Object.entries(RULE_KEY_TO_VIEW)
+    .filter(([, v]) => !viewKeys.includes(v))
+    .map(([k, v]) => `${k} -> ${v}`);
+  assert.deepEqual(
+    dangling,
+    [],
+    `RULE_KEY_TO_VIEW points at rule keys views/reports.js does not define: ${dangling.join(', ')}`
+  );
+
+  const unreachable = viewKeys.filter((v) => !Object.values(RULE_KEY_TO_VIEW).includes(v));
+  assert.deepEqual(
+    unreachable,
+    [],
+    `views/reports.js defines rule${unreachable.length === 1 ? '' : 's'} ${unreachable.join(', ')} ` +
+      'that nothing can ever book — no engine rule maps to them'
+  );
+});

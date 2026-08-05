@@ -447,10 +447,20 @@ export const SECTIONS = Object.freeze([
   { key: 'money', href: '/money', label: 'Money', group: 'People & money',
     question: 'Revenue, money sitting still, upsell pipeline',
     icon: '<path d="M9 2.5v13"/><path d="M12.5 5.4C11.7 4.4 10.5 4 9 4 6.9 4 5.6 4.9 5.6 6.3c0 3.2 7 1.6 7 5 0 1.5-1.4 2.5-3.6 2.5-1.7 0-3-.5-3.8-1.6"/>' },
+  { key: 'reports', href: '/reports', label: 'Reports', group: 'People & money',
+    question: 'Who is on shift, what they logged, and what is still owed a follow-up',
+    icon: '<path d="M3.5 15.5V8.5M7.2 15.5V4.5M10.8 15.5v-5M14.5 15.5v-9"/><path d="M2.5 15.5h13"/>' },
 ]);
 
+// The keycap is PRINTED on every rail link, so every keycap has to work. The
+// handler in SHELL_JS reads ONE character, which leaves exactly ten usable
+// keys — so the tenth section is '0', not '10'. A two-character keycap renders
+// perfectly and does nothing: an affordance advertising a shortcut the page
+// does not have, which is worse than printing no keycap at all.
+const KEYCAPS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
 export const SECTION_BY_KEY = Object.freeze(
-  Object.fromEntries(SECTIONS.map((s, i) => [s.key, { ...s, keycap: String(i + 1) }]))
+  Object.fromEntries(SECTIONS.map((s, i) => [s.key, { ...s, keycap: KEYCAPS[i] || '' }]))
 );
 
 // ============================================================================
@@ -492,12 +502,12 @@ const SHELL_JS = `
     } catch (e) {}
   });
 
-  // --- 1-9 section shortcuts: the keycap is printed, so it must work ---
+  // --- 1-9 and 0 section shortcuts: the keycap is printed, so it must work ---
   document.addEventListener('keydown', function(e){
     if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
     var t = e.target;
     if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
-    if (e.key.length !== 1 || e.key < '1' || e.key > '9') return;
+    if (e.key.length !== 1 || e.key < '0' || e.key > '9') return;
     var link = document.querySelector('.nav-link[data-key="' + e.key + '"]');
     if (link && link.getAttribute('href')) { e.preventDefault(); location.href = link.getAttribute('href'); }
   });

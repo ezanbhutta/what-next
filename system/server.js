@@ -39,6 +39,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 
 import {
   tryQuery,
@@ -81,6 +82,29 @@ import {
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
 
+// The thirteen reminder logics, as code. server.js does not decide when a
+// follow-up is owed — it asks this module and writes down the answer inside
+// the same transaction as the entry that caused it.
+import {
+  RULES as REMINDER_RULES,
+  ACTIVITY_KIND_KEYS,
+  ORDER_TYPES,
+  ORDER_ROUTES,
+  FOLLOWUP_ATTEMPTS,
+  SNOOZE_MINUTES,
+  AUTO_CLEARED,
+  ReminderError,
+  rulesFor,
+  autoClears,
+  resolve as resolveReminder,
+  buttonsFor,
+  buyerKey,
+  parseRemindIn,
+  parseAt,
+  toSqlUtc,
+  ratingAverage,
+} from './lib/reminders.js';
+
 import {
   layout,
   errorPage,
@@ -108,6 +132,26 @@ export const app = express();
 // One hop, not `true`. With `true` any client can spoof X-Forwarded-For, every
 // login attempt looks like a different address, and the rate limiter is off
 // with nothing on screen to say so.
+// Compress before anything writes a body.
+//
+// Measured without it: / was 56 KB, /clients 53 KB, /money 57 KB and
+// /inquiries 340 KB — all sent uncompressed even when the browser asked for
+// gzip. Server render time was 12-71ms, so none of the slowness was compute;
+// it was payload, over a phone connection. Server-rendered HTML is extremely
+// repetitive markup and compresses about 8:1, so this is the single biggest
+// thing available and it costs one line.
+//
+// It must be mounted BEFORE express.static and before the routes, because
+// compression works by wrapping res.write/res.end — middleware registered
+// after a response has already been written cannot compress it.
+app.use(compression({
+  threshold: 1024,          // below this the gzip header costs more than it saves
+  // Honour an explicit opt-out. Nothing does this today, but a future
+  // streaming or server-sent-events route would need it and would otherwise
+  // buffer invisibly.
+  filter: (req, res) => (res.getHeader('x-no-compression') ? false : compression.filter(req, res)),
+}));
+
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.set('etag', 'strong');
@@ -210,6 +254,19 @@ const FLASH_OK = {
   decision: 'Decision recorded.',
   upsell: 'Upsell row updated.',
   access: 'Section access updated.',
+
+  // Reports. Each names what was written, because "Saved." over a form that
+  // books follow-ups does not say whether any were booked.
+  shift_open: 'Your shift is open. Anything you log now belongs to this profile.',
+  logged_activity: 'Entry saved, and every reminder it books was booked with it.',
+  removed_activity: 'Entry removed, along with the reminders nobody had answered yet.',
+  reminder_done: 'Reminder closed.',
+  reminder_held: 'Closed without asking. No review request was sent — the order is late or disputed.',
+  reminder_already: 'Somebody else had already closed that one. Nothing changed.',
+  reminder_undone: 'Put back. If that tap had advanced a chain, the stage it booked went with it.',
+  handoff_read: 'Marked read. The shift that wrote it can see it landed.',
+  shift_saved: 'Handover note saved. Your shift is still open.',
+  shift_closed: 'Shift closed. Its reminders stay on the profile for whoever is next.',
 };
 
 const FLASH_ERR = {
@@ -217,6 +274,11 @@ const FLASH_ERR = {
   buyer: 'That buyer username was empty or not recognised.',
   notfound: 'That record no longer exists.',
   db: 'The typed-records database could not be written to. Nothing was saved.',
+  noshift: 'You have no shift open, so there is nothing to log against. Nothing was written.',
+  reminder:
+    'That entry would have booked a reminder the rules could not build — most often a custom reminder ' +
+    'with no date and time on it. The entry was NOT saved, because an entry that books nothing is the ' +
+    'failure this section exists to prevent.',
 };
 
 function themeOf(req) {
@@ -469,6 +531,32 @@ function gate(sectionKey) {
   });
 }
 
+/**
+ * A floor in code, on top of whatever `section_access` says.
+ *
+ * `gate()` alone cannot express "this page inside an open section is manager
+ * only", because a section with no row is open and a row is a thing a person
+ * has to remember to insert. This raises the bar and never lowers it: if the
+ * section is already locked higher, the higher one still applies.
+ *
+ * It renders the same locked page as `gate()` so a person who cannot open it
+ * is told the same way, by the same page, with the same reason.
+ */
+function atLeast(minRole, sectionKey) {
+  return (req, res, next) => {
+    const rank = ROLE_RANK[req.user?.role || 'csr'] ?? 0;
+    if (rank >= (ROLE_RANK[minRole] ?? 0)) return next();
+    return renderLocked(req, res, sectionKey, {
+      min_role: minRole,
+      locked_by: 'the hub itself',
+      locked_at: null,
+      reason:
+        'This page reports on named people — how many entries each logged and how much they left open. ' +
+        'It is restricted in code rather than by a setting, so there is no row anybody can forget to add.',
+    }, req.access);
+  };
+}
+
 function renderLocked(req, res, sectionKey, rule, access) {
   const ctx = buildCtx(req, res, sectionKey, { access, headline: 'This section is restricted' });
   const label = SECTION_BY_KEY[sectionKey]?.label || sectionKey;
@@ -512,9 +600,9 @@ function renderLocked(req, res, sectionKey, rule, access) {
 
 const viewCache = new Map();
 
-async function loadView(key) {
+async function loadView(key, sectionKey = key) {
   if (viewCache.has(key)) return viewCache.get(key);
-  if (!SECTION_BY_KEY[key]) throw new Error(`No such section: ${key}`);
+  if (!SECTION_BY_KEY[sectionKey]) throw new Error(`No such section: ${sectionKey}`);
 
   let mod = null;
   try {
@@ -546,16 +634,24 @@ function notBuiltYet(key) {
   };
 }
 
-/** GET one section: gate, load its material, hand it to the view. */
-function page(key, loader) {
+/**
+ * GET one section: gate, load its material, hand it to the view.
+ *
+ * `view` names a module other than the section's own — Reports has two halves
+ * that share one rail entry, one lock and one set of tables, and they are two
+ * files because "log my shift" and "read what the shifts produced" are two
+ * pages, not two modes of one. The section key still decides the chrome, so
+ * both halves highlight Reports in the rail and answer its question.
+ */
+function page(key, loader, { view = key } = {}) {
   return wrap(async (req, res) => {
     const ctx = buildCtx(req, res, key, { access: req.access });
     const q = makeQ(ctx);
     if (loader) ctx.data = (await loader(ctx, q, req)) || {};
     noteDbOutage(ctx);
 
-    const view = await loadView(key);
-    const result = view.render ? await view.render(ctx) : notBuiltYet(key);
+    const mod = await loadView(view, key);
+    const result = mod.render ? await mod.render(ctx) : notBuiltYet(key);
     res.send(layout(ctx, result));
   });
 }
@@ -746,7 +842,443 @@ export const loaders = {
       ),
     };
   },
+
+  // ---- Reports: the CSR half -----------------------------------------------
+  //
+  // One shift, from the inside. Everything is scoped to the profile the signed-
+  // in person has open, because a reminder belongs to the profile and popping
+  // another profile's queue at somebody is how two CSRs both answer the same
+  // buyer.
+  //
+  // Every SELECT here aliases into the names views/reports.js reads. That is
+  // deliberate and it is the seam: the view was written against the shift
+  // logger's vocabulary and the tables use the hub's, and one place has to own
+  // the translation. This is that place — see REPORT_COLS / REMINDER_COLS.
+  async reports(ctx, q, req) {
+    const now = new Date();
+    const date = pktToday(now);
+    const profiles = profilesFromEngine();
+    const designers = designersFromEngine();
+    const shiftNow = pktShiftNow(now);
+
+    const person = ctx.user?.name || null;
+
+    // EVERY KEY, ON EVERY PATH. The early returns below are the branches where
+    // there is nothing to load — no shift open, or the shift table unreadable —
+    // and it would be natural to return only what they filled in. That is the
+    // bug tests/wiring.test.js was written for: a view handed nothing takes the
+    // branch written for "there is nothing here yet" and renders a calm,
+    // correct-looking page missing half of itself, at HTTP 200, with no error
+    // anywhere. So the shape is fixed and only the contents vary.
+    //
+    // The two fillers are NOT interchangeable. `EMPTY` says "there is no shift,
+    // so there is no queue belonging to one" — a fact. A failed `q` result says
+    // "we could not ask" — and the view prints those differently, on purpose.
+    const EMPTY = { ok: true, rows: [], notice: null };
+    const base = {
+      date,
+      now,
+      profiles,
+      designers,
+      shiftNow,
+      report: EMPTY,
+      due: EMPTY,
+      waiting: EMPTY,
+      handled: EMPTY,
+      activities: EMPTY,
+      handoff: EMPTY,
+      flagged: null,
+    };
+
+    if (!person) {
+      // Cannot happen behind requireAuth. A loader that assumed it could not
+      // would hand back whoever's shift happened to be open first.
+      return base;
+    }
+
+    const report = await q(
+      `SELECT ${REPORT_COLS} FROM shift_report WHERE person = ? AND status = 'open' ORDER BY opened_at DESC LIMIT 1`,
+      [person]
+    );
+    const open = report.ok && report.rows.length ? report.rows[0] : null;
+    if (!open) {
+      // Unreadable propagates to every derived list; genuinely-no-shift does
+      // not. The view renders the first as MISSING and the second as the
+      // open-a-shift page, and conflating them is how an outage becomes an
+      // all-clear.
+      const derived = report.ok ? EMPTY : report;
+      return {
+        ...base,
+        report,
+        due: derived,
+        waiting: derived,
+        handled: derived,
+        activities: derived,
+        handoff: derived,
+        flagged: report.ok ? new Map() : null,
+      };
+    }
+
+    const [queue, activities, handled, handoff] = await Promise.all([
+      // The whole open queue for this profile, due or not. The view splits it —
+      // it needs the scheduled ones to say "nothing else until 4:35pm", and a
+      // count of what is waiting is not the same claim as a list of what is due.
+      q(
+        `SELECT ${REMINDER_COLS} FROM reminder
+          WHERE profile = ? AND state <> 'resolved'
+          ORDER BY alert DESC, due_at ASC`,
+        [open.profile]
+      ),
+      q(
+        `SELECT ${ACTIVITY_COLS} FROM activity WHERE report_id = ? ORDER BY at DESC`,
+        [open.id]
+      ),
+      // Handled ON THIS SHIFT, so the undo list is this person's own taps and
+      // not a stranger's from four hours ago.
+      q(
+        `SELECT ${REMINDER_COLS} FROM reminder
+          WHERE profile = ? AND state = 'resolved' AND resolved_at >= ?
+          ORDER BY resolved_at DESC LIMIT 40`,
+        [open.profile, open.started_at]
+      ),
+      // The most recent unread note aimed at this shift, on this profile, from
+      // somebody else's shift. `shift_handoff_read` is keyed per shift, so a
+      // note aimed at two shifts stays unread for the one that has not read it.
+      q(
+        `SELECT r.id, r.person AS csr_name, r.closed_at AS finished_at, r.handoff_note
+           FROM shift_report r
+           LEFT JOIN shift_handoff_read hr ON hr.report_id = r.id AND hr.shift = ?
+          WHERE r.profile = ? AND r.id <> ? AND r.handoff_note IS NOT NULL AND r.handoff_note <> ''
+            AND hr.report_id IS NULL
+            AND (r.note_shifts IS NULL OR JSON_CONTAINS(r.note_shifts, JSON_QUOTE(?)))
+          ORDER BY r.closed_at DESC, r.id DESC LIMIT 1`,
+        [open.shift, open.profile, open.id, open.shift]
+      ),
+    ]);
+
+    const nowMs = now.getTime();
+    const rows = queue.ok ? queue.rows.map(inViewVocabulary) : [];
+    const due = queue.ok
+      ? { ok: true, rows: rows.filter((r) => isDueRow(r, nowMs)), notice: null }
+      : queue;
+    const waiting = queue.ok
+      ? { ok: true, rows: rows.filter((r) => !isDueRow(r, nowMs)), notice: null }
+      : queue;
+
+    return {
+      date,
+      now,
+      profiles,
+      designers,
+      shiftNow,
+      report,
+      due,
+      waiting,
+      handled: mapRows(handled, inViewVocabulary),
+      activities: mapRows(activities, summarised),
+      handoff,
+      flagged: await flaggedBuyers(q, open.profile),
+    };
+  },
+
+  // ---- Reports: the owner half ---------------------------------------------
+  //
+  // A window of days, not a live feed. The view buckets everything into
+  // Pakistan calendar days itself — see its header for why that cannot be done
+  // in SQL — so this loader's only job is to hand it the right rows and the
+  // window they belong to.
+  async reportsCeo(ctx, q, req) {
+    const now = new Date();
+    const today = pktToday(now);
+    const date = isoDateParam(req?.query?.date) || today;
+    const days = REPORT_WINDOWS.has(String(req?.query?.days)) ? Number(req.query.days) : 1;
+    const from = shiftIsoDay(date, -(days - 1));
+    const profile = str(req?.query?.profile, 80);
+
+    // PKT is UTC+5 all year — no daylight saving — so a day's bounds are an
+    // exact offset and never need a time zone table on the database server.
+    const startUtc = new Date(`${from}T00:00:00+05:00`);
+    const endUtc = new Date(`${shiftIsoDay(date, 1)}T00:00:00+05:00`);
+
+    const scope = profile ? ' AND profile = ?' : '';
+    const scoped = (params) => (profile ? [...params, profile] : params);
+
+    const [shifts, activities, reminders, standing] = await Promise.all([
+      q(
+        `SELECT ${REPORT_COLS} FROM shift_report
+          WHERE opened_at >= ? AND opened_at < ?${scope}
+          ORDER BY opened_at ASC`,
+        scoped([startUtc, endUtc])
+      ),
+      q(
+        `SELECT a.id, a.report_id, a.kind AS type, a.client, a.order_ref AS project,
+                a.at AS created_at, a.author
+           FROM activity a
+           JOIN shift_report r ON r.id = a.report_id
+          WHERE a.at >= ? AND a.at < ?${profile ? ' AND r.profile = ?' : ''}
+          ORDER BY a.at ASC`,
+        scoped([startUtc, endUtc])
+      ),
+      // Counted against the window they were BOOKED in, so a shift's row
+      // answers "what did this shift set in motion" rather than "what happened
+      // to fall due while they were on".
+      q(
+        `SELECT ${REMINDER_COLS} FROM reminder
+          WHERE created_at >= ? AND created_at < ?${scope}
+          ORDER BY created_at ASC`,
+        scoped([startUtc, endUtc])
+      ),
+      // Deliberately NOT scoped to the window. What is owed right now is owed
+      // regardless of which date filter is on screen.
+      q(
+        `SELECT ${REMINDER_COLS} FROM reminder
+          WHERE state <> 'resolved' AND due_at <= UTC_TIMESTAMP()${scope}
+          ORDER BY due_at ASC LIMIT 200`,
+        scoped([])
+      ),
+    ]);
+
+    return {
+      date,
+      from,
+      days,
+      profile,
+      profiles: profilesFromEngine(),
+      now,
+      shifts,
+      activities,
+      reminders,
+      standing,
+    };
+  },
 };
+
+// ============================================================================
+// 5b. REPORTS — the shared vocabulary
+// ============================================================================
+//
+// THE ONE PLACE THE TWO NAMES MEET.
+//
+// views/reports.js was ported from the shift logger and reads its column
+// names; db/schema.sql uses the hub's. Rather than let each query invent its
+// own aliases — which is how half a section ends up rendering blank while the
+// other half works — every read of these three tables goes through the column
+// lists below, and every rule key goes through RULE_KEY_TO_VIEW.
+//
+// tests/wiring.test.js asserts the rule map is total in both directions. A
+// stage renamed on either side fails the suite instead of rendering as
+// "Unknown reminder", which is what a bare lookup would have produced: a card
+// with buttons that do nothing, on a page that looks fine.
+
+const REPORT_COLS = [
+  'id',
+  'person AS csr_name',
+  'profile',
+  'shift',
+  'opened_at AS started_at',
+  'closed_at',
+  'status',
+  'handoff_note',
+  'note_shifts',
+  'checklist',
+].join(', ');
+
+const ACTIVITY_COLS = [
+  'id',
+  'report_id',
+  'kind AS type',
+  'client',
+  'order_ref AS project',
+  'at AS created_at',
+  'author',
+  'detail',
+].join(', ');
+
+const REMINDER_COLS = [
+  'id',
+  'report_id',
+  'activity_id',
+  '`rule` AS rule_no',
+  'rule_key',
+  'profile',
+  'client',
+  'client_key',
+  'order_ref AS project',
+  'due_at',
+  'heading',
+  'body AS note',
+  'alert',
+  'state',
+  'resolution',
+  'snoozed_until',
+  'resolved_by',
+  'resolved_at',
+  'booked_by AS created_by',
+  'created_at',
+].join(', ');
+
+/** The stage keys, as `lib/reminders.js` spells them → as views/reports.js
+ *  spells them. Same sixteen stages of the same thirteen logics; two
+ *  vocabularies, because the two files were written from the same spec on
+ *  different days. The engine's spelling is the one stored. */
+export const RULE_KEY_TO_VIEW = Object.freeze({
+  inquiry_followup: 'inquiry',
+  lead_followup_next: 'lead_followup',
+  order_assign: 'new_order',
+  order_upsell: 'new_order_upsell',
+  completed_public_review: 'order_completed',
+  review_private_ask: 'review_received',
+  files_upsell: 'files_assigned',
+  revision_check: 'revision_assigned',
+  offer_fu1: 'offer',
+  offer_fu2: 'offer_fu2',
+  offer_fu3: 'offer_fu3',
+  delivery_followup: 'project_delivered',
+  shared_followup: 'shared',
+  frustrated_alert: 'frustrated',
+  disputed_alert: 'disputed',
+  custom: 'custom_reminder',
+});
+
+const REPORT_WINDOWS = new Set(['1', '7', '30']);
+
+/** Map a q() result's rows without losing the ok/rows:null distinction. A
+ *  `.map()` straight onto `rows` would throw on an outage, and a `|| []`
+ *  guard would turn the outage into an empty list — the one substitution this
+ *  whole seam exists to prevent. */
+function mapRows(result, fn) {
+  if (!result || !result.ok) return result;
+  return { ok: true, rows: (result.rows || []).map(fn), notice: null };
+}
+
+/** A stored reminder → the shape views/reports.js reads. The only thing that
+ *  changes is the rule key's spelling; nothing about the reminder itself. */
+function inViewVocabulary(row) {
+  const viewKey = RULE_KEY_TO_VIEW[String(row.rule_key)];
+  // An unmapped key is a bug, not a data condition, and it is left visible
+  // rather than silently blanked: the view falls back to its ORPHAN rule,
+  // which says the reminder cannot be interpreted instead of pretending it
+  // has no buttons. The wiring test fails long before this can ship.
+  return { ...row, rule: viewKey || String(row.rule_key) };
+}
+
+/** One line of what the CSR typed, for the shift timeline. Reads the entry's
+ *  own detail rather than re-deriving anything: this is a display of what was
+ *  saved, and a summary that computes is a second number that can disagree. */
+function summarised(row) {
+  const detail = row.detail && typeof row.detail === 'object' ? row.detail : {};
+  const bits = [];
+  for (const [key, value] of Object.entries(detail)) {
+    if (key === 'client' || key === 'project' || value === null || value === '') continue;
+    const text = Array.isArray(value) ? value.filter(Boolean).join(', ') : String(value);
+    if (text.trim()) bits.push(text.trim());
+    if (bits.length === 3) break;
+  }
+  return { ...row, summary: bits.join(' · ') || null };
+}
+
+/** Pakistan is UTC+5 with no daylight saving, so a calendar day there is an
+ *  exact offset from UTC and needs no time zone tables anywhere. */
+const PKT_OFFSET_MS = 5 * 60 * 60 * 1000;
+
+function pktToday(now = new Date()) {
+  return new Date(now.getTime() + PKT_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+function pktHour(now = new Date()) {
+  return new Date(now.getTime() + PKT_OFFSET_MS).getUTCHours();
+}
+
+/** Which shift the clock says it is. The view pre-selects it and says so; it
+ *  is never used to decide which shift a row belongs to after the fact. */
+function pktShiftNow(now = new Date()) {
+  const h = pktHour(now);
+  if (h >= 9 && h < 17) return 'Morning';
+  if (h >= 17 || h < 1) return 'Evening';
+  return 'Night';
+}
+
+function shiftIsoDay(iso, delta) {
+  const [y, m, d] = String(iso).split('-').map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return iso;
+  return new Date(Date.UTC(y, m - 1, d) + delta * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Due means: open, past its due time, and not snoozed into the future. Kept
+ *  here rather than in SQL so "due" has one definition shared with
+ *  reminders.isDue() and cannot drift between the page and the ledger. */
+function isDueRow(row, nowMs) {
+  if (!row || row.state === 'resolved') return false;
+  const due = parseAt(row.due_at);
+  if (due === null || due > nowMs) return false;
+  const snoozed = parseAt(row.snoozed_until);
+  return !(snoozed !== null && snoozed > nowMs);
+}
+
+/** Designer names the engine has actually seen on an order. A datalist, not a
+ *  validated list — a new designer must be typeable on their first day. */
+function designersFromEngine() {
+  const orders = engineOrders();
+  if (isMissing(orders)) return [];
+  const names = new Set();
+  for (const o of orders) {
+    for (const key of ['logo_designer', 'branding_designer', 'designer']) {
+      const v = o?.[key];
+      if (v && String(v).trim()) names.add(String(v).trim());
+    }
+  }
+  return [...names].sort();
+}
+
+/**
+ * Buyers a review ask must never be sent to — HOUSE RULE 5.
+ *
+ * Two sources, because there are two ways to be unsafe to ask:
+ *   · the engine's stale-order set — an order open past the stale threshold
+ *   · a frustrated or disputed caution still standing on this profile
+ *
+ * Returns `null` — meaning UNKNOWN, hold everything — if either source cannot
+ * be read. That is the deliberate asymmetry: an ask the hub cannot prove is
+ * safe is exactly the ask the rule was written about, and "we could not check"
+ * must never render the same as "we checked and it is fine".
+ */
+async function flaggedBuyers(q, profile) {
+  const alerts = await q(
+    `SELECT client, rule_key, created_at FROM reminder
+      WHERE profile = ? AND alert = 1 AND state <> 'resolved'`,
+    [profile]
+  );
+  if (!alerts.ok) return null;
+
+  const stale = pick(engineRun(), 'recovery.open_orders.orders');
+  if (isMissing(stale) || !Array.isArray(stale)) return null;
+
+  const out = new Map();
+  for (const o of stale) {
+    if (!o?.stale) continue;
+    const key = normaliseBuyer(o.client);
+    if (!key) continue;
+    out.set(key, {
+      reason: 'stale',
+      since: o.order_date || null,
+      age_days: o.age_days ?? null,
+      amount: o.amount ?? null,
+    });
+  }
+  // A live caution outranks a stale order: it is the more specific fact and it
+  // is the one a CSR can act on today.
+  for (const a of alerts.rows) {
+    const key = normaliseBuyer(a.client);
+    if (!key) continue;
+    out.set(key, {
+      reason: a.rule_key === 'disputed_alert' ? 'disputed' : 'frustrated',
+      since: a.created_at || null,
+      age_days: null,
+      amount: null,
+    });
+  }
+  return out;
+}
 
 /** Profile names, taken from the engine's own flow rows — never a hand-kept
  *  second list of profiles that can drift from the data. */
@@ -789,6 +1321,29 @@ app.get('/clients/:buyer', requireAuth, gate('clients'), (req, res, next) => {
 // says that name was not recognised, which tells whoever followed the bad link
 // what was wrong with it instead of silently returning them to the list.
 app.get('/messages/:buyer', requireAuth, gate('messages'), page('messages', loaders.message));
+
+// ---- Reports: two halves of one section ------------------------------------
+//
+// /reports      the CSR's own shift. Whoever can open the section can open it.
+// /reports/ceo  what the shifts produced. Manager and owner only.
+//
+// The owner half is gated TWICE and the order matters. `gate('reports')` reads
+// the section lock the owner sets from inside the hub, and `atLeast('manager')`
+// is the floor this page carries in code. The floor can only be raised: lock
+// Reports to owner and the CEO half follows it up, never down.
+//
+// It is a code floor rather than a `section_access` row on purpose. A section
+// absent from that table is OPEN — which is the right default for a section
+// and exactly the wrong one here, because forgetting to insert one row would
+// publish every CSR's per-person figures to every CSR, silently, with the page
+// looking completely normal.
+app.get(
+  '/reports/ceo',
+  requireAuth,
+  gate('reports'),
+  atLeast('manager', 'reports'),
+  page('reports', loaders.reportsCeo, { view: 'reports-ceo' })
+);
 
 // ============================================================================
 // 7. WRITES
@@ -1264,6 +1819,504 @@ app.post(
     done(req, res, '/team', 'access');
   })
 );
+
+// ---- Reports: the shift, what was logged, and what that booked -------------
+//
+// THE ONE INVARIANT THIS WHOLE SECTION EXISTS FOR:
+//
+//   An activity is written in the SAME TRANSACTION as the reminders it books.
+//
+// Not "shortly after", not "in an afterwards hook". If the reminder inserts
+// fail, the entry rolls back with them. An entry that saved and booked nothing
+// is the exact failure the shift logger was built to prevent — a follow-up
+// nobody ever hears about again — and it is invisible from the outside: the
+// CSR sees "saved", the timeline shows the entry, and the buyer is simply
+// never contacted. Half-written is worse than not written, because not written
+// is something a person notices.
+//
+// `lib/reminders.js` decides WHAT is owed. This code only writes it down.
+
+const REPORT_BACK = '/reports';
+
+/** Must match the ENUM in db/schema.sql and SHIFTS in views/reports.js. */
+const SHIFT_NAMES = ['Morning', 'Evening', 'Night'];
+
+/**
+ * Was this a rule refusing to book, rather than the database failing?
+ *
+ * `transaction()` wraps whatever is thrown inside it in a DbError and keeps
+ * the original on `.cause`, so a bare `instanceof` check here would classify
+ * "your custom reminder has no time on it" as a database outage — and tell the
+ * CSR nothing was saved because the store is down, which is both untrue and
+ * unfixable from their end. Walk the chain.
+ */
+function reminderFault(err) {
+  for (let e = err, hops = 0; e && hops < 5; e = e.cause, hops += 1) {
+    if (e instanceof ReminderError) return e;
+  }
+  return null;
+}
+
+/** Fields the form uses for plumbing rather than content. */
+const NOT_DETAIL = new Set(['_csrf', 'back', 'report_id', 'type', 'activity_id', 'reminder_id', 'button', 'intent']);
+
+/** The typed fields of an activity form → the `detail` JSON.
+ *  Blank stays out entirely: an absent key is "not recorded", and writing ''
+ *  would make `detail.remind_in` exist-and-be-empty, which parses to a default
+ *  rather than to the rule's stated 24 hours. */
+function detailFrom(body) {
+  const out = {};
+  for (const [key, value] of Object.entries(body || {})) {
+    if (NOT_DETAIL.has(key)) continue;
+    if (Array.isArray(value)) {
+      const list = value.map((v) => str(v, 200)).filter(Boolean);
+      if (list.length) out[key] = list;
+      continue;
+    }
+    const v = str(value, 2000);
+    if (v !== null) out[key] = v;
+  }
+  return out;
+}
+
+/** Read a reminder for update, inside the transaction, with its row locked.
+ *  `FOR UPDATE` matters: two CSRs on the same profile can tap the same card in
+ *  the same second, and without the lock both reads see it pending and both
+ *  write a resolution — the second silently overwriting the first's button. */
+async function lockReminder(t, id) {
+  return t.queryOne('SELECT * FROM reminder WHERE id = ? FOR UPDATE', [id]);
+}
+
+/** Write one drafted reminder. The draft comes from lib/reminders.js and its
+ *  keys are the column names on purpose — one shape, no per-call mapping. */
+async function insertReminder(t, draft) {
+  return t.run(
+    'INSERT INTO reminder (report_id, activity_id, `rule`, rule_key, chain_step, profile, client, client_key, ' +
+      'order_ref, due_at, heading, body, alert, state, resolution, snoozed_until, resolved_by, resolved_at, booked_by) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [
+      draft.report_id, draft.activity_id, draft.rule, draft.rule_key, draft.chain_step,
+      draft.profile, draft.client, draft.client_key, draft.order_ref, draft.due_at,
+      draft.heading, draft.body, draft.alert, draft.state, draft.resolution,
+      draft.snoozed_until, draft.resolved_by, draft.resolved_at, draft.booked_by,
+    ]
+  );
+}
+
+/** Write a state transition back. Never touches `heading`/`body`: resolving a
+ *  reminder does not change what it asked for, and a ledger that rewrites its
+ *  own history cannot settle an argument later. */
+async function saveReminderState(t, next) {
+  return t.run(
+    'UPDATE reminder SET state = ?, resolution = ?, snoozed_until = ?, resolved_by = ?, resolved_at = ? WHERE id = ?',
+    [next.state, next.resolution, next.snoozed_until, next.resolved_by, next.resolved_at, next.id]
+  );
+}
+
+/** The shift the signed-in person has open, or null. Every write below is
+ *  scoped through this: a report_id from a form is a number a browser sent,
+ *  and it is never trusted to name somebody else's shift. */
+async function openShiftOf(t, person, reportId = null) {
+  const row = await t.queryOne(
+    "SELECT * FROM shift_report WHERE person = ? AND status = 'open' ORDER BY opened_at DESC LIMIT 1",
+    [person]
+  );
+  if (!row) return null;
+  if (reportId !== null && String(row.id) !== String(reportId)) return null;
+  return row;
+}
+
+// ---- open a shift ----------------------------------------------------------
+
+app.post(
+  '/reports/open',
+  ...write('reports', REPORT_BACK, async (req) => {
+    // The name is NOT a form field. It is whoever is signed in, which is why
+    // this section needs no roster and why an entry can never be filed under a
+    // mistyped name.
+    const person = str(req.user?.name, 80);
+    const profile = str(req.body.profile, 80);
+    const shift = oneOf(req.body.shift, SHIFT_NAMES);
+    if (!person || !profile || !shift) return { error: 'invalid' };
+
+    try {
+      await auditedWrite(req, 'shift_open', { profile, shift }, async (t) => {
+        const already = await openShiftOf(t, person);
+        if (already) {
+          // Not an error worth losing their place over — they already have one
+          // open, which is what they were trying to achieve.
+          return;
+        }
+        await t.run('INSERT INTO shift_report (person, profile, shift) VALUES (?, ?, ?)', [
+          person,
+          profile,
+          shift,
+        ]);
+      });
+    } catch (err) {
+      // The unique index on `open_slot` is the real guard against a double
+      // submit racing itself. Catching it here turns a 500 into "you already
+      // have a shift open", which is true and is what they wanted.
+      if (err?.code === 'ER_DUP_ENTRY') return { ok: 'shift_open' };
+      throw err;
+    }
+    return { ok: 'shift_open' };
+  })
+);
+
+// ---- log an activity, and book what it owes --------------------------------
+
+app.post(
+  '/reports/activity',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const kind = oneOf(req.body.type, ACTIVITY_KIND_KEYS);
+    const reportId = intOrNull(req.body.report_id);
+    if (!person || !kind || reportId === null) return { error: 'invalid' };
+
+    const detail = detailFrom(req.body);
+    const client = str(detail.client, 120);
+    const orderRef = str(detail.project, 160);
+
+    // Rule 6 keys on the average of three star scores, and it is computed here
+    // rather than typed so it can never disagree with the scores it comes
+    // from. Rounded to one decimal BEFORE the 4.7 test — 5+5+4 is 4.666…, the
+    // page shows 4.7, and a rule reading the unrounded number would refuse a
+    // review the CSR can see qualifying on screen.
+    if (kind === 'review_received') {
+      const avg = ratingAverage(detail);
+      if (avg !== null) detail.rating = avg;
+    }
+
+    // R4. The retired programme is never named, in a column or anywhere else.
+    // The control offers Organic and Directed; anything else is rejected
+    // rather than stored, because a value stored is a value that will
+    // eventually be rendered.
+    if (detail.order_type && !ORDER_TYPES.includes(String(detail.order_type))) return { error: 'invalid' };
+    if (detail.order_via && !ORDER_ROUTES.includes(String(detail.order_via))) return { error: 'invalid' };
+    if (detail.attempt && !FOLLOWUP_ATTEMPTS.includes(String(detail.attempt))) return { error: 'invalid' };
+
+    try {
+      const outcome = await auditedWrite(req, 'shift_activity', { kind, client, order_ref: orderRef }, async (t) => {
+        const shift = await openShiftOf(t, person, reportId);
+        // Not an exception. A shift closed in another tab is an ordinary thing
+        // that happens, and it deserves a sentence rather than a stack trace.
+        if (!shift) return 'noshift';
+
+        // HOUSE RULE 5, at the point of booking. A completion for a buyer with
+        // a standing caution or a stale order books NO public-review ask at
+        // all — it is a suppression, not a delay. The CSR page holds the ask a
+        // second time for buyers who become flagged after it was booked; both
+        // layers are needed because the two failures happen at different
+        // moments and neither catches the other's.
+        const flags = await reviewFlagsFor(t, shift.profile, client);
+
+        const res = await t.run(
+          'INSERT INTO activity (report_id, kind, client, client_key, order_ref, detail, author) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [
+            shift.id,
+            kind,
+            client,
+            client ? buyerKey(client) : null,
+            orderRef,
+            JSON.stringify(detail),
+            person,
+          ]
+        );
+        const activityId = res?.insertId ?? null;
+
+        const activity = {
+          id: activityId,
+          report_id: shift.id,
+          profile: shift.profile,
+          kind,
+          client,
+          order_ref: orderRef,
+          detail,
+          at: new Date(),
+          author: person,
+        };
+
+        // 1. What this entry books.
+        for (const draft of rulesFor(activity, { flags })) {
+          await insertReminder(t, draft);
+        }
+
+        // 2. What this entry makes pointless. "They converted", "the upsell
+        //    happened", "the review already landed", "they came back with a
+        //    revision" — those clear themselves rather than asking somebody to
+        //    close work they never needed to do.
+        const open = await t.query(
+          "SELECT * FROM reminder WHERE profile = ? AND state <> 'resolved'",
+          [shift.profile]
+        );
+        for (const { reminder } of autoClears(activity, open, { by: person })) {
+          await saveReminderState(t, reminder);
+        }
+        return 'ok';
+      });
+      if (outcome === 'noshift') return { error: 'noshift' };
+    } catch (err) {
+      // A rule that refused to book says why, and the entry rolls back with
+      // it. A custom reminder with no time is the case this catches most: it
+      // is better to reject the form than to book a reminder for a moment the
+      // CSR did not choose and believes they did.
+      if (reminderFault(err)) return { error: 'reminder' };
+      throw err;
+    }
+    return { ok: 'logged_activity' };
+  })
+);
+
+// ---- remove an entry, and the reminders it booked --------------------------
+
+app.post(
+  '/reports/activity/remove',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const activityId = intOrNull(req.body.activity_id);
+    if (!person || activityId === null) return { error: 'invalid' };
+
+    const removed = await auditedWrite(req, 'shift_activity_remove', { activity_id: activityId }, async (t) => {
+      const shift = await openShiftOf(t, person);
+      if (!shift) return false;
+      const row = await t.queryOne('SELECT id, kind FROM activity WHERE id = ? AND report_id = ?', [
+        activityId,
+        shift.id,
+      ]);
+      if (!row) return false;
+
+      // Only the ones NOBODY has answered yet. A reminder somebody already
+      // closed stays closed: removing a mistyped entry must not erase the fact
+      // that a person did the work it asked for. The FK cascade would delete
+      // both, so the ones to keep are detached first.
+      await t.run(
+        "UPDATE reminder SET activity_id = NULL WHERE activity_id = ? AND state = 'resolved'",
+        [activityId]
+      );
+      await t.run('DELETE FROM activity WHERE id = ?', [activityId]);
+      return true;
+    });
+    return removed ? { ok: 'removed_activity' } : { error: 'notfound' };
+  })
+);
+
+// ---- resolve, snooze, or advance a chain -----------------------------------
+
+app.post(
+  '/reports/reminder',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const reminderId = intOrNull(req.body.reminder_id);
+    const button = str(req.body.button, 40);
+    if (!person || reminderId === null || !button) return { error: 'invalid' };
+
+    try {
+      const outcome = await auditedWrite(
+        req,
+        'reminder_resolve',
+        { reminder_id: reminderId, button },
+        async (t) => {
+          const row = await lockReminder(t, reminderId);
+          if (!row) return 'notfound';
+          if (row.state === 'resolved') return 'already';
+
+          // HOUSE RULE 5's own button. `held_no_ask` is not one of the rule's
+          // buttons and never can be — it means "closed WITHOUT asking",
+          // which the spec has no word for because the spec assumes the ask is
+          // always safe to send. It is recorded as its own resolution so the
+          // owner's page can count how often the rule actually fired.
+          if (button === 'held_no_ask') {
+            await saveReminderState(t, {
+              ...row,
+              state: 'resolved',
+              resolution: 'held_no_ask',
+              snoozed_until: null,
+              resolved_by: person,
+              resolved_at: new Date(),
+            });
+            return 'held';
+          }
+
+          const { reminder, booked } = resolveReminder(row, button, { by: person });
+          await saveReminderState(t, reminder);
+          // The next chain stage is written in the SAME transaction as the tap
+          // that earned it, and timed from the tap rather than from the
+          // original offer — rule 9 is explicit about that.
+          if (booked) await insertReminder(t, booked);
+          return 'ok';
+        }
+      );
+      if (outcome === 'notfound') return { error: 'notfound' };
+      if (outcome === 'already') return { ok: 'reminder_already' };
+      if (outcome === 'held') return { ok: 'reminder_held' };
+    } catch (err) {
+      if (reminderFault(err)) return { error: 'reminder' };
+      throw err;
+    }
+    return { ok: 'reminder_done' };
+  })
+);
+
+// ---- take the last tap back ------------------------------------------------
+//
+// The spec asks for five seconds of undo on a toast. A toast needs JavaScript
+// and vanishes with the page, so this keeps the same promise durably: the
+// reminders closed on this shift stay listed with a way back, through a page
+// load, a dropped connection and a locked screen.
+
+app.post(
+  '/reports/reminder/undo',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const reminderId = intOrNull(req.body.reminder_id);
+    if (!person || reminderId === null) return { error: 'invalid' };
+
+    const outcome = await auditedWrite(req, 'reminder_undo', { reminder_id: reminderId }, async (t) => {
+      const row = await lockReminder(t, reminderId);
+      if (!row) return 'notfound';
+      if (row.state !== 'resolved') return 'notresolved';
+
+      // If the tap advanced a chain, the stage it booked goes back with it —
+      // otherwise undoing "1st F/U done" leaves the 2nd follow-up standing,
+      // which is a reminder for work the CSR just said they had not done.
+      const button = (REMINDER_RULES[row.rule_key]?.buttons || []).find((b) => b.key === row.resolution);
+      if (button?.kind === 'chain' && button.next) {
+        await t.run(
+          "DELETE FROM reminder WHERE rule_key = ? AND state <> 'resolved' AND activity_id <=> ? AND profile = ? AND created_at >= ?",
+          [button.next, row.activity_id, row.profile, row.resolved_at]
+        );
+      }
+      await saveReminderState(t, {
+        ...row,
+        state: 'pending',
+        resolution: null,
+        snoozed_until: null,
+        resolved_by: null,
+        resolved_at: null,
+      });
+      return 'ok';
+    });
+    if (outcome === 'notfound') return { error: 'notfound' };
+    if (outcome === 'notresolved') return { error: 'invalid' };
+    return { ok: 'reminder_undone' };
+  })
+);
+
+// ---- mark an incoming handoff note read ------------------------------------
+
+app.post(
+  '/reports/handoff',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const reportId = intOrNull(req.body.report_id);
+    const noteReportId = intOrNull(req.body.note_report_id);
+    if (!person || reportId === null || noteReportId === null) return { error: 'invalid' };
+
+    const marked = await auditedWrite(req, 'handoff_read', { note_report_id: noteReportId }, async (t) => {
+      const shift = await openShiftOf(t, person, reportId);
+      if (!shift) return false;
+      // Keyed by the READER'S shift, not by the reader. A note aimed at two
+      // shifts has to be read by both, and one row per reader would let the
+      // first person to tap it close the note for everybody.
+      await t.run(
+        'INSERT INTO shift_handoff_read (report_id, shift, read_by) VALUES (?, ?, ?) ' +
+          'ON DUPLICATE KEY UPDATE read_by = VALUES(read_by), read_at = CURRENT_TIMESTAMP',
+        [noteReportId, shift.shift, person]
+      );
+      return true;
+    });
+    return marked ? { ok: 'handoff_read' } : { error: 'notfound' };
+  })
+);
+
+// ---- wrap up, and hand over ------------------------------------------------
+
+app.post(
+  '/reports/close',
+  ...write('reports', REPORT_BACK, async (req) => {
+    const person = str(req.user?.name, 80);
+    const reportId = intOrNull(req.body.report_id);
+    const intent = oneOf(req.body.intent, ['save', 'close']) || 'save';
+    if (!person || reportId === null) return { error: 'invalid' };
+
+    const note = str(req.body.handoff_note, 8000);
+    const noteShifts = [].concat(req.body.note_shift || []).filter((s) => SHIFT_NAMES.includes(String(s)));
+    const ticked = new Set([].concat(req.body.check || []).map((v) => String(v)));
+
+    // A BLANK COUNT IS NOT ZERO. `true` means ticked but not counted; a number
+    // means counted. The owner's page prints the first as MISSING, because
+    // "did the portfolio, did not count how many" and "did none" are different
+    // facts and only one of them is a problem.
+    const checklist = {};
+    for (const id of ticked) {
+      const n = intOrNull(req.body[`count_${id}`]);
+      checklist[id] = n === null ? true : n;
+    }
+
+    const closed = await auditedWrite(
+      req,
+      'shift_close',
+      { report_id: reportId, intent, checked: ticked.size, note_chars: note ? note.length : 0 },
+      async (t) => {
+        const shift = await openShiftOf(t, person, reportId);
+        if (!shift) return false;
+        await t.run(
+          'UPDATE shift_report SET handoff_note = ?, note_shifts = ?, checklist = ?, ' +
+            'status = ?, closed_at = ? WHERE id = ?',
+          [
+            note,
+            JSON.stringify(noteShifts),
+            JSON.stringify(checklist),
+            intent === 'close' ? 'closed' : 'open',
+            intent === 'close' ? new Date() : shift.closed_at,
+            shift.id,
+          ]
+        );
+        return true;
+      }
+    );
+    if (!closed) return { error: 'notfound' };
+    return { ok: intent === 'close' ? 'shift_closed' : 'shift_saved' };
+  })
+);
+
+/**
+ * Is this buyer safe to ask for a public review, right now, on this profile?
+ *
+ * Runs INSIDE the booking transaction so the answer cannot be stale: a dispute
+ * logged four seconds ago has to count, and a check made before the
+ * transaction opened would miss it.
+ *
+ * A read that fails does not reach here — it throws, and the whole entry rolls
+ * back — which is the right way round. The alternative is booking a review ask
+ * because the flag query happened to be unavailable, and that is precisely the
+ * ask the rule exists to stop.
+ */
+async function reviewFlagsFor(t, profile, client) {
+  const key = client ? buyerKey(client) : null;
+  if (!key) return {};
+
+  const alerts = await t.query(
+    "SELECT rule_key FROM reminder WHERE profile = ? AND client_key = ? AND alert = 1 AND state <> 'resolved'",
+    [profile, key]
+  );
+  const flags = {
+    frustrated: alerts.some((a) => a.rule_key === 'frustrated_alert'),
+    disputed: alerts.some((a) => a.rule_key === 'disputed_alert'),
+    late: false,
+  };
+
+  const stale = pick(engineRun(), 'recovery.open_orders.orders');
+  if (isMissing(stale) || !Array.isArray(stale)) {
+    // The late list is unreadable. Hold the ask: an ask the hub cannot prove
+    // is safe is the one the rule was written about.
+    flags.late = true;
+    return flags;
+  }
+  flags.late = stale.some((o) => o?.stale && normaliseBuyer(o.client) === normaliseBuyer(client));
+  return flags;
+}
 
 // ============================================================================
 // 8. LOGIN / LOGOUT
