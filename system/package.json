@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "test": "node --test \"lib/*.test.js\"",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js",
     "dev": "node --watch server.js"

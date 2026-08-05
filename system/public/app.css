@@ -1,0 +1,1412 @@
+@charset "UTF-8";
+/* =============================================================================
+   XSTUDIOZ MANAGEMENT HUB — public/app.css
+   The complete design system. This is the ONLY stylesheet in the project.
+
+   Direction: editorial broadsheet. No cards. Three rule weights do the
+   structural work — hairline (--rule), heavy (--rule-2), 3px double.
+   Money and every figure are set in the SERIF with tabular lining figures.
+   Everything else is the grotesk.
+
+   HOUSE RULES THIS FILE ENFORCES OR SUPPORTS
+   ---------------------------------------------------------------------------
+   R2  Never fabricate a number. `.missing` renders MISSING; there is no
+       styling for a zero standing in for an unknown.
+   R3  A rate on a small denominator is a RANGE, never a point. `.range` is the
+       component for that. `.meter` MUST NOT be used when n < 30 — there is a
+       `.meter--suppressed` state for exactly that case.
+   R4  No class, token, comment or generated-content string in this file
+       contains the retired programme's names. The columns are directed_*;
+       the label is "directed". `.directed` is the class.
+   R6  No review-request affordance is styled into `.stale`, `.cold` or any
+       recovery row. Do not add one.
+   R7  Every figure leads. `.figure` comes first in source order; its
+       explanation goes in the `details` UNDERNEATH it. `.lede` and `.panel`
+       are laid out so that putting prose above a figure looks wrong.
+
+   DARK MODE — read before editing
+   ---------------------------------------------------------------------------
+   Dark is applied ONLY by an explicit toggle stamping data-theme="dark" on
+   <html>. There is deliberately NO OS colour-scheme media query anywhere in
+   this file, and none may be added. A media-query palette shipped once and
+   handed everyone with a dark laptop a page they had explicitly not asked for.
+   `color-scheme` is declared per theme so UA widgets (scrollbars, date
+   pickers, spinners) follow the toggle rather than the OS.
+
+   The toggle must be stamped by an inline script that is the FIRST child of
+   <body>, before any painted markup, or a dark-mode user gets a full white
+   flash on load:
+
+       <body>
+       <script>
+         try{var t=localStorage.getItem('xs-theme');
+             document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}
+         catch(e){document.documentElement.dataset.theme='light';}
+       </script>
+
+   CONTRAST
+   ---------------------------------------------------------------------------
+   Every text-on-background pair defined below carries its measured WCAG 2.1
+   contrast ratio in a comment. Ratios were computed with the sRGB relative
+   luminance formula against the actual token values, not eyeballed. Anything
+   used for content text clears 4.5:1; anything used only for non-text
+   structure (rules, tracks) is marked as such and is exempt.
+   ============================================================================= */
+
+
+/* =============================================================================
+   1. TOKENS
+   ============================================================================= */
+
+:root{
+  color-scheme: light;
+
+  /* --- paper edition (default) --- */
+  --paper:    #F6F3EB;  /* warm newsprint, not cream                          */
+  --paper-2:  #EFEBE0;  /* recessed panels, table zebra, code wells           */
+  --ink:      #16130F;  /* warm near-black — 16.70:1 on paper, 15.54 on p-2   */
+  --ink-2:    #59524A;  /* secondary text  —  6.94:1 on paper,  6.46 on p-2   */
+
+  /* --ink-3 — FIX 1.
+     The prototype shipped #8B8275, which measures 3.41:1 on --paper and
+     3.18:1 on --paper-2, and it was used on content text (captions, table
+     sub-lines, hints, nav group labels). That fails 4.5:1 in both places.
+     Darkened to #6E6558:
+         #6E6558 on #F6F3EB (--paper)   = 5.17:1   PASS AA (4.5:1)
+         #6E6558 on #EFEBE0 (--paper-2) = 4.81:1   PASS AA (4.5:1)
+     Working: relative luminance L(#6E6558)=0.1379, L(#F6F3EB)=0.8676,
+     L(#EFEBE0)=0.8017; ratio = (L1+0.05)/(L2+0.05).
+     Do not lighten it back. If a value genuinely must be de-emphasised
+     further, reduce its size or letter-spacing, not its contrast.          */
+  --ink-3:    #6E6558;
+
+  --rule:     #D6CFC0;  /* hairline — NON-TEXT, 1.40:1, exempt from 4.5:1    */
+  --rule-2:   #B9AF9C;  /* heavy structural rule — NON-TEXT, 1.96:1, exempt  */
+
+  --accent:   #17456E;  /* prussian ink, the single editorial accent
+                           8.96:1 on paper / 8.34:1 on paper-2  PASS AAA    */
+  --accent-w: #17456E14;/* 8% accent wash — background only, never text      */
+  --accent-w2:#17456E24;/* stronger wash for active rows                     */
+
+  --neg:      #A3231D;  /* down / late — 6.73:1 on paper, 6.26 on p-2  PASS  */
+  --pos:      #1E6144;  /* up / cleared — 6.65:1 on paper, 6.19 on p-2 PASS  */
+  --warn:     #8A5A0B;  /* attention — 5.34:1 on paper, 4.97 on p-2    PASS  */
+
+  --sel:      #17456E22;
+  --grain-blend: multiply;
+  --grain-op: .055;
+
+  /* --- type --- */
+  --serif: "Hoefler Text","Iowan Old Style","Bodoni 72",Didot,"Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:  "Neue Haas Grotesk Text","Helvetica Neue",Helvetica,Inter,"Segoe UI",Arial,sans-serif;
+  --mono:  "SFMono-Regular","SF Mono","IBM Plex Mono","Roboto Mono",Menlo,Consolas,monospace;
+
+  --t-xs:   .6875rem;   /* 11px */
+  --t-sm:   .75rem;     /* 12px */
+  --t-base: .8125rem;   /* 13px */
+  --t-md:   .9375rem;   /* 15px */
+  --t-lg:  1.3125rem;   /* 21px */
+  --t-xl:  1.75rem;     /* 28px */
+  --t-2xl: 2.5rem;      /* 40px */
+  --t-3xl: 3.5rem;      /* 56px */
+
+  /* FIX 3 — iOS zooms the viewport on focus for any control under 16px.
+     Every input, select and textarea in this file is pinned to this token.
+     It is 1rem, i.e. 16px, and it is not scaled down at any breakpoint.   */
+  --t-input: 1rem;
+
+  /* --- metrics --- */
+  --rail-w: 236px;
+  --gut: 28px;
+  --tap: 44px;          /* minimum touch target, everywhere               */
+  --radius: 2px;        /* broadsheet: essentially square                 */
+}
+
+html[data-theme="dark"]{
+  color-scheme: dark;
+
+  /* --- late edition: newsprint under a desk lamp --- */
+  --paper:    #1A1713;
+  --paper-2:  #221E19;
+  --ink:      #EDE6D9;  /* 14.39:1 on paper, 13.35:1 on paper-2   PASS AAA  */
+  --ink-2:    #A79C8B;  /*  6.61:1 on paper,  6.13:1 on paper-2   PASS AA   */
+
+  /* --ink-3 — FIX 1, dark half.
+     The prototype shipped #7E7566: 3.93:1 on --paper, 3.65:1 on --paper-2.
+     Fails. Lightened to #988E7D:
+         #988E7D on #1A1713 (--paper)   = 5.53:1   PASS AA
+         #988E7D on #221E19 (--paper-2) = 5.13:1   PASS AA
+     Working: L(#988E7D)=0.2793, L(#1A1713)=0.0090, L(#221E19)=0.0151.    */
+  --ink-3:    #988E7D;
+
+  --rule:     #322C24;  /* NON-TEXT, 1.29:1, exempt                        */
+  --rule-2:   #4A4237;  /* NON-TEXT, 1.81:1, exempt                        */
+
+  --accent:   #7FB2DC;  /* 7.91:1 on paper, 7.34:1 on paper-2   PASS AAA   */
+  --accent-w: #7FB2DC1a;
+  --accent-w2:#7FB2DC2b;
+
+  --neg:      #E8776C;  /* 6.20:1 on paper, 5.75:1 on paper-2   PASS AA    */
+  --pos:      #74BE93;  /* 8.10:1 on paper, 7.52:1 on paper-2   PASS AAA   */
+  --warn:     #D9A441;  /* 7.94:1 on paper, 7.36:1 on paper-2   PASS AAA   */
+
+  --sel:      #7FB2DC2b;
+  --grain-blend: screen;
+  --grain-op: .085;
+}
+
+/* Reversed pairs used by solid fills (buttons, checked boxes, sticky heads):
+     light  --paper on --ink    = 16.70:1   PASS AAA
+     light  --paper on --accent =  8.96:1   PASS AAA
+     dark   --paper on --ink    = 14.39:1   PASS AAA
+     dark   --paper on --accent =  7.91:1   PASS AAA
+   Solid-fill buttons therefore use color:var(--paper) in both themes.     */
+
+
+/* =============================================================================
+   2. RESET
+   ============================================================================= */
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body,h1,h2,h3,h4,h5,h6,p,figure,blockquote,dl,dd,ol,ul,fieldset{ margin:0; padding:0; }
+ol[class],ul[class]{ list-style:none; }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:var(--t-base);
+  line-height:1.65;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+img,svg,video,canvas{ max-width:100%; display:block; }
+button,input,select,textarea{ font:inherit; color:inherit; }
+button{ background:none; border:0; }
+
+/* FIX 3, enforced globally rather than per-component. iOS Safari zooms the
+   viewport whenever a focused control renders under 16px, and it does not
+   zoom back out. --t-input is 1rem = 16px and is never scaled down at any
+   breakpoint. This rule means a control added by any future view is safe by
+   default — a component may raise the size (money fields use the 21px
+   serif) but nothing can silently lower it. Checkbox and radio are excluded
+   because they carry no text and do not trigger the zoom. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea{ font-size:var(--t-input); }
+table{ border-collapse:collapse; border-spacing:0; }
+fieldset{ border:0; min-width:0; }
+a{ color:var(--accent); text-underline-offset:.18em; text-decoration-thickness:1px; }
+a:hover{ color:var(--ink); }
+hr{ border:0; }
+::selection{ background:var(--sel); }
+
+/* Real focus rings. Never remove these; if a ring collides with a layout,
+   fix the layout. Two colours so the ring survives on top of --accent fills. */
+:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:1px;
+}
+.btn:focus-visible,
+.chk input:focus-visible{
+  outline:2px solid var(--ink);
+  outline-offset:2px;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+
+/* =============================================================================
+   3. PRIMITIVES / UTILITIES
+   ============================================================================= */
+
+.num{ font-variant-numeric:tabular-nums lining-nums; font-feature-settings:"tnum" 1,"lnum" 1; }
+.serif{ font-family:var(--serif); }
+.sans{ font-family:var(--sans); }
+.mono{
+  font-family:var(--mono); font-size:var(--t-sm);
+  font-variant-numeric:tabular-nums; color:var(--ink-2); /* 6.94:1 PASS */
+  letter-spacing:.01em;
+}
+.eyebrow{
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2);           /* 6.94:1 on paper PASS  */
+}
+.caption{
+  font-size:var(--t-xs); color:var(--ink-3);     /* 5.17:1 on paper PASS  */
+  letter-spacing:.02em;
+}
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0;
+}
+
+/* the three rule weights — the whole structural vocabulary */
+.hair{ border-top:1px solid var(--rule); }
+.hair-strong{ border-top:1px solid var(--rule-2); }
+.hair-double{ border-top:3px double var(--rule-2); }
+
+/* directional colour for figures. Never colour alone — pair with .glyph. */
+.up,.pos{ color:var(--pos); }
+.down,.neg{ color:var(--neg); }
+.flat{ color:var(--ink-2); }
+.warn{ color:var(--warn); }
+.accent{ color:var(--accent); }
+.delta{ font-family:var(--sans); font-size:var(--t-sm); font-weight:600; letter-spacing:.04em; }
+
+/* R2 — a value that does not exist. Never render 0 in its place, never a
+   guess, never an em-dash that could be mistaken for a real "none". */
+.missing{
+  font-family:var(--mono); font-size:.9em; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3);   /* 5.17:1 PASS          */
+  border-bottom:1px dotted var(--rule-2); padding-bottom:1px;
+}
+.missing::after{ content:""; }
+
+/* R4 — the retired programme has one permitted label. */
+.directed{ color:var(--ink-2); }
+
+.nowrap{ white-space:nowrap; }
+.stack-sm > * + *{ margin-top:8px; }
+.stack   > * + *{ margin-top:16px; }
+.stack-lg> * + *{ margin-top:26px; }
+
+
+/* =============================================================================
+   4. GRAIN LAYER  (G3)
+   One fixed div, one inline feTurbulence data-URI, zero network requests.
+   Markup:  <div class="grain" aria-hidden="true"></div>   (last in <body>)
+   ============================================================================= */
+
+.grain{
+  position:fixed; inset:0; z-index:9000;
+  pointer-events:none;
+  opacity:var(--grain-op);
+  mix-blend-mode:var(--grain-blend);
+  background-repeat:repeat;
+  background-size:180px 180px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+@media print{ .grain{ display:none; } }
+
+
+/* =============================================================================
+   5. FRAME — rail + sheet
+   ============================================================================= */
+
+.frame{ display:flex; min-height:100vh; align-items:stretch; }
+
+/* ---- rail: desktop sidebar, mobile tab strip ---- */
+.rail{
+  width:var(--rail-w); flex:0 0 var(--rail-w);
+  background:var(--paper);
+  border-right:1px solid var(--rule-2);
+  padding:20px 0;
+  position:sticky; top:0; align-self:flex-start; height:100vh;
+  display:flex; flex-direction:column; gap:14px;
+  z-index:30;
+}
+.flag{ padding:0 18px; display:flex; flex-direction:column; gap:2px; }
+.flag-word{
+  font-family:var(--serif); font-size:1.375rem; line-height:1.05;
+  letter-spacing:.055em; text-transform:uppercase; font-weight:400;
+  color:var(--ink);                                /* 16.70:1 PASS        */
+}
+.flag-word b{ font-weight:400; color:var(--accent); }  /* 8.96:1 PASS     */
+.flag-sub{
+  font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+
+.nav{
+  display:flex; flex-direction:column; overflow-y:auto;
+  flex:1 1 auto; padding:0 10px; min-height:0;
+}
+.nav-group{
+  font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  padding:14px 8px 6px;
+}
+.nav-link{
+  display:flex; align-items:center; gap:10px; width:100%;
+  min-height:var(--tap); padding:0 8px;
+  border-bottom:1px solid var(--rule);
+  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  font-family:var(--sans); font-size:var(--t-base);
+  letter-spacing:.02em; text-align:left; text-decoration:none; cursor:pointer;
+  transition:color .12s ease, background-color .12s ease;
+}
+.nav-link:hover{ color:var(--ink); background:var(--accent-w); }
+.nav-link svg{ flex:0 0 18px; width:18px; height:18px; opacity:.75; }
+.nav-link .lab{ flex:1 1 auto; }
+.nav-link .tag{
+  font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
+  font-variant-numeric:tabular-nums;
+}
+.nav-link[aria-current="page"]{
+  color:var(--ink); font-weight:600;
+  background:var(--accent-w);
+  box-shadow:inset 3px 0 0 var(--accent);
+}
+.nav-link[aria-current="page"] svg{ opacity:1; color:var(--accent); }
+.nav-link[aria-current="page"] .tag{ color:var(--accent); }
+
+/* G5 — keycap chips. The 1–9 shortcut is real, so the key is printed.
+   The handler must ignore keystrokes while focus is inside a field:
+     if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+     if (e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
+   Chips are hidden below 900px, where there is no keyboard to press.    */
+.keycap{
+  flex:0 0 auto;
+  min-width:17px; height:17px; padding:0 3px;
+  display:inline-grid; place-items:center;
+  font-family:var(--mono); font-size:9px; line-height:1;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  border:1px solid var(--rule-2); border-radius:2px;
+  box-shadow:0 1px 0 var(--rule-2);
+  font-variant-numeric:tabular-nums;
+}
+.nav-link[aria-current="page"] .keycap{ color:var(--accent); border-color:var(--accent); box-shadow:0 1px 0 var(--accent); }
+
+.rail-foot{ padding:0 18px; display:flex; flex-direction:column; gap:10px; }
+
+/* theme toggle — the ONLY thing that changes the palette */
+.theme-toggle{
+  display:flex; align-items:center; gap:8px;
+  min-height:var(--tap); width:100%; padding:0 10px; cursor:pointer;
+  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  border:1px solid var(--rule-2); border-radius:var(--radius);
+  font-family:var(--sans); font-size:var(--t-xs);
+  letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+}
+.theme-toggle:hover{ color:var(--ink); border-color:var(--ink-3); }
+.theme-toggle svg{ width:16px; height:16px; flex:0 0 16px; }
+/* Two icon+label pairs, one shown per theme. The word label carries the class
+   `.theme-label` as well, so the mobile rule that hides labels can match at
+   the same specificity as these theme rules and win on source order.
+     <span class="t-light theme-label">Late edition</span>
+     <span class="t-dark  theme-label">Day edition</span>            */
+.theme-toggle .t-dark{ display:none; }
+html[data-theme="dark"] .theme-toggle .t-dark{ display:inline; }
+html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
+
+/* ---- sheet ---- */
+.sheet{ flex:1 1 auto; min-width:0; padding:0 var(--gut) 96px; }
+
+
+/* =============================================================================
+   6. MASTHEAD + TICKER
+   ============================================================================= */
+
+.masthead{ padding:26px 0 0; }
+.masthead-top{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:16px; flex-wrap:wrap; padding-bottom:10px;
+}
+.masthead h1{
+  font-family:var(--serif); font-weight:400;
+  font-size:clamp(1.75rem,4.6vw,2.75rem); line-height:1;
+  letter-spacing:.02em; text-wrap:balance;
+  color:var(--ink);                                /* 16.70:1 PASS       */
+}
+.dateline{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+}
+.dateline .dot{ color:var(--rule-2); }             /* decorative only     */
+
+.ticker{
+  display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
+  border-top:3px double var(--rule-2);
+  border-bottom:1px solid var(--rule-2);
+  margin-top:2px;
+}
+.tick{ padding:9px 12px 10px; border-left:1px solid var(--rule); min-width:0; }
+.tick:first-child{ border-left:0; padding-left:0; }
+.tick dt{
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.tick dd{
+  font-family:var(--serif); font-size:1.0625rem; line-height:1.25;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.tick dd small{
+  font-family:var(--sans); font-size:var(--t-xs);
+  color:var(--ink-2); letter-spacing:.02em;        /* 6.94:1 PASS        */
+}
+
+
+/* =============================================================================
+   7. VIEW / SLUG / DECK  — the nine sections share these
+   ============================================================================= */
+
+.view{ padding-top:26px; animation:rise .32s cubic-bezier(.2,.7,.3,1) both; }
+.view[hidden]{ display:none; }
+@keyframes rise{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+
+.slug{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:14px; flex-wrap:wrap;
+  border-bottom:1px solid var(--rule-2); padding-bottom:6px; margin-bottom:20px;
+}
+.slug h2{
+  font-family:var(--serif); font-weight:400; font-size:var(--t-xl);
+  line-height:1.1; letter-spacing:.01em; text-wrap:balance;
+}
+.slug .kicker{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+
+/* G4 — the deck states the finding, not the section name.
+   "$6,952 earned. $8,007 waiting." not "Money".
+   Views own the words; this only sets them. */
+.deck{
+  font-family:var(--serif); font-weight:400;
+  font-size:clamp(1.3125rem,3.2vw,1.75rem); line-height:1.2;
+  letter-spacing:.005em; text-wrap:balance;
+  color:var(--ink);                                /* 16.70:1 PASS       */
+  margin-bottom:18px; max-width:34ch;
+}
+.deck em{ font-style:normal; color:var(--accent); }  /* 8.96:1 PASS      */
+.deck .num{ font-variant-numeric:tabular-nums lining-nums; }
+
+
+/* =============================================================================
+   8. FIGURE + LEDE  (R7 — the figure leads, reasoning goes underneath)
+   ============================================================================= */
+
+.lede{
+  display:grid; gap:0 var(--gut);
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  border-bottom:1px solid var(--rule-2); padding-bottom:22px; margin-bottom:22px;
+}
+.lede-main{ min-width:0; }
+.lede-side{ min-width:0; border-left:1px solid var(--rule); padding-left:var(--gut); }
+
+.figure{ display:block; }
+.figure .cap{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-2); margin-bottom:2px;           /* 6.94:1 PASS        */
+}
+.figure .big{
+  display:block; font-family:var(--serif); font-weight:400;
+  font-size:clamp(2.75rem,8.5vw,3.5rem); line-height:.95; letter-spacing:-.012em;
+  font-variant-numeric:tabular-nums lining-nums;
+  color:var(--ink);                                /* 16.70:1 PASS       */
+}
+.figure .mid{
+  display:block; font-family:var(--serif); font-size:var(--t-2xl); line-height:1;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.figure .small{
+  display:block; font-family:var(--serif); font-size:var(--t-lg); line-height:1.15;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.figure .sub{
+  font-size:var(--t-base); color:var(--ink-2);     /* 6.94:1 PASS        */
+  margin-top:8px; max-width:52ch;
+}
+.figure .sub b{ color:var(--ink); font-weight:600; }
+.figure-pair{ display:flex; gap:var(--gut); flex-wrap:wrap; align-items:flex-end; }
+
+
+/* =============================================================================
+   9. DETAILS / SUMMARY  — reasoning always UNDER the number (R7)
+   ============================================================================= */
+
+details{ border-top:1px solid var(--rule); margin-top:14px; }
+details > summary{
+  list-style:none; cursor:pointer;
+  min-height:var(--tap); display:flex; align-items:center; gap:8px;
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2);             /* 6.94:1 PASS        */
+}
+details > summary::-webkit-details-marker{ display:none; }
+details > summary::after{
+  content:""; width:9px; height:9px; margin-left:auto; flex:0 0 9px;
+  border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+  transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .18s ease;
+}
+details[open] > summary::after{ transform:rotate(225deg) translate(-1px,-1px); }
+details > summary:hover{ color:var(--ink); }
+details > summary:focus-visible{ outline-offset:-2px; }
+.details-body{
+  font-size:var(--t-base); color:var(--ink-2);     /* 6.94:1 PASS        */
+  padding-bottom:14px; max-width:64ch;
+}
+.details-body > * + *{ margin-top:.7em; }
+.details-body strong{ color:var(--ink); font-weight:600; }
+.details-body ul,.details-body ol{ padding-left:18px; }
+.details-body li + li{ margin-top:.35em; }
+
+
+/* =============================================================================
+   10. STATUS GLYPHS  (G1)  — shape AND colour, never colour alone
+   ============================================================================= */
+/*
+   Shape carries the meaning so the status survives greyscale, a projector,
+   and every form of colour blindness. Required inline SVG, 11×11:
+
+     ok    circle    <svg class="glyph glyph--ok"   viewBox="0 0 11 11" aria-hidden="true">
+                       <circle cx="5.5" cy="5.5" r="4"/></svg>
+     warn  triangle  <svg class="glyph glyph--warn" viewBox="0 0 11 11" aria-hidden="true">
+                       <path d="M5.5 1 10.2 9.6H.8Z"/></svg>
+     crit  diamond   <svg class="glyph glyph--crit" viewBox="0 0 11 11" aria-hidden="true">
+                       <path d="M5.5 .8 10.2 5.5 5.5 10.2.8 5.5Z"/></svg>
+     idle  ring      <svg class="glyph glyph--idle" viewBox="0 0 11 11" aria-hidden="true">
+                       <circle cx="5.5" cy="5.5" r="3.6" fill="none"
+                               stroke="currentColor" stroke-width="1.6"/></svg>
+
+   Every glyph MUST be accompanied by a text label, either visible in the
+   `.pill` it sits in or in an adjacent `.sr-only`. A glyph alone is not a
+   status; it is a decoration.
+*/
+.glyph{
+  width:11px; height:11px; flex:0 0 11px;
+  display:inline-block; vertical-align:-1px;
+  fill:currentColor;
+}
+.glyph--ok{   color:var(--pos);    }  /* 6.65:1 light / 8.10:1 dark  PASS  */
+.glyph--warn{ color:var(--warn);   }  /* 5.34:1 light / 7.94:1 dark  PASS  */
+.glyph--crit{ color:var(--neg);    }  /* 6.73:1 light / 6.20:1 dark  PASS  */
+.glyph--idle{ color:var(--ink-3);  }  /* 5.17:1 light / 5.53:1 dark  PASS  */
+.glyph--info{ color:var(--accent); }  /* 8.96:1 light / 7.91:1 dark  PASS  */
+
+/* pill = glyph + word. The word is not optional. */
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
+  padding:2px 7px; border:1px solid currentColor; border-radius:var(--radius);
+  white-space:nowrap; line-height:1.5;
+}
+.pill--ok{ color:var(--pos); }
+.pill--warn{ color:var(--warn); }
+.pill--crit{ color:var(--neg); }
+.pill--idle{ color:var(--ink-3); }
+.pill--info{ color:var(--accent); }
+.pill .glyph{ color:currentColor; }
+
+
+/* =============================================================================
+   11. PROVENANCE STAMPS  (G2)  — R2 rendered as design instead of an apology
+   ============================================================================= */
+/*
+   Every panel says where its figures came from, in the header, before the
+   reader reaches a number. Solid border = live (engine JSON on disk, or a
+   row a human typed into MySQL). Dashed border = sample / placeholder /
+   demo data that must never be read as fact.
+
+   Markup contract:
+     <div class="panel-head panel-head--live">
+       <h3>Money sitting still</h3>
+       <span class="stamp stamp--live">Live · latest-run.json · 04 Aug</span>
+     </div>
+
+   The head's own bottom rule changes weight with the stamp, so a sample
+   panel is legible as sample from across the room, not only up close.
+*/
+.panel{ margin-top:26px; }
+.panel-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:12px; flex-wrap:wrap;
+  padding-bottom:6px; margin-bottom:14px;
+}
+.panel-head h3{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2);             /* 6.94:1 PASS        */
+}
+.panel-head--live{   border-bottom:1px solid var(--rule-2); }
+.panel-head--sample{ border-bottom:1px dashed var(--rule-2); }
+.panel-head--missing{ border-bottom:1px dotted var(--neg); }
+
+.stamp{
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:var(--t-xs); letter-spacing:.04em;
+  padding:1px 6px; border-radius:var(--radius);
+  white-space:nowrap;
+}
+.stamp--live{
+  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  border:1px solid var(--rule-2);
+}
+.stamp--sample{
+  color:var(--warn);                               /* 5.34:1 PASS        */
+  border:1px dashed currentColor;
+}
+.stamp--missing{
+  color:var(--neg);                                /* 6.73:1 PASS        */
+  border:1px dotted currentColor;
+}
+.stamp--typed{                                     /* human-entered, MySQL */
+  color:var(--accent);                             /* 8.96:1 PASS        */
+  border:1px solid currentColor;
+}
+
+/* A block-level version for a whole view. */
+.provenance-bar{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:8px 0; border-top:1px solid var(--rule);
+  font-size:var(--t-xs); color:var(--ink-3);       /* 5.17:1 PASS        */
+  letter-spacing:.02em;
+}
+
+
+/* =============================================================================
+   12. STATS / METERS / RANGES
+   ============================================================================= */
+
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+.stat{
+  padding:12px 14px 14px; min-width:0;
+  border-left:1px solid var(--rule); border-top:1px solid var(--rule);
+}
+.stat:first-child{ border-left:0; padding-left:0; }
+.stat dt{
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+.stat dd{
+  margin-top:2px; font-family:var(--serif); font-size:var(--t-lg); line-height:1.15;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.stat dd .u{
+  font-family:var(--sans); font-size:var(--t-xs);
+  color:var(--ink-2); letter-spacing:.04em;        /* 6.94:1 PASS        */
+}
+
+/* ---- meter: a proportion of a known whole. R3 — NEVER on n < 30. ---- */
+.meter{ display:flex; align-items:center; gap:10px; }
+.meter-track{
+  flex:1 1 auto; height:8px; position:relative;
+  background:var(--paper-2); border:1px solid var(--rule);
+}
+.meter-fill{ position:absolute; inset:0 auto 0 0; background:var(--accent); width:var(--pct,0%); }
+.meter-fill--neg{ background:var(--neg); }
+.meter-fill--pos{ background:var(--pos); }
+.meter-fill--warn{ background:var(--warn); }
+.meter-val{
+  font-family:var(--mono); font-size:var(--t-sm); font-variant-numeric:tabular-nums;
+  color:var(--ink-2); min-width:4.5ch; text-align:right;   /* 6.94:1 PASS */
+}
+/* R3 state: denominator too small to draw. Render this instead of a bar. */
+.meter--suppressed .meter-track{
+  background:repeating-linear-gradient(135deg,transparent 0 5px,var(--rule) 5px 6px);
+}
+.meter--suppressed .meter-fill{ display:none; }
+
+/* ---- range: the honest form of a rate on a small denominator (R3) ----
+   FIX 2. The prototype laid four labels out with justify-content:space-between
+   while the band edges sat at 15.7% and 88.7% of the track — the axis the
+   labels implied and the axis the band was drawn on were different axes, and
+   the picture lied about its own numbers.
+
+   Here every element is positioned by its real value on a STATED axis. The
+   view computes one percentage per element and passes it as --at (or --lo /
+   --hi), where pct = (value - axisMin) / (axisMax - axisMin) * 100. The axis
+   bounds are printed in `.range-axis-note`; a range without that note is a
+   bug.
+
+     <figure class="range">
+       <div class="range-track">
+         <div class="range-band"  style="--lo:15.7%;--hi:88.7%"></div>
+         <div class="range-point" style="--at:39.3%"></div>
+       </div>
+       <div class="range-axis">
+         <span class="range-tick range-tick--first" style="--at:0%">0%</span>
+         <span class="range-tick" style="--at:15.7%">4.7%</span>
+         <span class="range-tick" style="--at:88.7%">26.6%</span>
+         <span class="range-tick range-tick--last" style="--at:100%">30%</span>
+       </div>
+       <figcaption class="range-axis-note">Axis 0–30% · Wilson 95% · n=34</figcaption>
+     </figure>
+*/
+.range{ margin-top:10px; }
+.range-track{
+  position:relative; height:26px;
+  border-top:1px solid var(--rule-2); border-bottom:1px solid var(--rule);
+}
+.range-band{
+  position:absolute; top:0; bottom:0;
+  left:var(--lo,0%); right:calc(100% - var(--hi,100%));
+  background:var(--accent-w);
+  border-left:1.5px solid var(--accent); border-right:1.5px solid var(--accent);
+}
+.range-point{
+  position:absolute; top:-4px; bottom:-4px;
+  left:var(--at,50%); width:1.5px; margin-left:-.75px;
+  background:var(--ink);
+}
+.range-axis{ position:relative; height:1.9em; margin-top:2px; }
+.range-tick{
+  position:absolute; top:0; left:var(--at,0%);
+  transform:translateX(-50%);
+  font-family:var(--mono); font-size:var(--t-xs); white-space:nowrap;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-variant-numeric:tabular-nums;
+  padding-top:5px;
+}
+/* the tick's own hairline, drawn AT the value so label and mark agree */
+.range-tick::before{
+  content:""; position:absolute; top:0; left:50%;
+  width:1px; height:4px; background:var(--rule-2);
+}
+.range-tick--first{ transform:none; }
+.range-tick--first::before{ left:0; }
+.range-tick--last{ transform:translateX(-100%); }
+.range-tick--last::before{ left:calc(100% - 1px); }
+.range-axis-note{
+  font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
+  letter-spacing:.03em; margin-top:2px;            /* 5.17:1 PASS        */
+}
+
+
+/* =============================================================================
+   13. TABLES  — overflow-x wrapper, sticky thead, hint bar
+   ============================================================================= */
+/*
+     <div class="tablewrap">
+       <table class="table">…</table>
+       <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
+     </div>
+
+   The wrapper is the ONLY thing that scrolls sideways. `.sheet` and `.frame`
+   both carry min-width:0 so a wide table can never push the body sideways.
+   Test at 375px before adding a column.
+
+   Sticky thead — read this before assuming it works everywhere.
+   `position:sticky` resolves against the nearest scrollport, and setting
+   overflow-x:auto makes the used value of overflow-y `auto` too. So
+   `.tablewrap` IS the scrollport for its table, and with height:auto it
+   never scrolls vertically — meaning a sticky head inside a plain
+   `.tablewrap` has nothing to stick to and will simply scroll away with the
+   page. That is fine for short tables and it is not a bug.
+
+   For any table long enough that the head matters — orders, inquiries,
+   clients, the response library — use `.tablewrap .tablewrap--capped`,
+   which gives the wrapper a real vertical scrollport and makes the sticky
+   head behave. Either way the head needs an OPAQUE background or rows show
+   through it, hence background:var(--paper) below.
+*/
+.tablewrap{
+  overflow-x:auto; overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  border-bottom:1px solid var(--rule-2);
+  /* scroll-shadow: the fades are painted local, the shadows scroll — so
+     they appear only when there is actually something off-screen. */
+  background:
+    linear-gradient(to right,  var(--paper) 40%, transparent) left  / 28px 100% no-repeat local,
+    linear-gradient(to left,   var(--paper) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0    50%, #00000021, #00000000) left  / 11px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, #00000021, #00000000) right / 11px 100% no-repeat scroll;
+}
+.tablewrap--capped{ max-height:min(70vh,640px); overflow-y:auto; }
+
+.table{ width:100%; font-size:var(--t-base); min-width:520px; background:transparent; }
+.table--wide{ min-width:760px; }
+.table--narrow{ min-width:380px; }
+
+.table thead th{
+  position:sticky; top:0; z-index:2;
+  background:var(--paper);
+  text-align:left; font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-2); font-weight:600;             /* 6.94:1 PASS        */
+  padding:6px 12px 7px 0; white-space:nowrap;
+  border-bottom:1px solid var(--rule-2);
+}
+.table thead th:last-child{ padding-right:0; }
+.table tbody td{
+  padding:9px 12px 9px 0; border-bottom:1px solid var(--rule); vertical-align:top;
+}
+.table tbody td:last-child{ padding-right:0; }
+.table tbody tr:last-child td{ border-bottom:0; }
+.table tbody tr:hover{ background:var(--accent-w); }
+.table td.r,.table th.r{ text-align:right; }
+.table td.c,.table th.c{ text-align:center; }
+.table .cell-figure{
+  font-family:var(--serif); font-size:var(--t-md);
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.table .cell-name{ font-weight:600; color:var(--ink); }   /* 16.70:1 PASS */
+.table .cell-sub{
+  display:block; font-size:var(--t-xs); color:var(--ink-3);/* 5.17:1 PASS */
+  letter-spacing:.02em;
+}
+/* Zebra paints over the wrapper's scroll shadows — use the hint bar with it. */
+.table--zebra tbody tr:nth-child(even){ background:var(--paper-2); }
+.table--zebra tbody tr:nth-child(even):hover{ background:var(--accent-w); }
+
+/* row states — colour is never the only signal; pair with a .pill or .glyph.
+   The marker goes on the FIRST cell only. Putting it on every td draws a
+   coloured rule at every column boundary, which reads as a table border. */
+.row-late    td:first-child{ box-shadow:inset 2px 0 0 var(--neg); }
+.row-attn    td:first-child{ box-shadow:inset 2px 0 0 var(--warn); }
+.row-cleared td{ color:var(--ink-2); }
+.row-cleared .cell-name{ color:var(--ink-2); }
+
+/* hint bar — shown where a sideways scroll is likely and easy to miss */
+.tablehint{
+  display:none;
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  padding:6px 0 2px; border-top:1px dotted var(--rule);
+}
+.empty{
+  padding:22px 0; color:var(--ink-2); font-size:var(--t-base);
+  border-bottom:1px solid var(--rule);             /* 6.94:1 PASS        */
+}
+
+
+/* =============================================================================
+   14. CHECKLIST  — full-row labels, real focus rings
+   ============================================================================= */
+/*
+     <li class="task">
+       <label class="task-row">                 <- the WHOLE row is the label
+         <span class="chk"><input type="checkbox" name="…"></span>
+         <span class="task-body"> … </span>
+       </label>
+       <div class="task-extra"> <details>…</details> </div>
+     </li>
+
+   The label wraps the row, so anywhere in the row is a 44px-tall hit area,
+   not just the 20px box. `.task-extra` sits OUTSIDE the label because a
+   <details> inside a <label> toggles the checkbox when you open it.
+*/
+.tasks{ border-top:1px solid var(--rule-2); }
+.task{ border-bottom:1px solid var(--rule); }
+.task-row{
+  display:flex; gap:14px; align-items:flex-start;
+  padding:14px 0 8px; cursor:pointer; border-radius:1px;
+}
+.task-row:hover{ background:var(--accent-w); }
+.task-row:has(input:focus-visible){ outline:2px solid var(--accent); outline-offset:2px; }
+
+.chk{ flex:0 0 auto; width:var(--tap); height:var(--tap); margin:-10px 0 0 -12px; display:grid; place-items:center; }
+.chk input{
+  appearance:none; -webkit-appearance:none; margin:0;
+  width:20px; height:20px; border:1.5px solid var(--rule-2);
+  background:transparent; cursor:pointer; border-radius:1px;
+  display:grid; place-items:center;
+  transition:border-color .12s ease, background-color .12s ease;
+}
+.chk input:hover{ border-color:var(--accent); }
+.chk input::after{
+  content:""; width:11px; height:6px; margin-top:-3px;
+  border-left:1.75px solid var(--paper); border-bottom:1.75px solid var(--paper);
+  transform:rotate(-45deg) scale(.4); opacity:0;
+  transition:opacity .12s ease, transform .12s ease;
+}
+.chk input:checked{ background:var(--accent); border-color:var(--accent); }
+.chk input:checked::after{ opacity:1; transform:rotate(-45deg) scale(1); }
+/* checked tick is --paper on --accent: 8.96:1 light / 7.91:1 dark  PASS   */
+
+.task-body{ flex:1 1 auto; min-width:0; }
+.task-head{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+.task-title{
+  font-family:var(--serif); font-size:var(--t-lg); font-weight:400;
+  line-height:1.25; letter-spacing:.005em; text-wrap:balance;
+  color:var(--ink);                                /* 16.70:1 PASS       */
+}
+.task-meta{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+.task-meta .owner{ color:var(--accent); font-weight:600; }  /* 8.96:1 PASS */
+.task-meta .amt{
+  font-family:var(--mono); color:var(--ink-2);     /* 6.94:1 PASS        */
+  letter-spacing:.02em; text-transform:none;
+}
+.task.is-done .task-title{
+  color:var(--ink-2);                              /* 6.94:1 PASS — still
+                                                      readable when struck */
+  text-decoration:line-through; text-decoration-thickness:1px;
+}
+.task-extra{ padding:0 0 6px 46px; }
+.task-extra details{ margin-top:0; }
+.steps{ padding-left:18px; }
+.steps li + li{ margin-top:.35em; }
+
+/* ---- progress rule: the foot of the checklist ----
+   A CENSUS of a complete list of 12, not a rate estimated from a sample of
+   12, so R3's ban on bars does not apply and nothing here draws one anyway.
+   The marks are one per task — they are a tally, and a tally cannot imply a
+   proportion of a population it is not a sample of. The `.progress-note`
+   states which kind of number it is, and renders MISSING rather than "0
+   cleared" when the typed store is unreachable. */
+.progress{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  border-top:3px double var(--rule-2);
+  margin-top:22px; padding-top:12px;
+}
+.progress-count{
+  font-family:var(--serif); font-size:var(--t-xl); line-height:1;
+  font-variant-numeric:tabular-nums lining-nums;
+  color:var(--ink);                                /* 16.70:1 PASS        */
+}
+.progress-note{
+  flex:1 1 240px; min-width:0;
+  font-size:var(--t-xs); letter-spacing:.02em;
+  color:var(--ink-3);                              /* 5.17:1 PASS         */
+}
+
+
+/* =============================================================================
+   15. FORMS  — 16px controls (FIX 3), visible labels, error slots
+   ============================================================================= */
+/*
+   FIX 3: every input, select and textarea below is font-size:var(--t-input),
+   which is 1rem = 16px. Safari on iOS zooms the viewport whenever a focused
+   control is under 16px, and the zoom does not come back. The 13px textarea
+   in the prototype did exactly that. --t-input is NOT scaled down at any
+   breakpoint; if a field looks too big, shorten it, do not shrink the type.
+
+   Labels are always visible elements. Placeholder-as-label is not permitted:
+   the label disappears the moment someone starts typing, which is precisely
+   when they need it.
+*/
+.form-grid{
+  display:grid; gap:0 var(--gut);
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+}
+.form-grid--two{ grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+.form-section{ border-top:1px solid var(--rule-2); padding-top:8px; margin-top:26px; }
+.form-section > legend,
+.form-section > h3{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2); padding:0;  /* 6.94:1 PASS        */
+}
+
+.field{
+  padding:12px 0 14px; border-bottom:1px solid var(--rule);
+  display:flex; flex-direction:column; gap:4px; min-width:0;
+}
+.field > label,
+.field > .field-label{
+  font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-2); font-weight:600;             /* 6.94:1 PASS        */
+}
+.field > label .req{ color:var(--neg); }           /* 6.73:1 PASS        */
+
+.field input,
+.field select,
+.field textarea{
+  font-family:var(--sans);
+  font-size:var(--t-input);                        /* FIX 3 — 16px       */
+  line-height:1.45;
+  background:transparent; color:var(--ink);        /* 16.70:1 PASS       */
+  border:0; border-bottom:1.5px solid var(--rule-2); border-radius:0;
+  padding:6px 2px; min-height:var(--tap); width:100%; max-width:100%;
+}
+/* numeric fields get the serif and tabular figures — they are money */
+.field input[type="number"],
+.field input[inputmode="numeric"],
+.field input[inputmode="decimal"],
+.field input.is-figure{
+  font-family:var(--serif); font-size:var(--t-lg); /* 21px, > 16px       */
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.field textarea{ min-height:96px; resize:vertical; line-height:1.6; }
+.field select{
+  -webkit-appearance:none; appearance:none;
+  padding-right:22px;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
+                   linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:right 8px center,right 3px center;
+  background-size:5px 5px,5px 5px;
+  background-repeat:no-repeat;
+}
+.field input::placeholder,
+.field textarea::placeholder{ color:var(--ink-3); opacity:1; } /* 5.17:1 PASS */
+.field input:hover,.field select:hover,.field textarea:hover{ border-bottom-color:var(--ink-3); }
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible{
+  outline:none;
+  border-bottom-color:var(--accent);
+  box-shadow:0 1.5px 0 var(--accent);
+}
+.field input:disabled,.field select:disabled,.field textarea:disabled{
+  color:var(--ink-3); cursor:not-allowed; border-bottom-style:dashed;
+}
+
+/* hint and error live in a reserved slot so validating does not reflow the
+   form and move the button out from under a thumb. */
+.field-hint{ font-size:var(--t-xs); color:var(--ink-3); }  /* 5.17:1 PASS */
+.field-error{
+  min-height:1.25em;
+  font-size:var(--t-xs); letter-spacing:.04em;
+  color:var(--neg);                                /* 6.73:1 PASS        */
+  display:flex; align-items:center; gap:5px;
+}
+.field-error:empty{ min-height:1.25em; }
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid textarea{ border-bottom-color:var(--neg); }
+.field.is-invalid > label{ color:var(--neg); }
+
+/* inline checkbox / radio rows — same full-row target as the checklist */
+.check-row{
+  display:flex; align-items:center; gap:12px;
+  min-height:var(--tap); padding:4px 6px 4px 0; cursor:pointer;
+  border-bottom:1px solid var(--rule); border-radius:1px;
+}
+.check-row:hover{ background:var(--accent-w); }
+.check-row:has(input:focus-visible){ outline:2px solid var(--accent); outline-offset:2px; }
+.check-row input[type="checkbox"],
+.check-row input[type="radio"]{
+  appearance:none; -webkit-appearance:none; margin:0;
+  flex:0 0 20px; width:20px; height:20px;
+  border:1.5px solid var(--rule-2); background:transparent; cursor:pointer;
+  display:grid; place-items:center;
+}
+.check-row input[type="radio"]{ border-radius:50%; }
+.check-row input:checked{ background:var(--accent); border-color:var(--accent); }
+.check-row input[type="checkbox"]:checked::after{
+  content:""; width:11px; height:6px; margin-top:-3px;
+  border-left:1.75px solid var(--paper); border-bottom:1.75px solid var(--paper);
+  transform:rotate(-45deg);
+}
+.check-row input[type="radio"]:checked::after{
+  content:""; width:7px; height:7px; border-radius:50%; background:var(--paper);
+}
+.check-row .check-label{ flex:1 1 auto; min-width:0; }
+
+.form-actions{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin-top:20px; padding-top:16px; border-top:1px solid var(--rule-2);
+}
+.form-status{ font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+.form-status.is-ok{ color:var(--pos); }
+.form-status.is-bad{ color:var(--neg); }
+
+
+/* =============================================================================
+   16. BUTTONS
+   ============================================================================= */
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  min-height:var(--tap); padding:0 18px; cursor:pointer;
+  font-family:var(--sans); font-size:var(--t-xs); font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; text-decoration:none;
+  border:1px solid var(--ink); background:var(--ink);
+  color:var(--paper);                              /* 16.70:1 light /
+                                                      14.39:1 dark  PASS  */
+  border-radius:var(--radius);
+  transition:background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.btn:hover{ background:var(--accent); border-color:var(--accent); color:var(--paper); }
+.btn:active{ transform:translateY(1px); }
+.btn[disabled],.btn[aria-disabled="true"]{
+  background:transparent; color:var(--ink-3); border-color:var(--rule-2);
+  cursor:not-allowed; transform:none;              /* 5.17:1 PASS        */
+}
+.btn--ghost{
+  background:transparent; color:var(--ink-2); border-color:var(--rule-2);
+}                                                  /* 6.94:1 PASS        */
+.btn--ghost:hover{ color:var(--accent); border-color:var(--accent); background:var(--accent-w); }
+.btn--danger{ background:transparent; color:var(--neg); border-color:currentColor; }
+.btn--danger:hover{ background:var(--neg); color:var(--paper); border-color:var(--neg); }
+.btn--sm{ min-height:36px; padding:0 12px; }
+.btn--block{ width:100%; }
+.btn svg{ width:15px; height:15px; }
+
+.btnrow{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* segmented filter control — used on orders, inquiries, clients */
+.segment{ display:flex; flex-wrap:wrap; border:1px solid var(--rule-2); border-radius:var(--radius); overflow:hidden; }
+.segment > *{
+  min-height:36px; padding:0 12px; cursor:pointer;
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
+  color:var(--ink-2); border-left:1px solid var(--rule-2);/* 6.94:1 PASS */
+  display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+}
+.segment > *:first-child{ border-left:0; }
+.segment > *:hover{ background:var(--accent-w); color:var(--ink); }
+.segment > [aria-pressed="true"],
+.segment > [aria-current="true"]{ background:var(--accent); color:var(--paper); }
+
+
+/* =============================================================================
+   17. SHARED SECTION COMPONENTS
+   ============================================================================= */
+
+/* column grid — the broadsheet's multi-column body */
+.cols{ display:grid; gap:var(--gut); grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+.cols--two{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.cols--three{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.col-rule{ border-left:1px solid var(--rule); padding-left:var(--gut); }
+
+.block{ border-top:1px solid var(--rule-2); padding-top:14px; margin-top:26px; }
+.block > h3{
+  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2); margin-bottom:12px;  /* 6.94:1 PASS */
+}
+
+/* a marginal note — the column rule holds it */
+.note{
+  font-size:var(--t-sm); color:var(--ink-2);       /* 6.94:1 PASS        */
+  max-width:66ch; margin-top:14px;
+  padding-left:12px; border-left:1px solid var(--rule-2);
+}
+.note--warn{ border-left-color:var(--warn); }
+.note--neg{ border-left-color:var(--neg); }
+
+/* threads / messages */
+.thread-list{ border-top:1px solid var(--rule-2); }
+.thread{ border-bottom:1px solid var(--rule); }
+.thread-btn{
+  width:100%; text-align:left; cursor:pointer;
+  padding:12px 8px 12px 0; min-height:var(--tap); color:inherit; font-family:inherit;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.thread-btn:hover{ background:var(--accent-w); }
+.thread[aria-selected="true"] .thread-btn{ box-shadow:inset 3px 0 0 var(--accent); padding-left:11px; }
+.thread .who{ font-weight:600; color:var(--ink); }        /* 16.70:1 PASS */
+.thread .snip{
+  display:block; color:var(--ink-2); font-size:var(--t-sm);/* 6.94:1 PASS */
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.thread .when{
+  margin-left:auto; font-family:var(--mono); font-size:var(--t-xs);
+  color:var(--ink-3); white-space:nowrap;          /* 5.17:1 PASS        */
+}
+.msg{ border-top:1px solid var(--rule); padding:12px 0; }
+.msg .from{
+  font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+.msg .from.is-us{ color:var(--accent); }           /* 8.96:1 PASS        */
+.msg p{ margin-top:4px; max-width:60ch; }
+
+/* response library */
+.snippet{ border-bottom:1px solid var(--rule); padding:14px 0; }
+.snippet-head{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.snippet h4{ font-family:var(--serif); font-size:var(--t-md); font-weight:400; }
+.snippet .uses{
+  margin-left:auto; font-family:var(--mono); font-size:var(--t-xs);
+  color:var(--ink-3);                              /* 5.17:1 PASS        */
+}
+.snippet-body{
+  margin-top:8px; padding:12px 14px;
+  background:var(--paper-2); border-left:2px solid var(--rule-2);
+  font-family:var(--sans); font-size:var(--t-base); line-height:1.6;
+  white-space:pre-wrap; color:var(--ink-2);        /* 6.46:1 on paper-2 PASS */
+  max-width:66ch; overflow-x:auto;
+}
+.snippet-body .var{ color:var(--accent); font-weight:600; }  /* 8.34:1 PASS */
+
+/* team scoring — self vs manager, the gap is the signal */
+.score{ display:inline-flex; gap:3px; vertical-align:middle; }
+.score i{ width:9px; height:14px; border:1px solid var(--rule-2); display:block; }
+.score i.is-on{ background:var(--accent); border-color:var(--accent); }
+.score i.is-self{ background:var(--rule-2); border-color:var(--rule-2); }
+
+/* search / filter bar */
+.toolbar{
+  display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+  padding:10px 0 12px; border-bottom:1px solid var(--rule);
+}
+.toolbar .search{ flex:1 1 220px; min-width:0; }
+.toolbar .search input{
+  width:100%; font-size:var(--t-input);            /* FIX 3 — 16px       */
+  min-height:var(--tap);
+  background:transparent; color:var(--ink);
+  border:0; border-bottom:1.5px solid var(--rule-2); border-radius:0; padding:6px 2px;
+}
+.toolbar .search input:focus-visible{ outline:none; border-bottom-color:var(--accent); box-shadow:0 1.5px 0 var(--accent); }
+.toolbar .count{ font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3); }
+/* A filter select is a `.field` let into the toolbar: the same 16px control
+   (FIX 3) and the same visible label, minus the column padding and the bottom
+   rule, because the toolbar's own rule already closes the row. Four share one
+   line on a laptop and each takes the full width at 375px.
+   Added for views/inquiries.js and views/orders.js. */
+.toolbar .field{ flex:1 1 150px; min-width:0; padding:0; border-bottom:0; gap:2px; }
+.toolbar .field select,
+.toolbar .field input{ min-height:36px; }
+
+/* A total row. Used where a table's whole claim is that its parts sum to a
+   figure published elsewhere — the stale-order split against
+   recovery.open_orders.stale_value. The sum belongs INSIDE the table it is a
+   sum of, and it takes the heaviest of the three rules, which is what a
+   bottom line is for. Added for views/orders.js. */
+.table tfoot td{
+  padding:10px 12px 10px 0;
+  border-top:3px double var(--rule-2);
+  font-weight:600; color:var(--ink);               /* 16.70:1 PASS        */
+}
+.table tfoot td:last-child{ padding-right:0; }
+.table tfoot .cell-figure{ font-size:var(--t-md); }
+
+/* banner — self-check blocks, stale data, DB unreachable */
+.banner{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:10px 12px; margin-bottom:18px;
+  border-left:3px solid var(--accent); background:var(--accent-w);
+  font-size:var(--t-base);
+}
+.banner--warn{ border-left-color:var(--warn); background:transparent; box-shadow:inset 0 0 0 1px var(--rule); }
+.banner--crit{ border-left-color:var(--neg); background:transparent; box-shadow:inset 0 0 0 1px var(--rule); }
+.banner strong{ color:var(--ink); }
+
+
+/* =============================================================================
+   18. RESPONSIVE — 375px is a first-class layout, not a fallback
+   =============================================================================
+   Reasoning at 375px, checked against the values below:
+     --gut 16px  →  .sheet content width = 375 - 32 = 343px.
+     .ticker 2 cols → 171px per cell; the longest label ("Success score")
+       ellipses rather than wrapping the figure off its own line.
+     .lede collapses to one column; .lede-side keeps its rule as a top rule.
+     .form-grid minmax(190px,1fr) auto-fits to exactly one column at 343px.
+     .table keeps min-width 520px and scrolls INSIDE .tablewrap; .frame,
+       .sheet and .tablewrap all carry min-width:0 / overflow-x:auto so the
+       body never scrolls sideways.
+     Every interactive element keeps min-height:var(--tap) = 44px.
+     --t-input is untouched at 1rem, so no control triggers iOS zoom.
+   ============================================================================= */
+
+@media (max-width:1080px){
+  :root{ --gut:22px; }
+  .ticker{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .tick{ border-top:1px solid var(--rule); }
+  .tick:nth-child(-n+3){ border-top:0; }
+  .tick:nth-child(3n+1){ border-left:0; padding-left:0; }
+  .cols--three{ grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+}
+
+@media (max-width:900px){
+  :root{ --gut:18px; }
+
+  .frame{ display:block; }
+
+  /* rail becomes a horizontal scrolling tab strip */
+  .rail{
+    width:auto; flex:none; height:auto;
+    position:sticky; top:0; z-index:30;
+    border-right:0; border-bottom:1px solid var(--rule-2);
+    padding:12px 0 0; gap:10px;
+    background:var(--paper);
+  }
+  .flag{ padding:0 var(--gut); flex-direction:row; align-items:baseline; gap:10px; justify-content:space-between; }
+  .flag-sub{ display:none; }
+  .nav{
+    flex-direction:row; overflow-x:auto; overflow-y:hidden;
+    padding:0 var(--gut); scrollbar-width:none;
+    -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
+  }
+  .nav::-webkit-scrollbar{ display:none; }
+  .nav-group{ display:none; }
+  .nav-link{
+    width:auto; flex:0 0 auto; white-space:nowrap; padding:0 14px; gap:8px;
+    border-bottom:2px solid transparent; scroll-snap-align:start;
+  }
+  .nav-link .tag{ display:none; }
+  .keycap{ display:none; }                 /* no keyboard, no keycap      */
+  .nav-link[aria-current="page"]{
+    box-shadow:none; background:none;
+    border-bottom-color:var(--accent); color:var(--accent);
+  }
+  .rail-foot{ position:absolute; top:6px; right:var(--gut); padding:0; width:auto; }
+  .theme-toggle{ width:var(--tap); padding:0; justify-content:center; }
+  /* Same specificity as the html[data-theme="dark"] rules above, later in
+     source, so the icon-only toggle actually wins in BOTH themes. The
+     naive `.theme-toggle span{display:none}` loses to the dark rule and
+     leaves the words wrapped inside a 44px square. */
+  html[data-theme] .theme-toggle .theme-label{ display:none; }
+
+  .sheet{ padding:0 var(--gut) 72px; }
+  .lede{ grid-template-columns:minmax(0,1fr); gap:20px; }
+  .lede-side{ border-left:0; padding-left:0; border-top:1px solid var(--rule); padding-top:18px; }
+  .cols--two,.cols--three{ grid-template-columns:minmax(0,1fr); }
+  .col-rule{ border-left:0; padding-left:0; border-top:1px solid var(--rule); padding-top:18px; }
+  .tablehint{ display:block; }             /* sideways scroll is likely   */
+  .form-grid--two{ grid-template-columns:minmax(0,1fr); }
+}
+
+@media (max-width:520px){
+  :root{ --gut:16px; --t-xl:1.5rem; }      /* NB: --t-input is NOT changed */
+
+  .ticker{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tick{ border-top:1px solid var(--rule); border-left:1px solid var(--rule); padding-left:12px; }
+  .tick:nth-child(-n+2){ border-top:0; }
+  .tick:nth-child(odd){ border-left:0; padding-left:0; }
+
+  .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .stat:nth-child(odd){ border-left:0; padding-left:0; }
+
+  .masthead-top{ align-items:flex-start; flex-direction:column; gap:6px; }
+  .figure .big{ font-size:2.625rem; }
+  .task-title{ font-size:var(--t-md); }
+  .task-extra{ padding-left:0; }
+  .btn{ flex:1 1 auto; }
+  .toolbar{ gap:8px; }
+  /* Axis ticks collide below ~420px: at a 343px track, a label centred on
+     88.7% and one right-aligned at 100% overlap. Views mark the droppable
+     ones — normally the axis bounds, never the interval edges, because the
+     interval edges ARE the number (R3). */
+  .range-tick--optional{ display:none; }
+}
+
+
+/* =============================================================================
+   19. PRINT  — the rail, the grain and every control come off the page
+   ============================================================================= */
+
+@media print{
+  :root{
+    --paper:#fff; --paper-2:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
+    --rule:#bbb; --rule-2:#666; --accent:#000;
+    --accent-w:transparent; --accent-w2:transparent;
+    --neg:#000; --pos:#000; --warn:#000;
+  }
+  html[data-theme="dark"]{
+    --paper:#fff; --paper-2:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
+    --rule:#bbb; --rule-2:#666; --accent:#000;
+    --neg:#000; --pos:#000; --warn:#000;
+    color-scheme:light;
+  }
+  body{ background:#fff; color:#000; font-size:10pt; line-height:1.45; }
+
+  .rail,.grain,.theme-toggle,.btn,.btnrow,.form-actions,
+  .segment,.toolbar,.tablehint,.keycap{ display:none !important; }
+
+  .frame{ display:block; }
+  .sheet{ padding:0; }
+  .view[hidden]{ display:block; }          /* print the whole hub, not one tab */
+  .view{ animation:none; break-before:page; }
+  .view:first-of-type{ break-before:auto; }
+
+  details{ border-top:1px solid #bbb; }
+  details > summary{ min-height:0; }
+  details > summary::after{ display:none; }
+  details:not([open]) .details-body{ display:block; }   /* reasoning prints */
+
+  .tablewrap{ overflow:visible; background:none; }
+  .tablewrap--capped{ max-height:none; overflow:visible; }
+  .table{ min-width:0; }
+  .table thead th{ position:static; background:none; }
+  .table tbody tr,.task,.snippet,.stat{ break-inside:avoid; }
+  a[href^="http"]::after{ content:" (" attr(href) ")"; font-size:8pt; color:#555; }
+
+  /* G1 shapes survive greyscale printing — that is the point of shapes. */
+  .glyph{ fill:#000; }
+  .pill{ border-color:#000; color:#000; }
+  .stamp--sample{ border-style:dashed; color:#000; }
+}
