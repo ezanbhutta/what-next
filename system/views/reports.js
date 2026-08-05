@@ -1188,7 +1188,6 @@ export function render(ctx) {
     return {
       title: 'The shift log cannot be read',
       kicker: 'Reports',
-      deck: html`Whether a shift is open, and what is due on it, are both <em>MISSING</em>, not "nothing".`,
       html: html`<div class="figure">
           <span class="cap">Due now</span>
           <strong class="big">${missing()}</strong>
@@ -1577,8 +1576,6 @@ export function render(ctx) {
           ? `${queue.length} reminder${queue.length === 1 ? '' : 's'} due on ${report.profile}`
           : `Nothing due on ${report.profile}`,
     kicker,
-    deck: html`Work what is due, log what happens, hand over what is left. Everything here belongs to
-      <em>${report.profile}</em> and follows it to the next shift.`,
     ticker: [
       { label: 'Due now', value: dueUnknown ? missing() : num(queue.length) },
       { label: 'Handle with care', value: dueUnknown ? missing() : num(alerts.length) },
@@ -1703,7 +1700,6 @@ function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
   return {
     title: 'No shift open',
     kicker: 'Reports',
-    deck: html`Pick a profile and a shift. Everything else on this page is about the profile you choose.`,
     ticker: [
       { label: 'Shift', value: 'Not open' },
       { label: 'Signed in', value: ctx.user ? ctx.user.name : missing() },

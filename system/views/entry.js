@@ -785,8 +785,6 @@ export function render(ctx) {
         ? `${dateShortText(date)} is not logged yet`
         : `Whether ${dateShortText(date)} is logged cannot be read`,
     kicker: profile ? `Daily entry · ${profile}` : 'Daily entry',
-    deck: html`Fourteen raw cells go in. Every total and every rate is worked out from them on this page and
-      stored <em>nowhere</em>.`,
     ticker: [
       { label: 'Entry date', value: dateShort(date, { year: true }), sub: profile || null },
       {

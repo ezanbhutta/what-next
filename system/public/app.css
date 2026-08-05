@@ -208,7 +208,9 @@
   --t-lg:  1.5rem;      /* 24px · section heading  (15 × φ)         */
   --t-xl:  1.5rem;      /* 24px · view heading                      */
   --t-2xl: 2.4375rem;   /* 39px · the one figure that matters (× φ²) */
-  --t-3xl: 3.9375rem;   /* 63px · deck headline (× φ³)              */
+  /* There is no φ³ step. 63px was declared for a deck headline that no longer
+     exists and was referenced by nothing, and a scale with an unused top step
+     invites somebody to reach for it. Five sizes is the scale. */
 
   /* iOS zooms the viewport on focus for any control under 16px. Every input,
      select and textarea in this file is pinned to this token. It is 1rem,
@@ -695,24 +697,16 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
   font-weight:700; color:var(--ink-3);             /* 5.07:1 PASS         */
 }
 
-/* G4 — the deck states the finding, not the section name.
-   "$6,952 earned. $8,007 waiting." not "Money".
-   Views own the words; this only sets them. */
-/* The deck supports the heading. It does not compete with it.
-   It was clamp(20px, 3vw, 26px) under a 24px heading, so the paragraph was
-   BIGGER than the thing it sat beneath, and a reader met two headline-sized
-   blocks of words before reaching a single number. On a page whose whole job
-   is "here is the figure, here is what to do", prose should be the quietest
-   thing on screen and the figure the loudest. */
-.deck{
-  font-family:var(--sans); font-weight:450;
-  font-size:var(--t-md); line-height:1.55;
-  letter-spacing:0; text-wrap:pretty;
-  color:var(--ink-2);                              /* 8.02:1 PASS         */
-  margin-bottom:var(--s5); max-width:56ch;
-}
-.deck em{ font-style:normal; color:var(--accent); }  /* 5.80:1 PASS       */
-.deck .num{ font-family:var(--mono); font-variant-numeric:tabular-nums lining-nums; letter-spacing:-.04em; }
+/* The deck is retired, and the history is worth keeping because the fix went
+   through two wrong answers before the right one.
+   It started as clamp(20px, 3vw, 26px) under a 24px heading, so the paragraph
+   was BIGGER than the thing it sat beneath. That was corrected to 17px and a
+   quieter ink, which read better and still left a paragraph standing in front
+   of the number. Size was never the problem. All 30 decks restated a figure
+   printed below them, so the honest fix was to delete the field rather than
+   make the restatement quieter. The shell no longer renders it, and the test
+   `no view returns a deck` keeps it from creeping back through a copied
+   template. */
 
 
 /* =============================================================================
@@ -738,9 +732,14 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
   font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
   font-weight:700; color:var(--ink-2); margin-bottom:6px;  /* 8.02:1 PASS */
 }
+/* On the scale, not beside it.
+   This was clamp(36px, 7.4vw, 48px). The tokens above declare a golden-ratio
+   scale and then the one size a reader actually looks at bypassed it, which
+   is why the hierarchy read as absent: 48px against a 39px step is not a
+   step, it is a fourth size nobody chose. */
 .figure .big{
   display:block; font-family:var(--mono); font-weight:700;
-  font-size:clamp(2.25rem,7.4vw,3rem); line-height:1; letter-spacing:-.05em;
+  font-size:var(--t-2xl); line-height:1; letter-spacing:-.05em;
   font-variant-numeric:tabular-nums lining-nums;
   color:var(--ink);                                /* 18.66:1 PASS        */
 }
@@ -754,9 +753,12 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
   font-size:var(--t-lg); line-height:1.15; letter-spacing:-.035em;
   font-variant-numeric:tabular-nums lining-nums;
 }
+/* One measure, everywhere. --measure was declared and then used by nothing,
+   while .figure .sub ran to 52ch, .details-body to 64ch and .deck to 56ch.
+   Three different line lengths down one page is why nothing lined up. */
 .figure .sub{
   font-size:var(--t-base); color:var(--ink-2);     /* 8.02:1 PASS         */
-  margin-top:10px; max-width:52ch;
+  margin-top:10px; max-width:var(--measure);
 }
 .figure .sub b{ color:var(--ink); font-weight:600; }
 .figure-pair{ display:flex; gap:var(--gut); flex-wrap:wrap; align-items:flex-end; }
@@ -786,7 +788,7 @@ details > summary:hover{ color:var(--accent); }
 details > summary:focus-visible{ outline-offset:-2px; }
 .details-body{
   font-size:var(--t-base); color:var(--ink-2);     /* 8.02:1 PASS         */
-  padding-bottom:var(--s3); max-width:64ch;
+  padding-bottom:var(--s3); max-width:var(--measure);
 }
 .details-body > * + *{ margin-top:.7em; }
 .details-body strong{ color:var(--ink); font-weight:600; }
@@ -1234,7 +1236,7 @@ details > summary:focus-visible{ outline-offset:-2px; }
 .task-body{ flex:1 1 auto; min-width:0; }
 .task-head{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
 .task-title{
-  font-family:var(--disp); font-size:1.0625rem; font-weight:600;
+  font-family:var(--disp); font-size:var(--t-base); font-weight:600;
   line-height:1.3; letter-spacing:-.024em; text-wrap:balance;
   color:var(--ink);                                /* 18.66:1 PASS        */
 }
@@ -2018,11 +2020,18 @@ mark{
     padding:var(--s3) 0 0; gap:10px;
     background:var(--paper);
   }
-  .flag{ padding:0 var(--gut); flex-direction:row; align-items:baseline; gap:10px; justify-content:space-between; }
-  .flag-sub{ display:none; }
+  /* ONE sticky row, not three.
+     The rail used to stack a brand row, the tab strip and an account row,
+     about 148px of permanently sticky height on a 667px screen. The brand
+     tells a signed-in person nothing they do not know, and the account row
+     is two controls used a handful of times a week. Both fold into the tab
+     row: the tabs scroll, the controls hold the right-hand end. */
+  .rail{ flex-direction:row; align-items:stretch; padding:0; gap:0; }
+  .flag{ display:none; }
   .nav{
+    flex:1 1 auto; min-width:0;
     flex-direction:row; overflow-x:auto; overflow-y:hidden;
-    padding:0 var(--gut); scrollbar-width:none; gap:2px;
+    padding:var(--s3) var(--gut) 0; scrollbar-width:none; gap:2px;
     -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
   }
   .nav::-webkit-scrollbar{ display:none; }
@@ -2047,15 +2056,23 @@ mark{
      line of height and can never overlap anything. */
   .rail-foot{
     position:static;
-    flex-direction:row; align-items:center; gap:var(--s2);
-    padding:0 var(--gut) var(--s2);
+    flex:0 0 auto;
+    flex-direction:row; align-items:center; gap:4px;
+    padding:0 var(--gut) 0 8px;
     width:auto; min-width:0;
-    order:3;                     /* masthead, tabs, then this */
+    border-left:1px solid var(--rule-2);
+    background:var(--paper);     /* the tabs scroll UNDER this, not through it */
   }
-  .rail-foot .who{
-    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    margin-inline-start:auto;    /* identity right, toggle left */
-  }
+  /* "Signed in as Ezan · owner" is the first thing to go: the desk line in
+     the masthead already names who is on, and a phone has no width to spend
+     saying it twice. The class is `.caption`, not `.who`. Targeting the
+     wrong one left the block at full width, and because `btn--block` makes
+     Sign out fill its container, the account controls grew wide enough to
+     sit on top of the tab strip, which is the exact collision the comment
+     above this block was written about. A selector that matches nothing
+     fails silently; only a screenshot showed it. */
+  .rail-foot .caption{ display:none; }
+  .rail-foot .btn--block{ width:auto; display:inline-flex; white-space:nowrap; }
   .theme-toggle{ width:var(--tap); padding:0; justify-content:center; }
   /* Same specificity as the html[data-theme="dark"] rules above, later in
      source, so the icon-only toggle actually wins in BOTH themes. The
@@ -2085,18 +2102,44 @@ mark{
 }
 
 @media (max-width:520px){
-  :root{ --gut:16px; --t-xl:1.5rem; --card-pad:16px; }  /* --t-input NOT changed */
+  /* --section-gap and --stack-gap were declared once and never reduced at any
+     breakpoint, so a phone spent 72px of a 667px screen on the gap between
+     the masthead and the one figure the page exists to show. Generous space
+     is right; 11% of the viewport in the single most expensive place is not.
+     --t-input is NOT changed: under 16px iOS zooms on focus and stays zoomed. */
+  :root{
+    --gut:16px; --t-xl:1.5rem; --card-pad:16px;
+    --section-gap:24px; --stack-gap:14px;
+  }
 
-  .ticker{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .tick{ border-top:1px solid var(--rule); border-left:1px solid var(--rule); }
-  .tick:nth-child(-n+2){ border-top:0; }
-  .tick:nth-child(odd){ border-left:0; }
+  /* Three cells in one row, not two over two rows. The cap is three now, so
+     the second row was only ever an empty cell and a border. */
+  .ticker{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .tick{ border-top:0; border-left:1px solid var(--rule); padding:12px 10px; }
+  .tick:first-child{ border-left:0; }
+  /* Let the label wrap instead of truncating. At 375px a third of the row is
+     about 105px, and "ORGANIC HEALTH" clipped to "ORGANIC H…" while "MONEY AT
+     REST" became "MONEY AT …", which is a label that has stopped naming its
+     own number. Two short lines beat one truncated one. */
+  .tick dt{ white-space:normal; overflow:visible; text-overflow:clip; line-height:1.3; }
+  /* The value stays on one line. "BREACH" broke across two at 24px, and a
+     word split down the middle reads as damage rather than a verdict.
+     The `small` beneath it must NOT inherit that: nowrap on the parent made
+     "since 1 June 2026" and "15 orders · floor" run straight out of their
+     cells and overlap the neighbouring one. */
+  .tick dd{ font-size:var(--t-lg); white-space:nowrap; }
+  .tick dd small{
+    display:block; margin-top:2px;
+    white-space:normal; overflow-wrap:anywhere; line-height:1.35;
+  }
 
   .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .stat:nth-child(odd){ border-left:1px solid var(--rule-2); }
 
   .masthead-top{ align-items:flex-start; flex-direction:column; gap:6px; }
-  .figure .big{ font-size:2.25rem; }
+  /* .figure .big is var(--t-2xl) at every width now. It used to be a clamp
+     that this line re-stated, so the two disagreed about which size a phone
+     got and the clamp usually won. */
   .task-title{ font-size:var(--t-md); }
   .task-extra{ padding-left:var(--card-pad); }
   .lede{ padding:var(--card-pad); }

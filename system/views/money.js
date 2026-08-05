@@ -100,10 +100,9 @@ function utcDay(value) {
 /**
  * The span the revenue window covers, inclusive of both end days.
  *
- * Reported in whole days AND in weeks, because the deck says "weeks" and a
- * reader who wants to check it needs the days the rounding came from. Returns
- * null rather than guessing when either end is unreadable, a window with no
- * measurable length gets no week count in the deck at all.
+ * Reported in whole days, for the window caption beneath the figure. Returns
+ * null rather than guessing when either end is unreadable, so a window with
+ * no measurable length gets no day count instead of an invented one.
  */
 function windowSpan(startIso, endIso) {
   const a = utcDay(startIso);
@@ -111,11 +110,6 @@ function windowSpan(startIso, endIso) {
   if (a === null || b === null || b < a) return null;
   const spanDays = Math.round((b - a) / 86_400_000) + 1;
   return { days: spanDays, weeks: Math.max(1, Math.round(spanDays / 7)) };
-}
-
-const WEEK_WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
-function weekWord(weeks) {
-  return WEEK_WORDS[weeks] || String(weeks);
 }
 
 /**
@@ -273,7 +267,6 @@ export function render(ctx) {
     return {
       title: 'No money figure can be stated',
       kicker: 'Money',
-      deck: html`Revenue and money-at-rest are <em>MISSING</em>, not zero, and not "a quiet month".`,
       html: html`<div class="figure">
           <span class="cap">metrics.economics + recovery</span>
           <strong class="mid">${missing()}</strong>
@@ -308,46 +301,21 @@ export function render(ctx) {
   const surplus = rev !== null && rest !== null ? rest - rev : null;
   const typical = n(pick(run, 'metrics.economics.median'));
 
-  // "in the five weeks since 1 July 2026" when both ends of the window are
-  // readable; the window's own label alone when they are not. The week count is
-  // never asserted without the dates it was counted from.
-  const bookedIn = span
-    ? html`in the ${weekWord(span.weeks)} week${span.weeks === 1 ? '' : 's'} ${
-        isMissing(windowLabel) ? 'of the window' : String(windowLabel)
-      }`
-    : html`${isMissing(windowLabel) ? 'in the current window' : String(windowLabel)}`;
-
-  const deck =
-    surplus === null
-      ? html`<em>${money(revenue)} earned. ${money(atRest)} waiting.</em> One of the two cannot be stated,
-          so the comparison between them is not made here.`
-      : surplus > 0
-        ? html`<em>${money(revenue)} earned. ${money(atRest)} waiting.</em> More money is standing still
-            than the agency has booked ${bookedIn}, ${money(surplus)} more, and none of it needs new
-            traffic.`
-        : html`<em>${money(revenue)} earned. ${money(atRest)} waiting.</em> The booked figure is ahead of
-            the standing one by ${money(Math.abs(surplus))}; the standing money still needs no new traffic.`;
-
   return {
-    title: `${plainMoney(atRest)} standing still against ${plainMoney(revenue)} booked`,
-    kicker: 'Money',
-    deck,
+    // Not "$7,627 standing still against $6,922 booked". Both figures sit in
+    // the ticker above and in the figure below, so that heading printed
+    // $7,627 three times on one 375px screen and wrapped to two lines doing
+    // it. The figure leads; the heading only names the page.
+    title: 'Money',
+    // Three cells, and none of them is the at-rest total: that is this page's
+    // lead figure, printed 39px tall a few hundred pixels below. A standing
+    // row exists to carry what the page does NOT say elsewhere, so these are
+    // the scale (earned), the typical order, and the board's state.
     ticker: [
       {
         label: 'Earned',
         value: money(revenue),
         sub: isMissing(windowLabel) ? null : String(windowLabel),
-      },
-      { label: 'Sitting still', value: money(atRest), sub: 'no new traffic needed' },
-      {
-        label: `Open past ${known(staleAfter) ? String(staleAfter) : '?'} days`,
-        value: money(staleValue),
-        sub: known(staleCount) ? `${staleCount} orders · floor` : null,
-      },
-      {
-        label: 'Quotes never placed',
-        value: money(quoteTotal),
-        sub: known(quoteCount) ? `${quoteCount} leads` : null,
       },
       {
         label: 'Typical order',

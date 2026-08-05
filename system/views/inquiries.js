@@ -213,7 +213,6 @@ export function render(ctx) {
     return {
       title: 'The inquiry join cannot be made',
       kicker: 'Inquiries',
-      deck: 'Nothing on this page can be stated, so nothing on this page is stated.',
       html: html`<div class="figure">
           <span class="cap">Referee unavailable</span>
           <strong class="mid">${missing()}</strong>
@@ -263,9 +262,6 @@ export function render(ctx) {
   return {
     title: `${summary.not_placed_but_ordered} buyers marked Not Placed had already ordered`,
     kicker: 'Inquiries',
-    deck: html`<em>${money(summary.not_placed_but_ordered_value, { cents: false })}</em> the inquiry log had written off.
-      ${num(summary.not_placed_but_ordered_orders)} orders, ${num(summary.not_placed_but_ordered)} buyers,
-      none of them lost.`,
     ticker: [
       { label: 'Inquiries logged', value: num(summary.leads), sub: 'rows' },
       { label: 'Distinct buyers', value: num(summary.lead_buyers), sub: 'the denominator' },

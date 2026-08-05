@@ -1492,8 +1492,6 @@ export function render(ctx) {
   return {
     title,
     kicker: dbUp ? `Week ending ${selected}` : 'Team · store unreachable',
-    deck: html`The score is not the signal. The <em>gap</em> between what someone says about their week and
-      what their manager says about it is, and 3 is normal.`,
     ticker: [
       { label: 'Week ending', value: dateShort(selected, { year: true }), sub: selected === current ? 'this week' : null },
       {

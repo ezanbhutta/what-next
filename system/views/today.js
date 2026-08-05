@@ -60,24 +60,9 @@ import {
 // small helpers
 // ============================================================================
 
-/** Plain-text money for the `title`/`kicker` strings, which are prose, not markup. */
-const USD0 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-function plainMoney(value) {
-  return known(value) ? USD0.format(Number(value)) : 'MISSING';
-}
-
 /** Priority → status shape. G1: the shape carries the meaning, not the colour. */
 const PRIORITY_TONE = { P0: 'crit', P1: 'warn', P2: 'info', P3: 'idle' };
 
-/** Engine verdict → status shape. Anything unrecognised stays idle rather than
- *  being guessed into a colour it did not earn. */
-const VERDICT_TONE = {
-  HEALTHY: 'ok',
-  STABLE: 'ok',
-  SOFTENING: 'warn',
-  DECLINING: 'crit',
-  BREACHED: 'crit',
-};
 
 /** An owner string like "Ezan (escalate to CEO if …)" is a name plus a caveat.
  *  The row shows the name; the caveat goes in the details, in sentence case,
@@ -162,7 +147,6 @@ function moneyAtRest(run) {
       <p class="sub">
         <b>${num(staleCount)}</b> orders open longer than ${days(staleAfter)} hold ${money(staleValue)},
         and <b>${num(quoteCount)}</b> quotes that never became orders hold ${money(quoteTotal)}.
-        It needs no new traffic, no marketplace lever and nobody's permission. Ezan owns all of it.
       </p>
     </div>
     ${why(
@@ -201,8 +185,14 @@ function healthSide(run) {
   const breached = pick(run, 'metrics.health.breached');
   const reasons = pick(run, 'metrics.health.breach_reasons');
   const structural = pick(run, 'metrics.health.structural_delta_pct');
-  const tone = VERDICT_TONE[String(verdict).toUpperCase()] || 'idle';
 
+  // ONE pill, not two.
+  //
+  // This rendered the engine's verdict ("BREACH") beside a second pill
+  // spelling out the same fact ("Constraint breached"), side by side under
+  // one figure. Two badges for one state reads as two problems. The verdict
+  // word is the engine's key; the sentence is what a person needs, so the
+  // sentence wins and the raw key stays in the run JSON where it belongs.
   const breachPill =
     breached === false
       ? pill('ok', 'Not breached')
@@ -228,7 +218,6 @@ function healthSide(run) {
       <span class="cap">Organic health index</span>
       <strong class="mid">${num(index, { dp: 1 })}<span class="caption"> / 100</span></strong>
       <p class="sub">
-        <span class="pill pill--${safe(tone)}">${glyph(tone)}${isMissing(verdict) ? missing() : String(verdict)}</span>
         ${breachPill}
       </p>
     </div>
@@ -402,7 +391,7 @@ function phasePanel(run) {
         'live',
         'Live · latest-run.json'
       )}
-      <p class="deck">${phase.objective}</p>
+      <p class="note">${phase.objective}</p>
       ${gates.length
         ? html`<div class="tablewrap">
               <table class="table table--narrow">
@@ -490,7 +479,6 @@ export function render(ctx) {
     return {
       title: 'There is no task list to work',
       kicker: 'Today',
-      deck: html`The engine run could not be read, so today's list is <em>MISSING</em>, not empty.`,
       html: html`<div class="figure">
           <span class="cap">Tasks for ${ctx.engine.runDate || 'today'}</span>
           <strong class="mid">${missing()}</strong>
@@ -578,13 +566,21 @@ export function render(ctx) {
     ${phasePanel(run)}
     ${selfCheckNote(run)}`;
 
-  return {
-    title: `${tasks.length} tasks, and ${plainMoney(atRest)} that needs no new traffic`,
-    kicker: canTick ? `${cleared} of ${tasks.length} cleared` : `${tasks.length} items · ticks MISSING`,
-    deck: html`<em>${money(atRest)}</em> is sitting still. Not one dollar of it needs new traffic, a
-      marketplace lever, or anybody's permission.`,
-    html: body,
-  };
+  // The title says what the page is, and nothing the page says again.
+  //
+  // It used to read "12 tasks, and $7,627 that needs no new traffic". That
+  // was the third printing of $7,627 and the second of the task count, both
+  // in a 24px heading that wrapped to two lines directly above the figure it
+  // was restating. The count belongs on the progress rule at the foot of the
+  // list, which is the one place a tick changes it.
+  // No ticker on this page.
+  //
+  // The three standing cells are Organic health, Money at rest and Open past
+  // 60 days. All three are restated as full figures inside the view, the
+  // first two within one screen of the cell. That put $7,627 twice and the
+  // breach verdict twice on a 375px viewport before a single instruction.
+  // Today is a checklist; the figure and the list are the page.
+  return { title: 'Today', ticker: false, html: body };
 }
 
 export default render;

@@ -1368,9 +1368,6 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
   return {
     title: 'Pick a buyer before writing anything',
     kicker: 'Messages',
-    deck: html`Nothing is offered until the triage is done. <em>${
-      isMissing(open) ? missing() : num(staleBuyers)
-    }</em> buyers have an order past ${staleLabel}, and they do not all get the same sentence.`,
     html: body,
   };
 }
@@ -1931,9 +1928,6 @@ export function render(ctx) {
   return {
     title: `${buyer}, ${runOk ? staleLine : 'open orders MISSING'}`,
     kicker: 'Messages',
-    deck: html`<em>${call.short}.</em> ${
-      gate.allowed ? 'A review request is permitted here.' : 'A review request is not.'
-    }`,
     ticker: [
       { label: 'Open orders', value: runOk ? num(rows.length) : missing() },
       {

@@ -361,7 +361,6 @@ export function render(ctx) {
     return {
       title: 'The shift log cannot be read',
       kicker: 'Reports · owner view',
-      deck: html`Who covered what, and what it produced, are both <em>MISSING</em>, not "nothing happened".`,
       html: html`<div class="figure">
           <span class="cap">Shifts covered · ${spanLabel}</span>
           <strong class="big">${missing()}</strong>
@@ -1116,8 +1115,6 @@ export function render(ctx) {
   return {
     title,
     kicker: `Reports · owner view · ${spanLabel}`,
-    deck: html`What the shifts produced across <em>${scope}</em>, and what they left owed. The follow-ups are
-      the point: everything else on this page is how they came to exist.`,
     ticker: [
       { label: 'Shifts', value: num(shifts.length) },
       { label: 'People', value: num(people.size) },

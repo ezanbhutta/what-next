@@ -178,11 +178,20 @@ const usd2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD'
  * keeps DECIMAL as a string on purpose so exactness survives the trip, and
  * formatting is the edge where it becomes a float, once.
  */
-export function money(value, { cents = null } = {}) {
+/**
+ * Money. Whole dollars unless the call site asks for cents.
+ *
+ * It used to decide per value: cents when the number had a fraction, none
+ * when it did not. That put $78.94 and $1,905 in the same column, so the
+ * decimal points never lined up and a column of figures could not be read
+ * down. Nobody chasing a late order needs the 94 cents.
+ *
+ * `{cents: true}` is for the places the cents are the point: a tip, an
+ * invoice line, an amount someone will reconcile against Fiverr.
+ */
+export function money(value, { cents = false } = {}) {
   if (!known(value)) return missing();
-  const n = Number(value);
-  const withCents = cents === null ? !Number.isInteger(n) : cents;
-  return new Safe(`<span class="num">${esc((withCents ? usd2 : usd0).format(n))}</span>`);
+  return new Safe(`<span class="num">${esc((cents ? usd2 : usd0).format(Number(value)))}</span>`);
 }
 
 /** A count. */
@@ -618,12 +627,25 @@ function navRail(ctx) {
     </nav>`;
 }
 
-/** The six standing figures. A view may replace them by returning `ticker`. */
+/**
+ * Three standing figures. A view may replace them, or refuse them outright by
+ * returning `ticker: false`.
+ *
+ * It was six, and six was the single largest object in the app: two columns
+ * over three rows, about 316px, sitting above every page's own lead figure.
+ * Three of Today's six were restated as full figures 300px lower down, and
+ * four of Entry's six were the literal contents of the inputs beneath them.
+ *
+ * Three is now the cap, and `false` is honoured. It could not be before:
+ * `custom && custom.length` is falsy for `false`, so a view asking for no
+ * ticker got the default six anyway.
+ */
 function tickerRow(ctx, custom) {
+  if (custom === false) return '';
   const cells = custom && custom.length ? custom : ctx.ticker || [];
   if (!cells.length) return '';
   return html`<dl class="ticker">${join(
-      cells.slice(0, 6).map(
+      cells.slice(0, 3).map(
         (c) => html`<div class="tick"><dt>${c.label}</dt><dd>${c.value}${
             c.sub ? html` <small>${c.sub}</small>` : ''
           }</dd></div>`
@@ -695,15 +717,28 @@ export function layout(ctx, result) {
   const section = SECTION_BY_KEY[ctx.section] || null;
   const pageTitle = [view.title || section?.label, 'XStudioz hub'].filter(Boolean).join(' · ');
 
-  const slug =
-    view.slug === false
-      ? ''
-      : html`<div class="slug">
-          <h2>${view.title || section?.label || 'XStudioz'}</h2>
-          <span class="kicker">${view.kicker || section?.label || ''}</span>
-        </div>`;
+  // ONE title, not four.
+  //
+  // The shell used to print the section's question as an h1, the view's title
+  // as an h2, the section label again as a kicker beside it, and then a deck
+  // paragraph. On Today that was: "What do I do now, and who owns it" / "12
+  // tasks, and $7,627 that needs no new traffic" / "TODAY" / "$7,627 is
+  // sitting still." Four blocks, one fact, roughly 200px, all of it in front
+  // of the first number on the page.
+  //
+  // The section question is not news to somebody who just clicked that tab,
+  // and the kicker repeats the tab they clicked. Both are gone. What is left
+  // is the view's own title, once.
+  const slug = view.slug === false ? '' : html`<div class="slug"><h2>${view.title || section?.label || 'XStudioz'}</h2></div>`;
 
-  const deck = view.deck ? html`<p class="deck">${view.deck}</p>` : '';
+  // The deck is deliberately dropped.
+  //
+  // All 30 of them restated a figure that appears below them, which is a
+  // paragraph in front of a number: the exact inversion the house style
+  // bans. Ignoring it at the shell rather than deleting 30 call sites means
+  // one change fixes fourteen pages, and a view that still returns a deck is
+  // wrong but not broken. `test_no_view_returns_a_deck` pins it so the field
+  // does not creep back through a copied template.
 
   const doc = html`<!doctype html>
 <html lang="en" data-theme="${ctx.theme === 'dark' ? 'dark' : 'light'}">
@@ -725,7 +760,7 @@ ${navRail(ctx)}
 <main class="sheet" id="main">
   <header class="masthead">
     <div class="masthead-top">
-      <h1>${ctx.headline || section?.question || 'XStudioz management hub'}</h1>
+      <h1 class="sr-only">${ctx.headline || section?.question || 'XStudioz management hub'}</h1>
       <p class="dateline">
         <span>${ctx.runDateLabel}</span><span class="dot">·</span>
         <span>${ctx.engineLabel}</span><span class="dot">·</span>
@@ -737,7 +772,7 @@ ${navRail(ctx)}
   </header>
   ${noticeStack(ctx)}
   <section class="view">
-    ${slug}${deck}${bodyHtml || ''}
+    ${slug}${bodyHtml || ''}
   </section>
 </main>
 </div>

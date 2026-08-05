@@ -129,6 +129,52 @@ test('the chokepoint converts em dashes arriving through data', async () => {
   assert.equal(esc(' — '), 'None');
 });
 
+// ------------------------------------------------- the figure leads, not prose
+
+test('no view returns a deck', async () => {
+  // R7: the figure leads and the reasoning goes in a <details> underneath.
+  // All 30 decks restated a number that appeared below them, which is a
+  // paragraph in front of a figure: the rule inverted. The shell no longer
+  // renders the field, so one creeping back would be invisible rather than
+  // wrong, which is worse. This is what makes the deletion stick.
+  const hits = allCode().filter((h) => /^\s*deck\s*:/.test(h.code));
+  assert.equal(
+    hits.length,
+    0,
+    `The deck is retired. Lead with the figure and put the reasoning in a <details>:\n${at(hits)}`
+  );
+});
+
+test('the shell caps the ticker at three and honours a refusal', async () => {
+  // Six cells was ~316px above every page's own lead figure, and a view
+  // could not decline them: `custom && custom.length` is falsy for `false`,
+  // so asking for no ticker returned the default six.
+  const { layout } = await import('../views/layout.js');
+  const ctx = {
+    nonce: 'n', theme: 'light', section: 'today', csrfToken: 'c',
+    user: { name: 'Ezan', role: 'owner' }, nav: [], notices: [], flash: {},
+    runDateLabel: 'Run 2026-08-05', engineLabel: "today's run",
+    engine: { ok: true, stale: false }, db: { ok: true },
+    ticker: Array.from({ length: 6 }, (_, i) => ({ label: `L${i}`, value: `V${i}` })),
+  };
+  const six = layout(ctx, { title: 'T', html: '<p>body</p>' });
+  const shown = [...six.matchAll(/class="tick"/g)].length;
+  assert.equal(shown, 3, 'the shell renders at most three ticker cells');
+  assert.ok(six.includes('V2') && !six.includes('V3'), 'it keeps the first three');
+
+  const none = layout(ctx, { title: 'T', html: '<p>body</p>', ticker: false });
+  assert.ok(!none.includes('class="tick"'), 'ticker:false renders no ticker');
+});
+
+test('money is whole dollars unless the call site asks for cents', async () => {
+  // $78.94 and $1,905 in one column never line up, and nobody chasing a late
+  // order needs the 94 cents.
+  const { money } = await import('../views/layout.js');
+  assert.match(String(money(78.94).value), /\$79\b/);
+  assert.match(String(money(1905).value), /\$1,905/);
+  assert.match(String(money(78.94, { cents: true }).value), /\$78\.94/);
+});
+
 // ------------------------------------------------------- the retired names
 
 test('the chokepoint scrubs the retired programme out of every string', async () => {

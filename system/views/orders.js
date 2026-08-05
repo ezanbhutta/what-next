@@ -218,7 +218,6 @@ export function render(ctx) {
     return {
       title: 'The live queue cannot be read',
       kicker: 'Orders',
-      deck: 'No open-order figure is shown, because none can be stated.',
       html: html`<div class="figure">
           <span class="cap">recovery.open_orders</span>
           <strong class="mid">${missing()}</strong>
@@ -254,9 +253,6 @@ export function render(ctx) {
   return {
     title: `${open.stale_count} of ${open.open_count} live orders are past ${open.stale_after_days} days`,
     kicker: 'Orders',
-    deck: html`<em>${num(open.open_count)} orders live</em>, ${money(open.open_value)} in them.
-      ${num(open.stale_count)} have been open past ${num(open.stale_after_days)} days and hold
-      ${money(open.stale_value)}.`,
     ticker: [
       { label: 'Live orders', value: num(open.open_count) },
       { label: 'Open value', value: money(open.open_value) },

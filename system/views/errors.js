@@ -93,7 +93,6 @@ export function render(ctx) {
   if (!book.length) {
     return {
       title: 'The order book could not be read',
-      deck: 'No orders were loaded, so nothing can be checked. This is MISSING, not clean.',
       html: html`<section class="block">
         <p class="caption">
           The engine's order file is absent or unreadable, so this page cannot tell a healthy
@@ -106,7 +105,6 @@ export function render(ctx) {
   if (report.clean) {
     return {
       title: 'Nothing to fix',
-      deck: html`All ${num(report.rowsChecked)} rows pass every check.`,
       html: html`<section class="block">
         <p class="caption">
           Checked for missing status, missing amount, missing date, missing buyer, orders in
@@ -123,9 +121,6 @@ export function render(ctx) {
     title: `${report.rowsFlagged} rows need a human`,
     // The headline states the finding, not the section name. The value is the
     // reason to care: these rows are moving numbers people act on.
-    deck: html`${num(report.rowsFlagged)} of ${num(report.rowsChecked)} rows carry something
-      that cannot be true, and ${money(report.totalValue)} sits on them.
-      The biggest single group is ${worst.label.toLowerCase()}.`,
 
     html: html`
       <p class="note">

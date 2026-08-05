@@ -642,8 +642,6 @@ export function render(ctx) {
     return {
       title: 'The reply library cannot be read',
       kicker: 'Responses',
-      deck: html`Every reply lives in the typed store, and the typed store did not answer. This is
-        <em>MISSING</em>, not an empty library.`,
       html: html`<div class="figure">
           <span class="cap">Replies on record</span>
           <strong class="big">${missing()}</strong>
@@ -685,8 +683,6 @@ export function render(ctx) {
     return {
       title: 'The reply library has not been imported yet',
       kicker: 'Responses',
-      deck: html`The <em>response</em> table is reachable and holds nothing. That is an import that has not
-        run, not a team without replies.`,
       html: html`<div class="figure">
           <span class="cap">Replies on record</span>
           <strong class="big">${num(0)}</strong>
@@ -820,8 +816,6 @@ export function render(ctx) {
   return {
     title: `${counts.active} replies ready, ${counts.untaken} never used`,
     kicker: `Responses · ${counts.categories} categories`,
-    deck: html`<em>${num(counts.active)}</em> replies, searchable by any word inside them.
-      <code class="mono">{username}</code> stays a token until Messages knows who it is for.`,
     ticker: [
       { label: 'In use', value: num(counts.active), sub: `of ${counts.total}` },
       { label: 'Categories', value: num(counts.categories) },

@@ -202,7 +202,6 @@ function renderDocument(ctx, doc, query) {
     return {
       kicker: doc.id,
       title: doc.title,
-      deck: doc.summary || `${doc.name}, shown as plain text.`,
       html: html`<p class="note note--warn">
           ${glyph('warn')} <strong>This document has no contents list.</strong> ${doc.reason}
           Everything it says is below, exactly as it is on disk. Nothing has been dropped.
@@ -236,7 +235,6 @@ function renderDocument(ctx, doc, query) {
   return {
     kicker: doc.id,
     title: doc.title,
-    deck: doc.summary || doc.answers,
     html: html`${metaRow(doc)}
       ${searchBar(query)}
       ${wanted.length
@@ -369,7 +367,6 @@ function renderSearch(ctx, docs, query, found) {
     title: found.total
       ? `${found.total} passage${found.total === 1 ? '' : 's'} match “${query}”`
       : `Nothing in the handbook says “${query}”`,
-    deck: html`All ${num(found.scanned)} documents, searched at once.`,
     html: html`${lede}
       ${searchBar(query)}
       ${gap}
@@ -413,10 +410,6 @@ function renderIndex(ctx, docs, query) {
         ? `${sections} sections you can jump to, across ${docs.length} documents`
         : `${sections} sections you can jump to, in ${readable.length} of ${docs.length} documents`
       : 'The handbook could not be read',
-    deck: whole
-      ? html`Search the words, not the file. Every rule in the six documents is one box away.`
-      : html`Search the words, not the file. <em>${num(docs.length - readable.length)}</em> of the six
-          documents will not open, and what they say is not searchable.`,
     html: html`<div class="lede">
         <div class="lede-main">
           <div class="figure">
@@ -486,8 +479,6 @@ export function render(ctx) {
     return {
       kicker: 'Handbook',
       title: 'The handbook could not be read',
-      deck: html`No document was found in <code class="mono">data/handbook/</code>, so this is
-        <em>MISSING</em>, not an empty set.`,
       html: html`<div class="figure">
           <span class="cap">Documents</span>
           <strong class="mid">${missing()}</strong>
@@ -505,7 +496,6 @@ export function render(ctx) {
     return {
       kicker: 'Handbook',
       title: 'No document with that name',
-      deck: html`<code class="mono">${docId}</code> is not one of the six. The set is below.`,
       html: html`<p class="note note--warn">
           ${glyph('warn')} A link pointed at <code class="mono">/handbook/${docId}</code> and nothing in the
           set answers to it. The six documents are named by their code, <code class="mono">om-01</code> to

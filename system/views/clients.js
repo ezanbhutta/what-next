@@ -596,7 +596,6 @@ function renderList(ctx) {
     return {
       title: 'There is no client list to show',
       kicker: 'Clients',
-      deck: html`The order book could not be read, so every client record is <em>MISSING</em>, not empty.`,
       html: html`<div class="figure">
           <span class="cap">Buyers</span>
           <strong class="mid">${missing()}</strong>
@@ -651,8 +650,6 @@ function renderList(ctx) {
   return {
     title: `${t.repeat_buyers} of ${t.buyers} buyers came back`,
     kicker: 'Clients',
-    deck: html`<em>${money(t.repeat_value)}</em> of ${money(t.lifetime_value)} came from the
-      ${num(t.repeat_buyers)} buyers who ordered more than once.`,
     ticker: [
       { label: 'Buyers', value: num(t.buyers) },
       { label: 'Came back', value: num(t.repeat_buyers), sub: 'of them' },
@@ -1022,15 +1019,6 @@ function renderClient(ctx, param) {
           ? `${label} inquired and never ordered`
           : `${label}, ${rec.orders.length} order${rec.orders.length === 1 ? '' : 's'}, ${plainMoney(rec.lifetime_value)}`,
     kicker: 'Client',
-    deck: !historyKnown
-      ? html`This client's history is <em>MISSING</em>, not empty.`
-      : unknownToEngine
-        ? html`Nothing in the order book or the inquiry log carries this username.`
-        : leadOnly
-          ? html`<em>${num(rec.leads.length)}</em> inquir${rec.leads.length === 1 ? 'y' : 'ies'} logged,
-              and no order in the book under this username.`
-          : html`<em>${money(rec.lifetime_value)}</em> across ${num(rec.orders.length)} orders,
-              ${rec.orders.length > 1 ? 'a buyer who came back' : 'one order only'}.`,
     ticker: [
       { label: 'Orders', value: historyKnown ? num(rec.orders.length) : missing() },
       { label: 'Lifetime', value: money(rec.lifetime_value), sub: rec.value_is_floor ? 'floor' : '' },
