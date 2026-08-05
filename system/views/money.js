@@ -64,6 +64,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   rate,
   rangeFigure,
@@ -636,10 +637,11 @@ function quotesTable(run) {
         <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
       </div>
       <p class="caption">
-        Ordered by value, not by follow-up count. A quote with no logged follow-up is not a neglected one
-        and this table does not colour it as though it were, the reason is the benchmark below. Ages are
-        measured to ${dateShort(pick(run, 'recovery.quotes.as_of'))}, the engine's run date, so every one
-        is a floor.
+        Ordered by value.${info(
+          `A quote with no logged follow-up is not a neglected one, and this table does not colour it as `
+          + `though it were: see the benchmark below. Ages are measured to the engine's run date, `
+          + `${dateShort(pick(run, 'recovery.quotes.as_of'))}, so every one is a floor.`
+        )}
       </p>
     </div>`;
 }

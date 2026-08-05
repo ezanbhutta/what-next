@@ -428,6 +428,33 @@ export function banner(level, title, body) {
 }
 
 /** A `<details>` block. R7: this is where reasoning goes, never above a figure. */
+/**
+ * A hover/tap explanation, folded behind an icon.
+ *
+ * THE PROBLEM THIS SOLVES, MEASURED
+ *
+ * 4,772 words of prose rendered across these views: a caption under every
+ * panel, a sub paragraph under every figure. Every one of them was written to
+ * stop somebody misreading a number, and every one of them made the page
+ * harder to read, which is the same failure by a different route.
+ *
+ * The reasoning still has to be reachable, because most of it is load-bearing
+ * (why a rate is a range, why money-at-rest ignores the window, why a review
+ * ask is refused). So it moves behind this: one 15px icon, the text on hover
+ * for a mouse and on tap for a phone, and nothing occupying the page until
+ * somebody asks.
+ *
+ * `<details>`-free on purpose. A details block still takes a line, still
+ * pushes the next figure down, and reads as content. This does not.
+ */
+export function info(text, { label = 'Why' } = {}) {
+  const body = String(text ?? '').trim();
+  if (!body) return '';
+  return html`<span class="info" tabindex="0" role="note"
+      aria-label="${label}: ${body}"><span aria-hidden="true">i</span><span
+      class="info-pop">${body}</span></span>`;
+}
+
 export function why(summary, body) {
   return html`<details><summary>${summary}</summary><div class="details-body">${body}</div></details>`;
 }
