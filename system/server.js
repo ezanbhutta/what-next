@@ -82,6 +82,14 @@ import {
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
 
+// The six owner-written documents. Read from data/handbook/, parsed out of
+// plain text, and never written to. Nothing here touches the database.
+import {
+  documents as handbookDocuments,
+  document as handbookDocument,
+  search as handbookSearch,
+} from './lib/handbook.js';
+
 // The thirteen reminder logics, as code. server.js does not decide when a
 // follow-up is owed, it asks this module and writes down the answer inside
 // the same transaction as the entry that caused it.
@@ -251,6 +259,9 @@ const FLASH_OK = {
   note: 'Note added to this client.',
   logged: 'Message logged against this buyer.',
   response: 'Reply library updated.',
+  talk: 'Talk playbook card saved. It is live on every buyer from now.',
+  talk_on: 'Card switched back on. It is offered again.',
+  talk_off: 'Card switched off. It is kept, and nobody is offered it.',
   team: 'Weekly review saved.',
   decision: 'Decision recorded.',
   upsell: 'Upsell row updated.',
@@ -274,6 +285,10 @@ const FLASH_ERR = {
   invalid: 'Some fields were not accepted. Nothing was written.',
   buyer: 'That buyer username was empty or not recognised.',
   notfound: 'That record no longer exists.',
+  forbidden: 'Only Ezan can change the talk playbook. Nothing was written.',
+  talk:
+    'A card needs a heading, a group, a title and at least one full exchange — what the buyer says AND ' +
+    'the line that goes back. Nothing was written.',
   db: 'The typed-records database could not be written to. Nothing was saved.',
   noshift: 'You have no shift open, so there is nothing to log against. Nothing was written.',
   reminder:
@@ -688,7 +703,9 @@ export const loaders = {
   },
 
   async entry(ctx, q) {
-    const date = isoDateParam(ctx.query.date) || todayIso();
+    // Yesterday, not today. Fiverr publishes a day's reach the day after, so
+    // the numbers on screen when someone opens this form describe yesterday.
+    const date = isoDateParam(ctx.query.date) || entryDefaultIso();
     return {
       date,
       entries: await q('SELECT * FROM daily_entry WHERE entry_date = ? ORDER BY profile', [date]),
@@ -782,6 +799,13 @@ export const loaders = {
           "SUM(kind = 'sent') AS sent, SUM(kind = 'flag') AS flags, " +
           'MAX(at) AS last_at FROM client_note GROUP BY buyer'
       ),
+      // Counts only. The picker never prints a line from the playbook, because
+      // no line can be chosen before a buyer is, and pulling thirty cards to
+      // render a list of usernames is waste.
+      talk: await q(
+        'SELECT `group`, MIN(heading) AS heading, COUNT(*) AS cards ' +
+          'FROM talk WHERE active = 1 GROUP BY `group` ORDER BY MIN(sort)'
+      ),
     };
   },
 
@@ -789,6 +813,11 @@ export const loaders = {
   // reply's name through the join so the history can say which template was
   // sent; `orders` and `leads` are this buyer's rows out of the engine's own
   // files, a filter of published data, never a second computation of it.
+  //
+  // `talk` is the owner's Client Talk Hub, the whole of it. INACTIVE CARDS ARE
+  // SELECTED TOO, and that is deliberate: the owner edits this page, and a card
+  // he switched off has to be visible to him to be switched back on. The view
+  // shows a deactivated card to the owner and to nobody else.
   async message(ctx, q, req) {
     const buyer = String(req.params.buyer || '').slice(0, 120);
     const key = normaliseBuyer(buyer);
@@ -806,11 +835,10 @@ export const loaders = {
           'WHERE n.buyer = ? ORDER BY n.at DESC LIMIT 300',
         [buyer]
       ),
-      // when_to_use and uses are what the library panel prints under each
-      // reply. Selecting four of the six columns rendered it half-blank.
-      responses: await q(
-        'SELECT id, name, body, when_to_use, category, uses FROM response ' +
-          'WHERE active = 1 ORDER BY category IS NULL, category, name'
+      talk: await q(
+        'SELECT id, slug, heading, `group`, kind, stage, chips, title, sub, turns, ' +
+          'active, sort, source, author, updated_at FROM talk ' +
+          'ORDER BY sort, id'
       ),
     };
   },
@@ -1050,6 +1078,35 @@ export const loaders = {
       activities,
       reminders,
       standing,
+    };
+  },
+
+  // ---- Handbook: the six documents, from disk -------------------------------
+  //
+  // No database at all. These are files committed to the repository, so this
+  // section keeps working through an outage that takes out everything typed.
+  // `documents()` never throws and never returns null: a file that will not
+  // parse comes back with `ok:false` and its full text, a file that is not
+  // there comes back with `present:false` and a reason, and the view renders
+  // both rather than showing a document that looks empty.
+  //
+  // The search runs over the whole set on purpose, including when a document
+  // is open. "Which of the six is this in" is the question the reader cannot
+  // answer, and removing it is what this section is for.
+  async handbook(ctx, q, req) {
+    const docs = handbookDocuments();
+    const wanted = str(req?.params?.doc, 40);
+    const doc = wanted ? handbookDocument(wanted) : null;
+    const query = str(ctx.query?.q, 120) || '';
+    return {
+      docs,
+      docId: wanted,
+      doc,
+      query,
+      // Results belong to the index. With a document open the same query is
+      // used to mark the words in place, which is a different job from
+      // listing everywhere else they appear.
+      results: query && !doc ? handbookSearch(query) : null,
     };
   },
 };
@@ -1323,6 +1380,14 @@ app.get('/clients/:buyer', requireAuth, gate('clients'), (req, res, next) => {
 // what was wrong with it instead of silently returning them to the list.
 app.get('/messages/:buyer', requireAuth, gate('messages'), page('messages', loaders.message));
 
+// One document, open. Same section, same lock, same loader, its own URL so a
+// rule can be linked to: /handbook/oh-01#s6 is "revisions, in the Order
+// Handbook" and it survives being pasted into a message. An unrecognised name
+// is NOT redirected away, the view has a stated branch for it that names what
+// was asked for and lists the six, which tells whoever followed the bad link
+// what was wrong with it.
+app.get('/handbook/:doc', requireAuth, gate('handbook'), page('handbook', loaders.handbook));
+
 // ---- Reports: two halves of one section ------------------------------------
 //
 // /reports      the CSR's own shift. Whoever can open the section can open it.
@@ -1396,6 +1461,30 @@ const oneOf = (v, allowed) => (allowed.includes(String(v ?? '')) ? String(v) : n
 const checked = (v) => (v === 'on' || v === '1' || v === 'true' ? 1 : 0);
 const todayIso = () => {
   const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+/**
+ * The day the daily entry is ABOUT, which is not the day it is typed.
+ *
+ * Fiverr publishes a day's impressions and clicks the following day, so
+ * whoever opens this form in the morning is reading yesterday's figures off
+ * the analytics page. Defaulting the form to today filed those numbers under
+ * the wrong date, and everything downstream inherited the shift: the 14-day
+ * window in decompose_funnel, the structural organic decline, and the
+ * previous-entry hint that exists to catch a typo by comparing days.
+ *
+ * A one-day offset is the kind of error that never looks wrong. Every figure
+ * stays plausible, every rate stays in range, and the whole series just sits
+ * one column to the right of the truth.
+ *
+ * The date is still editable on the form. This only changes what it opens on,
+ * so the common case is right without anyone having to remember.
+ */
+const entryDefaultIso = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
@@ -1606,6 +1695,114 @@ app.post(
       if (responseId) await t.run('UPDATE response SET uses = uses + 1 WHERE id = ?', [responseId]);
     });
     return { ok: 'logged' };
+  })
+);
+
+// ---- Messages: the owner's own talk playbook -------------------------------
+//
+// OWNER ONLY, AND IT IS CHECKED HERE RATHER THAN TRUSTED FROM THE PAGE.
+//
+// views/messages.js does not render the editor to anybody but Ezan, and that is
+// the courtesy. This is the rule. A hidden form is not a permission: the POST
+// is one curl away, and the person most likely to find it is a CSR who
+// bookmarked the URL, not an attacker.
+//
+// It is a code check rather than a `section_access` row for the same reason
+// /reports/ceo is: a section absent from that table is OPEN, so forgetting one
+// row would hand every CSR the ability to rewrite what everybody says to every
+// buyer — silently, with the page looking completely normal.
+
+const TALK_STAGES = ['all', 'inquiry', 'kickoff', 'working', 'approved', 'delivered'];
+const TALK_KINDS = ['ask', 'stop', 'care'];
+
+/** The turn rows a form posted, as parallel arrays. Blank rows are dropped. */
+function readTurns(body) {
+  const heard = [].concat(body.turn_h || []);
+  const say = [].concat(body.turn_s || []);
+  const opens = [].concat(body.turn_u || []);
+  const warn = [].concat(body.turn_w || []);
+
+  const turns = [];
+  for (let i = 0; i < Math.max(heard.length, say.length); i += 1) {
+    const h = str(heard[i], 400);
+    const s = str(say[i], 4000);
+    // BOTH HALVES OR NEITHER. A turn with a reply and no trigger is a line
+    // nobody can find; a turn with a trigger and no reply is a question the
+    // page raises and refuses to answer. Neither is stored.
+    if (!h || !s) continue;
+    turns.push({ h, s, u: str(opens[i], 200), w: str(warn[i], 600) });
+  }
+  return turns;
+}
+
+app.post(
+  '/messages/talk',
+  ...write('messages', '/messages', async (req) => {
+    if (req.user?.role !== 'owner') return { error: 'forbidden' };
+
+    const id = intOrNull(req.body.id);
+    const title = str(req.body.title, 200);
+    const group = str(req.body.group, 24);
+    const heading = str(req.body.heading, 80);
+    const turns = readTurns(req.body);
+
+    if (!title || !group || !heading || !turns.length) return { error: 'talk' };
+
+    const kind = oneOf(req.body.kind, TALK_KINDS) || 'ask';
+    const sub = str(req.body.sub, 2000);
+    const sort = intOrNull(req.body.sort) ?? 0;
+
+    // A card with no stage ticked is offered at EVERY stage, never at none.
+    // Storing an empty list would hide it behind every tab at once, which is
+    // indistinguishable from having deleted it and is not what anybody meant
+    // by leaving the boxes alone.
+    const stage = [].concat(req.body.stage || []).map(String).filter((s) => TALK_STAGES.includes(s));
+    const stageJson = JSON.stringify(stage.length ? [...new Set(stage)] : ['all']);
+
+    const chips = JSON.stringify(
+      String(req.body.chips ?? '')
+        .split(',')
+        .map((c) => c.trim().slice(0, 40))
+        .filter(Boolean)
+        .slice(0, 4)
+    );
+
+    await auditedWrite(req, id ? 'talk_update' : 'talk_create', { id, title, turns: turns.length }, (t) =>
+      id
+        ? t.run(
+            'UPDATE talk SET heading = ?, `group` = ?, kind = ?, stage = ?, chips = ?, ' +
+              'title = ?, sub = ?, turns = ?, sort = ?, author = ? WHERE id = ?',
+            [heading, group, kind, stageJson, chips, title, sub, JSON.stringify(turns), sort, req.user.name, id]
+          )
+        : // slug stays NULL on a card written here. That is what keeps
+          // db/seed-talk.js off it: the seed keys on slug, and a UNIQUE index
+          // ignores NULLs, so re-running the import can neither duplicate this
+          // card nor overwrite it.
+          t.run(
+            'INSERT INTO talk (heading, `group`, kind, stage, chips, title, sub, turns, sort, source, author) ' +
+              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'hub', ?)",
+            [heading, group, kind, stageJson, chips, title, sub, JSON.stringify(turns), sort, req.user.name]
+          )
+    );
+    return { ok: 'talk' };
+  })
+);
+
+app.post(
+  '/messages/talk/toggle',
+  ...write('messages', '/messages', async (req) => {
+    if (req.user?.role !== 'owner') return { error: 'forbidden' };
+    const id = intOrNull(req.body.id);
+    if (!id) return { error: 'invalid' };
+    const active = checked(req.body.active);
+
+    // Deactivate, never delete. A card that went out to buyers for six months
+    // is the explanation for six months of replies, and a DELETE makes those
+    // replies unaccountable. Off is a state; gone is a hole.
+    await auditedWrite(req, 'talk_toggle', { id, active }, (t) =>
+      t.run('UPDATE talk SET active = ?, author = ? WHERE id = ?', [active, req.user.name, id])
+    );
+    return { ok: active ? 'talk_on' : 'talk_off' };
   })
 );
 

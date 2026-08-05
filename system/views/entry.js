@@ -514,7 +514,11 @@ export function render(ctx) {
         <a href="/entry?date=${safe(encodeURIComponent(shiftIso(date, 1) || ''))}&amp;profile=${safe(encodeURIComponent(profile))}">Next day →</a>
       </div>
       <span class="count">${dateShort(date, { year: true })}</span>
-    </form>`;
+    </form>
+    <p class="caption">
+      Everything on this page is for ${dateShort(date, { year: true })}, not today.
+      Fiverr publishes a day's impressions the following day, so the form opens on yesterday.
+    </p>`;
 
   const profileNav =
     profiles.length > 1
