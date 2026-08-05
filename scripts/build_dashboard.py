@@ -8,16 +8,21 @@ one is ever on screen.
 
 Three rules this file exists to keep:
 
-**Light only.** The old page defined a light palette and then handed it to a
-``prefers-color-scheme: dark`` block that rewrote all twenty tokens. Anyone
-whose laptop was set to dark saw a dark page, having asked for a light one.
-There is no dark block here and there must not be one. If a dark mode is ever
-wanted it belongs behind an explicit toggle the reader operates, never behind
-a media query that reads the OS.
+**The reader picks the theme, never the OS.** The page ships dark by default
+with a light palette behind a toggle in the header, remembered in
+``localStorage`` under ``xs-theme`` and applied by an inline script before
+first paint so the wrong palette never flashes. What must never come back is
+the ``prefers-color-scheme`` block that used to rewrite all twenty tokens:
+that handed a stated product decision to the reader's operating system, and
+everyone whose laptop was set to dark opened a dark page having asked for a
+light one. Two palettes, one attribute, one button.
 
-**No external requests.** System fonts, no CDN, no remote CSS. The published
-artifact runs under a CSP that blocks every external host, so a webfont link
-is not a cosmetic choice — it is a silent failure on one of the two targets.
+**No external requests.** No CDN, no remote CSS, no webfont link. Inter and
+JetBrains Mono are base64-embedded from ``assets/fonts/``. The published
+artifact runs under a CSP that blocks every external host, so a link to
+fonts.googleapis.com renders on Vercel and silently falls back to a system
+face on the artifact — a design that looks like it was never applied. The
+bytes travel inside the file so both targets render identically.
 
 **Numbers lead, reasoning follows.** Each view opens with the figure and the
 instruction. Method and evidence sit underneath for anyone who wants them, and
@@ -26,6 +31,7 @@ never in front of the number.
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
 import re
@@ -84,107 +90,253 @@ def plural(n: int, one: str, many: str | None = None) -> str:
     return one if n == 1 else (many or one + "s")
 
 
+# ---------------------------------------------------------------------- FONTS
+# Inter for the interface, JetBrains Mono for anything a reader compares down a
+# column: figures, dates, ids. Both are the latin subset of the variable font,
+# base64-embedded rather than linked.
+#
+# The embedding is not a preference. This page ships to two targets, and one of
+# them (the published artifact) runs under a CSP that blocks every external
+# host. A <link> to fonts.googleapis.com renders perfectly on Vercel and
+# silently falls back to a system font on the artifact, which is the worst kind
+# of failure: it looks like a design that was never applied. So the bytes
+# travel inside the file, tests/test_engine.py asserts no external host appears
+# in the output, and the two targets render identically.
+#
+# 106 KB of base64 for both faces. That is the price of the page looking the
+# same everywhere, paid once per load.
+
+def _font_face(family: str, path: Path, weights: str) -> str:
+    """One @font-face with the file inlined as a data: URI."""
+    if not path.exists():
+        # Never fabricate a font. Without the file the stack falls through to
+        # the system face and the page still renders; a broken data: URI would
+        # give the browser something to fail at instead.
+        return ""
+    b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+    return (f"@font-face{{font-family:'{family}';font-style:normal;"
+            f"font-weight:{weights};font-display:swap;"
+            f"src:url(data:font/woff2;base64,{b64}) format('woff2')}}")
+
+
+def fonts_css(root: Path) -> str:
+    d = root / "assets" / "fonts"
+    return (_font_face("Inter", d / "inter-latin-var.woff2", "400 700")
+            + _font_face("JetBrains Mono", d / "jetbrains-mono-latin-var.woff2", "400 600"))
+
+
 # ---------------------------------------------------------------------- CSS
-# One accent, a lot of air, and a hard cap on line length. The old page ran
-# text the full width of a desktop monitor; 68ch is where prose stops being a
-# wall. Spacing is on a 4px scale so nothing lands off-grid.
+#
+# TWO THEMES, AND NEITHER OF THEM IS THE OPERATING SYSTEM'S CHOICE
+#
+# The page used to define a light palette and hand it to a
+# `@media (prefers-color-scheme: dark)` block that rewrote all twenty tokens.
+# Nothing in the source looked wrong, so it passed review twice, and everyone
+# whose laptop was set to dark opened a dark page they had explicitly not
+# asked for.
+#
+# The lesson was never "no dark mode". It was that a stated product decision
+# does not belong in a media query. So there are two palettes here, dark is
+# the default, and the ONLY thing that switches them is a button the reader
+# presses. `data-theme` on <html> is the switch; there is no
+# prefers-color-scheme rule anywhere in this file and
+# test_no_output_lets_the_os_pick_the_colour_scheme keeps it that way.
+#
+# Spacing is on a 4px scale. Prose stops at 68ch, because the old page ran
+# text the full width of a monitor and a 140-character line is not read, it is
+# skimmed.
 
 CSS = """
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--canvas);color:var(--ink);
-  font:400 16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
 
-:root{
-  --canvas:#FBFBFD; --card:#FFFFFF; --sunk:#F5F5F8;
-  --ink:#15151A; --body:#3E3E4A; --muted:#71717F; --faint:#A1A1AE;
-  --line:#E8E8EF; --line-soft:#F1F1F6;
-  --accent:#4F46E5; --accent-soft:#EEF0FE; --accent-ink:#3730A3;
-  --good:#059669; --good-soft:#E8F6F1;
-  --warn:#B45309; --warn-soft:#FDF3E4;
-  --bad:#DC2626;  --bad-soft:#FDECEC;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --shadow:0 1px 2px rgba(20,20,40,.04),0 1px 3px rgba(20,20,40,.06);
+/* ---- tokens: dark is the default, the toggle sets data-theme ---- */
+:root,:root[data-theme="dark"]{
+  --canvas:#0B0F17; --canvas-2:#0E131F;
+  --card:rgba(22,28,45,.75); --card-solid:#161C2D; --sunk:rgba(255,255,255,.03);
+  --glass:blur(12px);
+  --ink:#F1F5F9; --body:#CBD5E1; --muted:#94A3B8; --faint:#64748B;
+  --line:rgba(255,255,255,.08); --line-soft:rgba(255,255,255,.05);
+  --accent:#6366F1; --accent-ink:#A5B4FC; --accent-soft:rgba(99,102,241,.14);
+  --good:#10B981; --good-ink:#6EE7B7; --good-soft:rgba(16,185,129,.13);
+  --warn:#F59E0B; --warn-ink:#FCD34D; --warn-soft:rgba(245,158,11,.13);
+  --bad:#EF4444;  --bad-ink:#FCA5A5;  --bad-soft:rgba(239,68,68,.13);
+  --info:#38BDF8; --info-soft:rgba(56,189,248,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -6px rgba(0,0,0,.5);
+  --shadow-lift:0 12px 32px -8px rgba(0,0,0,.6);
+  --ring:rgba(99,102,241,.35);
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --canvas:#F8FAFC; --canvas-2:#F1F5F9;
+  --card:#FFFFFF; --card-solid:#FFFFFF; --sunk:#F1F5F9;
+  --glass:blur(12px);
+  --ink:#0F172A; --body:#334155; --muted:#64748B; --faint:#94A3B8;
+  --line:#E2E8F0; --line-soft:#EFF3F8;
+  --accent:#4F46E5; --accent-ink:#3730A3; --accent-soft:#EEF0FE;
+  --good:#059669; --good-ink:#047857; --good-soft:#E8F6F1;
+  --warn:#B45309; --warn-ink:#92400E; --warn-soft:#FDF3E4;
+  --bad:#DC2626;  --bad-ink:#991B1B;  --bad-soft:#FDECEC;
+  --info:#0284C7; --info-soft:#E0F2FE;
+  --shadow:0 10px 30px -5px rgba(0,0,0,.05),0 1px 2px rgba(15,23,42,.04);
+  --shadow-lift:0 18px 40px -10px rgba(0,0,0,.10);
+  --ring:rgba(79,70,229,.30);
   color-scheme:light;
 }
 
-.wrap{max-width:940px;margin:0 auto;padding:0 24px}
+body{margin:0;background:var(--canvas);color:var(--ink);
+  font:400 16px/1.65 var(--sans);-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+  transition:background .18s ease,color .18s ease}
+
+/* An ambient wash so the dark canvas is not a flat black rectangle. Fixed, so
+   it does not travel with the scroll and cost a repaint on every frame. */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 500px at 12% -8%,rgba(99,102,241,.10),transparent 60%),
+    radial-gradient(700px 400px at 92% 0%,rgba(56,189,248,.07),transparent 55%)}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(900px 500px at 12% -8%,rgba(99,102,241,.06),transparent 60%),
+    radial-gradient(700px 400px at 92% 0%,rgba(56,189,248,.05),transparent 55%)}
+
+:root{
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 
 /* ---- masthead ---- */
-header.top{background:var(--card);border-bottom:1px solid var(--line);
-  position:sticky;top:0;z-index:20}
-.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:22px 0 0}
-.brand h1{margin:0;font-size:17px;font-weight:640;letter-spacing:-.01em}
+header.top{position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb,var(--canvas) 78%,transparent);
+  -webkit-backdrop-filter:saturate(160%) blur(16px);
+  backdrop-filter:saturate(160%) blur(16px);
+  border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 0 0}
+.brand h1{margin:0;font-size:16px;font-weight:700;letter-spacing:-.015em;
+  display:flex;align-items:center;gap:9px}
+.brand h1::before{content:"";width:9px;height:9px;border-radius:3px;
+  background:linear-gradient(135deg,var(--accent),var(--info));
+  box-shadow:0 0 12px var(--ring)}
 .brand .date{font-size:13px;color:var(--muted)}
-.brand .win{font:600 11px/1 var(--sans);letter-spacing:.03em;
-  color:var(--accent-ink);background:var(--accent-soft);
-  padding:5px 9px;border-radius:999px;white-space:nowrap}
-.brand .stamp{margin-left:auto;font:500 11px/1 var(--mono);color:var(--faint);
+.brand .win{font:600 11px/1 var(--sans);letter-spacing:.03em;color:var(--accent-ink);
+  background:var(--accent-soft);border:1px solid var(--line);
+  padding:5px 10px;border-radius:999px;white-space:nowrap}
+.brand .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.brand .stamp{font:500 11px/1 var(--mono);color:var(--faint);
   text-transform:uppercase;letter-spacing:.08em}
 
-nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;
-  padding:14px 0 0;margin-bottom:-1px}
+/* Theme toggle. Two SVGs, one shown per theme. */
+.themer{display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;padding:0;border-radius:10px;cursor:pointer;
+  background:var(--sunk);border:1px solid var(--line);color:var(--muted);
+  transition:color .14s,background .14s,transform .14s}
+.themer:hover{color:var(--ink);background:var(--accent-soft);transform:translateY(-1px)}
+.themer:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.themer svg{width:16px;height:16px;display:block}
+.themer .moon{display:none}
+:root[data-theme="light"] .themer .moon{display:block}
+:root[data-theme="light"] .themer .sun{display:none}
+
+/* ---- segmented pill nav with a sliding highlight ---- */
+nav.tabs{position:relative;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;
+  margin:14px 0 0;padding:4px;border-radius:14px;
+  background:var(--sunk);border:1px solid var(--line)}
 nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs a{flex:0 0 auto;padding:9px 15px 13px;font-size:14px;font-weight:520;
-  color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;
-  border-radius:7px 7px 0 0;white-space:nowrap;transition:color .12s,background .12s}
-nav.tabs a:hover{color:var(--ink);background:var(--sunk)}
-nav.tabs a.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
-nav.tabs a .pip{display:inline-block;min-width:19px;margin-left:7px;padding:1px 6px;
-  border-radius:9px;background:var(--sunk);color:var(--muted);
-  font:600 11px/1.5 var(--sans);text-align:center}
-nav.tabs a.on .pip{background:var(--accent-soft);color:var(--accent-ink)}
-nav.tabs a .pip.alert{background:var(--bad-soft);color:var(--bad)}
+nav.tabs .slide{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:10px;
+  background:var(--card-solid);box-shadow:var(--shadow);
+  border:1px solid var(--line);
+  transition:transform .22s cubic-bezier(.4,0,.2,1),width .22s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;z-index:0}
+nav.tabs a{position:relative;z-index:1;flex:0 0 auto;display:inline-flex;align-items:center;
+  gap:7px;padding:9px 15px;border-radius:10px;font-size:14px;font-weight:520;
+  color:var(--muted);text-decoration:none;white-space:nowrap;
+  transition:color .14s}
+nav.tabs a:hover{color:var(--ink)}
+nav.tabs a.on{color:var(--ink);font-weight:640}
+nav.tabs a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+nav.tabs a .pip{display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:19px;padding:0 6px;border-radius:9px;
+  background:var(--sunk);border:1px solid var(--line);color:var(--muted);
+  font:600 11px/1 var(--sans)}
+nav.tabs a.on .pip{background:var(--accent-soft);color:var(--accent-ink);
+  border-color:transparent}
+nav.tabs a .pip.alert{background:var(--bad-soft);color:var(--bad-ink);
+  border-color:transparent;font-weight:700}
+@media (prefers-reduced-motion:reduce){nav.tabs .slide{transition:none}}
 
 /* ---- view scaffolding ---- */
 main{padding:44px 0 96px}
-.view{display:none;animation:in .16s ease-out}
+.view{display:none;animation:in .18s ease-out}
 .view.on{display:block}
-@keyframes in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.view{animation:none}}
 
-.lede{margin:0 0 8px;font-size:27px;line-height:1.25;font-weight:660;
-  letter-spacing:-.022em;max-width:24ch}
+.lede{margin:0 0 8px;font-size:28px;line-height:1.22;font-weight:680;
+  letter-spacing:-.025em;max-width:24ch}
 .sub{margin:0 0 40px;font-size:16px;color:var(--muted);max-width:64ch}
 
-h2.sec{margin:56px 0 4px;font-size:12px;font-weight:660;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.09em}
+h2.sec{margin:56px 0 4px;font-size:12px;font-weight:680;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.10em}
 p.secnote{margin:0 0 20px;font-size:14px;color:var(--faint);max-width:68ch}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;
-  box-shadow:var(--shadow)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);-webkit-backdrop-filter:var(--glass);
+  backdrop-filter:var(--glass)}
 .pad{padding:26px 28px}
 
-/* ---- the one number ---- */
-.hero{padding:34px 32px;margin-bottom:16px}
-.hero .cap{font:600 11px/1 var(--sans);text-transform:uppercase;
-  letter-spacing:.09em;color:var(--muted);margin-bottom:14px}
-.hero .fig{font-size:52px;line-height:1;font-weight:680;letter-spacing:-.035em;
+/* ---- hero: the one number ---- */
+.hero{position:relative;padding:34px 32px;margin-bottom:16px;overflow:hidden}
+/* Gradient border, drawn as a masked ring so the glass behind stays visible. */
+.hero::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,var(--accent),transparent 42%,transparent 62%,var(--info));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;pointer-events:none;opacity:.7}
+.hero .cap{display:flex;align-items:center;gap:8px;
+  font:600 11px/1 var(--sans);text-transform:uppercase;
+  letter-spacing:.10em;color:var(--muted);margin-bottom:14px}
+.hero .cap .ic{display:inline-flex;width:20px;height:20px;border-radius:6px;
+  align-items:center;justify-content:center;font-size:11px;
+  background:var(--accent-soft);color:var(--accent-ink)}
+.hero.good .cap .ic{background:var(--good-soft);color:var(--good-ink)}
+.hero.warn .cap .ic{background:var(--warn-soft);color:var(--warn-ink)}
+.hero.bad  .cap .ic{background:var(--bad-soft);color:var(--bad-ink)}
+.hero .fig{font-size:54px;line-height:1;font-weight:700;letter-spacing:-.04em;
   font-variant-numeric:tabular-nums}
 .hero .say{margin-top:14px;font-size:16px;color:var(--body);max-width:60ch}
 .hero.good .fig{color:var(--good)} .hero.warn .fig{color:var(--warn)}
-.hero.bad .fig{color:var(--bad)}   .hero.accent .fig{color:var(--accent)}
+.hero.bad .fig{color:var(--bad)}   .hero.accent .fig{color:var(--accent-ink)}
 
-/* ---- stat row ---- */
-.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+/* ---- stat grid ---- */
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));
   margin-bottom:12px}
-.stat{padding:20px 22px}
-.stat .k{font:600 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;
+.stat{position:relative;padding:20px 22px;overflow:hidden;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.stat::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent);opacity:.55;transition:opacity .16s}
+.stat.good::after{background:var(--good)} .stat.warn::after{background:var(--warn)}
+.stat.bad::after{background:var(--bad)}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);border-color:var(--ring)}
+.stat:hover::after{opacity:1}
+.stat .k{font:600 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.09em;
   color:var(--muted);margin-bottom:10px}
-.stat .v{font-size:27px;line-height:1.1;font-weight:660;letter-spacing:-.022em;
+.stat .v{font-size:28px;line-height:1.1;font-weight:680;letter-spacing:-.025em;
   font-variant-numeric:tabular-nums}
 .stat .n{margin-top:7px;font-size:13px;color:var(--faint);line-height:1.45}
 .stat .v.good{color:var(--good)} .stat .v.warn{color:var(--warn)}
 .stat .v.bad{color:var(--bad)}
 
+@media (prefers-reduced-motion:reduce){.stat{transition:none}.stat:hover{transform:none}}
+
 /* ---- tasks ---- */
 .task{display:flex;gap:15px;padding:19px 22px;border-bottom:1px solid var(--line-soft);
-  transition:background .12s}
+  transition:background .14s}
 .task:last-child{border-bottom:0}
-.task:hover{background:#FCFCFE}
-.task input{appearance:none;flex:0 0 auto;width:21px;height:21px;margin:1px 0 0;
-  border:1.75px solid #C9C9D6;border-radius:6px;background:var(--card);
+.task:hover{background:var(--sunk)}
+.task input{appearance:none;flex:0 0 auto;width:21px;height:21px;margin:2px 0 0;
+  border:1.75px solid var(--faint);border-radius:6px;background:transparent;
   cursor:pointer;position:relative;transition:.14s}
 .task input:hover{border-color:var(--accent)}
 .task input:checked{background:var(--accent);border-color:var(--accent)}
@@ -193,59 +345,88 @@ p.secnote{margin:0 0 20px;font-size:14px;color:var(--faint);max-width:68ch}
   transform:rotate(45deg)}
 .task input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .task .body{min-width:0;flex:1}
-.task h3{margin:0 0 5px;font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.4}
-.task .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+.task h3{margin:0 0 7px;font-size:16px;font-weight:620;letter-spacing:-.012em;
+  line-height:1.4;transition:opacity .2s,text-decoration-color .2s}
+.task .meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;
   font-size:13px;color:var(--muted);margin-bottom:11px}
-.task .who{font-weight:560;color:var(--body)}
-.task .val{font-weight:620;color:var(--good);font-variant-numeric:tabular-nums}
-.task ol{margin:0;padding-left:19px;font-size:14px;color:var(--body);line-height:1.6}
-.task ol li{margin:4px 0}
-.task ol li::marker{color:var(--faint);font-size:12px}
-.task.done{opacity:.42}
+.task .val{font-weight:640;color:var(--good);font-variant-numeric:tabular-nums;
+  font-family:var(--mono);font-size:12.5px}
+.task ol{margin:0;padding-left:0;list-style:none;font-size:14px;color:var(--body);
+  line-height:1.6}
+.task ol li{position:relative;margin:6px 0;padding-left:24px}
+.task ol li::before{content:"";position:absolute;left:0;top:.5em;
+  width:13px;height:13px;border-radius:4px;border:1.5px solid var(--line);
+  background:var(--sunk)}
+.task.done{opacity:.45}
 .task.done h3{text-decoration:line-through;text-decoration-color:var(--faint)}
 
-.dot{width:5px;height:5px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+/* Priority and owner badges. Shape and letter carry the meaning, colour only
+   reinforces it — P0 and P2 must stay distinguishable in greyscale. */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;
+  font:700 10.5px/1.6 var(--mono);letter-spacing:.05em;white-space:nowrap}
+.tag.p0{background:var(--bad-soft);color:var(--bad-ink)}
+.tag.p1{background:var(--warn-soft);color:var(--warn-ink)}
+.tag.p2{background:var(--info-soft);color:var(--info)}
+.tag.p3{background:var(--sunk);color:var(--muted)}
+.who{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;
+  background:var(--sunk);border:1px solid var(--line);
+  font:560 12px/1.6 var(--sans);color:var(--body)}
+.who::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+
+.dot{width:4px;height:4px;border-radius:50%;background:var(--faint);flex:0 0 auto}
 
 /* ---- tables ---- */
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
+  border-radius:14px}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;padding:11px 16px;font:600 11px/1 var(--sans);
-  text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
-  background:var(--sunk);white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;z-index:1;text-align:left;padding:11px 16px;
+  font:600 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--line);
+  background:var(--card-solid)}
 td{padding:13px 16px;border-bottom:1px solid var(--line-soft);
-  color:var(--body);vertical-align:top}
+  color:var(--body);vertical-align:top;transition:background .12s}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:var(--sunk)}
 tr:last-child td{border-bottom:0}
-td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-family:var(--mono);font-size:13px}
 td.name{font-weight:560;color:var(--ink);white-space:nowrap}
 
 /* ---- pills ---- */
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
-  border-radius:999px;font:600 11px/1.6 var(--sans);letter-spacing:.02em;white-space:nowrap}
-.pill.good{background:var(--good-soft);color:var(--good)}
-.pill.warn{background:var(--warn-soft);color:var(--warn)}
-.pill.bad{background:var(--bad-soft);color:var(--bad)}
+  border-radius:999px;font:600 11px/1.6 var(--sans);letter-spacing:.02em;
+  white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good-ink)}
+.pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.pill.bad{background:var(--bad-soft);color:var(--bad-ink)}
 .pill.flat{background:var(--sunk);color:var(--muted)}
 
 /* ---- banner ---- */
-.banner{display:flex;gap:13px;padding:17px 20px;border-radius:11px;
-  font-size:14.5px;line-height:1.6;margin-bottom:16px}
-.banner.bad{background:var(--bad-soft);color:#8C1D1D}
-.banner.warn{background:var(--warn-soft);color:#7C3D08}
-.banner.good{background:var(--good-soft);color:#065F46}
-.banner b{font-weight:660}
+.banner{display:flex;gap:13px;padding:17px 20px;border-radius:12px;
+  font-size:14.5px;line-height:1.6;margin-bottom:16px;border:1px solid transparent}
+.banner.bad{background:var(--bad-soft);color:var(--bad-ink);border-color:var(--bad-soft)}
+.banner.warn{background:var(--warn-soft);color:var(--warn-ink);border-color:var(--warn-soft)}
+.banner.good{background:var(--good-soft);color:var(--good-ink);border-color:var(--good-soft)}
+.banner b{font-weight:680;color:var(--ink)}
 .banner .ic{flex:0 0 auto;font-size:15px;line-height:1.5}
 
 /* ---- disclosure ---- */
 details{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:14px}
 summary{cursor:pointer;font-size:13px;font-weight:560;color:var(--muted);
-  list-style:none;display:inline-flex;align-items:center;gap:6px;
-  padding:3px 0;border-radius:5px}
+  list-style:none;display:inline-flex;align-items:center;gap:7px;
+  padding:4px 0;border-radius:6px;transition:color .14s}
 summary::-webkit-details-marker{display:none}
-summary::before{content:"›";font-size:15px;transition:transform .14s;display:inline-block}
-details[open] summary::before{transform:rotate(90deg)}
-summary:hover{color:var(--accent)}
-details .inner{padding:12px 0 2px;font-size:14px;color:var(--body);
-  line-height:1.65;max-width:68ch}
+summary::before{content:"";width:6px;height:6px;flex:0 0 auto;
+  border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:rotate(-45deg);transition:transform .18s ease;margin-left:2px}
+details[open] summary::before{transform:rotate(45deg)}
+summary:hover{color:var(--accent-ink)}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+details .inner{padding:14px 16px 4px;font-size:14px;color:var(--body);
+  line-height:1.65;max-width:68ch;
+  animation:reveal .18s ease-out}
+@keyframes reveal{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){details .inner{animation:none}}
 
 .empty{padding:40px 28px;text-align:center;color:var(--faint);font-size:14.5px}
 .foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);
@@ -261,6 +442,7 @@ details .inner{padding:12px 0 2px;font-size:14px;color:var(--body);
   .task{padding:17px}
   main{padding:32px 0 72px}
   h2.sec{margin-top:44px}
+  .brand{padding-top:14px}
 }
 """
 
@@ -275,7 +457,48 @@ JS = r"""
 (function(){
   var PAGES=%(pages)s, RUN=%(run)s;
   var SB=%(sb_url)s, KEY=%(sb_key)s, TABLE='growth_task_state';
-  var LS='xs.tasks.'+RUN;
+  var LS='xs.tasks.'+RUN, TKEY='xs-theme';
+
+  /* ---- theme -------------------------------------------------------------
+     Dark is the default and the OS is never consulted. The choice is written
+     to localStorage AND to a cookie: localStorage is what this page reads on
+     the next load, and the cookie is what a server-rendered page could read
+     to paint the right theme before first paint. The inline boot script in
+     the <head> applies it, so there is no flash of the wrong palette. */
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme',t);
+    var b=document.getElementById('themer');
+    if(b){
+      b.setAttribute('aria-pressed',t==='light'?'true':'false');
+      b.title=t==='light'?'Switch to dark':'Switch to light';
+      b.setAttribute('aria-label',b.title);
+    }
+  }
+  function theme(){
+    try{ return localStorage.getItem(TKEY)==='light'?'light':'dark'; }catch(e){ return 'dark'; }
+  }
+  function setTheme(t){
+    try{ localStorage.setItem(TKEY,t); }catch(e){}
+    try{ document.cookie=TKEY+'='+t+';path=/;max-age=31536000;samesite=lax'; }catch(e){}
+    applyTheme(t);
+  }
+  var themer=document.getElementById('themer');
+  if(themer) themer.addEventListener('click',function(){
+    setTheme(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light');
+  });
+  applyTheme(theme());
+
+  /* ---- nav: slide the highlight to the active tab ---- */
+  function slide(id){
+    var bar=document.querySelector('nav.tabs .slide'), a=document.getElementById('t-'+id);
+    if(!bar||!a) return;
+    bar.style.width=a.offsetWidth+'px';
+    bar.style.transform='translateX('+a.offsetLeft+'px)';
+  }
+  window.addEventListener('resize',function(){
+    var on=document.querySelector('nav.tabs a.on');
+    if(on) slide(on.id.replace(/^t-/,''));
+  });
 
   function show(id){
     if(PAGES.indexOf(id)<0) id=PAGES[0];
@@ -285,6 +508,7 @@ JS = r"""
       if(t){ t.classList.toggle('on',p===id);
              p===id?t.setAttribute('aria-current','page'):t.removeAttribute('aria-current'); }
     });
+    slide(id);
     window.scrollTo(0,0);
   }
   function route(){ show((location.hash||'').replace(/^#\/?/,'')||PAGES[0]); }
@@ -353,15 +577,48 @@ JS = r"""
 
 # --------------------------------------------------------------- components
 
+#: One glyph per tone. Shape carries the status before colour does, so the
+#: hero still reads correctly in greyscale or to anyone who cannot separate
+#: red from green.
+_TONE_ICON = {"good": "&#10003;", "warn": "&#9888;", "bad": "&#9679;", "": "&#9670;", "accent": "&#9670;"}
+
+
 def hero(cap: str, fig: str, say: str, tone: str = "") -> str:
-    return (f'<div class="card hero {tone}"><div class="cap">{e(cap)}</div>'
+    icon = _TONE_ICON.get(tone, "&#9670;")
+    return (f'<div class="card hero {tone}">'
+            f'<div class="cap"><span class="ic" aria-hidden="true">{icon}</span>{e(cap)}</div>'
             f'<div class="fig">{fig}</div><div class="say">{say}</div></div>')
 
 
 def stat(k: str, v: str, n: str = "", tone: str = "") -> str:
     note = f'<div class="n">{e(n)}</div>' if n else ""
-    return (f'<div class="card stat"><div class="k">{e(k)}</div>'
+    # The tone goes on the card too, so the top accent bar matches the figure.
+    return (f'<div class="card stat {tone}"><div class="k">{e(k)}</div>'
             f'<div class="v {tone}">{v}</div>{note}</div>')
+
+
+def priority_tag(value: str) -> str:
+    """P0..P3 as a badge. Anything unrecognised renders as itself, unstyled,
+    rather than being silently dropped or coerced into a level it is not."""
+    p = str(value or "").strip().upper()
+    if not p:
+        return ""
+    klass = p.lower() if p in {"P0", "P1", "P2", "P3"} else "p3"
+    return f'<span class="tag {klass}" title="Priority {e(p)}">{e(p)}</span>'
+
+
+def owner_badge(owner: str) -> str:
+    """The owner as a short badge, with the full text kept in the tooltip.
+
+    Owners in the run JSON are sentences, not names: "Salman (highest
+    value-per-lead at $53)". The qualifier is the reasoning and belongs in the
+    task's own text, not in a badge that has to sit on one line beside three
+    others. So the badge is the name and the tooltip is the whole thing, and
+    nothing is lost.
+    """
+    full = str(owner or "unassigned").strip()
+    short = full.split("(")[0].strip() or full
+    return f'<span class="who" title="{e(full)}">{e(short)}</span>'
 
 
 def banner(tone: str, icon: str, text: str) -> str:
@@ -432,7 +689,11 @@ def view_today(run: dict) -> str:
         rows = []
         for t in tasks:
             steps = "".join(f"<li>{e(s)}</li>" for s in (t.get("steps") or [])[:4])
-            bits = [f'<span class="who">{e(t.get("owner", "unassigned"))}</span>']
+            bits = []
+            tag = priority_tag(t.get("priority"))
+            if tag:
+                bits.append(tag)
+            bits.append(owner_badge(t.get("owner", "unassigned")))
             if t.get("impact_usd"):
                 bits += ['<span class="dot"></span>',
                          f'<span class="val">{money(t["impact_usd"])}</span>']
@@ -829,15 +1090,37 @@ def render(run: dict, flow: list[dict], root: Path) -> str:
     # The artifact is found by its name and tab icon, so the title is fixed
     # even though the page behind it was rebuilt. Changing it would read as a
     # different page in the gallery and in an open browser tab.
+    # The theme is applied before the body paints. Waiting for the main script
+    # at the end of the document would render one frame of the default palette
+    # and then repaint, which reads as a flicker on every single load for
+    # whoever chose the non-default theme.
+    boot = ("(function(){try{var t=localStorage.getItem('xs-theme');"
+            "document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}"
+            "catch(e){document.documentElement.setAttribute('data-theme','dark')}})()")
+
+    sun = ('<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+           'stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+           '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2'
+           'M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>'
+           '</svg>')
+    moon = ('<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+            '<path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1Z"/></svg>')
+
     return f"""<title>XStudioz — What Next</title>
-<style>{CSS}</style>
+<script>{boot}</script>
+<style>{fonts_css(root)}{CSS}</style>
 <header class="top"><div class="wrap">
   <div class="brand">
     <h1>XStudioz</h1><span class="date">{e(pretty)}</span>
     {f'<span class="win">{e(wlabel)}</span>' if wlabel else ''}
-    <span class="stamp">brief<span class="sync" id="sync">·</span></span>
+    <span class="right">
+      <span class="stamp">brief<span class="sync" id="sync">·</span></span>
+      <button class="themer" id="themer" type="button" aria-pressed="false"
+              aria-label="Switch to light" title="Switch to light">{sun}{moon}</button>
+    </span>
   </div>
-  <nav class="tabs">{"".join(tabs)}</nav>
+  <nav class="tabs"><span class="slide" aria-hidden="true"></span>{"".join(tabs)}</nav>
 </div></header>
 <main><div class="wrap">{views}
   <p class="foot">Generated by the XStudioz Growth Engine from the order workbook, the inquiry
@@ -890,7 +1173,7 @@ def main() -> int:
     flow = load_flow(root, run.get("metrics", {}).get("profile", ""))
     out = Path(args.out) if args.out else reports / "dashboard.html"
     out.write_text(render(run, flow, root), encoding="utf-8")
-    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB, {len(PAGES)} views, light only)")
+    print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB, {len(PAGES)} views, dark default + light toggle, fonts embedded)")
     return 0
 
 

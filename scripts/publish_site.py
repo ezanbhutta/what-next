@@ -44,6 +44,7 @@ The output is generated on every run. Never hand-edit either file.
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime as _dt
 import json
 import re
@@ -57,6 +58,30 @@ ROOT = Path(__file__).resolve().parent.parent
 # <link> is not a cosmetic choice — it is a request that fails on one of the
 # two targets while looking fine on the other. Empty rather than deleted so the
 # __FONTS__ placeholder keeps working.
+def _fonts_css() -> str:
+    """The same two faces the brief embeds, inlined here too.
+
+    The login page is a separate document and never sees the dashboard's
+    stylesheet, so without this it renders in a system face and the sign-in
+    screen looks like a different product from the page behind it. Embedded
+    rather than linked for the same reason as the brief: the CSP on the
+    published artifact blocks external hosts, and a <link> that silently does
+    nothing is worse than no link at all.
+    """
+    d = ROOT / "assets" / "fonts"
+    faces = [("Inter", d / "inter-latin-var.woff2", "400 700"),
+             ("JetBrains Mono", d / "jetbrains-mono-latin-var.woff2", "400 600")]
+    out = []
+    for family, path, weights in faces:
+        if not path.exists():
+            continue  # fall through to the system stack rather than emit a broken URI
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        out.append(f"@font-face{{font-family:'{family}';font-style:normal;"
+                   f"font-weight:{weights};font-display:swap;"
+                   f"src:url(data:font/woff2;base64,{b64}) format('woff2')}}")
+    return "<style>" + "".join(out) + "</style>" if out else ""
+
+
 FONTS = ""
 
 FAVICON = (
@@ -72,54 +97,141 @@ FAVICON = (
 # It carries its own tokens because the dashboard's stylesheet never reaches an
 # unauthenticated visitor — that is the point.
 LOGIN_PAGE = """<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en" data-theme="dark"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>XStudioz &middot; Daily brief</title>
+<script>(function(){try{var t=localStorage.getItem('xs-theme');
+document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}
+catch(e){document.documentElement.setAttribute('data-theme','dark')}})()</script>
 __FONTS__
 __FAVICON__
 <style>
-/* Light only, and deliberately no prefers-color-scheme block. This page used
-   to define a light palette and then hand it to a dark override, so anyone
-   whose device was set to dark met a dark sign-in screen having asked for a
-   light one. The tokens below match the brief's, so signing in is continuous
-   rather than a jump between two different products. */
-:root{--accent:#4F46E5;--ink:#15151A;--dim:#71717F;--bg:#FBFBFD;
-  --card:#fff;--raised:#F5F5F8;--border:#E8E8EF;--border-hi:#DDDDE7;
-  --coral:#DC2626;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+/* The same tokens as the brief, so signing in is continuous rather than a jump
+   between two different-looking products. Dark by default, light behind the
+   same toggle, and deliberately NO prefers-color-scheme block: this page once
+   defined a light palette and handed it to a dark override, so anyone whose
+   device was set to dark met a dark sign-in screen having asked for a light
+   one. The reader chooses; the operating system does not. */
+:root,:root[data-theme="dark"]{
+  --canvas:#0B0F17;--card:rgba(22,28,45,.75);--sunk:rgba(255,255,255,.04);
+  --ink:#F1F5F9;--body:#CBD5E1;--dim:#94A3B8;
+  --line:rgba(255,255,255,.08);--line-hi:rgba(255,255,255,.14);
+  --accent:#6366F1;--accent-ink:#A5B4FC;--info:#38BDF8;--coral:#F87171;
+  --ring:rgba(99,102,241,.35);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 44px -10px rgba(0,0,0,.6);
+  color-scheme:dark}
+:root[data-theme="light"]{
+  --canvas:#F8FAFC;--card:#FFFFFF;--sunk:#F1F5F9;
+  --ink:#0F172A;--body:#334155;--dim:#64748B;
+  --line:#E2E8F0;--line-hi:#CBD5E1;
+  --accent:#4F46E5;--accent-ink:#3730A3;--info:#0284C7;--coral:#DC2626;
+  --ring:rgba(79,70,229,.30);
+  --shadow:0 10px 30px -5px rgba(0,0,0,.05),0 1px 2px rgba(15,23,42,.04);
   color-scheme:light}
+:root{
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:flex;align-items:center;
-  justify-content:center;background:var(--bg);padding:24px}
-form{background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:28px 30px;width:100%;max-width:340px;display:flex;
-  flex-direction:column;gap:14px}
+  justify-content:center;background:var(--canvas);padding:24px;
+  font-family:var(--sans);-webkit-font-smoothing:antialiased;position:relative}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 420px at 50% -10%,rgba(99,102,241,.16),transparent 62%),
+    radial-gradient(560px 320px at 88% 8%,rgba(56,189,248,.10),transparent 58%)}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(760px 420px at 50% -10%,rgba(99,102,241,.08),transparent 62%),
+    radial-gradient(560px 320px at 88% 8%,rgba(56,189,248,.06),transparent 58%)}
+form{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:32px 32px 26px;width:100%;max-width:360px;
+  display:flex;flex-direction:column;gap:15px;box-shadow:var(--shadow);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.brandline{display:flex;align-items:center;gap:9px}
+.mark{width:11px;height:11px;border-radius:3.5px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--accent),var(--info));
+  box-shadow:0 0 14px var(--ring)}
 h2{margin:0;font:600 10px/1.4 var(--sans);text-transform:uppercase;
   letter-spacing:.18em;color:var(--dim)}
-.t{font:700 20px/1.25 var(--sans);letter-spacing:-.02em;color:var(--ink)}
-input{font:500 14px/1.4 var(--sans);padding:11px 13px;border-radius:9px;
-  border:1px solid var(--border-hi);background:var(--raised);color:var(--ink)}
-input:focus{outline:2px solid var(--accent);outline-offset:1px}
-button{font:600 12px/1 var(--sans);letter-spacing:.06em;padding:12px;border:0;
-  border-radius:9px;background:var(--accent);color:#fff;cursor:pointer}
-button:disabled{opacity:.55;cursor:default}
-.err{font:500 12px/1.4 var(--sans);color:var(--coral);min-height:1.2em}
-.foot{font:500 10px/1.5 var(--mono);color:var(--dim);text-align:center}
+.t{font:700 22px/1.25 var(--sans);letter-spacing:-.025em;color:var(--ink);
+  margin-top:-4px}
+.lede{font:400 13.5px/1.55 var(--sans);color:var(--dim);margin:-6px 0 2px}
+input{font:500 14px/1.4 var(--sans);padding:12px 14px;border-radius:11px;
+  border:1px solid var(--line-hi);background:var(--sunk);color:var(--ink);
+  transition:border-color .16s,box-shadow .16s,background .16s}
+input::placeholder{color:var(--dim)}
+input:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--ring);background:transparent}
+button.go{font:600 12.5px/1 var(--sans);letter-spacing:.05em;padding:13px;border:0;
+  border-radius:11px;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),#4F46E5);
+  box-shadow:0 6px 18px -6px var(--ring);
+  transition:transform .14s,box-shadow .14s,opacity .14s}
+button.go:hover:not(:disabled){transform:translateY(-1px);
+  box-shadow:0 10px 24px -6px var(--ring)}
+button.go:focus-visible{outline:2px solid var(--accent-ink);outline-offset:2px}
+button.go:disabled{opacity:.55;cursor:default;transform:none}
+.err{font:500 12px/1.45 var(--sans);color:var(--coral);min-height:1.2em}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:2px;padding-top:14px;border-top:1px solid var(--line)}
+.foot span{font:500 10px/1.5 var(--mono);color:var(--dim);
+  text-transform:uppercase;letter-spacing:.1em}
+.themer{display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;padding:0;border-radius:9px;cursor:pointer;
+  background:var(--sunk);border:1px solid var(--line);color:var(--dim);
+  transition:color .14s,background .14s}
+.themer:hover{color:var(--ink);background:var(--sunk)}
+.themer:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.themer svg{width:15px;height:15px;display:block}
+.themer .moon{display:none}
+:root[data-theme="light"] .themer .moon{display:block}
+:root[data-theme="light"] .themer .sun{display:none}
+@media (prefers-reduced-motion:reduce){button.go{transition:none}
+  button.go:hover:not(:disabled){transform:none}}
 </style></head><body>
 <form id="gform" autocomplete="off">
-  <h2>XStudioz</h2>
+  <div class="brandline"><span class="mark"></span><h2>XStudioz</h2></div>
   <div class="t">Daily brief</div>
+  <p class="lede">This page carries client names, revenue and the open pipeline.</p>
   <label for="pw" style="position:absolute;left:-9999px">Access password</label>
   <input id="pw" type="password" placeholder="Access password" required
          autocomplete="current-password" autofocus>
   <div class="err" id="gerr" role="alert" aria-live="polite"></div>
-  <button type="submit" id="gbtn">Sign in</button>
-  <div class="foot">Internal &middot; Confidential</div>
+  <button class="go" type="submit" id="gbtn">Sign in</button>
+  <div class="foot">
+    <span>Internal &middot; Confidential</span>
+    <button class="themer" id="themer" type="button" aria-label="Switch to light"
+            title="Switch to light">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>
+      </svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 1 1 9.4 3.5a6.9 6.9 0 0 0 11.1 11.1Z"/>
+      </svg>
+    </button>
+  </div>
 </form>
 <script>
 (function(){
+  var TKEY='xs-theme';
+  function apply(t){
+    document.documentElement.setAttribute('data-theme',t);
+    var b=document.getElementById('themer');
+    if(b){ b.title=t==='light'?'Switch to dark':'Switch to light';
+           b.setAttribute('aria-label',b.title); }
+  }
+  var tb=document.getElementById('themer');
+  if(tb) tb.addEventListener('click',function(){
+    var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    try{ localStorage.setItem(TKEY,t); }catch(e){}
+    try{ document.cookie=TKEY+'='+t+';path=/;max-age=31536000;samesite=lax'; }catch(e){}
+    apply(t);
+  });
+  try{ apply(localStorage.getItem(TKEY)==='light'?'light':'dark'); }catch(e){}
+
   var form=document.getElementById('gform'),pw=document.getElementById('pw'),
       err=document.getElementById('gerr'),btn=document.getElementById('gbtn');
   form.addEventListener('submit',function(e){
@@ -212,7 +324,7 @@ def build(fragment: str, generated: str) -> str:
 
 
 def login_page() -> str:
-    return LOGIN_PAGE.replace("__FONTS__", FONTS).replace("__FAVICON__", FAVICON)
+    return LOGIN_PAGE.replace("__FONTS__", _fonts_css()).replace("__FAVICON__", FAVICON)
 
 
 def build_function(page_html: str) -> str:
