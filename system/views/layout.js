@@ -346,12 +346,17 @@ export function meter({ value, total, tone = '', label = null, dp = 1 }) {
 // 4. STATUS COMPONENTS  — shape AND colour, never colour alone
 // ============================================================================
 
+// The five shapes are circle / triangle / diamond / ring / square and NO TWO
+// STATUSES MAY SHARE ONE — see the glyph block in app.css, which documents the
+// same table. `info` was drawn as a circle here, which is byte-identical to
+// `ok`: in greyscale, on a projector, or to a deuteranope an info glyph drawn
+// as a circle IS an ok glyph, and the colour was doing all the work alone.
 const GLYPHS = {
   ok: '<circle cx="5.5" cy="5.5" r="4"/>',
   warn: '<path d="M5.5 1 10.2 9.6H.8Z"/>',
   crit: '<path d="M5.5 .8 10.2 5.5 5.5 10.2.8 5.5Z"/>',
   idle: '<circle cx="5.5" cy="5.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>',
-  info: '<circle cx="5.5" cy="5.5" r="4"/>',
+  info: '<rect x="1.9" y="1.9" width="7.2" height="7.2" rx="1.4"/>',
 };
 
 /** A status shape. Never render one without an adjacent word — see `pill`. */
@@ -565,8 +570,8 @@ function navRail(ctx) {
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
             <circle cx="8" cy="8" r="3.2"/><path d="M8 .8v2M8 13.2v2M.8 8h2M13.2 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M13.1 2.9l-1.4 1.4M4.3 11.7l-1.4 1.4"/>
           </svg>
-          <span class="t-light theme-label">Late edition</span>
-          <span class="t-dark theme-label">Day edition</span>
+          <span class="t-light theme-label">Dark</span>
+          <span class="t-dark theme-label">Light</span>
           <span class="sr-only">Switch colour scheme</span>
         </button>
         ${who}

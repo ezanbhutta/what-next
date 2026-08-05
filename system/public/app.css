@@ -3,10 +3,18 @@
    XSTUDIOZ MANAGEMENT HUB — public/app.css
    The complete design system. This is the ONLY stylesheet in the project.
 
-   Direction: editorial broadsheet. No cards. Three rule weights do the
-   structural work — hairline (--rule), heavy (--rule-2), 3px double.
-   Money and every figure are set in the SERIF with tabular lining figures.
-   Everything else is the grotesk.
+   Direction: MODERN MINIMAL — the house language shared by the sibling apps.
+   A soft violet dawn high on the page settling into paper white; content
+   lives on CARDS with a hairline border, a generous radius and a DIFFUSE
+   AMBIENT shadow that reads as light in a room, never a hard drop shadow.
+   Inter for text, Space Grotesk for display, JetBrains Mono with tabular
+   figures for every number.
+
+   This file replaced an editorial-broadsheet skin. Every selector from that
+   skin survives unchanged — only colour, type, radius, shadow, spacing and
+   borders moved. If a selector looks vestigial (`.serif`, `.hair-double`,
+   `.grain`) it is because views in flight still reference it; it has been
+   re-pointed at the nearest thing the new language has, never deleted.
 
    HOUSE RULES THIS FILE ENFORCES OR SUPPORTS
    ---------------------------------------------------------------------------
@@ -24,14 +32,21 @@
        explanation goes in the `details` UNDERNEATH it. `.lede` and `.panel`
        are laid out so that putting prose above a figure looks wrong.
 
+   NETWORK
+   ---------------------------------------------------------------------------
+   Zero off-origin requests. The three families are vendored as latin-subset
+   woff2 under /fonts and declared below. Never add a Google Fonts link, an
+   @import, or a remote image — the CSP blocks it and the page breaks silently.
+
    DARK MODE — read before editing
    ---------------------------------------------------------------------------
    Dark is applied ONLY by an explicit toggle stamping data-theme="dark" on
    <html>. There is deliberately NO OS colour-scheme media query anywhere in
    this file, and none may be added. A media-query palette shipped once and
    handed everyone with a dark laptop a page they had explicitly not asked for.
-   `color-scheme` is declared per theme so UA widgets (scrollbars, date
-   pickers, spinners) follow the toggle rather than the OS.
+   The dark half is a designed violet-neutral surface set, not an inversion of
+   the light one. `color-scheme` is declared per theme so UA widgets
+   (scrollbars, date pickers, spinners) follow the toggle rather than the OS.
 
    The toggle must be stamped by an inline script that is the FIRST child of
    <body>, before any painted markup, or a dark-mode user gets a full white
@@ -49,9 +64,55 @@
    Every text-on-background pair defined below carries its measured WCAG 2.1
    contrast ratio in a comment. Ratios were computed with the sRGB relative
    luminance formula against the actual token values, not eyeballed. Anything
-   used for content text clears 4.5:1; anything used only for non-text
-   structure (rules, tracks) is marked as such and is exempt.
+   used for content text clears 4.5:1 in BOTH themes; anything used only for
+   non-text structure (rules, tracks, shadows) is marked as such and is exempt.
    ============================================================================= */
+
+
+/* =============================================================================
+   0. FONTS — vendored latin subsets, self-hosted, zero network requests
+   ============================================================================= */
+
+@font-face{
+  font-family:"Inter"; font-style:normal; font-weight:400; font-display:swap;
+  src:url('/fonts/inter-400.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Inter"; font-style:normal; font-weight:500; font-display:swap;
+  src:url('/fonts/inter-500.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Inter"; font-style:normal; font-weight:600; font-display:swap;
+  src:url('/fonts/inter-600.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Inter"; font-style:normal; font-weight:700; font-display:swap;
+  src:url('/fonts/inter-700.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Space Grotesk"; font-style:normal; font-weight:500; font-display:swap;
+  src:url('/fonts/space-grotesk-500.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Space Grotesk"; font-style:normal; font-weight:600; font-display:swap;
+  src:url('/fonts/space-grotesk-600.woff2') format('woff2');
+}
+@font-face{
+  font-family:"Space Grotesk"; font-style:normal; font-weight:700; font-display:swap;
+  src:url('/fonts/space-grotesk-700.woff2') format('woff2');
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-style:normal; font-weight:400; font-display:swap;
+  src:url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-style:normal; font-weight:500; font-display:swap;
+  src:url('/fonts/jetbrains-mono-500.woff2') format('woff2');
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-style:normal; font-weight:600; font-display:swap;
+  src:url('/fonts/jetbrains-mono-600.woff2') format('woff2');
+}
 
 
 /* =============================================================================
@@ -61,105 +122,196 @@
 :root{
   color-scheme: light;
 
-  /* --- paper edition (default) --- */
-  --paper:    #F6F3EB;  /* warm newsprint, not cream                          */
-  --paper-2:  #EFEBE0;  /* recessed panels, table zebra, code wells           */
-  --ink:      #16130F;  /* warm near-black — 16.70:1 on paper, 15.54 on p-2   */
-  --ink-2:    #59524A;  /* secondary text  —  6.94:1 on paper,  6.46 on p-2   */
+  /* --- surfaces ---
+     --paper page ground · --paper-2 raised/recessed · --card card fill.
+     The card is pure white and sits on the tinted ground; that separation is
+     what makes the shadow read as ambient light rather than a drop shadow. */
+  --paper:    #FAFAFE;
+  --paper-2:  #F4F2FA;
+  --card:     #FFFFFF;
 
-  /* --ink-3 — FIX 1.
-     The prototype shipped #8B8275, which measures 3.41:1 on --paper and
-     3.18:1 on --paper-2, and it was used on content text (captions, table
-     sub-lines, hints, nav group labels). That fails 4.5:1 in both places.
-     Darkened to #6E6558:
-         #6E6558 on #F6F3EB (--paper)   = 5.17:1   PASS AA (4.5:1)
-         #6E6558 on #EFEBE0 (--paper-2) = 4.81:1   PASS AA (4.5:1)
-     Working: relative luminance L(#6E6558)=0.1379, L(#F6F3EB)=0.8676,
-     L(#EFEBE0)=0.8017; ratio = (L1+0.05)/(L2+0.05).
-     Do not lighten it back. If a value genuinely must be de-emphasised
-     further, reduce its size or letter-spacing, not its contrast.          */
-  --ink-3:    #6E6558;
+  /* --- text ---
+     L(#FFFFFF)=1.000000   L(#FAFAFE)=0.958530   L(#F4F2FA)=0.896416        */
+  --ink:      #160A33;  /* L=0.006265 · 18.66:1 card · 17.93:1 paper · 16.82:1 paper-2  AAA */
+  --ink-2:    #534A78;  /* L=0.080936 ·  8.02:1 card ·  7.70:1 paper ·  7.23:1 paper-2  AAA */
 
-  --rule:     #D6CFC0;  /* hairline — NON-TEXT, 1.40:1, exempt from 4.5:1    */
-  --rule-2:   #B9AF9C;  /* heavy structural rule — NON-TEXT, 1.96:1, exempt  */
+  /* --ink-3 — the dim tier. It is the tightest token in the file, so it is
+     the one that constrains every tinted background below.
+         #6F6690 (L=0.149014) on #FFFFFF = 5.28:1  PASS AA
+         #6F6690              on #FAFAFE = 5.07:1  PASS AA
+         #6F6690              on #F4F2FA = 4.76:1  PASS AA
+     Do not lighten it, and do not put it on any fill darker than --accent-w.
+     If a value must be de-emphasised further, reduce its size or weight.  */
+  --ink-3:    #6F6690;
 
-  --accent:   #17456E;  /* prussian ink, the single editorial accent
-                           8.96:1 on paper / 8.34:1 on paper-2  PASS AAA    */
-  --accent-w: #17456E14;/* 8% accent wash — background only, never text      */
-  --accent-w2:#17456E24;/* stronger wash for active rows                     */
+  /* structural rules — NON-TEXT, exempt from 4.5:1, ratios given for record */
+  --rule:     #F0EDF8;  /* hairline divider · L=0.858693 · 1.16:1 on card   */
+  --rule-2:   #E8E5F3;  /* card border      · L=0.796683 · 1.24:1 on card   */
+  --rule-3:   #D8D2EB;  /* emphatic divider · L=0.667046 · 1.46:1 on card   */
 
-  --neg:      #A3231D;  /* down / late — 6.73:1 on paper, 6.26 on p-2  PASS  */
-  --pos:      #1E6144;  /* up / cleared — 6.65:1 on paper, 6.19 on p-2 PASS  */
-  --warn:     #8A5A0B;  /* attention — 5.34:1 on paper, 4.97 on p-2    PASS  */
+  /* --- brand --- */
+  --accent:   #7229FF;  /* L=0.123842 · 6.04:1 card · 5.80:1 paper · 5.44:1 paper-2  PASS AA */
+  --accent-2: #5E1FD8;  /* pressed/hover fill — --paper on it = 7.57:1      PASS AAA */
+  --accent-line:rgba(114,41,255,.22);  /* NON-TEXT hairline on tinted fills */
 
-  --sel:      #17456E22;
+  /* Tinted fills are OPAQUE on purpose. An alpha wash composites differently
+     over --card, over a --paper-2 zebra row and over a hovered zebra row,
+     and --ink-3 fell under 4.5:1 on the darkest of those three. A solid
+     value is measured once and is true everywhere.                        */
+  --accent-w: #F3EEFF;  /* L=0.874227 · ink 16.98 · ink-2 7.06 · ink-3 4.64 · accent 5.32  PASS */
+  --accent-w2:#EDE6FF;  /* L=0.818399 · STRONG fill: ink 13.86 · ink-2 6.63 ONLY.
+                           --ink-3 measures 4.36:1 here — not permitted on this token. */
+
+  /* --- status. Shape (.glyph) always carries the meaning too; colour never
+     travels alone. Ratios are card / paper / paper-2, then on the chip fill. */
+  --neg:      #B91C1C;  /* L=0.112279 · 6.47 / 6.22 / 5.83 · on --bad-bg  5.55:1  PASS */
+  --pos:      #047857;  /* L=0.141475 · 5.48 / 5.27 / 4.94 · on --ok-bg   4.99:1  PASS */
+  /* --warn is the tightest COLOUR token in the light theme — amber has to stay
+     amber while carrying text weight, so it has the least headroom of the
+     three status hues. The sibling apps ship #B45309; this file darkens it by
+     3.5% lightness (hue and saturation identical) because #B45309 does not
+     survive the hover fill:
+         #B45309 on --accent-w #F3EEFF = 4.42:1  FAIL
+         #B45309 on --bad-bg   #FDE9E9 = 4.31:1  FAIL
+     and `.table tbody tr:hover`, `.task-row:hover`, `.thread-btn:hover` and
+     `.check-row:hover` all paint --accent-w under whatever the row contains,
+     including a `.warn` figure or a `.glyph--warn`. The delta is invisible
+     side by side; the failure was not.
+         #AD5009 (L=0.146413) card 5.35 · paper 5.13 · paper-2 4.82
+                              accent-w 4.71 · ok-bg 4.86 · warn-bg 4.89
+                              bad-bg 4.58 · --paper on it 5.13   ALL PASS AA
+     --bad-bg is the binding constraint. Do not lighten this back.          */
+  --warn:     #AD5009;
+
+  --ok-bg:    #E7F8F1;  --ok-line:  rgba(16,185,129,.28);   /* NON-TEXT line */
+  --warn-bg:  #FEF4DE;  --warn-line:rgba(245,158,11,.32);   /* NON-TEXT line */
+  --bad-bg:   #FDE9E9;  --bad-line: rgba(239,68,68,.30);    /* NON-TEXT line */
+
+  --sel:      rgba(114,41,255,.20);
+  --focus:    #7229FF;
+
+  /* Grain survives from the broadsheet skin because `.grain` is still in the
+     markup. In this language it is a whisper of tooth, not newsprint.      */
   --grain-blend: multiply;
-  --grain-op: .055;
+  --grain-op: .018;
 
-  /* --- type --- */
-  --serif: "Hoefler Text","Iowan Old Style","Bodoni 72",Didot,"Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
-  --sans:  "Neue Haas Grotesk Text","Helvetica Neue",Helvetica,Inter,"Segoe UI",Arial,sans-serif;
-  --mono:  "SFMono-Regular","SF Mono","IBM Plex Mono","Roboto Mono",Menlo,Consolas,monospace;
+  /* --- elevation — diffuse ambient light, never a hard drop shadow ---    */
+  --e1: 0 1px 2px rgba(22,10,51,.03), 0 6px 16px -6px rgba(22,10,51,.06);
+  --e2: 0 1px 2px rgba(22,10,51,.03), 0 6px 16px -6px rgba(22,10,51,.06), 0 22px 48px -24px rgba(22,10,51,.10);
+  --e3: 0 2px 6px rgba(22,10,51,.05), 0 30px 70px -32px rgba(22,10,51,.24);
+  --shadow-edge: rgba(22,10,51,.13);   /* table scroll-shadow · NON-TEXT    */
+  --ring: 0 0 0 3px rgba(114,41,255,.14);
+
+  /* --- type ---
+     Inter body · Space Grotesk display (--disp) · JetBrains Mono numerals.
+     --serif is the OLD name for the figure/display face and is kept because
+     views already set class="serif" on headings and figures. It now points
+     at Space Grotesk; there is no serif anywhere in this design.           */
+  --disp:  "Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --serif: "Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --sans:  "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
+  --mono:  "JetBrains Mono",ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,monospace;
 
   --t-xs:   .6875rem;   /* 11px */
   --t-sm:   .75rem;     /* 12px */
-  --t-base: .8125rem;   /* 13px */
-  --t-md:   .9375rem;   /* 15px */
+  --t-base: .875rem;    /* 14px */
+  --t-md:   1rem;       /* 16px */
   --t-lg:  1.3125rem;   /* 21px */
   --t-xl:  1.75rem;     /* 28px */
-  --t-2xl: 2.5rem;      /* 40px */
-  --t-3xl: 3.5rem;      /* 56px */
+  --t-2xl: 2.25rem;     /* 36px */
+  --t-3xl: 3rem;        /* 48px */
 
-  /* FIX 3 — iOS zooms the viewport on focus for any control under 16px.
-     Every input, select and textarea in this file is pinned to this token.
-     It is 1rem, i.e. 16px, and it is not scaled down at any breakpoint.   */
+  /* iOS zooms the viewport on focus for any control under 16px. Every input,
+     select and textarea in this file is pinned to this token. It is 1rem,
+     i.e. 16px, and it is not scaled down at any breakpoint.               */
   --t-input: 1rem;
 
+  /* --- spacing · 4 8 12 16 24 32 48 64 --- */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+
+  /* --- radius --- */
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-2xl:26px; --r-pill:999px;
+  --radius: 12px;       /* default control radius                          */
+
   /* --- metrics --- */
-  --rail-w: 236px;
+  --rail-w: 244px;
   --gut: 28px;
-  --tap: 44px;          /* minimum touch target, everywhere               */
-  --radius: 2px;        /* broadsheet: essentially square                 */
+  --card-pad: 20px;
+  --tap: 44px;          /* minimum touch target, everywhere                */
 }
 
 html[data-theme="dark"]{
   color-scheme: dark;
 
-  /* --- late edition: newsprint under a desk lamp --- */
-  --paper:    #1A1713;
-  --paper-2:  #221E19;
-  --ink:      #EDE6D9;  /* 14.39:1 on paper, 13.35:1 on paper-2   PASS AAA  */
-  --ink-2:    #A79C8B;  /*  6.61:1 on paper,  6.13:1 on paper-2   PASS AA   */
+  /* --- deep violet-neutral, designed rather than inverted ---
+     L(--paper)=0.004713   L(--paper-2)=0.007977   L(--card)=0.011055      */
+  --paper:    #100C1F;
+  --paper-2:  #171130;
+  --card:     #1C1638;
 
-  /* --ink-3 — FIX 1, dark half.
-     The prototype shipped #7E7566: 3.93:1 on --paper, 3.65:1 on --paper-2.
-     Fails. Lightened to #988E7D:
-         #988E7D on #1A1713 (--paper)   = 5.53:1   PASS AA
-         #988E7D on #221E19 (--paper-2) = 5.13:1   PASS AA
-     Working: L(#988E7D)=0.2793, L(#1A1713)=0.0090, L(#221E19)=0.0151.    */
-  --ink-3:    #988E7D;
+  --ink:      #EFECFB;  /* L=0.853060 · 14.79:1 card · 16.51:1 paper · 15.58:1 paper-2  AAA */
+  --ink-2:    #B4ABD6;  /* L=0.436850 ·  7.97:1 card ·  8.90:1 paper ·  8.40:1 paper-2  AAA */
+  /* --ink-3 — the dim tier. It must clear 4.5:1 on the STATUS TINTS too, not
+     just the three surfaces: `.banner--warn`, `.banner--crit`, `.note--warn`
+     and `.note--neg` set --warn-bg / --bad-bg as a content background, and a
+     `.caption` / `.field-hint` / `.task-meta` inside one of those is ordinary
+     markup. The previous value (#928AB8, L=0.277522) measured 4.13:1 on
+     --warn-bg, 4.22:1 on --ok-bg and 4.42:1 on --bad-bg — passing in light and
+     failing only in dark, which is the asymmetry that ships unnoticed.
+         #9A92BD (L=0.311019) on #1C1638 card    = 5.91:1  PASS AA
+         #9A92BD              on #100C1F paper   = 6.60:1  PASS AA
+         #9A92BD              on #171130 paper-2 = 6.23:1  PASS AA
+         #9A92BD              on #262046 accent-w= 5.24:1  PASS AA
+         #9A92BD              on #1F2F45 ok-bg   = 4.66:1  PASS AA
+         #9A92BD              on #392C35 warn-bg = 4.55:1  PASS AA  (tightest)
+         #9A92BD              on #392242 bad-bg  = 4.87:1  PASS AA
+     --warn-bg is the binding constraint. Do not darken it and do not dim this
+     token; either one drops the pair back under 4.5:1.                     */
+  --ink-3:    #9A92BD;
 
-  --rule:     #322C24;  /* NON-TEXT, 1.29:1, exempt                        */
-  --rule-2:   #4A4237;  /* NON-TEXT, 1.81:1, exempt                        */
+  --rule:     #2A2350;  /* NON-TEXT · L=0.022738 · 1.33:1 on paper         */
+  --rule-2:   #383063;  /* NON-TEXT · L=0.037274 · 1.59:1 on paper         */
+  --rule-3:   #4A4180;  /* NON-TEXT · L=0.062339 · 2.05:1 on paper         */
 
-  --accent:   #7FB2DC;  /* 7.91:1 on paper, 7.34:1 on paper-2   PASS AAA   */
-  --accent-w: #7FB2DC1a;
-  --accent-w2:#7FB2DC2b;
+  --accent:   #B79BFF;  /* L=0.407328 · 7.49:1 card · 8.36:1 paper · 7.89:1 paper-2  AAA */
+  --accent-2: #CDB8FF;  /* hover fill — --paper on it = 10.87:1            AAA */
+  --accent-line:rgba(183,155,255,.28);
 
-  --neg:      #E8776C;  /* 6.20:1 on paper, 5.75:1 on paper-2   PASS AA    */
-  --pos:      #74BE93;  /* 8.10:1 on paper, 7.52:1 on paper-2   PASS AAA   */
-  --warn:     #D9A441;  /* 7.94:1 on paper, 7.36:1 on paper-2   PASS AAA   */
+  --accent-w: #262046;  /* L=0.018879 · ink 13.65 · ink-2 7.07 · ink-3 5.24 · accent 6.64  PASS */
+  --accent-w2:#322A5C;  /* L=0.031061 · STRONG fill: ink 11.14 · ink-2 6.01 ONLY.
+                           --ink-3 measures 4.45:1 here — not permitted on this token.
+                           (Light --accent-w2 #EDE6FF is 4.36:1 for the same reason.) */
 
-  --sel:      #7FB2DC2b;
+  --neg:      #FB7185;  /* L=0.340174 · 6.39:1 card · 7.13:1 paper · on --bad-bg  5.27:1  PASS */
+  --pos:      #34D399;  /* L=0.496223 · 8.95:1 card · 9.98:1 paper · on --ok-bg   7.05:1  AAA  */
+  --warn:     #FBBF24;  /* L=0.578957 ·10.30:1 card ·11.50:1 paper · on --warn-bg 7.93:1  AAA  */
+
+  --ok-bg:    #1F2F45;  --ok-line:  rgba(52,211,153,.30);
+  --warn-bg:  #392C35;  --warn-line:rgba(251,191,36,.32);
+  --bad-bg:   #392242;  --bad-line: rgba(251,113,133,.32);
+
+  --sel:      rgba(183,155,255,.26);
+  --focus:    #B79BFF;
+
   --grain-blend: screen;
-  --grain-op: .085;
+  --grain-op: .028;
+
+  --e1: 0 1px 2px rgba(0,0,0,.34), 0 6px 16px -6px rgba(0,0,0,.46);
+  --e2: 0 1px 2px rgba(0,0,0,.34), 0 6px 16px -6px rgba(0,0,0,.46), 0 22px 48px -24px rgba(0,0,0,.62);
+  --e3: 0 2px 6px rgba(0,0,0,.42), 0 30px 70px -32px rgba(0,0,0,.72);
+  --shadow-edge: rgba(0,0,0,.55);
+  --ring: 0 0 0 3px rgba(183,155,255,.20);
 }
 
 /* Reversed pairs used by solid fills (buttons, checked boxes, sticky heads):
-     light  --paper on --ink    = 16.70:1   PASS AAA
-     light  --paper on --accent =  8.96:1   PASS AAA
-     dark   --paper on --ink    = 14.39:1   PASS AAA
-     dark   --paper on --accent =  7.91:1   PASS AAA
+     light  --paper on --ink      = 17.93:1   PASS AAA
+     light  --paper on --accent   =  5.80:1   PASS AA
+     light  --paper on --accent-2 =  7.57:1   PASS AAA
+     light  --paper on --neg      =  6.22:1   PASS AA
+     dark   --paper on --ink      = 16.51:1   PASS AAA
+     dark   --paper on --accent   =  8.36:1   PASS AAA
+     dark   --paper on --accent-2 = 10.87:1   PASS AAA
+     dark   --paper on --neg      =  7.13:1   PASS AAA
    Solid-fill buttons therefore use color:var(--paper) in both themes.     */
 
 
@@ -172,11 +324,32 @@ html,body,h1,h2,h3,h4,h5,h6,p,figure,blockquote,dl,dd,ol,ul,fieldset{ margin:0; 
 ol[class],ul[class]{ list-style:none; }
 html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 body{
-  background:var(--paper);
+  background-color:var(--paper);
+  /* One soft violet dawn high on the page settling into paper white. One
+     light source, fixed, so scrolling does not drag the gradient with it. */
+  background-image:
+    radial-gradient(78rem 52rem at 50% -22%, rgba(114,41,255,.055), transparent 62%),
+    radial-gradient(40rem 34rem at 92% 4%,   rgba(114,41,255,.022), transparent 60%);
+  background-repeat:no-repeat;
+  background-attachment:fixed;
   color:var(--ink);
   font-family:var(--sans);
   font-size:var(--t-base);
-  line-height:1.65;
+  line-height:1.6;
+  letter-spacing:-.005em;
+  /* The one thing standing between a long unbroken string and a sideways
+     body scroll at 375px. Client names, order ids, file names, buyer emails
+     and pasted URLs all land in `.details-body`, `.task-title`, `.msg p`,
+     `.empty` and `.field-hint`, none of which clip or scroll. body carries no
+     overflow-x:hidden on purpose (it would make body a scroll container and
+     kill the rail's position:sticky), and min-width:0 only stops a FLEX item
+     from refusing to shrink — it does nothing about a single 60-character
+     token, which overflows its card and drags the page with it. This
+     inherits, so it covers every view written against this file, including
+     the ones not written yet. Only breaks where there is no other
+     opportunity, so ordinary prose is untouched. */
+  overflow-wrap:break-word;
+  font-feature-settings:'cv11' 1,'ss01' 1;
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
@@ -186,29 +359,28 @@ img,svg,video,canvas{ max-width:100%; display:block; }
 button,input,select,textarea{ font:inherit; color:inherit; }
 button{ background:none; border:0; }
 
-/* FIX 3, enforced globally rather than per-component. iOS Safari zooms the
-   viewport whenever a focused control renders under 16px, and it does not
-   zoom back out. --t-input is 1rem = 16px and is never scaled down at any
-   breakpoint. This rule means a control added by any future view is safe by
-   default — a component may raise the size (money fields use the 21px
-   serif) but nothing can silently lower it. Checkbox and radio are excluded
-   because they carry no text and do not trigger the zoom. */
+/* Enforced globally rather than per-component. iOS Safari zooms the viewport
+   whenever a focused control renders under 16px, and it does not zoom back
+   out. --t-input is 1rem = 16px and is never scaled down at any breakpoint.
+   This rule means a control added by any future view is safe by default — a
+   component may raise the size but nothing can silently lower it. Checkbox
+   and radio are excluded because they carry no text. */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea{ font-size:var(--t-input); }
 table{ border-collapse:collapse; border-spacing:0; }
 fieldset{ border:0; min-width:0; }
 a{ color:var(--accent); text-underline-offset:.18em; text-decoration-thickness:1px; }
-a:hover{ color:var(--ink); }
+a:hover{ color:var(--accent-2); }
 hr{ border:0; }
 ::selection{ background:var(--sel); }
 
 /* Real focus rings. Never remove these; if a ring collides with a layout,
    fix the layout. Two colours so the ring survives on top of --accent fills. */
 :focus-visible{
-  outline:2px solid var(--accent);
+  outline:2px solid var(--focus);
   outline-offset:2px;
-  border-radius:1px;
+  border-radius:var(--r-sm);
 }
 .btn:focus-visible,
 .chk input:focus-visible{
@@ -231,30 +403,34 @@ hr{ border:0; }
    ============================================================================= */
 
 .num{ font-variant-numeric:tabular-nums lining-nums; font-feature-settings:"tnum" 1,"lnum" 1; }
-.serif{ font-family:var(--serif); }
+/* `.serif` is the display face. There is no serif in this design; the class
+   name is kept because views already carry it. */
+.serif{ font-family:var(--serif); letter-spacing:-.022em; }
 .sans{ font-family:var(--sans); }
 .mono{
   font-family:var(--mono); font-size:var(--t-sm);
-  font-variant-numeric:tabular-nums; color:var(--ink-2); /* 6.94:1 PASS */
-  letter-spacing:.01em;
+  font-variant-numeric:tabular-nums; color:var(--ink-2); /* 8.02:1 PASS   */
+  letter-spacing:-.02em;
 }
 .eyebrow{
   font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
-  font-weight:600; color:var(--ink-2);           /* 6.94:1 on paper PASS  */
+  font-weight:700; color:var(--ink-2);             /* 8.02:1 on card PASS */
 }
 .caption{
-  font-size:var(--t-xs); color:var(--ink-3);     /* 5.17:1 on paper PASS  */
-  letter-spacing:.02em;
+  font-size:var(--t-xs); color:var(--ink-3);       /* 5.28:1 on card PASS */
+  letter-spacing:.01em;
 }
 .sr-only{
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0;
 }
 
-/* the three rule weights — the whole structural vocabulary */
+/* The three divider weights. They were the entire structural vocabulary of
+   the broadsheet skin; here cards do the structural work and these are quiet
+   dividers INSIDE a card. Kept, re-pointed, still ordered light → heavy. */
 .hair{ border-top:1px solid var(--rule); }
 .hair-strong{ border-top:1px solid var(--rule-2); }
-.hair-double{ border-top:3px double var(--rule-2); }
+.hair-double{ border-top:2px solid var(--rule-3); }
 
 /* directional colour for figures. Never colour alone — pair with .glyph. */
 .up,.pos{ color:var(--pos); }
@@ -262,14 +438,17 @@ hr{ border:0; }
 .flat{ color:var(--ink-2); }
 .warn{ color:var(--warn); }
 .accent{ color:var(--accent); }
-.delta{ font-family:var(--sans); font-size:var(--t-sm); font-weight:600; letter-spacing:.04em; }
+.delta{
+  font-family:var(--mono); font-size:var(--t-sm); font-weight:600;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+}
 
 /* R2 — a value that does not exist. Never render 0 in its place, never a
    guess, never an em-dash that could be mistaken for a real "none". */
 .missing{
-  font-family:var(--mono); font-size:.9em; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--ink-3);   /* 5.17:1 PASS          */
-  border-bottom:1px dotted var(--rule-2); padding-bottom:1px;
+  font-family:var(--mono); font-size:.9em; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-3);    /* 5.28:1 PASS         */
+  border-bottom:1px dotted var(--rule-3); padding-bottom:1px;
 }
 .missing::after{ content:""; }
 
@@ -277,15 +456,17 @@ hr{ border:0; }
 .directed{ color:var(--ink-2); }
 
 .nowrap{ white-space:nowrap; }
-.stack-sm > * + *{ margin-top:8px; }
-.stack   > * + *{ margin-top:16px; }
-.stack-lg> * + *{ margin-top:26px; }
+.stack-sm > * + *{ margin-top:var(--s2); }
+.stack   > * + *{ margin-top:var(--s4); }
+.stack-lg> * + *{ margin-top:var(--s5); }
 
 
 /* =============================================================================
    4. GRAIN LAYER  (G3)
    One fixed div, one inline feTurbulence data-URI, zero network requests.
    Markup:  <div class="grain" aria-hidden="true"></div>   (last in <body>)
+   Turned right down for this skin — a whisper of tooth under the gradient,
+   not the newsprint it used to be.
    ============================================================================= */
 
 .grain{
@@ -304,59 +485,62 @@ hr{ border:0; }
    5. FRAME — rail + sheet
    ============================================================================= */
 
-.frame{ display:flex; min-height:100vh; align-items:stretch; }
+.frame{ display:flex; min-height:100vh; align-items:stretch; min-width:0; }
 
 /* ---- rail: desktop sidebar, mobile tab strip ---- */
 .rail{
   width:var(--rail-w); flex:0 0 var(--rail-w);
   background:var(--paper);
   border-right:1px solid var(--rule-2);
-  padding:20px 0;
+  padding:var(--s5) 0 var(--s4);
   position:sticky; top:0; align-self:flex-start; height:100vh;
-  display:flex; flex-direction:column; gap:14px;
+  display:flex; flex-direction:column; gap:var(--s4);
   z-index:30;
 }
-.flag{ padding:0 18px; display:flex; flex-direction:column; gap:2px; }
+.flag{ padding:0 var(--s5); display:flex; flex-direction:column; gap:2px; }
 .flag-word{
-  font-family:var(--serif); font-size:1.375rem; line-height:1.05;
-  letter-spacing:.055em; text-transform:uppercase; font-weight:400;
-  color:var(--ink);                                /* 16.70:1 PASS        */
+  font-family:var(--disp); font-size:1.125rem; line-height:1.1;
+  letter-spacing:.01em; text-transform:uppercase; font-weight:700;
+  color:var(--ink);                                /* 17.93:1 PASS        */
 }
-.flag-word b{ font-weight:400; color:var(--accent); }  /* 8.96:1 PASS     */
+.flag-word b{ font-weight:700; color:var(--accent); }  /* 5.80:1 PASS     */
 .flag-sub{
-  font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.07:1 PASS         */
 }
 
 .nav{
   display:flex; flex-direction:column; overflow-y:auto;
-  flex:1 1 auto; padding:0 10px; min-height:0;
+  flex:1 1 auto; padding:0 var(--s3); min-height:0; gap:2px;
 }
 .nav-group{
-  font-size:var(--t-xs); letter-spacing:.16em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
-  padding:14px 8px 6px;
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-3);             /* 5.07:1 PASS         */
+  padding:var(--s4) var(--s2) 6px;
 }
 .nav-link{
   display:flex; align-items:center; gap:10px; width:100%;
-  min-height:var(--tap); padding:0 8px;
-  border-bottom:1px solid var(--rule);
-  color:var(--ink-2);                              /* 6.94:1 PASS        */
-  font-family:var(--sans); font-size:var(--t-base);
-  letter-spacing:.02em; text-align:left; text-decoration:none; cursor:pointer;
-  transition:color .12s ease, background-color .12s ease;
+  min-height:var(--tap); padding:0 10px;
+  /* No separators in a card language — but the rule is KEPT (transparent) so
+     the 900px tab-strip rule below can still swap it for a live underline. */
+  border-bottom:1px solid transparent;
+  border-radius:10px;
+  color:var(--ink-2);                              /* 7.70:1 PASS         */
+  font-family:var(--sans); font-size:var(--t-base); font-weight:500;
+  letter-spacing:-.005em; text-align:left; text-decoration:none; cursor:pointer;
+  transition:color .16s ease, background-color .16s ease;
 }
 .nav-link:hover{ color:var(--ink); background:var(--accent-w); }
-.nav-link svg{ flex:0 0 18px; width:18px; height:18px; opacity:.75; }
+.nav-link svg{ flex:0 0 18px; width:18px; height:18px; opacity:.7; }
 .nav-link .lab{ flex:1 1 auto; }
 .nav-link .tag{
   font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
   font-variant-numeric:tabular-nums;
 }
 .nav-link[aria-current="page"]{
-  color:var(--ink); font-weight:600;
+  color:var(--accent); font-weight:600;            /* 5.32:1 on --accent-w PASS */
   background:var(--accent-w);
-  box-shadow:inset 3px 0 0 var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent-line);
 }
 .nav-link[aria-current="page"] svg{ opacity:1; color:var(--accent); }
 .nav-link[aria-current="page"] .tag{ color:var(--accent); }
@@ -368,34 +552,38 @@ hr{ border:0; }
    Chips are hidden below 900px, where there is no keyboard to press.    */
 .keycap{
   flex:0 0 auto;
-  min-width:17px; height:17px; padding:0 3px;
+  min-width:18px; height:18px; padding:0 4px;
   display:inline-grid; place-items:center;
-  font-family:var(--mono); font-size:9px; line-height:1;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
-  border:1px solid var(--rule-2); border-radius:2px;
+  font-family:var(--mono); font-size:10px; font-weight:600; line-height:1;
+  color:var(--ink-3);                              /* 5.28:1 on card PASS */
+  background:var(--card);
+  border:1px solid var(--rule-2); border-radius:6px;
   box-shadow:0 1px 0 var(--rule-2);
   font-variant-numeric:tabular-nums;
 }
-.nav-link[aria-current="page"] .keycap{ color:var(--accent); border-color:var(--accent); box-shadow:0 1px 0 var(--accent); }
+.nav-link[aria-current="page"] .keycap{ color:var(--accent); border-color:var(--accent-line); box-shadow:none; }
 
-.rail-foot{ padding:0 18px; display:flex; flex-direction:column; gap:10px; }
+.rail-foot{ padding:0 var(--s5); display:flex; flex-direction:column; gap:10px; }
 
 /* theme toggle — the ONLY thing that changes the palette */
 .theme-toggle{
   display:flex; align-items:center; gap:8px;
-  min-height:var(--tap); width:100%; padding:0 10px; cursor:pointer;
-  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  min-height:var(--tap); width:100%; padding:0 var(--s3); cursor:pointer;
+  color:var(--ink-2);                              /* 7.70:1 PASS         */
+  background:var(--card);
   border:1px solid var(--rule-2); border-radius:var(--radius);
+  box-shadow:var(--e1);
   font-family:var(--sans); font-size:var(--t-xs);
-  letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; font-weight:700;
+  transition:color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
-.theme-toggle:hover{ color:var(--ink); border-color:var(--ink-3); }
+.theme-toggle:hover{ color:var(--accent); border-color:var(--accent-line); box-shadow:var(--e2); }
 .theme-toggle svg{ width:16px; height:16px; flex:0 0 16px; }
 /* Two icon+label pairs, one shown per theme. The word label carries the class
    `.theme-label` as well, so the mobile rule that hides labels can match at
    the same specificity as these theme rules and win on source order.
-     <span class="t-light theme-label">Late edition</span>
-     <span class="t-dark  theme-label">Day edition</span>            */
+     <span class="t-light theme-label">Dark</span>
+     <span class="t-dark  theme-label">Light</span>            */
 .theme-toggle .t-dark{ display:none; }
 html[data-theme="dark"] .theme-toggle .t-dark{ display:inline; }
 html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
@@ -408,44 +596,50 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
    6. MASTHEAD + TICKER
    ============================================================================= */
 
-.masthead{ padding:26px 0 0; }
+.masthead{ padding:var(--s6) 0 0; }
 .masthead-top{
   display:flex; align-items:flex-end; justify-content:space-between;
-  gap:16px; flex-wrap:wrap; padding-bottom:10px;
+  gap:var(--s4); flex-wrap:wrap; padding-bottom:var(--s4);
 }
 .masthead h1{
-  font-family:var(--serif); font-weight:400;
-  font-size:clamp(1.75rem,4.6vw,2.75rem); line-height:1;
-  letter-spacing:.02em; text-wrap:balance;
-  color:var(--ink);                                /* 16.70:1 PASS       */
+  font-family:var(--disp); font-weight:700;
+  font-size:clamp(1.625rem,4.2vw,2.25rem); line-height:1.08;
+  letter-spacing:-.032em; text-wrap:balance;
+  color:var(--ink);                                /* 17.93:1 PASS        */
 }
 .dateline{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2);             /* 7.70:1 PASS         */
   display:flex; gap:8px; flex-wrap:wrap; align-items:center;
 }
-.dateline .dot{ color:var(--rule-2); }             /* decorative only     */
+.dateline .dot{ color:var(--rule-3); }             /* decorative only      */
 
+/* The ticker is one card strip now, not a ruled band. */
 .ticker{
   display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
-  border-top:3px double var(--rule-2);
-  border-bottom:1px solid var(--rule-2);
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  overflow:hidden;
   margin-top:2px;
 }
-.tick{ padding:9px 12px 10px; border-left:1px solid var(--rule); min-width:0; }
-.tick:first-child{ border-left:0; padding-left:0; }
+.tick{ padding:var(--s3) var(--s4); border-left:1px solid var(--rule); min-width:0; }
+.tick:first-child{ border-left:0; }
 .tick dt{
-  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tick dd{
-  font-family:var(--serif); font-size:1.0625rem; line-height:1.25;
+  margin-top:4px;
+  font-family:var(--mono); font-weight:600; font-size:1.0625rem; line-height:1.2;
+  letter-spacing:-.03em;
   font-variant-numeric:tabular-nums lining-nums;
 }
 .tick dd small{
-  font-family:var(--sans); font-size:var(--t-xs);
-  color:var(--ink-2); letter-spacing:.02em;        /* 6.94:1 PASS        */
+  font-family:var(--sans); font-size:var(--t-xs); font-weight:500;
+  color:var(--ink-2); letter-spacing:0;            /* 8.02:1 PASS         */
 }
 
 
@@ -453,72 +647,80 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
    7. VIEW / SLUG / DECK  — the nine sections share these
    ============================================================================= */
 
-.view{ padding-top:26px; animation:rise .32s cubic-bezier(.2,.7,.3,1) both; }
+.view{ padding-top:var(--s6); animation:rise .34s cubic-bezier(.22,.61,.36,1) both; }
 .view[hidden]{ display:none; }
-@keyframes rise{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
 
 .slug{
   display:flex; align-items:baseline; justify-content:space-between;
-  gap:14px; flex-wrap:wrap;
-  border-bottom:1px solid var(--rule-2); padding-bottom:6px; margin-bottom:20px;
+  gap:var(--s4); flex-wrap:wrap;
+  padding-bottom:var(--s2); margin-bottom:var(--s5);
 }
 .slug h2{
-  font-family:var(--serif); font-weight:400; font-size:var(--t-xl);
-  line-height:1.1; letter-spacing:.01em; text-wrap:balance;
+  font-family:var(--disp); font-weight:700; font-size:var(--t-xl);
+  line-height:1.12; letter-spacing:-.03em; text-wrap:balance;
 }
 .slug .kicker{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-3);             /* 5.07:1 PASS         */
 }
 
 /* G4 — the deck states the finding, not the section name.
    "$6,952 earned. $8,007 waiting." not "Money".
    Views own the words; this only sets them. */
 .deck{
-  font-family:var(--serif); font-weight:400;
-  font-size:clamp(1.3125rem,3.2vw,1.75rem); line-height:1.2;
-  letter-spacing:.005em; text-wrap:balance;
-  color:var(--ink);                                /* 16.70:1 PASS       */
-  margin-bottom:18px; max-width:34ch;
+  font-family:var(--disp); font-weight:600;
+  font-size:clamp(1.25rem,3vw,1.625rem); line-height:1.25;
+  letter-spacing:-.028em; text-wrap:balance;
+  color:var(--ink);                                /* 17.93:1 PASS        */
+  margin-bottom:var(--s5); max-width:36ch;
 }
-.deck em{ font-style:normal; color:var(--accent); }  /* 8.96:1 PASS      */
-.deck .num{ font-variant-numeric:tabular-nums lining-nums; }
+.deck em{ font-style:normal; color:var(--accent); }  /* 5.80:1 PASS       */
+.deck .num{ font-family:var(--mono); font-variant-numeric:tabular-nums lining-nums; letter-spacing:-.04em; }
 
 
 /* =============================================================================
    8. FIGURE + LEDE  (R7 — the figure leads, reasoning goes underneath)
    ============================================================================= */
 
+/* The lede is the hero card and carries the deepest elevation on the page. */
 .lede{
   display:grid; gap:0 var(--gut);
   grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
-  border-bottom:1px solid var(--rule-2); padding-bottom:22px; margin-bottom:22px;
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-xl);
+  box-shadow:var(--e2);
+  padding:var(--s5);
+  margin-bottom:var(--s5);
 }
 .lede-main{ min-width:0; }
 .lede-side{ min-width:0; border-left:1px solid var(--rule); padding-left:var(--gut); }
 
 .figure{ display:block; }
 .figure .cap{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  color:var(--ink-2); margin-bottom:2px;           /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2); margin-bottom:6px;  /* 8.02:1 PASS */
 }
 .figure .big{
-  display:block; font-family:var(--serif); font-weight:400;
-  font-size:clamp(2.75rem,8.5vw,3.5rem); line-height:.95; letter-spacing:-.012em;
+  display:block; font-family:var(--mono); font-weight:700;
+  font-size:clamp(2.25rem,7.4vw,3rem); line-height:1; letter-spacing:-.05em;
   font-variant-numeric:tabular-nums lining-nums;
-  color:var(--ink);                                /* 16.70:1 PASS       */
+  color:var(--ink);                                /* 18.66:1 PASS        */
 }
 .figure .mid{
-  display:block; font-family:var(--serif); font-size:var(--t-2xl); line-height:1;
+  display:block; font-family:var(--mono); font-weight:600;
+  font-size:var(--t-2xl); line-height:1.05; letter-spacing:-.045em;
   font-variant-numeric:tabular-nums lining-nums;
 }
 .figure .small{
-  display:block; font-family:var(--serif); font-size:var(--t-lg); line-height:1.15;
+  display:block; font-family:var(--mono); font-weight:600;
+  font-size:var(--t-lg); line-height:1.15; letter-spacing:-.035em;
   font-variant-numeric:tabular-nums lining-nums;
 }
 .figure .sub{
-  font-size:var(--t-base); color:var(--ink-2);     /* 6.94:1 PASS        */
-  margin-top:8px; max-width:52ch;
+  font-size:var(--t-base); color:var(--ink-2);     /* 8.02:1 PASS         */
+  margin-top:10px; max-width:52ch;
 }
 .figure .sub b{ color:var(--ink); font-weight:600; }
 .figure-pair{ display:flex; gap:var(--gut); flex-wrap:wrap; align-items:flex-end; }
@@ -528,26 +730,27 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
    9. DETAILS / SUMMARY  — reasoning always UNDER the number (R7)
    ============================================================================= */
 
-details{ border-top:1px solid var(--rule); margin-top:14px; }
+details{ border-top:1px solid var(--rule); margin-top:var(--s4); }
 details > summary{
   list-style:none; cursor:pointer;
   min-height:var(--tap); display:flex; align-items:center; gap:8px;
-  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
-  font-weight:600; color:var(--ink-2);             /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2);             /* 8.02:1 PASS         */
+  transition:color .16s ease;
 }
 details > summary::-webkit-details-marker{ display:none; }
 details > summary::after{
   content:""; width:9px; height:9px; margin-left:auto; flex:0 0 9px;
   border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
   transform:rotate(45deg) translate(-2px,-2px);
-  transition:transform .18s ease;
+  transition:transform .2s cubic-bezier(.22,.61,.36,1);
 }
 details[open] > summary::after{ transform:rotate(225deg) translate(-1px,-1px); }
-details > summary:hover{ color:var(--ink); }
+details > summary:hover{ color:var(--accent); }
 details > summary:focus-visible{ outline-offset:-2px; }
 .details-body{
-  font-size:var(--t-base); color:var(--ink-2);     /* 6.94:1 PASS        */
-  padding-bottom:14px; max-width:64ch;
+  font-size:var(--t-base); color:var(--ink-2);     /* 8.02:1 PASS         */
+  padding-bottom:var(--s3); max-width:64ch;
 }
 .details-body > * + *{ margin-top:.7em; }
 .details-body strong{ color:var(--ink); font-weight:600; }
@@ -571,6 +774,15 @@ details > summary:focus-visible{ outline-offset:-2px; }
      idle  ring      <svg class="glyph glyph--idle" viewBox="0 0 11 11" aria-hidden="true">
                        <circle cx="5.5" cy="5.5" r="3.6" fill="none"
                                stroke="currentColor" stroke-width="1.6"/></svg>
+     info  square    <svg class="glyph glyph--info" viewBox="0 0 11 11" aria-hidden="true">
+                       <rect x="1.9" y="1.9" width="7.2" height="7.2" rx="1.4"/></svg>
+
+   `.glyph--info` needs its OWN shape and this is it. It used to have a colour
+   (--accent) and no documented mark, so the obvious thing for a view author
+   to reach for was the circle — which is `ok`. In greyscale, on a projector,
+   or to a deuteranope, an info glyph drawn as a circle IS an ok glyph. The
+   five shapes are circle / triangle / diamond / ring / square and no two
+   statuses may share one.
 
    Every glyph MUST be accompanied by a text label, either visible in the
    `.pill` it sits in or in an adjacent `.sr-only`. A glyph alone is not a
@@ -581,24 +793,26 @@ details > summary:focus-visible{ outline-offset:-2px; }
   display:inline-block; vertical-align:-1px;
   fill:currentColor;
 }
-.glyph--ok{   color:var(--pos);    }  /* 6.65:1 light / 8.10:1 dark  PASS  */
-.glyph--warn{ color:var(--warn);   }  /* 5.34:1 light / 7.94:1 dark  PASS  */
-.glyph--crit{ color:var(--neg);    }  /* 6.73:1 light / 6.20:1 dark  PASS  */
-.glyph--idle{ color:var(--ink-3);  }  /* 5.17:1 light / 5.53:1 dark  PASS  */
-.glyph--info{ color:var(--accent); }  /* 8.96:1 light / 7.91:1 dark  PASS  */
+.glyph--ok{   color:var(--pos);    }  /* 5.48:1 light /  8.95:1 dark  PASS */
+.glyph--warn{ color:var(--warn);   }  /* 5.35:1 light / 10.30:1 dark  PASS */
+.glyph--crit{ color:var(--neg);    }  /* 6.47:1 light /  6.39:1 dark  PASS */
+.glyph--idle{ color:var(--ink-3);  }  /* 5.28:1 light /  5.91:1 dark  PASS */
+.glyph--info{ color:var(--accent); }  /* 6.04:1 light /  7.49:1 dark  PASS */
 
-/* pill = glyph + word. The word is not optional. */
+/* pill = glyph + word. The word is not optional. Now the house chip: soft
+   tinted fill, hairline in the status hue, pill radius. */
 .pill{
   display:inline-flex; align-items:center; gap:6px;
-  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
-  padding:2px 7px; border:1px solid currentColor; border-radius:var(--radius);
+  font-size:var(--t-xs); letter-spacing:.06em; text-transform:uppercase; font-weight:700;
+  padding:3px 10px; border:1px solid var(--rule-2); border-radius:var(--r-pill);
+  background:var(--paper-2);
   white-space:nowrap; line-height:1.5;
 }
-.pill--ok{ color:var(--pos); }
-.pill--warn{ color:var(--warn); }
-.pill--crit{ color:var(--neg); }
-.pill--idle{ color:var(--ink-3); }
-.pill--info{ color:var(--accent); }
+.pill--ok{   color:var(--pos);    background:var(--ok-bg);    border-color:var(--ok-line);    } /* 4.99 / 7.05 PASS */
+.pill--warn{ color:var(--warn);   background:var(--warn-bg);  border-color:var(--warn-line);  } /* 4.89 / 7.93 PASS */
+.pill--crit{ color:var(--neg);    background:var(--bad-bg);   border-color:var(--bad-line);   } /* 5.55 / 5.27 PASS */
+.pill--idle{ color:var(--ink-3);  background:var(--paper-2);  border-color:var(--rule-2);     } /* 4.76 / 6.23 PASS */
+.pill--info{ color:var(--accent); background:var(--accent-w); border-color:var(--accent-line);} /* 5.32 / 6.64 PASS */
 .pill .glyph{ color:currentColor; }
 
 
@@ -618,51 +832,75 @@ details > summary:focus-visible{ outline-offset:-2px; }
      </div>
 
    The head's own bottom rule changes weight with the stamp, so a sample
-   panel is legible as sample from across the room, not only up close.
+   panel is legible as sample from across the room, not only up close. The
+   solid / dashed / dotted distinction is load-bearing: it is the one place
+   in this skin where a border STYLE carries meaning rather than decoration.
 */
-.panel{ margin-top:26px; }
+.panel{
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  padding:var(--card-pad);
+  margin-top:var(--s5);
+}
 .panel-head{
   display:flex; align-items:baseline; justify-content:space-between;
-  gap:12px; flex-wrap:wrap;
-  padding-bottom:6px; margin-bottom:14px;
+  gap:var(--s3); flex-wrap:wrap;
+  padding-bottom:10px; margin-bottom:var(--s4);
 }
 .panel-head h3{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  font-weight:600; color:var(--ink-2);             /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2);             /* 8.02:1 PASS         */
 }
 .panel-head--live{   border-bottom:1px solid var(--rule-2); }
-.panel-head--sample{ border-bottom:1px dashed var(--rule-2); }
+.panel-head--sample{ border-bottom:1px dashed var(--rule-3); }
 .panel-head--missing{ border-bottom:1px dotted var(--neg); }
 
 .stamp{
   display:inline-flex; align-items:center; gap:5px;
-  font-family:var(--mono); font-size:var(--t-xs); letter-spacing:.04em;
-  padding:1px 6px; border-radius:var(--radius);
-  white-space:nowrap;
+  font-family:var(--mono); font-size:var(--t-xs); letter-spacing:-.01em;
+  padding:2px 8px; border-radius:var(--r-pill);
+  /* Wraps rather than nowraps. A provenance stamp reads "Live · latest-run.json
+     · 04 Aug", and a longer source filename with nowrap and no max-width cannot
+     break or clip — it pushes the whole card sideways at 375px, where the inner
+     width is 311px. Ellipsis was the other option and is worse: the date is the
+     load-bearing part, so truncating it would hide exactly the fact the stamp
+     exists to state. Let it take two lines. */
+  max-width:100%;
+  min-width:0;
+  flex-wrap:wrap;
+  overflow-wrap:anywhere;
 }
 .stamp--live{
-  color:var(--ink-2);                              /* 6.94:1 PASS        */
+  color:var(--ink-2);                              /* 8.02:1 PASS         */
+  background:var(--paper-2);
   border:1px solid var(--rule-2);
 }
 .stamp--sample{
-  color:var(--warn);                               /* 5.34:1 PASS        */
+  color:var(--warn);                               /* 4.89:1 on chip PASS */
+  background:var(--warn-bg);
   border:1px dashed currentColor;
 }
 .stamp--missing{
-  color:var(--neg);                                /* 6.73:1 PASS        */
+  color:var(--neg);                                /* 5.55:1 on chip PASS */
+  background:var(--bad-bg);
   border:1px dotted currentColor;
 }
 .stamp--typed{                                     /* human-entered, MySQL */
-  color:var(--accent);                             /* 8.96:1 PASS        */
-  border:1px solid currentColor;
+  color:var(--accent);                             /* 5.32:1 on chip PASS */
+  background:var(--accent-w);
+  border:1px solid var(--accent-line);
 }
 
 /* A block-level version for a whole view. */
 .provenance-bar{
   display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-  padding:8px 0; border-top:1px solid var(--rule);
-  font-size:var(--t-xs); color:var(--ink-3);       /* 5.17:1 PASS        */
-  letter-spacing:.02em;
+  padding:10px var(--s3); margin-top:var(--s4);
+  background:var(--paper-2);
+  border:1px solid var(--rule); border-radius:var(--radius);
+  font-size:var(--t-xs); color:var(--ink-3);       /* 4.76:1 on paper-2 PASS */
+  letter-spacing:.01em;
 }
 
 
@@ -670,23 +908,31 @@ details > summary:focus-visible{ outline-offset:-2px; }
    12. STATS / METERS / RANGES
    ============================================================================= */
 
-.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--s3); }
 .stat{
-  padding:12px 14px 14px; min-width:0;
-  border-left:1px solid var(--rule); border-top:1px solid var(--rule);
+  padding:var(--s4); min-width:0;
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  transition:transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s cubic-bezier(.22,.61,.36,1);
 }
-.stat:first-child{ border-left:0; padding-left:0; }
+/* Kept from the ruled layout, where the first cell dropped its dividing rule.
+   Cards each own all four edges now, so this restates the border rather than
+   removing it — the selector stays live for views that target it. */
+.stat:first-child{ border-left:1px solid var(--rule-2); }
 .stat dt{
-  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
 }
 .stat dd{
-  margin-top:2px; font-family:var(--serif); font-size:var(--t-lg); line-height:1.15;
+  margin-top:6px; font-family:var(--mono); font-weight:600;
+  font-size:var(--t-lg); line-height:1.15; letter-spacing:-.04em;
   font-variant-numeric:tabular-nums lining-nums;
 }
 .stat dd .u{
-  font-family:var(--sans); font-size:var(--t-xs);
-  color:var(--ink-2); letter-spacing:.04em;        /* 6.94:1 PASS        */
+  font-family:var(--sans); font-size:var(--t-xs); font-weight:500;
+  color:var(--ink-2); letter-spacing:0;            /* 8.02:1 PASS         */
 }
 
 /* ---- meter: a proportion of a known whole. R3 — NEVER on n < 30. ---- */
@@ -694,32 +940,29 @@ details > summary:focus-visible{ outline-offset:-2px; }
 .meter-track{
   flex:1 1 auto; height:8px; position:relative;
   background:var(--paper-2); border:1px solid var(--rule);
+  border-radius:var(--r-pill); overflow:hidden;
 }
-.meter-fill{ position:absolute; inset:0 auto 0 0; background:var(--accent); width:var(--pct,0%); }
+.meter-fill{ position:absolute; inset:0 auto 0 0; background:var(--accent); width:var(--pct,0%); border-radius:var(--r-pill); }
 .meter-fill--neg{ background:var(--neg); }
 .meter-fill--pos{ background:var(--pos); }
 .meter-fill--warn{ background:var(--warn); }
 .meter-val{
   font-family:var(--mono); font-size:var(--t-sm); font-variant-numeric:tabular-nums;
-  color:var(--ink-2); min-width:4.5ch; text-align:right;   /* 6.94:1 PASS */
+  color:var(--ink-2); min-width:4.5ch; text-align:right;   /* 8.02:1 PASS */
+  letter-spacing:-.02em;
 }
 /* R3 state: denominator too small to draw. Render this instead of a bar. */
 .meter--suppressed .meter-track{
-  background:repeating-linear-gradient(135deg,transparent 0 5px,var(--rule) 5px 6px);
+  background:repeating-linear-gradient(135deg,transparent 0 5px,var(--rule-3) 5px 6px);
 }
 .meter--suppressed .meter-fill{ display:none; }
 
 /* ---- range: the honest form of a rate on a small denominator (R3) ----
-   FIX 2. The prototype laid four labels out with justify-content:space-between
-   while the band edges sat at 15.7% and 88.7% of the track — the axis the
-   labels implied and the axis the band was drawn on were different axes, and
-   the picture lied about its own numbers.
-
-   Here every element is positioned by its real value on a STATED axis. The
-   view computes one percentage per element and passes it as --at (or --lo /
-   --hi), where pct = (value - axisMin) / (axisMax - axisMin) * 100. The axis
-   bounds are printed in `.range-axis-note`; a range without that note is a
-   bug.
+   Every element is positioned by its real value on a STATED axis. The view
+   computes one percentage per element and passes it as --at (or --lo / --hi),
+   where pct = (value - axisMin) / (axisMax - axisMin) * 100. The axis bounds
+   are printed in `.range-axis-note`; a range without that note is a bug.
+   The arithmetic below is correctness, not style — do not "tidy" it.
 
      <figure class="range">
        <div class="range-track">
@@ -735,10 +978,12 @@ details > summary:focus-visible{ outline-offset:-2px; }
        <figcaption class="range-axis-note">Axis 0–30% · Wilson 95% · n=34</figcaption>
      </figure>
 */
-.range{ margin-top:10px; }
+.range{ margin-top:var(--s3); }
 .range-track{
   position:relative; height:26px;
-  border-top:1px solid var(--rule-2); border-bottom:1px solid var(--rule);
+  background:var(--paper-2);
+  border:1px solid var(--rule);
+  border-radius:var(--r-sm);
 }
 .range-band{
   position:absolute; top:0; bottom:0;
@@ -748,22 +993,22 @@ details > summary:focus-visible{ outline-offset:-2px; }
 }
 .range-point{
   position:absolute; top:-4px; bottom:-4px;
-  left:var(--at,50%); width:1.5px; margin-left:-.75px;
-  background:var(--ink);
+  left:var(--at,50%); width:2px; margin-left:-1px;
+  background:var(--ink); border-radius:var(--r-pill);
 }
-.range-axis{ position:relative; height:1.9em; margin-top:2px; }
+.range-axis{ position:relative; height:1.9em; margin-top:4px; }
 .range-tick{
   position:absolute; top:0; left:var(--at,0%);
   transform:translateX(-50%);
   font-family:var(--mono); font-size:var(--t-xs); white-space:nowrap;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
-  font-variant-numeric:tabular-nums;
+  color:var(--ink-3);                              /* 5.28:1 PASS         */
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em;
   padding-top:5px;
 }
 /* the tick's own hairline, drawn AT the value so label and mark agree */
 .range-tick::before{
   content:""; position:absolute; top:0; left:50%;
-  width:1px; height:4px; background:var(--rule-2);
+  width:1px; height:4px; background:var(--rule-3);
 }
 .range-tick--first{ transform:none; }
 .range-tick--first::before{ left:0; }
@@ -771,7 +1016,7 @@ details > summary:focus-visible{ outline-offset:-2px; }
 .range-tick--last::before{ left:calc(100% - 1px); }
 .range-axis-note{
   font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
-  letter-spacing:.03em; margin-top:2px;            /* 5.17:1 PASS        */
+  letter-spacing:-.01em; margin-top:4px;           /* 5.28:1 PASS         */
 }
 
 
@@ -784,9 +1029,10 @@ details > summary:focus-visible{ outline-offset:-2px; }
        <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
      </div>
 
-   The wrapper is the ONLY thing that scrolls sideways. `.sheet` and `.frame`
-   both carry min-width:0 so a wide table can never push the body sideways.
-   Test at 375px before adding a column.
+   The wrapper is the ONLY thing that scrolls sideways, and it is now the card
+   the table sits on. `.sheet` and `.frame` both carry min-width:0 so a wide
+   table can never push the body sideways. Test at 375px before adding a
+   column.
 
    Sticky thead — read this before assuming it works everywhere.
    `position:sticky` resolves against the nearest scrollport, and setting
@@ -800,19 +1046,27 @@ details > summary:focus-visible{ outline-offset:-2px; }
    clients, the response library — use `.tablewrap .tablewrap--capped`,
    which gives the wrapper a real vertical scrollport and makes the sticky
    head behave. Either way the head needs an OPAQUE background or rows show
-   through it, hence background:var(--paper) below.
+   through it, hence background:var(--card) below.
 */
 .tablewrap{
   overflow-x:auto; overflow-y:visible;
   -webkit-overflow-scrolling:touch;
-  border-bottom:1px solid var(--rule-2);
+  background-color:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  padding:var(--s1) var(--card-pad);
   /* scroll-shadow: the fades are painted local, the shadows scroll — so
      they appear only when there is actually something off-screen. */
-  background:
-    linear-gradient(to right,  var(--paper) 40%, transparent) left  / 28px 100% no-repeat local,
-    linear-gradient(to left,   var(--paper) 40%, transparent) right / 28px 100% no-repeat local,
-    radial-gradient(farthest-side at 0    50%, #00000021, #00000000) left  / 11px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, #00000021, #00000000) right / 11px 100% no-repeat scroll;
+  background-image:
+    linear-gradient(to right, var(--card) 40%, transparent),
+    linear-gradient(to left,  var(--card) 40%, transparent),
+    radial-gradient(farthest-side at 0    50%, var(--shadow-edge), transparent),
+    radial-gradient(farthest-side at 100% 50%, var(--shadow-edge), transparent);
+  background-position:left, right, left, right;
+  background-size:28px 100%, 28px 100%, 11px 100%, 11px 100%;
+  background-repeat:no-repeat;
+  background-attachment:local, local, scroll, scroll;
 }
 .tablewrap--capped{ max-height:min(70vh,640px); overflow-y:auto; }
 
@@ -822,15 +1076,15 @@ details > summary:focus-visible{ outline-offset:-2px; }
 
 .table thead th{
   position:sticky; top:0; z-index:2;
-  background:var(--paper);
-  text-align:left; font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
-  color:var(--ink-2); font-weight:600;             /* 6.94:1 PASS        */
-  padding:6px 12px 7px 0; white-space:nowrap;
+  background:var(--card);
+  text-align:left; font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-2); font-weight:700;             /* 8.02:1 PASS         */
+  padding:10px 14px 10px 0; white-space:nowrap;
   border-bottom:1px solid var(--rule-2);
 }
 .table thead th:last-child{ padding-right:0; }
 .table tbody td{
-  padding:9px 12px 9px 0; border-bottom:1px solid var(--rule); vertical-align:top;
+  padding:11px 14px 11px 0; border-bottom:1px solid var(--rule); vertical-align:top;
 }
 .table tbody td:last-child{ padding-right:0; }
 .table tbody tr:last-child td{ border-bottom:0; }
@@ -838,36 +1092,55 @@ details > summary:focus-visible{ outline-offset:-2px; }
 .table td.r,.table th.r{ text-align:right; }
 .table td.c,.table th.c{ text-align:center; }
 .table .cell-figure{
-  font-family:var(--serif); font-size:var(--t-md);
+  font-family:var(--mono); font-size:var(--t-base); font-weight:500;
+  letter-spacing:-.03em;
   font-variant-numeric:tabular-nums lining-nums;
 }
-.table .cell-name{ font-weight:600; color:var(--ink); }   /* 16.70:1 PASS */
+.table .cell-name{ font-weight:600; color:var(--ink); }   /* 18.66:1 PASS */
 .table .cell-sub{
-  display:block; font-size:var(--t-xs); color:var(--ink-3);/* 5.17:1 PASS */
-  letter-spacing:.02em;
+  display:block; font-size:var(--t-xs); color:var(--ink-3);/* 5.28:1 PASS */
+  letter-spacing:.01em; margin-top:2px;
 }
-/* Zebra paints over the wrapper's scroll shadows — use the hint bar with it. */
+/* Zebra paints over the wrapper's scroll shadows — use the hint bar with it.
+   --ink-3 on --paper-2 = 4.76:1 and on a hovered zebra row (--accent-w,
+   opaque) = 4.64:1. Both clear AA; that is why the hover fill is not a wash. */
 .table--zebra tbody tr:nth-child(even){ background:var(--paper-2); }
 .table--zebra tbody tr:nth-child(even):hover{ background:var(--accent-w); }
 
-/* row states — colour is never the only signal; pair with a .pill or .glyph.
-   The marker goes on the FIRST cell only. Putting it on every td draws a
-   coloured rule at every column boundary, which reads as a table border. */
+/* row states — the marker goes on the FIRST cell only. Putting it on every td
+   draws a coloured rule at every column boundary, which reads as a border.
+
+   The two states differ by PATTERN as well as hue: late is a solid bar, needs
+   attention is a dashed one. Hue alone was not enough — at 2px wide, red and
+   amber are close to the hardest pair to tell apart for a deuteranope, and
+   they are identical in greyscale or on a printout. The old comment told
+   authors to pair the row with a .pill, which enforced nothing; the CSS now
+   carries the distinction itself, so the row stays readable when someone
+   forgets. */
 .row-late    td:first-child{ box-shadow:inset 2px 0 0 var(--neg); }
-.row-attn    td:first-child{ box-shadow:inset 2px 0 0 var(--warn); }
+.row-attn    td:first-child{
+  box-shadow:none;
+  /* 7px of colour then 5px of nothing, tiled down the edge. The gradient must
+     carry the gap itself — a solid one tiled with repeat-y just paints a
+     continuous bar and the two states look identical again. */
+  background-image:linear-gradient(var(--warn) 0 7px, transparent 7px 12px);
+  background-size:2px 12px;
+  background-position:left top;
+  background-repeat:repeat-y;
+}
 .row-cleared td{ color:var(--ink-2); }
 .row-cleared .cell-name{ color:var(--ink-2); }
 
 /* hint bar — shown where a sideways scroll is likely and easy to miss */
 .tablehint{
   display:none;
-  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
-  padding:6px 0 2px; border-top:1px dotted var(--rule);
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
+  padding:8px 0 4px; border-top:1px solid var(--rule);
 }
 .empty{
-  padding:22px 0; color:var(--ink-2); font-size:var(--t-base);
-  border-bottom:1px solid var(--rule);             /* 6.94:1 PASS        */
+  padding:var(--s5) 0; color:var(--ink-2); font-size:var(--t-base);
+  text-align:center;                               /* 8.02:1 PASS         */
 }
 
 
@@ -887,57 +1160,64 @@ details > summary:focus-visible{ outline-offset:-2px; }
    not just the 20px box. `.task-extra` sits OUTSIDE the label because a
    <details> inside a <label> toggles the checkbox when you open it.
 */
-.tasks{ border-top:1px solid var(--rule-2); }
+.tasks{
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  overflow:hidden;
+}
 .task{ border-bottom:1px solid var(--rule); }
 .task-row{
   display:flex; gap:14px; align-items:flex-start;
-  padding:14px 0 8px; cursor:pointer; border-radius:1px;
+  padding:var(--s4) var(--card-pad) 10px; cursor:pointer; border-radius:0;
+  transition:background-color .16s ease;
 }
 .task-row:hover{ background:var(--accent-w); }
-.task-row:has(input:focus-visible){ outline:2px solid var(--accent); outline-offset:2px; }
+.task-row:has(input:focus-visible){ outline:2px solid var(--focus); outline-offset:-2px; }
 
 .chk{ flex:0 0 auto; width:var(--tap); height:var(--tap); margin:-10px 0 0 -12px; display:grid; place-items:center; }
 .chk input{
   appearance:none; -webkit-appearance:none; margin:0;
-  width:20px; height:20px; border:1.5px solid var(--rule-2);
-  background:transparent; cursor:pointer; border-radius:1px;
+  width:20px; height:20px; border:1.5px solid var(--rule-3);
+  background:var(--card); cursor:pointer; border-radius:6px;
   display:grid; place-items:center;
-  transition:border-color .12s ease, background-color .12s ease;
+  transition:border-color .14s ease, background-color .14s ease, box-shadow .14s ease;
 }
-.chk input:hover{ border-color:var(--accent); }
+.chk input:hover{ border-color:var(--accent); box-shadow:var(--ring); }
 .chk input::after{
   content:""; width:11px; height:6px; margin-top:-3px;
-  border-left:1.75px solid var(--paper); border-bottom:1.75px solid var(--paper);
+  border-left:2px solid var(--paper); border-bottom:2px solid var(--paper);
   transform:rotate(-45deg) scale(.4); opacity:0;
-  transition:opacity .12s ease, transform .12s ease;
+  transition:opacity .14s ease, transform .14s cubic-bezier(.22,.61,.36,1);
 }
 .chk input:checked{ background:var(--accent); border-color:var(--accent); }
 .chk input:checked::after{ opacity:1; transform:rotate(-45deg) scale(1); }
-/* checked tick is --paper on --accent: 8.96:1 light / 7.91:1 dark  PASS   */
+/* checked tick is --paper on --accent: 5.80:1 light / 8.36:1 dark  PASS   */
 
 .task-body{ flex:1 1 auto; min-width:0; }
 .task-head{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
 .task-title{
-  font-family:var(--serif); font-size:var(--t-lg); font-weight:400;
-  line-height:1.25; letter-spacing:.005em; text-wrap:balance;
-  color:var(--ink);                                /* 16.70:1 PASS       */
+  font-family:var(--disp); font-size:1.0625rem; font-weight:600;
+  line-height:1.3; letter-spacing:-.024em; text-wrap:balance;
+  color:var(--ink);                                /* 18.66:1 PASS        */
 }
 .task-meta{
-  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;
-  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px;
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
 }
-.task-meta .owner{ color:var(--accent); font-weight:600; }  /* 8.96:1 PASS */
+.task-meta .owner{ color:var(--accent); font-weight:700; }  /* 6.04:1 PASS */
 .task-meta .amt{
-  font-family:var(--mono); color:var(--ink-2);     /* 6.94:1 PASS        */
-  letter-spacing:.02em; text-transform:none;
+  font-family:var(--mono); color:var(--ink-2);     /* 8.02:1 PASS         */
+  letter-spacing:-.02em; text-transform:none; font-variant-numeric:tabular-nums;
 }
 .task.is-done .task-title{
-  color:var(--ink-2);                              /* 6.94:1 PASS — still
+  color:var(--ink-2);                              /* 8.02:1 PASS — still
                                                       readable when struck */
   text-decoration:line-through; text-decoration-thickness:1px;
 }
-.task-extra{ padding:0 0 6px 46px; }
+.task-extra{ padding:0 var(--card-pad) 10px 66px; }
 .task-extra details{ margin-top:0; }
 .steps{ padding-left:18px; }
 .steps li + li{ margin-top:.35em; }
@@ -950,136 +1230,153 @@ details > summary:focus-visible{ outline-offset:-2px; }
    states which kind of number it is, and renders MISSING rather than "0
    cleared" when the typed store is unreachable. */
 .progress{
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  border-top:3px double var(--rule-2);
-  margin-top:22px; padding-top:12px;
+  display:flex; align-items:center; gap:var(--s4); flex-wrap:wrap;
+  background:var(--paper-2);
+  border-top:1px solid var(--rule-2);
+  margin-top:0; padding:var(--s4) var(--card-pad);
 }
 .progress-count{
-  font-family:var(--serif); font-size:var(--t-xl); line-height:1;
+  font-family:var(--mono); font-size:var(--t-xl); font-weight:700; line-height:1;
+  letter-spacing:-.05em;
   font-variant-numeric:tabular-nums lining-nums;
-  color:var(--ink);                                /* 16.70:1 PASS        */
+  color:var(--ink);                                /* 16.82:1 on paper-2 PASS */
 }
 .progress-note{
   flex:1 1 240px; min-width:0;
-  font-size:var(--t-xs); letter-spacing:.02em;
-  color:var(--ink-3);                              /* 5.17:1 PASS         */
+  font-size:var(--t-xs); letter-spacing:.01em;
+  color:var(--ink-3);                              /* 4.76:1 on paper-2 PASS  */
 }
 
 
 /* =============================================================================
-   15. FORMS  — 16px controls (FIX 3), visible labels, error slots
+   15. FORMS  — 16px controls, visible labels, error slots
    ============================================================================= */
 /*
-   FIX 3: every input, select and textarea below is font-size:var(--t-input),
-   which is 1rem = 16px. Safari on iOS zooms the viewport whenever a focused
-   control is under 16px, and the zoom does not come back. The 13px textarea
-   in the prototype did exactly that. --t-input is NOT scaled down at any
-   breakpoint; if a field looks too big, shorten it, do not shrink the type.
+   Every input, select and textarea below is font-size:var(--t-input), which
+   is 1rem = 16px. Safari on iOS zooms the viewport whenever a focused control
+   is under 16px, and the zoom does not come back. --t-input is NOT scaled
+   down at any breakpoint; if a field looks too big, shorten it, do not shrink
+   the type.
 
    Labels are always visible elements. Placeholder-as-label is not permitted:
    the label disappears the moment someone starts typing, which is precisely
    when they need it.
+
+   Controls are boxed now rather than underlined — a filled field with a
+   hairline and a violet focus ring, the same control the sibling apps use.
 */
 .form-grid{
   display:grid; gap:0 var(--gut);
   grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
 }
 .form-grid--two{ grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
-.form-section{ border-top:1px solid var(--rule-2); padding-top:8px; margin-top:26px; }
+.form-section{ border-top:1px solid var(--rule); padding-top:var(--s4); margin-top:var(--s5); }
 .form-section > legend,
 .form-section > h3{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  font-weight:600; color:var(--ink-2); padding:0;  /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2); padding:0;  /* 8.02:1 PASS         */
 }
 
 .field{
-  padding:12px 0 14px; border-bottom:1px solid var(--rule);
-  display:flex; flex-direction:column; gap:4px; min-width:0;
+  padding:0 0 var(--s4); border-bottom:1px solid transparent;
+  display:flex; flex-direction:column; gap:6px; min-width:0;
 }
 .field > label,
 .field > .field-label{
-  font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
-  color:var(--ink-2); font-weight:600;             /* 6.94:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-2); font-weight:700;             /* 8.02:1 PASS         */
 }
-.field > label .req{ color:var(--neg); }           /* 6.73:1 PASS        */
+.field > label .req{ color:var(--neg); }           /* 6.47:1 PASS         */
 
 .field input,
 .field select,
 .field textarea{
   font-family:var(--sans);
-  font-size:var(--t-input);                        /* FIX 3 — 16px       */
+  font-size:var(--t-input);                        /* 16px — iOS zoom     */
   line-height:1.45;
-  background:transparent; color:var(--ink);        /* 16.70:1 PASS       */
-  border:0; border-bottom:1.5px solid var(--rule-2); border-radius:0;
-  padding:6px 2px; min-height:var(--tap); width:100%; max-width:100%;
+  background:var(--card); color:var(--ink);        /* 18.66:1 PASS        */
+  border:1px solid var(--rule-2); border-radius:10px;
+  padding:10px 12px; min-height:var(--tap); width:100%; max-width:100%;
+  transition:border-color .14s ease, box-shadow .14s ease;
 }
-/* numeric fields get the serif and tabular figures — they are money */
+/* numeric fields get the mono face and tabular figures — they are money */
 .field input[type="number"],
 .field input[inputmode="numeric"],
 .field input[inputmode="decimal"],
 .field input.is-figure{
-  font-family:var(--serif); font-size:var(--t-lg); /* 21px, > 16px       */
+  font-family:var(--mono); font-size:var(--t-md); font-weight:600;
+  letter-spacing:-.03em;
   font-variant-numeric:tabular-nums lining-nums;
 }
 .field textarea{ min-height:96px; resize:vertical; line-height:1.6; }
 .field select{
   -webkit-appearance:none; appearance:none;
-  padding-right:22px;
-  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
-                   linear-gradient(135deg,currentColor 50%,transparent 50%);
-  background-position:right 8px center,right 3px center;
-  background-size:5px 5px,5px 5px;
+  padding-right:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236F6690' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-position:right 12px center;
+  background-size:12px;
   background-repeat:no-repeat;
 }
+/* The caret is painted inside a data-URI, so its stroke CANNOT reference a
+   custom property — the light --ink-3 (#6F6690) would otherwise stay frozen
+   into the dark theme, where it measures 3.26:1 on the dark --card. That only
+   just clears the 3:1 non-text floor and reads as a smudge. The dark theme
+   gets its own copy of the same glyph at the dark --ink-3 (#9A92BD, 5.91:1).
+   If --ink-3 moves in either theme, move the matching stroke here too. */
+html[data-theme="dark"] .field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A92BD' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
 .field input::placeholder,
-.field textarea::placeholder{ color:var(--ink-3); opacity:1; } /* 5.17:1 PASS */
-.field input:hover,.field select:hover,.field textarea:hover{ border-bottom-color:var(--ink-3); }
+.field textarea::placeholder{ color:var(--ink-3); opacity:1; } /* 5.28:1 PASS */
+.field input:hover,.field select:hover,.field textarea:hover{ border-color:var(--rule-3); }
 .field input:focus-visible,
 .field select:focus-visible,
 .field textarea:focus-visible{
   outline:none;
-  border-bottom-color:var(--accent);
-  box-shadow:0 1.5px 0 var(--accent);
+  border-color:var(--accent);
+  box-shadow:var(--ring);
 }
 .field input:disabled,.field select:disabled,.field textarea:disabled{
-  color:var(--ink-3); cursor:not-allowed; border-bottom-style:dashed;
+  color:var(--ink-3); cursor:not-allowed; border-style:dashed; background:var(--paper-2);
 }
 
 /* hint and error live in a reserved slot so validating does not reflow the
    form and move the button out from under a thumb. */
-.field-hint{ font-size:var(--t-xs); color:var(--ink-3); }  /* 5.17:1 PASS */
+.field-hint{ font-size:var(--t-xs); color:var(--ink-3); }  /* 5.28:1 PASS */
 .field-error{
   min-height:1.25em;
-  font-size:var(--t-xs); letter-spacing:.04em;
-  color:var(--neg);                                /* 6.73:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.01em;
+  color:var(--neg);                                /* 6.47:1 PASS         */
   display:flex; align-items:center; gap:5px;
 }
 .field-error:empty{ min-height:1.25em; }
 .field.is-invalid input,
 .field.is-invalid select,
-.field.is-invalid textarea{ border-bottom-color:var(--neg); }
+.field.is-invalid textarea{ border-color:var(--neg); }
 .field.is-invalid > label{ color:var(--neg); }
 
 /* inline checkbox / radio rows — same full-row target as the checklist */
 .check-row{
   display:flex; align-items:center; gap:12px;
-  min-height:var(--tap); padding:4px 6px 4px 0; cursor:pointer;
-  border-bottom:1px solid var(--rule); border-radius:1px;
+  min-height:var(--tap); padding:var(--s2) var(--s3); cursor:pointer;
+  border-bottom:1px solid transparent; border-radius:10px;
+  transition:background-color .16s ease;
 }
 .check-row:hover{ background:var(--accent-w); }
-.check-row:has(input:focus-visible){ outline:2px solid var(--accent); outline-offset:2px; }
+.check-row:has(input:focus-visible){ outline:2px solid var(--focus); outline-offset:2px; }
 .check-row input[type="checkbox"],
 .check-row input[type="radio"]{
   appearance:none; -webkit-appearance:none; margin:0;
   flex:0 0 20px; width:20px; height:20px;
-  border:1.5px solid var(--rule-2); background:transparent; cursor:pointer;
+  border:1.5px solid var(--rule-3); background:var(--card); cursor:pointer;
+  border-radius:6px;
   display:grid; place-items:center;
 }
 .check-row input[type="radio"]{ border-radius:50%; }
 .check-row input:checked{ background:var(--accent); border-color:var(--accent); }
 .check-row input[type="checkbox"]:checked::after{
   content:""; width:11px; height:6px; margin-top:-3px;
-  border-left:1.75px solid var(--paper); border-bottom:1.75px solid var(--paper);
+  border-left:2px solid var(--paper); border-bottom:2px solid var(--paper);
   transform:rotate(-45deg);
 }
 .check-row input[type="radio"]:checked::after{
@@ -1089,11 +1386,14 @@ details > summary:focus-visible{ outline-offset:-2px; }
 
 .form-actions{
   display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-  margin-top:20px; padding-top:16px; border-top:1px solid var(--rule-2);
+  margin-top:var(--s5); padding-top:var(--s4); border-top:1px solid var(--rule);
 }
-.form-status{ font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
-.form-status.is-ok{ color:var(--pos); }
-.form-status.is-bad{ color:var(--neg); }
+.form-status{
+  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
+}
+.form-status.is-ok{ color:var(--pos); }            /* 5.48:1 PASS         */
+.form-status.is-bad{ color:var(--neg); }           /* 6.47:1 PASS         */
 
 
 /* =============================================================================
@@ -1103,39 +1403,50 @@ details > summary:focus-visible{ outline-offset:-2px; }
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   min-height:var(--tap); padding:0 18px; cursor:pointer;
-  font-family:var(--sans); font-size:var(--t-xs); font-weight:600;
-  letter-spacing:.14em; text-transform:uppercase; text-decoration:none;
-  border:1px solid var(--ink); background:var(--ink);
-  color:var(--paper);                              /* 16.70:1 light /
-                                                      14.39:1 dark  PASS  */
+  font-family:var(--sans); font-size:var(--t-sm); font-weight:600;
+  letter-spacing:-.005em; text-transform:none; text-decoration:none;
+  border:1px solid var(--accent); background:var(--accent);
+  color:var(--paper);                              /* 5.80:1 light /
+                                                      8.36:1 dark   PASS  */
   border-radius:var(--radius);
-  transition:background-color .12s ease, border-color .12s ease, color .12s ease;
+  box-shadow:var(--e1);
+  transition:background-color .16s ease, border-color .16s ease, color .16s ease,
+             box-shadow .16s ease, transform .12s cubic-bezier(.22,.61,.36,1);
 }
-.btn:hover{ background:var(--accent); border-color:var(--accent); color:var(--paper); }
-.btn:active{ transform:translateY(1px); }
+.btn:hover{ background:var(--accent-2); border-color:var(--accent-2); color:var(--paper); box-shadow:var(--e2); }
+.btn:active{ transform:translateY(1px); box-shadow:var(--e1); }
 .btn[disabled],.btn[aria-disabled="true"]{
-  background:transparent; color:var(--ink-3); border-color:var(--rule-2);
-  cursor:not-allowed; transform:none;              /* 5.17:1 PASS        */
+  background:var(--paper-2); color:var(--ink-3); border-color:var(--rule-2);
+  cursor:not-allowed; transform:none; box-shadow:none;  /* 4.76:1 PASS    */
 }
 .btn--ghost{
-  background:transparent; color:var(--ink-2); border-color:var(--rule-2);
-}                                                  /* 6.94:1 PASS        */
-.btn--ghost:hover{ color:var(--accent); border-color:var(--accent); background:var(--accent-w); }
-.btn--danger{ background:transparent; color:var(--neg); border-color:currentColor; }
+  background:var(--card); color:var(--ink-2); border-color:var(--rule-2);
+}                                                  /* 8.02:1 PASS         */
+.btn--ghost:hover{ color:var(--accent); border-color:var(--accent-line); background:var(--accent-w); }
+.btn--danger{ background:var(--card); color:var(--neg); border-color:var(--bad-line); }
 .btn--danger:hover{ background:var(--neg); color:var(--paper); border-color:var(--neg); }
-.btn--sm{ min-height:36px; padding:0 12px; }
+.btn--sm{ min-height:36px; padding:0 12px; font-size:var(--t-xs); border-radius:10px; }
 .btn--block{ width:100%; }
 .btn svg{ width:15px; height:15px; }
 
 .btnrow{ display:flex; gap:10px; flex-wrap:wrap; }
 
-/* segmented filter control — used on orders, inquiries, clients */
-.segment{ display:flex; flex-wrap:wrap; border:1px solid var(--rule-2); border-radius:var(--radius); overflow:hidden; }
+/* segmented filter control — used on orders, inquiries, clients.
+   A recessed track holding pill items; the active one is a solid violet
+   chip rather than a shared border. */
+.segment{
+  display:flex; flex-wrap:wrap; gap:2px;
+  background:var(--paper-2);
+  border:1px solid var(--rule-2); border-radius:var(--radius);
+  padding:3px; overflow:hidden;
+}
 .segment > *{
-  min-height:36px; padding:0 12px; cursor:pointer;
-  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
-  color:var(--ink-2); border-left:1px solid var(--rule-2);/* 6.94:1 PASS */
+  min-height:36px; padding:0 14px; cursor:pointer;
+  font-size:var(--t-xs); letter-spacing:.02em; text-transform:none; font-weight:600;
+  color:var(--ink-2); border-left:1px solid transparent;  /* 7.23:1 PASS  */
+  border-radius:9px;
   display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  transition:background-color .16s ease, color .16s ease;
 }
 .segment > *:first-child{ border-left:0; }
 .segment > *:hover{ background:var(--accent-w); color:var(--ink); }
@@ -1147,123 +1458,196 @@ details > summary:focus-visible{ outline-offset:-2px; }
    17. SHARED SECTION COMPONENTS
    ============================================================================= */
 
-/* column grid — the broadsheet's multi-column body */
+/* column grid */
 .cols{ display:grid; gap:var(--gut); grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
 .cols--two{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 .cols--three{ grid-template-columns:repeat(3,minmax(0,1fr)); }
 .col-rule{ border-left:1px solid var(--rule); padding-left:var(--gut); }
 
-.block{ border-top:1px solid var(--rule-2); padding-top:14px; margin-top:26px; }
+.block{
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  padding:var(--card-pad);
+  margin-top:var(--s5);
+}
 .block > h3{
-  font-size:var(--t-xs); letter-spacing:.15em; text-transform:uppercase;
-  font-weight:600; color:var(--ink-2); margin-bottom:12px;  /* 6.94:1 PASS */
+  font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2); margin-bottom:var(--s3);  /* 8.02:1 PASS */
 }
 
-/* a marginal note — the column rule holds it */
+/* a marginal note */
 .note{
-  font-size:var(--t-sm); color:var(--ink-2);       /* 6.94:1 PASS        */
-  max-width:66ch; margin-top:14px;
-  padding-left:12px; border-left:1px solid var(--rule-2);
+  font-size:var(--t-sm); color:var(--ink-2);       /* 7.23:1 on paper-2 PASS */
+  max-width:66ch; margin-top:var(--s4);
+  padding:10px var(--s3); border-radius:var(--radius);
+  background:var(--paper-2);
+  border-left:3px solid var(--rule-3);
 }
-.note--warn{ border-left-color:var(--warn); }
-.note--neg{ border-left-color:var(--neg); }
+.note--warn{ border-left-color:var(--warn); background:var(--warn-bg); }
+.note--neg{ border-left-color:var(--neg); background:var(--bad-bg); }
 
 /* threads / messages */
-.thread-list{ border-top:1px solid var(--rule-2); }
+.thread-list{
+  background:var(--card);
+  border:1px solid var(--rule-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--e1);
+  overflow:hidden;
+}
 .thread{ border-bottom:1px solid var(--rule); }
 .thread-btn{
   width:100%; text-align:left; cursor:pointer;
-  padding:12px 8px 12px 0; min-height:var(--tap); color:inherit; font-family:inherit;
+  padding:var(--s3) var(--card-pad); min-height:var(--tap); color:inherit; font-family:inherit;
   display:flex; gap:12px; align-items:flex-start;
+  transition:background-color .16s ease;
 }
 .thread-btn:hover{ background:var(--accent-w); }
-.thread[aria-selected="true"] .thread-btn{ box-shadow:inset 3px 0 0 var(--accent); padding-left:11px; }
-.thread .who{ font-weight:600; color:var(--ink); }        /* 16.70:1 PASS */
+.thread[aria-selected="true"] .thread-btn{ background:var(--accent-w); box-shadow:inset 3px 0 0 var(--accent); }
+.thread .who{ font-weight:600; color:var(--ink); }        /* 18.66:1 PASS */
 .thread .snip{
-  display:block; color:var(--ink-2); font-size:var(--t-sm);/* 6.94:1 PASS */
+  display:block; color:var(--ink-2); font-size:var(--t-sm);/* 8.02:1 PASS */
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .thread .when{
   margin-left:auto; font-family:var(--mono); font-size:var(--t-xs);
-  color:var(--ink-3); white-space:nowrap;          /* 5.17:1 PASS        */
+  color:var(--ink-3); white-space:nowrap;          /* 5.28:1 PASS         */
 }
-.msg{ border-top:1px solid var(--rule); padding:12px 0; }
+/* The buyer picker on Messages. `.thread-btn` was written for a <button>,
+   where there is no underline to strip; on an <a> the entire row underlines,
+   including the meta line, and the row is not the thing being pointed at —
+   the buyer is. So the underline moves onto the name.
+   `.thread-lines` exists because a flex item defaults to min-width:auto: the
+   `.snip` ellipsis then has nothing to measure against, the row refuses to
+   shrink, and the timestamp is pushed off the right edge at 375px.
+   Added for views/messages.js. */
+.thread-link{ text-decoration:none; color:inherit; }
+.thread-link .thread-lines{ flex:1 1 auto; min-width:0; }
+.thread-link .who{ text-decoration:underline; text-underline-offset:.18em; }
+.thread-link:hover .who{ color:var(--accent); }    /* 5.32:1 on hover fill PASS */
+.msg{ border-top:1px solid var(--rule); padding:var(--s3) 0; }
 .msg .from{
-  font-size:var(--t-xs); letter-spacing:.13em; text-transform:uppercase;
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  font-size:var(--t-xs); letter-spacing:.12em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
 }
-.msg .from.is-us{ color:var(--accent); }           /* 8.96:1 PASS        */
+.msg .from.is-us{ color:var(--accent); }           /* 6.04:1 PASS         */
 .msg p{ margin-top:4px; max-width:60ch; }
 
 /* response library */
-.snippet{ border-bottom:1px solid var(--rule); padding:14px 0; }
+.snippet{ border-bottom:1px solid var(--rule); padding:var(--s4) 0; }
 .snippet-head{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.snippet h4{ font-family:var(--serif); font-size:var(--t-md); font-weight:400; }
+.snippet h4{ font-family:var(--disp); font-size:var(--t-md); font-weight:600; letter-spacing:-.024em; }
 .snippet .uses{
   margin-left:auto; font-family:var(--mono); font-size:var(--t-xs);
-  color:var(--ink-3);                              /* 5.17:1 PASS        */
+  color:var(--ink-3);                              /* 5.28:1 PASS         */
 }
 .snippet-body{
-  margin-top:8px; padding:12px 14px;
-  background:var(--paper-2); border-left:2px solid var(--rule-2);
+  margin-top:var(--s2); padding:var(--s3) var(--s4);
+  background:var(--paper-2); border:1px solid var(--rule);
+  border-left:3px solid var(--rule-3); border-radius:var(--radius);
   font-family:var(--sans); font-size:var(--t-base); line-height:1.6;
-  white-space:pre-wrap; color:var(--ink-2);        /* 6.46:1 on paper-2 PASS */
+  white-space:pre-wrap; color:var(--ink-2);        /* 7.23:1 on paper-2 PASS */
   max-width:66ch; overflow-x:auto;
 }
-.snippet-body .var{ color:var(--accent); font-weight:600; }  /* 8.34:1 PASS */
+.snippet-body .var{ color:var(--accent); font-weight:600; }  /* 5.44:1 PASS */
+/* The row of actions under a reply — copy, retire, and the status word the
+   copy button writes into. A `.btnrow` of one-button forms, so the forms are
+   the flex items; without align-items the taller form (the one carrying the
+   status text) stretches its sibling's button. The status sits INSIDE the copy
+   form because it reports on that form only, and it wraps under the button at
+   375px rather than pushing the row sideways.
+   Added for views/responses.js. */
+.snippet-actions{ align-items:center; margin-top:var(--s3); }
+.snippet-actions form{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+.snippet-actions .form-status{ max-width:40ch; text-transform:none; letter-spacing:0; }
 
 /* team scoring — self vs manager, the gap is the signal */
 .score{ display:inline-flex; gap:3px; vertical-align:middle; }
-.score i{ width:9px; height:14px; border:1px solid var(--rule-2); display:block; }
+.score i{ width:9px; height:14px; border:1px solid var(--rule-3); border-radius:3px; display:block; }
 .score i.is-on{ background:var(--accent); border-color:var(--accent); }
-.score i.is-self{ background:var(--rule-2); border-color:var(--rule-2); }
+.score i.is-self{ background:var(--rule-3); border-color:var(--rule-3); }
 
 /* search / filter bar */
 .toolbar{
-  display:flex; gap:12px; flex-wrap:wrap; align-items:center;
-  padding:10px 0 12px; border-bottom:1px solid var(--rule);
+  display:flex; gap:var(--s3); flex-wrap:wrap; align-items:center;
+  padding:var(--s3) var(--card-pad); margin-bottom:var(--s4);
+  background:var(--card);
+  border:1px solid var(--rule-2); border-radius:var(--r-lg);
+  box-shadow:var(--e1);
 }
 .toolbar .search{ flex:1 1 220px; min-width:0; }
 .toolbar .search input{
-  width:100%; font-size:var(--t-input);            /* FIX 3 — 16px       */
+  width:100%; font-size:var(--t-input);            /* 16px — iOS zoom     */
   min-height:var(--tap);
-  background:transparent; color:var(--ink);
-  border:0; border-bottom:1.5px solid var(--rule-2); border-radius:0; padding:6px 2px;
+  background:var(--card); color:var(--ink);
+  border:1px solid var(--rule-2); border-radius:10px; padding:10px 12px;
+  transition:border-color .14s ease, box-shadow .14s ease;
 }
-.toolbar .search input:focus-visible{ outline:none; border-bottom-color:var(--accent); box-shadow:0 1.5px 0 var(--accent); }
-.toolbar .count{ font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3); }
+.toolbar .search input:focus-visible{ outline:none; border-color:var(--accent); box-shadow:var(--ring); }
+.toolbar .count{
+  font-family:var(--mono); font-size:var(--t-xs); color:var(--ink-3);
+  font-variant-numeric:tabular-nums;               /* 5.28:1 PASS         */
+}
 /* A filter select is a `.field` let into the toolbar: the same 16px control
-   (FIX 3) and the same visible label, minus the column padding and the bottom
-   rule, because the toolbar's own rule already closes the row. Four share one
-   line on a laptop and each takes the full width at 375px.
-   Added for views/inquiries.js and views/orders.js. */
-.toolbar .field{ flex:1 1 150px; min-width:0; padding:0; border-bottom:0; gap:2px; }
+   and the same visible label, minus the column padding, because the toolbar
+   card already closes the row. Four share one line on a laptop and each takes
+   the full width at 375px. Added for views/inquiries.js and views/orders.js. */
+.toolbar .field{ flex:1 1 150px; min-width:0; padding:0; border-bottom:0; gap:4px; }
 .toolbar .field select,
-.toolbar .field input{ min-height:36px; }
+.toolbar .field input{ min-height:40px; padding-top:6px; padding-bottom:6px; }
 
 /* A total row. Used where a table's whole claim is that its parts sum to a
    figure published elsewhere — the stale-order split against
    recovery.open_orders.stale_value. The sum belongs INSIDE the table it is a
-   sum of, and it takes the heaviest of the three rules, which is what a
-   bottom line is for. Added for views/orders.js. */
+   sum of, and it takes the heaviest divider, which is what a bottom line is
+   for. Added for views/orders.js. */
 .table tfoot td{
-  padding:10px 12px 10px 0;
-  border-top:3px double var(--rule-2);
-  font-weight:600; color:var(--ink);               /* 16.70:1 PASS        */
+  padding:12px 14px 12px 0;
+  border-top:2px solid var(--rule-3);
+  font-weight:700; color:var(--ink);               /* 18.66:1 PASS        */
 }
 .table tfoot td:last-child{ padding-right:0; }
-.table tfoot .cell-figure{ font-size:var(--t-md); }
+.table tfoot .cell-figure{ font-size:var(--t-md); font-weight:600; }
 
 /* banner — self-check blocks, stale data, DB unreachable */
 .banner{
   display:flex; gap:10px; align-items:flex-start;
-  padding:10px 12px; margin-bottom:18px;
-  border-left:3px solid var(--accent); background:var(--accent-w);
+  padding:var(--s3) var(--s4); margin-bottom:var(--s5);
+  border:1px solid var(--accent-line); border-left:3px solid var(--accent);
+  border-radius:var(--radius);
+  background:var(--accent-w);
+  box-shadow:var(--e1);
   font-size:var(--t-base);
 }
-.banner--warn{ border-left-color:var(--warn); background:transparent; box-shadow:inset 0 0 0 1px var(--rule); }
-.banner--crit{ border-left-color:var(--neg); background:transparent; box-shadow:inset 0 0 0 1px var(--rule); }
-.banner strong{ color:var(--ink); }
+.banner--warn{ border-color:var(--warn-line); border-left-color:var(--warn); background:var(--warn-bg); }
+.banner--crit{ border-color:var(--bad-line); border-left-color:var(--neg); background:var(--bad-bg); }
+.banner strong{ color:var(--ink); }                /* 16.98:1 on tint PASS */
+
+
+/* --- 44px floor on touch ---------------------------------------------------
+   Three controls are deliberately denser than --tap so a laptop toolbar does
+   not become a row of slabs: `.btn--sm` (36px), `.segment > *` (36px) and the
+   `.toolbar .field` controls (40px). Against a mouse that is correct — a
+   cursor is pixel-accurate. Against a finger it is not, and 44px is the house
+   floor. These are the only three things in this file under it.
+
+   `pointer:coarse` is the right test rather than a width breakpoint: it asks
+   what is POINTING at the page, so a 1280px touchscreen gets the big targets
+   and a 700px desktop window keeps the dense ones. It changes no palette and
+   renames nothing.
+
+   This block MUST stay below `.segment > *` and `.toolbar .field` in source
+   order. A media query adds no specificity, so at the equal specificity these
+   selectors carry, whichever comes LAST wins — put this block up beside
+   `.btn--sm` in section 16 and the 36px/40px rules below it silently win it
+   back on exactly the devices it exists for. */
+@media (pointer:coarse){
+  .btn--sm{ min-height:var(--tap); }
+  .segment > *{ min-height:var(--tap); }
+  .toolbar .field select,
+  .toolbar .field input{ min-height:var(--tap); }
+}
 
 
 /* =============================================================================
@@ -1271,13 +1655,16 @@ details > summary:focus-visible{ outline-offset:-2px; }
    =============================================================================
    Reasoning at 375px, checked against the values below:
      --gut 16px  →  .sheet content width = 375 - 32 = 343px.
+     --card-pad drops to 16px, so a card's inner width is 311px.
      .ticker 2 cols → 171px per cell; the longest label ("Success score")
        ellipses rather than wrapping the figure off its own line.
      .lede collapses to one column; .lede-side keeps its rule as a top rule.
-     .form-grid minmax(190px,1fr) auto-fits to exactly one column at 343px.
+     .form-grid minmax(190px,1fr) auto-fits to exactly one column at 311px.
      .table keeps min-width 520px and scrolls INSIDE .tablewrap; .frame,
        .sheet and .tablewrap all carry min-width:0 / overflow-x:auto so the
-       body never scrolls sideways.
+       body never scrolls sideways. Note that overflow-x:hidden is NOT set on
+       body on purpose: it makes body a scroll container and kills the rail's
+       position:sticky. Keep the min-width:0 discipline instead.
      Every interactive element keeps min-height:var(--tap) = 44px.
      --t-input is untouched at 1rem, so no control triggers iOS zoom.
    ============================================================================= */
@@ -1287,7 +1674,7 @@ details > summary:focus-visible{ outline-offset:-2px; }
   .ticker{ grid-template-columns:repeat(3,minmax(0,1fr)); }
   .tick{ border-top:1px solid var(--rule); }
   .tick:nth-child(-n+3){ border-top:0; }
-  .tick:nth-child(3n+1){ border-left:0; padding-left:0; }
+  .tick:nth-child(3n+1){ border-left:0; }
   .cols--three{ grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
 }
 
@@ -1301,29 +1688,47 @@ details > summary:focus-visible{ outline-offset:-2px; }
     width:auto; flex:none; height:auto;
     position:sticky; top:0; z-index:30;
     border-right:0; border-bottom:1px solid var(--rule-2);
-    padding:12px 0 0; gap:10px;
+    padding:var(--s3) 0 0; gap:10px;
     background:var(--paper);
   }
   .flag{ padding:0 var(--gut); flex-direction:row; align-items:baseline; gap:10px; justify-content:space-between; }
   .flag-sub{ display:none; }
   .nav{
     flex-direction:row; overflow-x:auto; overflow-y:hidden;
-    padding:0 var(--gut); scrollbar-width:none;
+    padding:0 var(--gut); scrollbar-width:none; gap:2px;
     -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
   }
   .nav::-webkit-scrollbar{ display:none; }
   .nav-group{ display:none; }
   .nav-link{
     width:auto; flex:0 0 auto; white-space:nowrap; padding:0 14px; gap:8px;
+    border-radius:10px 10px 0 0;
     border-bottom:2px solid transparent; scroll-snap-align:start;
   }
   .nav-link .tag{ display:none; }
   .keycap{ display:none; }                 /* no keyboard, no keycap      */
   .nav-link[aria-current="page"]{
     box-shadow:none; background:none;
-    border-bottom-color:var(--accent); color:var(--accent);
+    border-bottom-color:var(--accent); color:var(--accent);  /* 5.80:1 PASS */
   }
-  .rail-foot{ position:absolute; top:6px; right:var(--gut); padding:0; width:auto; }
+  /* In normal flow, NOT absolute.
+     Absolute put the theme button, "Signed in as …" and Sign out on top of the
+     tab strip, where they covered whichever section happened to sit under them
+     — Inquiries, at 375px. An absolutely positioned block over a horizontally
+     scrolling row cannot be made safe: the row moves under it, so there is no
+     width to reserve and no order that avoids a collision. A flow row costs one
+     line of height and can never overlap anything. */
+  .rail-foot{
+    position:static;
+    flex-direction:row; align-items:center; gap:var(--s2);
+    padding:0 var(--gut) var(--s2);
+    width:auto; min-width:0;
+    order:3;                     /* masthead, tabs, then this */
+  }
+  .rail-foot .who{
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    margin-inline-start:auto;    /* identity right, toggle left */
+  }
   .theme-toggle{ width:var(--tap); padding:0; justify-content:center; }
   /* Same specificity as the html[data-theme="dark"] rules above, later in
      source, so the icon-only toggle actually wins in BOTH themes. The
@@ -1341,23 +1746,24 @@ details > summary:focus-visible{ outline-offset:-2px; }
 }
 
 @media (max-width:520px){
-  :root{ --gut:16px; --t-xl:1.5rem; }      /* NB: --t-input is NOT changed */
+  :root{ --gut:16px; --t-xl:1.5rem; --card-pad:16px; }  /* --t-input NOT changed */
 
   .ticker{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .tick{ border-top:1px solid var(--rule); border-left:1px solid var(--rule); padding-left:12px; }
+  .tick{ border-top:1px solid var(--rule); border-left:1px solid var(--rule); }
   .tick:nth-child(-n+2){ border-top:0; }
-  .tick:nth-child(odd){ border-left:0; padding-left:0; }
+  .tick:nth-child(odd){ border-left:0; }
 
   .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .stat:nth-child(odd){ border-left:0; padding-left:0; }
+  .stat:nth-child(odd){ border-left:1px solid var(--rule-2); }
 
   .masthead-top{ align-items:flex-start; flex-direction:column; gap:6px; }
-  .figure .big{ font-size:2.625rem; }
+  .figure .big{ font-size:2.25rem; }
   .task-title{ font-size:var(--t-md); }
-  .task-extra{ padding-left:0; }
+  .task-extra{ padding-left:var(--card-pad); }
+  .lede{ padding:var(--card-pad); }
   .btn{ flex:1 1 auto; }
   .toolbar{ gap:8px; }
-  /* Axis ticks collide below ~420px: at a 343px track, a label centred on
+  /* Axis ticks collide below ~420px: at a 311px track, a label centred on
      88.7% and one right-aligned at 100% overlap. Views mark the droppable
      ones — normally the axis bounds, never the interval edges, because the
      interval edges ARE the number (R3). */
@@ -1366,23 +1772,31 @@ details > summary:focus-visible{ outline-offset:-2px; }
 
 
 /* =============================================================================
-   19. PRINT  — the rail, the grain and every control come off the page
+   19. PRINT  — the rail, the grain, every shadow and every control come off
    ============================================================================= */
 
 @media print{
   :root{
-    --paper:#fff; --paper-2:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
-    --rule:#bbb; --rule-2:#666; --accent:#000;
-    --accent-w:transparent; --accent-w2:transparent;
+    --paper:#fff; --paper-2:#fff; --card:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
+    --rule:#bbb; --rule-2:#666; --rule-3:#333; --accent:#000; --accent-2:#000;
+    --accent-w:transparent; --accent-w2:transparent; --accent-line:#666;
     --neg:#000; --pos:#000; --warn:#000;
+    --ok-bg:transparent; --warn-bg:transparent; --bad-bg:transparent;
+    --ok-line:#666; --warn-line:#666; --bad-line:#666;
+    --e1:none; --e2:none; --e3:none; --ring:none; --shadow-edge:transparent;
+    --grain-op:0;
   }
   html[data-theme="dark"]{
-    --paper:#fff; --paper-2:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
-    --rule:#bbb; --rule-2:#666; --accent:#000;
+    --paper:#fff; --paper-2:#fff; --card:#fff; --ink:#000; --ink-2:#333; --ink-3:#555;
+    --rule:#bbb; --rule-2:#666; --rule-3:#333; --accent:#000; --accent-2:#000;
+    --accent-w:transparent; --accent-w2:transparent; --accent-line:#666;
     --neg:#000; --pos:#000; --warn:#000;
+    --ok-bg:transparent; --warn-bg:transparent; --bad-bg:transparent;
+    --e1:none; --e2:none; --e3:none; --ring:none; --shadow-edge:transparent;
+    --grain-op:0;
     color-scheme:light;
   }
-  body{ background:#fff; color:#000; font-size:10pt; line-height:1.45; }
+  body{ background:#fff; background-image:none; color:#000; font-size:10pt; line-height:1.45; }
 
   .rail,.grain,.theme-toggle,.btn,.btnrow,.form-actions,
   .segment,.toolbar,.tablehint,.keycap{ display:none !important; }
@@ -1398,7 +1812,7 @@ details > summary:focus-visible{ outline-offset:-2px; }
   details > summary::after{ display:none; }
   details:not([open]) .details-body{ display:block; }   /* reasoning prints */
 
-  .tablewrap{ overflow:visible; background:none; }
+  .tablewrap{ overflow:visible; background:none; border:0; padding:0; }
   .tablewrap--capped{ max-height:none; overflow:visible; }
   .table{ min-width:0; }
   .table thead th{ position:static; background:none; }
@@ -1407,6 +1821,6 @@ details > summary:focus-visible{ outline-offset:-2px; }
 
   /* G1 shapes survive greyscale printing — that is the point of shapes. */
   .glyph{ fill:#000; }
-  .pill{ border-color:#000; color:#000; }
-  .stamp--sample{ border-style:dashed; color:#000; }
+  .pill{ border-color:#000; color:#000; background:none; }
+  .stamp--sample{ border-style:dashed; color:#000; background:none; }
 }
