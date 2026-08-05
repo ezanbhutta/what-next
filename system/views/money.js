@@ -134,6 +134,24 @@ function typeLabel(key) {
   return TYPE_LABEL[k] || (k ? k.charAt(0).toUpperCase() + k.slice(1) : '');
 }
 
+/**
+ * Add one field across rows, or return null if any row does not carry it.
+ *
+ * `reduce((a, r) => a + (Number(r.x) || 0), 0)` is the shape that makes a
+ * partial sum look complete: one row with no revenue figure lands as a zero,
+ * the total comes out plausible and short, and the remainder computed against
+ * it is wrong by exactly the amount nobody can see. A sum with an unknown term
+ * in it is unknown, and it renders MISSING.
+ */
+function sumField(rows, field) {
+  let total = 0;
+  for (const row of rows) {
+    if (!known(row?.[field])) return null;
+    total += Number(row[field]);
+  }
+  return total;
+}
+
 /** A share of a KNOWN TOTAL — arithmetic on a census, not a rate on a sample. */
 function shareOf(part, whole) {
   const p = n(part);
@@ -796,14 +814,20 @@ function revenuePanel(run) {
   const typeRows = byType
     .map(([key, v]) => ({ key, ...v }))
     .sort((a, b) => (Number(b.revenue) || 0) - (Number(a.revenue) || 0));
-  const typeSum = typeRows.reduce((acc, r) => acc + (Number(r.revenue) || 0), 0);
-  const typeMatches = revenue !== null && Math.abs(typeSum - revenue) < 0.005;
+  const typeSum = sumField(typeRows, 'revenue');
+  const typeMatches = typeSum !== null && revenue !== null && Math.abs(typeSum - revenue) < 0.005;
 
   const byDesigner = Array.isArray(econ.by_designer) ? econ.by_designer : [];
-  const designerSum = byDesigner.reduce((acc, r) => acc + (Number(r.revenue) || 0), 0);
-  const designerOrders = byDesigner.reduce((acc, r) => acc + (Number(r.n) || 0), 0);
-  const unattributedValue = revenue === null ? null : revenue - designerSum;
-  const unattributedOrders = known(priced) ? Number(priced) - designerOrders : null;
+  const designerSum = sumField(byDesigner, 'revenue');
+  const designerOrders = sumField(byDesigner, 'n');
+  // The remainder is only knowable when BOTH ends of the subtraction are. A
+  // named row with no revenue figure would otherwise be silently added to the
+  // "no designer recorded" row, which is the one row on the page nobody can
+  // check against a source.
+  const unattributedValue =
+    revenue === null || designerSum === null ? null : revenue - designerSum;
+  const unattributedOrders =
+    known(priced) && designerOrders !== null ? Number(priced) - designerOrders : null;
 
   return html`<div class="panel">
       ${panelHead(
@@ -888,10 +912,14 @@ function revenuePanel(run) {
               </table>
             </div>
             <p class="caption">
-              ${typeMatches
-                ? html`${glyph('ok')} The rows add up exactly to ${money(econ.revenue)}.`
-                : html`${glyph('crit')} The rows do not add up to ${money(econ.revenue)}; trust the
-                    headline figure and check the classification.`}
+              ${typeSum === null
+                ? html`${glyph('warn')} At least one row carries no revenue figure, so the rows cannot be
+                    added up and checked against ${money(econ.revenue)}. The total above is
+                    ${missing()} rather than a sum with an unknown counted as nothing.`
+                : typeMatches
+                  ? html`${glyph('ok')} The rows add up exactly to ${money(econ.revenue)}.`
+                  : html`${glyph('crit')} The rows do not add up to ${money(econ.revenue)}; trust the
+                      headline figure and check the classification.`}
               Shares are of a known total, not rates estimated from a sample, so they carry no interval.
             </p>
             ${why(
@@ -1094,10 +1122,14 @@ function boardPanel(ctx, board, { typical }) {
               window as carrying an upsell.`}
         Its denominator is <em>every order</em>, including all the buyers nobody ever offered anything to,
         so it measures how often an upsell happened — not how often one was accepted when it was put.
-        ${known(leadsWithAttempt)
-          ? html` The inquiry log records ${num(leadsWithAttempt)} leads with an upsell attempt against
-              them, so there is no offered group on that side either.`
-          : ''}
+        ${!known(leadsWithAttempt)
+          ? ''
+          : Number(leadsWithAttempt) === 0
+            ? html` The inquiry log records no lead with an upsell attempt against it either, so there is no
+                offered group on that side to take a rate on.`
+            : html` The inquiry log records ${num(leadsWithAttempt)} leads with an upsell attempt against
+                them — an offered group, but one of inquiries rather than of orders, and not the
+                denominator above.`}
       </p>
 
       ${orphanSettled.length

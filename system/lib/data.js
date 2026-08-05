@@ -302,15 +302,53 @@ function utcMidnight(value) {
  *
  * @param {{now?: Date, staleAfterDays?: number}} [opts]
  */
+/**
+ * The date of the newest SOURCE record the run actually saw, dug out of the
+ * self-check's data_freshness result.
+ *
+ * A run is only as fresh as its inputs. The engine can run today against
+ * sheets nobody updated since Saturday, and it says so — but it says so in
+ * prose inside a self-check result, which no consumer reads. Meanwhile the
+ * run's own `today` field is genuinely today, so a page trusting that shows a
+ * confident "fresh" badge over four-day-old numbers.
+ *
+ * That is precisely the failure this repo exists to prevent, so the age below
+ * is measured from this date when it is available.
+ */
+function newestSourceRecord(runValue) {
+  const results = runValue?.selfcheck?.results;
+  if (!Array.isArray(results)) return null;
+  for (const r of results) {
+    if (r?.name !== 'data_freshness') continue;
+    const text = String(r.detail ?? r.message ?? '');
+    const m = text.match(/newest record is (\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 export function staleness({ now = new Date(), staleAfterDays = DEFAULT_STALE_AFTER_DAYS } = {}) {
   const record = load('run');
-  const runDate = record.exists && !isMissing(record.value) ? pick(record.value, 'today') : MISSING;
+  const runValue = record.exists && !isMissing(record.value) ? record.value : null;
+  const generatedOn = runValue ? pick(runValue, 'today') : MISSING;
+  const sourceDate = runValue ? newestSourceRecord(runValue) : null;
+
+  // Age is measured from the data, not from the run that read it. Falling back
+  // to the run date only when the source date is unavailable keeps this honest
+  // for older run files that predate the self-check field.
+  const runDate = sourceDate ?? generatedOn;
 
   const base = {
     ok: false,
     file: record.file,
     exists: record.exists,
     run_date: MISSING,
+    // What the engine WROTE, as distinct from what it READ. When these two
+    // disagree the gap is the story: a run generated today off Saturday's
+    // sheets means the intake is broken, not that the numbers are current.
+    generated_on: isMissing(generatedOn) ? MISSING : generatedOn,
+    source_date: sourceDate ?? MISSING,
+    age_measured_from: sourceDate ? 'newest source record' : 'run date',
     generated_at: record.mtime ? record.mtime.toISOString() : MISSING,
     age_days: MISSING,
     age_hours: MISSING,

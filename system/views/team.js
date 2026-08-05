@@ -482,6 +482,19 @@ function scoreSelect({ id, name, value, disabled, roleLocked = false, describedB
  * manager score with no self score behind it. It is never hidden and never
  * quietly deleted: the field is left open so it can be corrected, and the row
  * says what happened.
+ *
+ * A DISABLED CONTROL IS NOT SUBMITTED, WHICH IS HOW A LOCK ERASES DATA.
+ *
+ * The form carries every column and the write is an upsert that sets each one
+ * from what was posted, so a field the browser omits is stored as NULL. The
+ * role lock therefore had a hole with teeth: a CSR opening their own row to
+ * edit a note saw the manager's score rendered and greyed, and saving the note
+ * posted no `manager_score` at all — wiping the manager's mark, under the
+ * CSR's name in the audit log. The lock is meant to stop a score being
+ * ENTERED, never to delete one already there. So whenever the select is
+ * disabled and a score exists, a hidden input carries the stored value back
+ * unchanged. The sequence lock needs no mirror: it only ever engages when the
+ * manager score is already null, and null round-tripping to null is correct.
  */
 function personForm(person, row, { week, csrfToken, backTo, canScoreManager, isSelf }) {
   const self = scoreOf(row?.self_score);
@@ -539,6 +552,9 @@ function personForm(person, row, { week, csrfToken, backTo, canScoreManager, isS
               roleLocked: !canScoreManager,
               describedBy: `${idBase}-mgr-h`,
             })}
+            ${managerDisabled && manager !== null
+              ? html`<input type="hidden" name="manager_score" value="${String(manager)}">`
+              : ''}
             <p class="field-hint" id="${idBase}-mgr-h">${managerHint}</p>
           </div>
 
@@ -593,8 +609,11 @@ const REVIEW_JS = `
   'use strict';
   var forms = document.querySelectorAll('form[data-review]');
   Array.prototype.forEach.call(forms, function(form){
-    var self = form.elements['self_score'];
-    var mgr  = form.elements['manager_score'];
+    // querySelector, NOT form.elements: a role-locked row carries a hidden
+    // input mirroring the stored manager score, so form.elements['manager_score']
+    // is a RadioNodeList there and every property read below would throw.
+    var self = form.querySelector('select[name="self_score"]');
+    var mgr  = form.querySelector('select[name="manager_score"]');
     if (!self || !mgr) return;
     // A field the SERVER locked for a ROLE, not for the sequence, stays locked.
     if (mgr.getAttribute('data-role-locked') === '1') return;

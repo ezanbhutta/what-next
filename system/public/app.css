@@ -1626,11 +1626,20 @@ html[data-theme="dark"] .field select{
 
 
 /* --- 44px floor on touch ---------------------------------------------------
-   Three controls are deliberately denser than --tap so a laptop toolbar does
-   not become a row of slabs: `.btn--sm` (36px), `.segment > *` (36px) and the
-   `.toolbar .field` controls (40px). Against a mouse that is correct — a
+   Four things are denser than --tap. Three are deliberate, so a laptop toolbar
+   does not become a row of slabs: `.btn--sm` (36px), `.segment > *` (36px) and
+   the `.toolbar .field` controls (40px). Against a mouse that is correct — a
    cursor is pixel-accurate. Against a finger it is not, and 44px is the house
-   floor. These are the only three things in this file under it.
+   floor.
+
+   The fourth was not a choice. A sortable column header is an `<a>` inside a
+   `<th>`, and `.table thead th` sets its height out of 10px padding and
+   --t-xs text: about 34px, with no rule anywhere naming a link as a control.
+   It is the shape a header link takes by default, which is why it slipped
+   past — nothing in the source says 34, it is just what padding plus a small
+   font came to. The selector below is written against the pattern rather than
+   against the one view that has them today, so the next sortable table
+   inherits the floor instead of re-discovering the hole.
 
    `pointer:coarse` is the right test rather than a width breakpoint: it asks
    what is POINTING at the page, so a 1280px touchscreen gets the big targets
@@ -1647,6 +1656,9 @@ html[data-theme="dark"] .field select{
   .segment > *{ min-height:var(--tap); }
   .toolbar .field select,
   .toolbar .field input{ min-height:var(--tap); }
+  /* inline-flex, not block: a header cell is sized by its text and must not
+     stretch the sticky thead's own height on a laptop. */
+  .table thead th a{ display:inline-flex; align-items:center; min-height:var(--tap); }
 }
 
 

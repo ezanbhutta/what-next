@@ -591,6 +591,26 @@ const loaders = {
         'SELECT entry_date, COUNT(*) AS profiles, MAX(updated_at) AS updated ' +
           'FROM daily_entry GROUP BY entry_date ORDER BY entry_date DESC LIMIT 21'
       ),
+      // The last entry BEFORE this date, per profile — the figure printed under
+      // each box so a typo of 41,200 for 4,120 is visible while it is being
+      // typed. It is the latest earlier row for each profile rather than the
+      // whole of the previous calendar day, because a profile that was not
+      // logged yesterday still has a last known figure and "no earlier entry"
+      // would be a different, false claim about it.
+      previous: await q(
+        'SELECT e.* FROM daily_entry e JOIN (' +
+          'SELECT profile, MAX(entry_date) AS d FROM daily_entry WHERE entry_date < ? GROUP BY profile' +
+          ') m ON m.profile = e.profile AND m.d = e.entry_date',
+        [date]
+      ),
+      // The gig rows of those same entries — the view reads only their names,
+      // to offer the gigs that were logged last time as the rows to fill in.
+      previousGigs: await q(
+        'SELECT g.* FROM daily_entry_gig g JOIN (' +
+          'SELECT profile, MAX(entry_date) AS d FROM daily_entry_gig WHERE entry_date < ? GROUP BY profile' +
+          ') m ON m.profile = g.profile AND m.d = g.entry_date',
+        [date]
+      ),
       profiles: profilesFromEngine(),
     };
   },
@@ -642,15 +662,49 @@ const loaders = {
     };
   },
 
+  // No buyer chosen: the picker. `directory` is one row per buyer that has ever
+  // been written to here — counts only, because the picker never shows a
+  // message body and pulling 300 of them to render a list of names is waste.
+  // It is merged in the view with the engine's open orders and cold quotes, so
+  // the picker still names every buyer who needs one during a database outage.
   async messages(ctx, q) {
     return {
-      sent: await q(
+      buyer: '',
+      buyerKey: '',
+      directory: await q(
+        'SELECT buyer, COUNT(*) AS notes, ' +
+          "SUM(kind = 'sent') AS sent, SUM(kind = 'flag') AS flags, " +
+          'MAX(at) AS last_at FROM client_note GROUP BY buyer'
+      ),
+    };
+  },
+
+  // One buyer. Same section, same lock, its own material. `notes` carries the
+  // reply's name through the join so the history can say which template was
+  // sent; `orders` and `leads` are this buyer's rows out of the engine's own
+  // files — a filter of published data, never a second computation of it.
+  async message(ctx, q, req) {
+    const buyer = String(req.params.buyer || '').slice(0, 120);
+    const key = normaliseBuyer(buyer);
+    const allOrders = engineOrders();
+    const allLeads = engineLeads();
+
+    return {
+      buyer,
+      buyerKey: key,
+      orders: isMissing(allOrders) ? MISSING : allOrders.filter((r) => normaliseBuyer(r.client) === key),
+      leads: isMissing(allLeads) ? MISSING : allLeads.filter((r) => normaliseBuyer(r.client) === key),
+      notes: await q(
         'SELECT n.id, n.buyer, n.at, n.author, n.kind, n.body, n.response_id, r.name AS response_name ' +
           'FROM client_note n LEFT JOIN response r ON r.id = n.response_id ' +
-          "WHERE n.kind IN ('sent','flag') ORDER BY n.at DESC LIMIT 300"
+          'WHERE n.buyer = ? ORDER BY n.at DESC LIMIT 300',
+        [buyer]
       ),
+      // when_to_use and uses are what the library panel prints under each
+      // reply. Selecting four of the six columns rendered it half-blank.
       responses: await q(
-        'SELECT id, name, body, category FROM response WHERE active = 1 ORDER BY category, name'
+        'SELECT id, name, body, when_to_use, category, uses FROM response ' +
+          'WHERE active = 1 ORDER BY category IS NULL, category, name'
       ),
     };
   },
@@ -666,6 +720,13 @@ const loaders = {
       weeks: await q('SELECT * FROM team_week ORDER BY week_ending DESC, person ASC LIMIT 300'),
       people: await q('SELECT name, role, active FROM app_user ORDER BY role, name'),
       decisions: await q('SELECT * FROM decision ORDER BY decided_on DESC, id DESC LIMIT 100'),
+      // The lock list itself, so the owner-only access panel can print the
+      // minimum role and who set it rather than inferring "above csr" from the
+      // rail. `readAccess()` already has this, but it is cached for 15s and
+      // carries no reason text — the panel states a stored fact, so it reads it.
+      access: await q(
+        'SELECT section, min_role, locked_by, locked_at, reason FROM section_access ORDER BY section'
+      ),
     };
   },
 
@@ -707,6 +768,18 @@ app.get('/clients/:buyer', requireAuth, gate('clients'), (req, res, next) => {
   if (!buyer || !normaliseBuyer(buyer)) return res.redirect(302, '/clients?error=buyer');
   return page('clients', loaders.client)(req, res, next);
 });
+
+// One buyer's message history and what may be said to them next. This is the
+// href every "write to this buyer" link on the hub points at — the compose
+// form's own `back` field is `/messages/<buyer>`, so without this route every
+// logged message bounced to a 404 and the section could only ever show its
+// picker.
+//
+// A username that normalises to nothing is NOT redirected away, unlike
+// /clients. The view has a stated branch for it: it renders the picker and
+// says that name was not recognised, which tells whoever followed the bad link
+// what was wrong with it instead of silently returning them to the list.
+app.get('/messages/:buyer', requireAuth, gate('messages'), page('messages', loaders.message));
 
 // ============================================================================
 // 7. WRITES
@@ -994,6 +1067,39 @@ app.post(
               'ON DUPLICATE KEY UPDATE body = VALUES(body), when_to_use = VALUES(when_to_use), category = VALUES(category)',
             [name, body, whenToUse, category]
           )
+    );
+    return { ok: 'response' };
+  })
+);
+
+// A reply was taken out of the library. The button that posts here only fires
+// AFTER the clipboard write succeeded — views/responses.js refuses to post if
+// the browser declined — so this records something that actually happened.
+//
+// It moves the same counter a logged send moves, which is why the page labels
+// the figure "taken" and not "sent": one number, two producers, and the page
+// says so rather than letting a reader assume every count reached a buyer.
+app.post(
+  '/responses/copy',
+  ...write('responses', '/responses', async (req) => {
+    const id = intOrNull(req.body.id);
+    if (!id) return { error: 'invalid' };
+
+    // Confirm the reply is there BEFORE the audited write, so the log never
+    // carries a `response_copy` line for a copy of something that does not
+    // exist — an audit that records attempts has to be filtered before it can
+    // be counted, and then it is not an audit.
+    //
+    // Deliberately NOT done by throwing out of the transaction to roll the
+    // audit row back: lib/db.js treats anything escaping transaction() as a
+    // database fault, so a bad id would flip the pool's health to down and put
+    // an outage banner on every page until the breaker cleared.
+    const found = await tryQuery('SELECT id FROM response WHERE id = ?', [id]);
+    if (!found.ok) throw found.error;
+    if (!found.rows.length) return { error: 'notfound' };
+
+    await auditedWrite(req, 'response_copy', { id }, (t) =>
+      t.run('UPDATE response SET uses = uses + 1 WHERE id = ?', [id])
     );
     return { ok: 'response' };
   })

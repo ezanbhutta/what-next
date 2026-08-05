@@ -10,11 +10,12 @@
   "scripts": {
     "//build": "Nothing to compile — the app is server-rendered with no bundler. This exists because Hostinger's Express preset runs `npm run build` during deploy, and a missing script exits non-zero and fails the deployment with npm install as the last thing in the log.",
     "build": "node -e \"console.log('no build step: server-rendered, no bundler')\"",
-    "start": "node server.js",
+    "//env": "--env-file-if-exists, not --env-file. README tells you to copy .env.example to .env and run npm start; nothing loaded it, so `npm run migrate` answered 'not configured' on a correctly filled-in file and every local run needed the flag typed by hand. IF-EXISTS is the half that matters in production: on Hostinger the variables come from the Web App panel and there is no .env on disk, and plain --env-file exits non-zero on a missing file — which would turn a working deploy into a boot loop.",
+    "start": "node --env-file-if-exists=.env server.js",
     "test": "node --test \"lib/*.test.js\"",
-    "migrate": "node db/migrate.js",
-    "seed": "node db/seed.js",
-    "dev": "node --watch server.js"
+    "migrate": "node --env-file-if-exists=.env db/migrate.js",
+    "seed": "node --env-file-if-exists=.env db/seed.js",
+    "dev": "node --watch --env-file-if-exists=.env server.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

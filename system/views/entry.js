@@ -746,7 +746,17 @@ export function render(ctx) {
     <script nonce="${ctx.nonce}">${safe(LIVE_JS)}</script>`;
 
   return {
-    title: saved ? `${dateShortText(date)} is logged for ${profile}` : `${dateShortText(date)} is not logged yet`,
+    // Three states, not two. Every other cell on this page already separates
+    // "not logged" from "we cannot tell" — the saved stamp, the form, the
+    // ticker — and the headline was the one place that collapsed them, which
+    // is where it does the most damage: during an outage it told whoever
+    // opened the page that today had not been entered, when the honest answer
+    // was that the table could not be read.
+    title: saved
+      ? `${dateShortText(date)} is logged for ${profile}`
+      : dbUp
+        ? `${dateShortText(date)} is not logged yet`
+        : `Whether ${dateShortText(date)} is logged cannot be read`,
     kicker: profile ? `Daily entry · ${profile}` : 'Daily entry',
     deck: html`Fourteen raw cells go in. Every total and every rate is worked out from them on this page and
       stored <em>nowhere</em>.`,

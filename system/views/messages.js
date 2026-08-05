@@ -163,13 +163,22 @@ function triage(openRows, bookRows, flagged) {
     // recovery block flattened. With the book in hand, "priced" is what the
     // book says; without it, an ambiguous figure is MISSING, never $0.
     const priced = match ? Number.isFinite(match.amount) : Number.isFinite(o.amount) && o.amount !== 0;
+    // The figure to SHOW is the one that answered "priced". Asking the book and
+    // then printing the recovery row's flattened 0.0 is how a $450 order renders
+    // as $0 and contributes $0 to the open value — a fabricated number wearing
+    // the face of a real one, produced by the very lookup that exists to
+    // disambiguate it.
+    const amount = match && Number.isFinite(match.amount) ? match.amount : o.amount;
     const owes = flagged === true ? 'dead' : OWES_BY_STATUS[o.status] || 'unknown';
     return {
       ...o,
       matched: match !== null,
       book_available: Array.isArray(bookRows),
       priced,
-      shown_amount: priced ? o.amount : MISSING,
+      shown_amount: priced ? amount : MISSING,
+      // The same figure as a plain number, for the totals. Null when unpriced,
+      // so nothing downstream can add an unknown in as a zero.
+      priced_amount: priced ? amount : null,
       owes,
     };
   });
@@ -320,12 +329,31 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
     });
   }
 
-  if (!stale.length && !us.length && lastDeliveryAge !== null && lastDeliveryAge > toNumber(staleAfter)) {
-    reasons.push({
-      what: html`Last delivery here was ${days(lastDeliveryAge)} ago`,
-      detail: html`A review request that arrives long after the work is a cold ask. It reminds the buyer of
-        a job they have stopped thinking about and invites them to score it from memory.`,
-    });
+  // The ask needs a delivery it can point at AND a date for it. A null age is
+  // not a recent delivery — it is no answer, and the whole question this branch
+  // asks is whether the work is recent enough to be worth reviewing.
+  //
+  // Testing `lastDeliveryAge !== null` first is what made the gate fail OPEN in
+  // the two cases it most needed to close: a buyer whose only order carries no
+  // usable date (7 order rows in the book have no order date and 61 no delivery
+  // date), and a buyer who inquired and never ordered at all — neither has a
+  // stale order, an unfinished one or a cold quote, so every other test passed
+  // them and the ask was offered on an absent number.
+  if (!stale.length && !us.length) {
+    if (lastDeliveryAge === null) {
+      reasons.push({
+        what: 'No dated delivery to attach a review to',
+        detail: html`Nothing in the order book under this username carries a date this page can read, so how
+          long ago the work landed is ${missing()}. A review ask is not sent on a MISSING — and if there is
+          no order here at all, there is nothing delivered to be reviewed.`,
+      });
+    } else if (lastDeliveryAge > toNumber(staleAfter)) {
+      reasons.push({
+        what: html`Last delivery here was ${days(lastDeliveryAge)} ago`,
+        detail: html`A review request that arrives long after the work is a cold ask. It reminds the buyer of
+          a job they have stopped thinking about and invites them to score it from memory.`,
+      });
+    }
   }
 
   return { allowed: reasons.length === 0, reasons };
@@ -1204,7 +1232,9 @@ export function render(ctx) {
   const staleCount = rows.filter((r) => r.stale === true).length;
   const oldest = rows.reduce((a, r) => Math.max(a, toNumber(r.age_days)), 0);
   const openValuePriced = rows.filter((r) => r.priced);
-  const openValue = openValuePriced.reduce((n, r) => n + toNumber(r.amount), 0);
+  // `priced_amount`, not `amount`: the book's figure where the book is what
+  // decided the row was priced. See triage().
+  const openValue = openValuePriced.reduce((n, r) => n + toNumber(r.priced_amount), 0);
 
   const lede = html`<div class="lede">
       <div class="lede-main">
