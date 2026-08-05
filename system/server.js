@@ -3177,12 +3177,34 @@ async function prepareDatabase() {
   }
   try {
     const { seed } = await import('./db/seed.js');
-    const { users } = await seed({ log: hush });
+    const { users, responses } = await seed({ log: hush });
     if (users?.inserted?.length) {
       console.log(`[boot] seed: added ${users.inserted.length} user(s), ${users.inserted.join(', ')}`);
     }
+    if (responses?.inserted) {
+      console.log(`[boot] seed: added ${responses.inserted} repl(ies) to the library`);
+    }
   } catch (err) {
     console.error(`[boot] seed failed, ${err.message}`);
+  }
+
+  // THE TALK PLAYBOOK SEEDS ON BOOT, and it did not before.
+  //
+  // It was an npm script, on the assumption that whoever deployed would run it
+  // once. Nobody did, because the person who owns those lines works from a
+  // phone and a browser and has no shell. The result was a Messages page that
+  // said "the playbook is empty, run npm run seed:talk" to the one person who
+  // could not, and every reply looked like something he had to type by hand.
+  //
+  // Safe to run every boot: INSERT IGNORE on a stable slug, so a second run
+  // inserts nothing, overwrites nothing, and never touches a card written or
+  // edited inside the hub.
+  try {
+    const { seedTalk } = await import('./db/seed-talk.js');
+    const res = await seedTalk({ log: hush });
+    if (res?.inserted) console.log(`[boot] seed: added ${res.inserted} talk card(s)`);
+  } catch (err) {
+    console.error(`[boot] talk seed failed, ${err.message}`);
   }
 }
 

@@ -1930,16 +1930,23 @@ export function render(ctx) {
 
   const composePanel = html`<section class="panel">
       ${panelHead(
-        html`Log something against ${buyer}`,
+        html`Log a decision about ${buyer}`,
         canWrite ? 'typed' : 'missing',
         canWrite ? 'Typed · client_note' : 'client_note unwritable'
       )}
       ${canWrite
         ? html`${composeForm({ ctx, buyer, prefill: '', open: true })}
             <p class="caption">
-              This hub sends nothing. It records what was said so the next person does not repeat it, and so
-              the sentence a buyer was given has an author. Every write carries your name through the audit
-              log in the same transaction, if the attribution cannot be written, neither is the note.
+              <b>This is not a transcript, and nobody should type one.</b> Fiverr already holds every
+              message. What is worth a line here is the handful of things Fiverr will not tell the next
+              person: what was agreed, what was promised, what to avoid saying, and why a buyer is being
+              handled the way they are. If a note would not change what somebody does next, it does not
+              need writing.
+            </p>
+            <p class="caption">
+              Sending a line from the playbook above logs itself, so the common case costs nothing. This
+              box is for the rest. Every write carries your name through the audit log in the same
+              transaction; if the attribution cannot be written, neither is the note.
             </p>`
         : composeClosed(ctx.dbNotice)}
     </section>`;
