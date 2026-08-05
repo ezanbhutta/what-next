@@ -449,10 +449,24 @@ export async function attemptLogin({ req, res, password }) {
   }
 
   if (!checkPassword(password)) {
-    // The event, never the attempt. No password material reaches a log.
-    console.warn(`[auth] failed login from ${req?.ip ?? 'unknown ip'}`);
+    // Lengths only, never the values. "Not accepted" with nothing else is an
+    // dead end for whoever is setting the thing up: they cannot see what the
+    // server holds, so a password that is simply not the one configured looks
+    // identical to a panel that mangled it or an env var that never saved.
+    // Two numbers separate those cases in one glance and leak nothing that the
+    // boot log does not already print.
+    const sent = typeof password === 'string' ? password.trim().length : 0;
+    const want = configuredPassword()?.length ?? 0;
+    console.warn(`[auth] failed login from ${req?.ip ?? 'unknown ip'} — sent ${sent} chars, configured is ${want}`);
     await recordAudit(null, 'login_failed', { reason: 'bad_password', ip: req?.ip ?? null });
-    return { ok: false, reason: 'bad_password', message: 'That password was not accepted.' };
+    return {
+      ok: false,
+      reason: 'bad_password',
+      message:
+        sent === want
+          ? `That password was not accepted. You typed ${sent} characters, which is the right length — so the characters themselves differ.`
+          : `That password was not accepted. You typed ${sent} characters; the server is configured with ${want}.`,
+    };
   }
 
   // Known device: straight in, no second step, no name asked. This is the path
