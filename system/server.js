@@ -82,6 +82,7 @@ import {
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
 import { deskNow } from './lib/roster.js';
+import { loadDueDates, setDueDate, clearDueDate } from './lib/duedates.js';
 
 // The six owner-written documents. Read from data/handbook/, parsed out of
 // plain text, and never written to. Nothing here touches the database.
@@ -267,6 +268,8 @@ const FLASH_OK = {
   decision: 'Decision recorded.',
   upsell: 'Upsell row updated.',
   access: 'Section access updated.',
+  due_set: 'Promised date recorded. The order sheet was not touched.',
+  due_cleared: 'Promised date removed. That order now reads as no promise recorded, which is not the same as on time.',
 
   // Reports. Each names what was written, because "Saved." over a form that
   // books follow-ups does not say whether any were booked.
@@ -285,6 +288,7 @@ const FLASH_OK = {
 const FLASH_ERR = {
   invalid: 'Some fields were not accepted. Nothing was written.',
   buyer: 'That buyer username was empty or not recognised.',
+  date: 'A promised date has to be a real date. Nothing was written.',
   notfound: 'That record no longer exists.',
   forbidden: 'Only Ezan can change the talk playbook. Nothing was written.',
   talk:
@@ -758,6 +762,10 @@ export const loaders = {
       flags: await q(
         "SELECT buyer, COUNT(*) AS n, MAX(at) AS last_at FROM client_note WHERE kind = 'flag' GROUP BY buyer"
       ),
+      // The promised dates. `loadDueDates` returns null rather than throwing
+      // when the table cannot be read, and the view keeps that distinction:
+      // "nobody promised anything" and "we could not look" render differently.
+      due: await loadDueDates(),
     };
   },
 
@@ -846,6 +854,10 @@ export const loaders = {
           'active, sort, source, author, updated_at FROM talk ' +
           'ORDER BY sort, id'
       ),
+      // The review gate reads these: an order past a date we promised refuses
+      // a review ask whatever its age. null when unreadable, which the gate
+      // treats as unknown rather than as "not late".
+      due: await loadDueDates(),
     };
   },
 
@@ -1714,6 +1726,46 @@ app.post(
       }
     });
     return { ok: 'note' };
+  })
+);
+
+// ---- Orders: the promised delivery date -------------------------------------
+//
+// The one field the order sheet does not carry, so it is typed here. Writing
+// it does NOT touch the sheet, and it does not change any engine figure: the
+// engine keeps computing age, and this records what was agreed. The page
+// compares them.
+
+app.post(
+  '/orders/due',
+  ...write('orders', '/orders', async (req) => {
+    const row = {
+      client: str(req.body.client, 120),
+      project: str(req.body.project, 200),
+      order_date: str(req.body.order_date, 30),
+    };
+    if (!row.client) return { error: 'buyer' };
+
+    if (req.body.clear) {
+      await auditedWrite(req, 'order_due_cleared', { buyer: row.client, project: row.project }, async () => {
+        await clearDueDate(row);
+      });
+      return { ok: 'due_cleared' };
+    }
+
+    const dueDate = str(req.body.due_date, 30);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { error: 'date' };
+    const note = str(req.body.note, 2000) || null;
+
+    await auditedWrite(
+      req,
+      'order_due_set',
+      { buyer: row.client, project: row.project, due: dueDate },
+      async () => {
+        await setDueDate({ row, dueDate, note, setBy: req.user.name });
+      }
+    );
+    return { ok: 'due_set' };
   })
 );
 

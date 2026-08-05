@@ -58,6 +58,7 @@ import {
 } from './layout.js';
 import { MISSING, isMissing, pick, orders as engineOrders } from '../lib/data.js';
 import { normaliseBuyer } from '../lib/reconcile.js';
+import { applyDueDates } from '../lib/duedates.js';
 
 // ============================================================================
 // STAGES, shape first, colour second (G1)
@@ -235,7 +236,12 @@ export function render(ctx) {
     };
   }
 
-  const queue = buildQueue(open.orders, bookRows, flagged);
+  // The promised dates, typed in the hub. `ctx.data.due` is the Map, or null
+  // when the table could not be read, and that difference is carried all the
+  // way to the screen: "nobody promised anything" and "we could not look" are
+  // not the same page.
+  const withDue = applyDueDates(buildQueue(open.orders, bookRows, flagged), ctx.data?.due ?? null, open.as_of);
+  const queue = withDue.rows;
   const stale = queue.filter((r) => r.stale === true);
   const filters = readFilters(ctx.query || {});
   const filtered = queue.filter((r) => matches(r, filters));
@@ -251,21 +257,23 @@ export function render(ctx) {
   const unpricedOpen = queue.filter((r) => !r.priced).length;
 
   return {
-    title: `${open.stale_count} of ${open.open_count} live orders are past ${open.stale_after_days} days`,
-    kicker: 'Orders',
+    title: 'Orders',
     ticker: [
-      { label: 'Live orders', value: num(open.open_count) },
-      { label: 'Open value', value: money(open.open_value) },
-      { label: `Past ${open.stale_after_days} days`, value: num(open.stale_count) },
-      { label: 'Sitting still', value: money(open.stale_value), sub: 'floor' },
-      { label: 'Oldest', value: num(oldest), sub: 'days' },
-      { label: 'Open, unpriced', value: num(unpricedOpen), sub: 'no amount' },
+      { label: 'Live orders', value: num(open.open_count), sub: money(open.open_value) },
+      {
+        label: 'Past their promised date',
+        value: withDue.store_readable ? num(withDue.late.length) : missing(),
+        sub: withDue.store_readable
+          ? `${withDue.unpromised.length} have no promise recorded`
+          : 'promised dates unreadable',
+      },
+      { label: `Open past ${open.stale_after_days} days`, value: num(open.stale_count), sub: 'age, not lateness' },
     ],
     html: join([
-      lede(open, split, unpricedOpen),
+      lede(open, split, unpricedOpen, withDue),
       decomposition(open, split, flags),
       bandsPanel(open),
-      queuePanel(open, queue, filtered, filters, flagged === null),
+      queuePanel(open, queue, filtered, filters, flagged === null, ctx.csrfToken),
       bookPanel(bookRows, open),
     ]),
   };
@@ -273,19 +281,66 @@ export function render(ctx) {
 
 // ---------------------------------------------------------------- 1. the lede
 
-function lede(open, split, unpricedOpen) {
+function lede(open, split, unpricedOpen, withDue) {
   const usValue = sumValue(split.us);
-  return html`<div class="lede">
-      <div class="lede-main">
-        <div class="figure">
+
+  // The page leads with what can be PROVEN late, because that is the only
+  // claim anyone can take to a buyer. Age leads only when no promise has been
+  // recorded anywhere, in which case age really is all we have.
+  const anyPromises = withDue.store_readable && (withDue.late.length || withDue.on_time.length);
+  // sumValue returns {count,total,priced,unpriced}, not a number. Passing the
+  // object straight to money() renders MISSING over a figure that is known.
+  const lateValue = sumValue(withDue.late);
+
+  const head = anyPromises
+    ? html`<div class="figure">
+          <span class="cap">Past their promised date</span>
+          <strong class="big">${num(withDue.late.length)}</strong>
+          <p class="sub">
+            order${withDue.late.length === 1 ? '' : 's'}, holding <b>${money(lateValue.total)}</b>${
+              lateValue.unpriced
+                ? html` (a floor: ${num(lateValue.unpriced)} carr${lateValue.unpriced === 1 ? 'ies' : 'y'} no
+                    amount in the book)`
+                : ''
+            }. ${num(withDue.unpromised.length)} more ha${withDue.unpromised.length === 1 ? 's' : 've'} no
+            promised date recorded, so whether they are late is ${missing()}.
+          </p>
+        </div>`
+    : html`<div class="figure">
           <span class="cap">Open past ${String(open.stale_after_days)} days</span>
           <strong class="big">${num(open.stale_count)}</strong>
           <p class="sub">
             orders, holding <b>${money(open.stale_value)}</b>. The ball is with
             <b>us</b> on ${num(split.us.length)} of them
             ${split.them.length ? html`and with the buyer on ${num(split.them.length)}` : ''}.
+            ${withDue.store_readable
+              ? html`No promised dates are recorded yet, so this is age, not lateness.`
+              : html`Promised dates are ${missing()}, so this is age, not lateness.`}
           </p>
-        </div>
+        </div>`;
+
+  return html`<div class="lede">
+      <div class="lede-main">
+        ${head}
+        ${why(
+          'Why late and old are two different counts',
+          html`<p>
+              The order sheet carries an order date and a delivered date, and nothing in between. So the
+              engine can only compute <strong>age</strong>. An order with an agreed 90-day scope is not
+              late on day 61, and an order promised in five days is late on day six while sitting nowhere
+              near the ${days(open.stale_after_days)} band.
+            </p>
+            <p>
+              The promised date is typed here, in the hub, one per order. The sheet is never written to.
+              An order with no promise recorded is <strong>not</strong> counted as late and not counted as
+              on time; it is ${missing()}, and it stays that way until somebody records what was agreed.
+            </p>
+            <p>
+              Age still matters on its own. ${num(open.stale_count)} orders have been open longer than
+              ${days(open.stale_after_days)}, holding ${money(open.stale_value)}, and that is the money most
+              worth chasing whether or not a promise was ever written down.
+            </p>`
+        )}
         ${why(
           'Why the count comes before the money',
           html`<p>
@@ -528,7 +583,7 @@ function bandsPanel(open) {
 
 // -------------------------------------------------------------- 4. the queue
 
-function queuePanel(open, queue, filtered, filters, flagsDown) {
+function queuePanel(open, queue, filtered, filters, flagsDown, csrf) {
   const csrs = [...new Set(queue.map((r) => r.csr).filter(Boolean))].sort();
   const designers = [...new Set(queue.map((r) => r.designer).filter(Boolean))].sort();
 
@@ -607,13 +662,14 @@ function queuePanel(open, queue, filtered, filters, flagsDown) {
                     <th scope="col">Project</th>
                     <th scope="col">Stage</th>
                     <th scope="col" class="r">Age</th>
+                    <th scope="col">Promised</th>
                     <th scope="col" class="r">Amount</th>
                     <th scope="col">Designer</th>
                     <th scope="col">CSR</th>
                     <th scope="col">Who is waiting</th>
                   </tr>
                 </thead>
-                <tbody>${join(filtered.map(queueRow))}</tbody>
+                <tbody>${join(filtered.map((r) => queueRow(r, csrf)))}</tbody>
               </table>
               <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
             </div>`}
@@ -630,8 +686,48 @@ function queuePanel(open, queue, filtered, filters, flagsDown) {
     </div>`;
 }
 
-function queueRow(row) {
-  const rowClass = row.stale === true ? 'row-late' : row.owes === 'us' ? 'row-attn' : '';
+/**
+ * The promised-date cell: what was agreed, and a control to set or change it.
+ *
+ * An inline form rather than a link to a detail page, because the whole point
+ * is that a CSR looking at the queue can record what was agreed in the moment
+ * they remember it. A promise that needs two navigations to record is a
+ * promise that stays unrecorded.
+ */
+function dueCell(row, csrf) {
+  const d = row.due;
+  const label = d.known
+    ? html`<span class="cell-name">${dateShort(d.due)}</span>
+        <span class="cell-sub">${d.late ? pill('crit', d.label) : d.label}</span>`
+    : html`<span class="cell-sub">${missing()}</span>`;
+
+  return html`<td>
+      ${label}
+      <details class="due-edit">
+        <summary>${d.known ? 'Change' : 'Record a date'}</summary>
+        <form method="post" action="/orders/due" class="due-form">
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <input type="hidden" name="client" value="${row.client ?? ''}">
+          <input type="hidden" name="project" value="${row.project ?? ''}">
+          <input type="hidden" name="order_date" value="${row.order_date ?? ''}">
+          <label class="sr-only" for="due-${row.order_key}">Promised delivery date</label>
+          <input type="date" id="due-${row.order_key}" name="due_date" value="${d.due ?? ''}" required>
+          <label class="sr-only" for="note-${row.order_key}">What was agreed</label>
+          <input type="text" id="note-${row.order_key}" name="note" value="${row.due_note ?? ''}"
+                 placeholder="What was agreed" maxlength="200">
+          <button class="btn btn--sm" type="submit">Save</button>
+          ${d.known
+            ? html`<button class="btn btn--sm btn--ghost" type="submit" name="clear" value="1">Remove</button>`
+            : ''}
+        </form>
+      </details>
+    </td>`;
+}
+
+function queueRow(row, csrf) {
+  // A proven-late row outranks an old one: `row-late` is the strongest
+  // treatment on the page and it now goes to evidence, not to age alone.
+  const rowClass = row.due?.late ? 'row-late' : row.stale === true ? 'row-old' : row.owes === 'us' ? 'row-attn' : '';
   const waiting =
     row.owes === 'us'
       ? pill('crit', 'Us')
@@ -649,6 +745,7 @@ function queueRow(row) {
       <td>${row.project ?? missing()}</td>
       <td>${stagePill(row.status)}</td>
       <td class="r cell-figure">${days(row.age_days)}</td>
+      ${dueCell(row, csrf)}
       <td class="r cell-figure">${money(row.shown_amount)}${
         row.priced
           ? ''

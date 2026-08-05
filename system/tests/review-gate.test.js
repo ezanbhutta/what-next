@@ -189,6 +189,55 @@ test('an unreadable quotes block refuses, it does not read as "no cold quotes"',
   assert.equal(verdictOf(String(render(ctx).html)), 'refused');
 });
 
+test('an order past its promised date is refused, however young it is', () => {
+  // The case age could never see. Ordered four days ago, promised in three,
+  // so it is one day late and nowhere near the 60-day stale band. Before the
+  // promised date existed this buyer was permitted a review ask.
+  const ctx = {
+    run: {
+      recovery: {
+        open_orders: {
+          as_of: '2026-08-05',
+          stale_after_days: 60,
+          orders: [{ client: 'testbuyer', project: 'Falcon logo', status: 'delivered',
+                     age_days: 4, stale: false, amount: 200, order_date: '2026-08-01' }],
+        },
+        quotes: { quotes: [] },
+        followup_benchmark: { followed_n: 50, followed_placed: 20 },
+      },
+    },
+    nonce: 'n', query: {}, user: { name: 'Ezan', role: 'owner' }, csrfToken: 'c',
+    data: {
+      buyer: 'testbuyer', buyerKey: 'testbuyer',
+      orders: [{ client: 'testbuyer', project: 'Falcon logo', status: 'delivered',
+                 amount: 200, order_date: '2026-08-01', delivered_date: '2026-08-04' }],
+      leads: [], notes: ok([]), talk: ok([]),
+      due: new Map([
+        ['testbuyer|falconlogo|2026-08-01',
+         { order_key: 'testbuyer|falconlogo|2026-08-01', due_date: '2026-08-04' }],
+      ]),
+    },
+  };
+  const html = String(render(ctx).html);
+  assert.equal(verdictOf(html), 'refused');
+  assert.match(html, /past the date we promised/);
+
+  // Same order, promised for next week: the refusal must lift, or the gate is
+  // a wall and people route around it.
+  ctx.data.due = new Map([
+    ['testbuyer|falconlogo|2026-08-01',
+     { order_key: 'testbuyer|falconlogo|2026-08-01', due_date: '2026-08-12' }],
+  ]);
+  assert.equal(verdictOf(String(render(ctx).html)), 'permitted');
+});
+
+test('an unreadable promise store cannot open the gate', () => {
+  // null means "we could not look", and the row comes back unknown, not
+  // "not late". The stale refusal underneath still has to hold.
+  const html = page({ status: 'delivered', flagged: false, ageDays: 268 });
+  assert.equal(verdictOf(html), 'refused');
+});
+
 test('the one clean case still clears, so the gate is a gate and not a wall', () => {
   // Nothing open, one delivery inside the stale line, no flag. This is the only
   // combination the page claims will pass, and it has to actually pass: a rule

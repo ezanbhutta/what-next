@@ -448,3 +448,53 @@ CREATE TABLE IF NOT EXISTS reminder (
   INDEX idx_reminder_entry (activity_id, rule_key),
   INDEX idx_reminder_ledger (state, resolved_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------ promised delivery
+
+-- The date we told the buyer the work would land.
+--
+-- WHY THIS TABLE EXISTS
+--
+-- The order sheet has an order date and a delivered date and nothing in
+-- between. So "past 60 days" is AGE SINCE ORDERING, which is not the same
+-- thing as LATE. An order with an agreed 90-day scope is not late on day 61,
+-- and an order promised in 5 days is late on day 6 while sitting nowhere near
+-- the 60-day band. Every triage decision, the dispute-risk read and the
+-- review gate all rested on a distinction the data did not encode.
+--
+-- The sheet stays read-only, so the date lives here: this is the hub's rule,
+-- one row per order, typed by a person, never derived and never guessed.
+--
+-- THE KEY, AND WHY IT IS NOT AN ID
+--
+-- The sheet has no order number. `order_key` is derived from the three fields
+-- that identify a row in it: buyer, project and order date, each lowercased
+-- with non-alphanumerics stripped. Measured against all 1,073 orders, that is
+-- unique with zero collisions.
+--
+-- It is also fragile in one specific way, and the columns beside it are the
+-- answer to that: if somebody renames a project in the sheet, the key changes
+-- and this row stops matching. `buyer`, `project` and `order_date` are stored
+-- again in plain form so an orphaned promise can be shown to a person and
+-- re-attached, rather than vanishing and taking the only record of what was
+-- promised with it. Nothing here is recomputed from the sheet; these three
+-- are a copy kept deliberately, for identification, not for arithmetic.
+--
+-- `due_date` is the ONLY number this table contributes, and no engine figure
+-- duplicates it. What the engine computes is age; what this holds is a
+-- promise. A page may compare them. Neither replaces the other.
+CREATE TABLE IF NOT EXISTS order_due (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  order_key   VARCHAR(200) NOT NULL,
+  buyer       VARCHAR(120) NOT NULL,
+  project     VARCHAR(200) NULL,
+  order_date  DATE         NULL,
+  due_date    DATE         NOT NULL,
+  note        TEXT         NULL,        -- why this date, in the typist's words
+  set_by      VARCHAR(80)  NULL,
+  set_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+  -- One promise per order. Changing it is an UPDATE, and set_at records when.
+  UNIQUE KEY uq_order_due (order_key),
+  INDEX idx_order_due_buyer (buyer)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

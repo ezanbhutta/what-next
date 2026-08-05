@@ -1155,7 +1155,22 @@ details > summary:focus-visible{ outline-offset:-2px; }
    authors to pair the row with a .pill, which enforced nothing; the CSS now
    carries the distinction itself, so the row stays readable when someone
    forgets. */
+/* Three edge treatments, three different claims, all distinguishable without
+   colour:
+     row-late  solid    PROVEN late: a promised date exists and it has passed
+     row-old   dotted   open a long time. Age, not evidence of lateness.
+     row-attn  dashed   we owe work on it
+   The solid bar used to go to age. It goes to evidence now, because "past 60
+   days" and "past what we promised" are different sentences and only one of
+   them can be said to a buyer. */
 .row-late    td:first-child{ box-shadow:inset 2px 0 0 var(--neg); }
+.row-old     td:first-child{
+  box-shadow:none;
+  background-image:linear-gradient(var(--ink-3) 0 2px, transparent 2px 6px);
+  background-size:2px 6px;
+  background-position:left top;
+  background-repeat:repeat-y;
+}
 .row-attn    td:first-child{
   box-shadow:none;
   /* 7px of colour then 5px of nothing, tiled down the edge. The gradient must
@@ -2215,3 +2230,25 @@ mark{
   .pill{ border-color:#000; color:#000; background:none; }
   .stamp--sample{ border-style:dashed; color:#000; background:none; }
 }
+
+/* ---------------------------------------------------------------------------
+   The promised-date cell.
+
+   An inline form in a table cell, closed by default. The whole reason it is
+   here rather than behind a link is that a CSR looking at the queue can record
+   what was agreed in the moment they remember it; a promise that costs two
+   navigations to record is a promise that stays unrecorded.
+   -------------------------------------------------------------------------*/
+.due-edit{ margin-top:6px; }
+.due-edit > summary{
+  font-size:var(--t-xs); font-weight:600; color:var(--ink-3);
+  letter-spacing:.06em; text-transform:uppercase;
+  padding:2px 0; min-height:auto;
+}
+.due-edit > summary::after{ width:6px; height:6px; margin-left:6px; }
+.due-form{
+  display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+  padding:8px 0 2px; max-width:340px;
+}
+.due-form input[type="date"]{ flex:0 0 auto; }
+.due-form input[type="text"]{ flex:1 1 140px; min-width:0; }

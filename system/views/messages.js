@@ -81,6 +81,7 @@ import {
 } from './layout.js';
 import { MISSING, isMissing, pick } from '../lib/data.js';
 import { normaliseBuyer } from '../lib/reconcile.js';
+import { applyDueDates } from '../lib/duedates.js';
 
 // ============================================================================
 // 1. SMALL SHARED PIECES
@@ -362,15 +363,31 @@ function reviewGate({ runOk, quotesKnown, rows, coldQuotes, staleAfter, lastDeli
     });
   }
 
+  // Past a date we actually promised. The strongest refusal on this page, and
+  // it fires whatever the order's age is: an order promised in five days and
+  // still open on day six is late, sits nowhere near the stale band, and is
+  // exactly the buyer a review ask must not reach.
+  const overdue = rows.filter((r) => r.due?.late === true);
+  if (overdue.length) {
+    const worst = overdue.reduce((a, r) => (toNumber(r.due.days) > toNumber(a.due.days) ? r : a), overdue[0]);
+    reasons.push({
+      what: html`${num(overdue.length)} order${overdue.length === 1 ? '' : 's'} past the date we promised`,
+      detail: html`<b>${worst.project ?? missing()}</b> was promised for ${dateShort(worst.due.due)} and is
+        ${days(worst.due.days)} past it. This is the one refusal backed by something we told the buyer
+        ourselves; asking them to rate us in public while it is outstanding is how a private three-star
+        becomes a public one.`,
+    });
+  }
+
   const stale = rows.filter((r) => r.stale === true);
   if (stale.length) {
     const oldest = stale.reduce((a, r) => (toNumber(r.age_days) > toNumber(a.age_days) ? r : a), stale[0]);
     reasons.push({
       what: html`${num(stale.length)} order${stale.length === 1 ? '' : 's'} open past ${days(staleAfter)}`,
       detail: html`The oldest is <b>${oldest.project ?? missing()}</b>, open ${days(oldest.age_days)} in
-        status <em>${STAGE_LABEL[oldest.status] || String(oldest.status ?? '').replace(/_/g, ' ')}</em>. A
-        review ask on a late delivery is the most reliable way to turn a private three-star into a public
-        one.`,
+        status <em>${STAGE_LABEL[oldest.status] || String(oldest.status ?? '').replace(/_/g, ' ')}</em>.
+        That is age rather than a missed promise, and it is still a refusal: a review ask on work that has
+        been sitting this long is the most reliable way to turn a private three-star into a public one.`,
     });
   }
 
@@ -1802,7 +1819,15 @@ export function render(ctx) {
 
   const flagged = notes === null ? null : notes.some((n) => String(n.kind) === 'flag');
   const mine = openRows.filter((o) => normaliseBuyer(o.client) === key);
-  const rows = triage(mine, isMissing(bookOrders) ? null : bookOrders, flagged);
+  // The promised dates, attached before triage's output reaches the gate.
+  // `ctx.data.due` is null when the table could not be read, and applyDueDates
+  // turns that into `unknown` on every row rather than into "not late", so a
+  // database outage cannot open the gate.
+  const rows = applyDueDates(
+    triage(mine, isMissing(bookOrders) ? null : bookOrders, flagged),
+    ctx.data?.due ?? null,
+    runOk ? open.as_of : null
+  ).rows;
   const coldQuotes = quoteRows.filter((qrow) => normaliseBuyer(qrow.client) === key);
 
   const orderList = isMissing(bookOrders) ? MISSING : bookOrders;
@@ -1894,12 +1919,12 @@ export function render(ctx) {
           : html`<p class="note note--neg">
               ${glyph('crit')} <b>No review request goes to ${buyer}.</b> A review ask on a late or cold
               order is the most reliable way to turn a private three-star into a public one.
-              ${gate.reasons.length
-                ? html`<span class="caption"> ${num(gate.reasons.length)} reason${
-                    gate.reasons.length === 1 ? '' : 's'
-                  }, each with its evidence, are printed on every review reply below.</span>`
-                : ''}
-            </p>`}
+            </p>
+            ${gate.reasons.length
+              ? html`<ul class="steps">
+                    ${join(gate.reasons.map((x) => html`<li><strong>${x.what}</strong>, ${x.detail}</li>`))}
+                  </ul>`
+              : ''}`}
       </div>
     </div>`;
 
