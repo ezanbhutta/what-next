@@ -103,7 +103,7 @@ const SECTIONS = [
         help: 'A number only, never "5 star". The unit suffix has silently voided hundreds of real ratings before.',
       },
       { name: 'success_score', label: 'Success score', mode: 'numeric', help: 'Whole number, 1–10.' },
-      { name: 'msg_ratio', label: 'Message response ratio', mode: 'decimal', help: 'Percent as Fiverr states it, e.g. 92.00.' },
+      { name: 'inquiries_received', label: 'Inquiries received', mode: 'numeric', help: 'How many people messaged that day. A count, not a percentage.' },
     ],
   },
 ];

@@ -65,7 +65,11 @@ CREATE TABLE IF NOT EXISTS daily_entry (
   completed_value  DECIMAL(10,2) NULL,
   orders_in_queue  INT          NULL,
   total_reviews    INT          NULL,
-  msg_ratio        DECIMAL(5,2) NULL,
+  -- How many inquiries arrived that day. This was `msg_ratio DECIMAL(5,2)`
+  -- and labelled "Message response ratio, percent as Fiverr states it",
+  -- which is a different measurement entirely. A count stored as a percent
+  -- is not a formatting problem: 4 inquiries would have been read as 4%.
+  inquiries_received INT        NULL,
   success_score    INT          NULL,
   profile_rating   DECIMAL(3,2) NULL,
   cancellations    INT          NULL,
@@ -161,6 +165,64 @@ CREATE TABLE IF NOT EXISTS client_note (
   body         TEXT         NOT NULL,
   response_id  INT          NULL,
   INDEX idx_note_buyer (buyer, at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------ client talk hub
+
+-- The owner's own playbook: what a buyer says, and the line that goes back.
+--
+-- It is a TABLE rather than a constant in views/messages.js because the person
+-- who writes these lines is Ezan, not whoever is deploying. A sentence that
+-- costs an order should be fixable at 11pm from a phone, and a sentence that
+-- wins one should be addable the day it works. db/seed-talk.js loads the
+-- starting set out of db/client-talk-hub.html; everything after that is typed
+-- here.
+--
+-- `slug` IS THE SEED'S IDENTITY, AND IT IS NULLABLE ON PURPOSE.
+-- Re-running the seed must not duplicate a row, so each seeded card carries a
+-- stable slug and the seed is INSERT IGNORE against this unique key. Cards the
+-- owner adds in the hub have slug NULL, and a MySQL UNIQUE index ignores NULLs
+-- entirely — so any number of hub-written cards coexist while a second seed run
+-- inserts nothing. Keying idempotency on the title instead would have broken
+-- the moment the owner reworded one: the seed would have seen a new card and
+-- inserted the old text back underneath the edit.
+--
+-- `stage` and `turns` are JSON because both are genuinely lists. A card is
+-- offered at one or more stages of an order (inquiry, kickoff, working,
+-- approved, delivered, or `all`), and a card holds one or more exchanges. The
+-- alternative was a comma-joined string, which is a parser waiting to be wrong
+-- about the first stage name containing a comma.
+--
+--   stage  ["inquiry","kickoff"]
+--   turns  [{"h":"what the buyer says","s":"what goes back",
+--            "u":"which package it opens","w":"the warning on this line"}]
+--
+-- `kind` is the treatment, and it is NOT the same as `group`. One card in
+-- "When they say no" is a buying signal rather than an objection, and it has to
+-- read as go rather than stop. Deriving the treatment from the group would have
+-- painted it red.
+--
+-- Nothing here is a number, so nothing here duplicates an engine figure. This
+-- table is words.
+CREATE TABLE IF NOT EXISTS talk (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  slug        VARCHAR(80)  NULL,
+  heading     VARCHAR(80)  NOT NULL,   -- the section it renders under
+  `group`     VARCHAR(24)  NOT NULL,   -- ask | up | obj | care
+  kind        ENUM('ask','stop','care') NOT NULL DEFAULT 'ask',
+  stage       JSON         NOT NULL,
+  chips       JSON         NULL,
+  title       VARCHAR(200) NOT NULL,
+  sub         TEXT         NULL,
+  turns       JSON         NOT NULL,
+  active      TINYINT(1)   NOT NULL DEFAULT 1,
+  sort        SMALLINT     NOT NULL DEFAULT 0,
+  source      ENUM('playbook','hub') NOT NULL DEFAULT 'hub',
+  author      VARCHAR(80)  NULL,
+  updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_talk_slug (slug),
+  INDEX idx_talk_order (active, `group`, sort)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------- upsell

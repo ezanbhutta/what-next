@@ -211,7 +211,37 @@ export async function migrate({ dryRun = false, log = console.log } = {}) {
   const created = [...after].filter((t) => !before.has(t)).sort();
   const existing = [...after].filter((t) => before.has(t)).sort();
 
-  // Drift check — the part IF NOT EXISTS cannot do for you.
+  // ------------------------------------------------------------- fixups
+  //
+  // Named, one-off corrections to a table that already exists. This runner
+  // refuses ALTERs as a rule and that rule is right: an ALTER against live
+  // data is a decision a person makes. These are the narrow exception, and
+  // each one has to satisfy all three of:
+  //
+  //   1. it cannot lose data
+  //   2. it is guarded, so running it twice is a no-op
+  //   3. leaving it undone breaks writes, so "tell the operator" is not a fix
+  //
+  // The alternative here was asking Ezan to run SQL in phpMyAdmin, and an
+  // instruction nobody can follow is not a migration strategy.
+  const fixups = [];
+
+  // `msg_ratio DECIMAL(5,2)` was labelled "message response ratio, percent as
+  // Fiverr states it". It is not a ratio: it is how many inquiries arrived
+  // that day. Stored as a percent, 4 inquiries would have read as 4%. CHANGE
+  // rather than add-and-drop, so any value already typed moves with it.
+  if (after.has('daily_entry')) {
+    const cols = await existingColumns('daily_entry');
+    const lower = new Set([...cols].map((c) => c.toLowerCase()));
+    if (lower.has('msg_ratio') && !lower.has('inquiries_received')) {
+      await raw('ALTER TABLE daily_entry CHANGE COLUMN msg_ratio inquiries_received INT NULL');
+      fixups.push('daily_entry.msg_ratio renamed to inquiries_received (INT)');
+    }
+  }
+
+  for (const f of fixups) log(`[migrate] fixup: ${f}`);
+
+  // Drift check. The part IF NOT EXISTS cannot do for you.
   const drift = [];
   for (const statement of statements) {
     const table = tableOf(statement);

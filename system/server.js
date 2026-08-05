@@ -1548,7 +1548,7 @@ const ENTRY_DEC = [
   'organic_value',
   'directed_value',
   'completed_value',
-  'msg_ratio',
+  'inquiries_received',
   'profile_rating',
   'cancelled_value',
 ];
@@ -1560,11 +1560,50 @@ app.post(
     const profile = str(req.body.profile, 80);
     if (!date || !profile) return { error: 'invalid' };
 
+    // Per-gig reach arrives as parallel arrays from repeated inputs. Read it
+    // BEFORE building the row, because the profile's impressions and clicks
+    // are derived from it when it is present.
+    const gigNames = [].concat(req.body.gig_name || []);
+    const gigImps = [].concat(req.body.gig_impressions || []);
+    const gigClicks = [].concat(req.body.gig_clicks || []);
+
+    /**
+     * The profile total is the sum of the gigs, not a number typed twice.
+     *
+     * Ezan enters reach per gig rather than combined. Asking for the parts AND
+     * the total is two copies of one figure, and two copies drift: a gig added
+     * next month gets typed into the split and forgotten in the total, and the
+     * click-through rate quietly starts describing a subset of the profile.
+     * This file's own header says one copy of every number, so when a split is
+     * given it wins and the typed total is ignored.
+     *
+     * Strict on blanks, in line with the rest of the form. If any gig row has
+     * a blank where a number belongs, the total is NULL rather than a sum of
+     * whatever happened to be filled in: a partial sum looks like a real
+     * measurement and is not one.
+     */
+    const sumGigs = (values) => {
+      const seen = gigNames.map((n, i) => (str(n, 160) ? values[i] : null)).filter((_, i) => str(gigNames[i], 160));
+      if (!seen.length) return undefined; // no split given, keep what was typed
+      let total = 0;
+      for (const v of seen) {
+        const n = intOrNull(v);
+        if (n === null) return null; // a blank part means an unknown whole
+        total += n;
+      }
+      return total;
+    };
+
+    const gigImpTotal = sumGigs(gigImps);
+    const gigClickTotal = sumGigs(gigClicks);
+
     const cols = ['entry_date', 'profile'];
     const vals = [date, profile];
     for (const c of ENTRY_INT) {
       cols.push(c);
-      vals.push(intOrNull(req.body[c]));
+      if (c === 'impressions' && gigImpTotal !== undefined) vals.push(gigImpTotal);
+      else if (c === 'clicks' && gigClickTotal !== undefined) vals.push(gigClickTotal);
+      else vals.push(intOrNull(req.body[c]));
     }
     for (const c of ENTRY_DEC) {
       cols.push(c);
@@ -1577,11 +1616,6 @@ app.post(
       .filter((c) => c !== 'entry_date' && c !== 'profile')
       .map((c) => `${c} = VALUES(${c})`)
       .join(', ');
-
-    // Per-gig impressions arrive as parallel arrays from repeated inputs.
-    const gigNames = [].concat(req.body.gig_name || []);
-    const gigImps = [].concat(req.body.gig_impressions || []);
-    const gigClicks = [].concat(req.body.gig_clicks || []);
 
     await auditedWrite(
       req,
@@ -1750,7 +1784,10 @@ app.post(
 
     const kind = oneOf(req.body.kind, TALK_KINDS) || 'ask';
     const sub = str(req.body.sub, 2000);
-    const sort = intOrNull(req.body.sort) ?? 0;
+    // Clamped to the column. A SMALLINT handed 99999 is a strict-mode error,
+    // which surfaces as a 500 on a form that was filled in correctly except for
+    // one number nobody was told the range of.
+    const sort = Math.max(-32768, Math.min(32767, intOrNull(req.body.sort) ?? 0));
 
     // A card with no stage ticked is offered at EVERY stage, never at none.
     // Storing an empty list would hide it behind every tab at once, which is
