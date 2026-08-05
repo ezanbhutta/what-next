@@ -1,16 +1,16 @@
-// lib/reconcile.js — the referee. Where the inquiry sheet and the order book
+// lib/reconcile.js, the referee. Where the inquiry sheet and the order book
 // disagree, and by how much.
 //
 // WHY THIS FILE EXISTS
 //
 // Five systems each hold a third of the truth and they contradict each other.
-// The hub does not add a sixth opinion — it joins the two authoritative logs
+// The hub does not add a sixth opinion, it joins the two authoritative logs
 // on the one identifier that is stable in both, and reports the disagreements
 // without editing either side. Nothing in here writes anywhere.
 //
 // The finding that started the build, reproduced by this module on every run:
-// 25 buyers the CSRs marked "Not Placed" had in fact ordered — 27 orders worth
-// $3,628 — and 5 marked won had no order behind them. Real conversion is 29.4%
+// 25 buyers the CSRs marked "Not Placed" had in fact ordered, 27 orders worth
+// $3,628, and 5 marked won had no order behind them. Real conversion is 29.4%
 // against the 22.9% the sheet reports. Nobody was wrong on purpose. The CSR who
 // logs Monday's inquiry never sees Thursday's order land.
 //
@@ -58,7 +58,7 @@ const PLACED_STATUSES = new Set(['placed']);
 
 /**
  * Normalise a Fiverr username into a join key: lowercase, alphanumerics only.
- * Returns '' for anything that reduces to nothing — such a row cannot be
+ * Returns '' for anything that reduces to nothing, such a row cannot be
  * joined and is counted as unjoinable rather than lumped under a blank buyer.
  */
 export function normaliseBuyer(value) {
@@ -94,7 +94,7 @@ export function wilson(successes, trials, z = 1.96) {
 /**
  * Rates keep six decimals, not the two or three anyone displays.
  *
- * That is not false precision — it is the opposite. 91/310 rounded to 4dp is
+ * That is not false precision, it is the opposite. 91/310 rounded to 4dp is
  * 0.2935, and a renderer asking for one decimal of a percentage then gets
  * "29.3%" from a true 29.4%. Rounding twice moves a number. Round once, at the
  * point of display, and let this layer carry the digits.
@@ -147,8 +147,8 @@ function groupByBuyer(rows) {
 
 /**
  * A Fiverr username is lowercase and unbroken: `thisguy07`, `nativ_shaibi`,
- * `dcleanglobe`. So a value that starts with a capital or contains a space —
- * "Adrian C", "Berkay", "Dami A." — is a display name someone typed, and NO
+ * `dcleanglobe`. So a value that starts with a capital or contains a space, 
+ * "Adrian C", "Berkay", "Dami A.", is a display name someone typed, and NO
  * exact join can ever reach that buyer's orders. 28 inquiry rows are like this
  * and only 3 orders are, which is what you would expect: the order book is
  * exported, the inquiry log is hand-entered under time pressure.
@@ -157,7 +157,7 @@ function groupByBuyer(rows) {
  * Four of the five "marked won, no order" cases are exactly this, and a fifth
  * sits one character from a real username (`alanzfs` against the order book's
  * `alanzfss`). Fuzzy-matching those would attach money to a buyer on the
- * strength of a typo — inventing the very link this module exists to check.
+ * strength of a typo, inventing the very link this module exists to check.
  * The finding says "this cannot be joined, and here is why"; a human decides.
  */
 const USERNAME_SHAPED = /^[a-z0-9][a-z0-9_-]*$/;
@@ -184,7 +184,7 @@ function displayName(rows) {
  * Money and volume for one buyer's orders.
  *
  * `total_value` is order amount plus tip, summing only the orders that carry a
- * figure. Orders with no amount are counted separately — a total that silently
+ * figure. Orders with no amount are counted separately, a total that silently
  * treats an unpriced order as $0 is a fabricated number wearing a plausible
  * face. When NO order carries a figure the total is MISSING, not 0.
  */
@@ -230,7 +230,7 @@ function sumValues(entries) {
   };
 }
 
-/** Findings sort by money at stake, then volume, then name — stable across runs. */
+/** Findings sort by money at stake, then volume, then name, stable across runs. */
 function byStake(a, b) {
   const av = isMissing(a.total_value) ? -1 : a.total_value;
   const bv = isMissing(b.total_value) ? -1 : b.total_value;
@@ -246,7 +246,7 @@ function byStake(a, b) {
  *
  * @param {{orders?: object[], leads?: object[]}} [input] Inject rows to test
  *        or to reconcile a subset; omit to read the engine's committed files.
- * @returns {object} report — see `available`, `summary`, `conversion`,
+ * @returns {object} report, see `available`, `summary`, `conversion`,
  *          `findings`, `counts`, `unjoinable`.
  */
 export function reconcile(input = {}) {
@@ -290,7 +290,7 @@ export function reconcile(input = {}) {
     const ordersFor = o.byBuyer.get(buyer) ?? [];
     const hasOrder = ordersFor.length > 0;
     // One buyer can appear in the inquiry log more than once. If ANY of those
-    // rows says placed, the sheet is claiming the win — that is the claim this
+    // rows says placed, the sheet is claiming the win, that is the claim this
     // module checks, and it keeps a re-inquiry from erasing an earlier win.
     const claimsPlaced = leadsFor.some((row) => PLACED_STATUSES.has(row.status));
 
@@ -335,7 +335,7 @@ export function reconcile(input = {}) {
         quoted: leadsFor.map((r) => r.quoted).find((q) => Number.isFinite(q)) ?? MISSING,
         csr: leadsFor.map((r) => r.csr).find((c) => c) ?? MISSING,
         order_count: 0,
-        // No order means no revenue to total — that is a known zero, not a hole.
+        // No order means no revenue to total, that is a known zero, not a hole.
         total_value: 0,
         orders_priced: 0,
         orders_without_value: 0,
@@ -374,8 +374,8 @@ export function reconcile(input = {}) {
   // asked twice is one chance to convert, not two, and counting rows would
   // deflate both rates by the same invisible amount.
   //
-  //   claimed  — what the sheet says: buyers with a lead marked placed.
-  //   true     — what the order book proves: buyers who ever ordered.
+  //   claimed, what the sheet says: buyers with a lead marked placed.
+  //   true, what the order book proves: buyers who ever ordered.
   const claimed = rate(markedPlaced, leadBuyers);
   const truth = rate(actuallyOrdered, leadBuyers);
   const gap =

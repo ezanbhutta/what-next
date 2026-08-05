@@ -1,4 +1,4 @@
-// views/messages.js — what this buyer was already told, and what may be said next.
+// views/messages.js, what this buyer was already told, and what may be said next.
 //
 // THE ORDER OF THIS PAGE IS THE POINT OF THIS PAGE
 //
@@ -8,7 +8,7 @@
 // it may be offered at all:
 //
 //     1. who this buyer is, and what is open
-//     2. the triage — we owe work / they owe a reply / dead
+//     2. the triage, we owe work / they owe a reply / dead
 //     3. what may be sent today, in one line
 //     4. only then, the reply library
 //
@@ -17,11 +17,11 @@
 // order becomes a dispute. The only bucket a check-in belongs in is *they owe
 // a reply*.
 //
-// R6 — THE REVIEW ASK, AND WHY IT IS REFUSED OUT LOUD
+// R6. THE REVIEW ASK, AND WHY IT IS REFUSED OUT LOUD
 //
 // A review ask on a late delivery is the most reliable way to turn a private
 // three-star into a public one. So a template that asks for a review is NOT
-// silently dropped from the library when the buyer is late or cold — silently
+// silently dropped from the library when the buyer is late or cold, silently
 // dropping it teaches nobody, and the next person writes the message by hand.
 // It is shown, marked, and the refusal states the order, its age and the
 // reason. `reviewGate()` is the whole rule and it fails CLOSED: if the engine
@@ -36,7 +36,7 @@
 //   response         the reply library. MySQL.
 //
 // If MySQL is unreachable the history and the library are MISSING and the
-// compose forms are closed — a compose box that cannot save is worse than no
+// compose forms are closed, a compose box that cannot save is worse than no
 // compose box. The triage above them still works, because it is engine data.
 //
 // R2 · nothing renders 0 for an unknown.  R7 · the figure leads, always.
@@ -98,7 +98,7 @@ function toNumber(value) {
 }
 
 // ============================================================================
-// 2. THE TRIAGE — an open order is not one thing
+// 2. THE TRIAGE, an open order is not one thing
 // ============================================================================
 
 const BUCKETS = {
@@ -106,7 +106,7 @@ const BUCKETS = {
     key: 'us',
     label: 'We owe work',
     glyph: 'crit',
-    sub: 'in progress or in revision — the buyer has paid and is waiting on us',
+    sub: 'in progress or in revision, the buyer has paid and is waiting on us',
     send: 'Deliver, or send a dated commitment. Never a nudge.',
   },
   them: {
@@ -120,7 +120,7 @@ const BUCKETS = {
     key: 'dead',
     label: 'Dead',
     glyph: 'idle',
-    sub: 'a human looked and called it — flagged in this hub',
+    sub: 'a human looked and called it, flagged in this hub',
     send: 'Nothing. Somebody already closed this by name.',
   },
   unknown: {
@@ -149,7 +149,7 @@ const STAGE_LABEL = {
 /**
  * Sort this buyer's open orders into the three buckets.
  *
- * `flagged` is the ONLY source of "dead" — nothing in the order book means
+ * `flagged` is the ONLY source of "dead", nothing in the order book means
  * dead, so nothing here infers it. When the flag store is unreachable
  * `flagged` is null and the dead bucket is unknown rather than empty.
  */
@@ -159,13 +159,13 @@ function triage(openRows, bookRows, flagged) {
 
   return openRows.map((o) => {
     const match = book.get(orderKey(o)) || null;
-    // A recovery amount of 0.0 is ambiguous — either a free order or a null the
+    // A recovery amount of 0.0 is ambiguous, either a free order or a null the
     // recovery block flattened. With the book in hand, "priced" is what the
     // book says; without it, an ambiguous figure is MISSING, never $0.
     const priced = match ? Number.isFinite(match.amount) : Number.isFinite(o.amount) && o.amount !== 0;
     // The figure to SHOW is the one that answered "priced". Asking the book and
     // then printing the recovery row's flattened 0.0 is how a $450 order renders
-    // as $0 and contributes $0 to the open value — a fabricated number wearing
+    // as $0 and contributes $0 to the open value, a fabricated number wearing
     // the face of a real one, produced by the very lookup that exists to
     // disambiguate it.
     const amount = match && Number.isFinite(match.amount) ? match.amount : o.amount;
@@ -194,7 +194,7 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
   if (us.length) {
     return {
       tone: 'crit',
-      short: 'Deliver — do not check in',
+      short: 'Deliver, do not check in',
       long: html`${num(us.length)} open order${us.length === 1 ? '' : 's'} ${us.length === 1 ? 'is' : 'are'}
         waiting on <b>us</b>. A "just checking in" note here tells a buyer who has already paid, in writing
         and with a timestamp, that we have not started. Send work, or send a dated commitment.`,
@@ -205,7 +205,7 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
       tone: 'warn',
       short: 'A check-in is the right message',
       long: html`${num(them.length)} delivered order${them.length === 1 ? '' : 's'} with no reply. This is
-        the one bucket a check-in belongs in — short, specific, and about the work rather than about us.`,
+        the one bucket a check-in belongs in, short, specific, and about the work rather than about us.`,
     };
   }
   if (unknown.length) {
@@ -219,7 +219,7 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
   if (dead.length) {
     return {
       tone: 'idle',
-      short: 'Nothing — this was called dead',
+      short: 'Nothing, this was called dead',
       long: html`Every open order here is flagged dead by a person in this hub. Re-opening it is a decision
         somebody makes deliberately, not a message that goes out on a list.`,
     };
@@ -229,7 +229,7 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
       tone: 'warn',
       short: 'A quote follow-up',
       long: html`${num(coldQuotes.length)} quote${coldQuotes.length === 1 ? '' : 's'} never became an order.
-        A follow-up on a quote is a sales message, not a service message — and it is never a review ask.`,
+        A follow-up on a quote is a sales message, not a service message, and it is never a review ask.`,
     };
   }
   return {
@@ -237,13 +237,13 @@ function verdict({ rows, coldQuotes, flagsKnown }) {
     short: flagsKnown ? 'Nothing is owed here' : 'Nothing open that we can see',
     long: flagsKnown
       ? html`No open order and no cold quote. Anything sent to this buyer today is a choice, not a debt.`
-      : html`No open order and no cold quote — but the flag store is unreachable, so whether anybody had
+      : html`No open order and no cold quote, but the flag store is unreachable, so whether anybody had
           already closed this buyer out is ${missing()}.`,
   };
 }
 
 // ============================================================================
-// 3. R6 — THE REVIEW GATE. Fails closed, states its reason.
+// 3. R6. THE REVIEW GATE. Fails closed, states its reason.
 // ============================================================================
 
 /**
@@ -259,7 +259,7 @@ const REVIEW_ASK =
 function asksForReview(response) {
   const text = [response.name, response.category, response.when_to_use, response.body]
     .filter(Boolean)
-    .join(' — ');
+    .join(', ');
   return REVIEW_ASK.test(text);
 }
 
@@ -267,7 +267,7 @@ function asksForReview(response) {
  * May a review request go to this buyer at all?
  *
  * Returns `{ allowed, reasons: [] }`. Every refusal carries the evidence that
- * produced it — an order, an age, a date — because "no" without a number is
+ * produced it, an order, an age, a date, because "no" without a number is
  * indistinguishable from a preference.
  *
  * It fails CLOSED on purpose. An unreadable engine run is not "nothing is
@@ -330,13 +330,13 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
   }
 
   // The ask needs a delivery it can point at AND a date for it. A null age is
-  // not a recent delivery — it is no answer, and the whole question this branch
+  // not a recent delivery, it is no answer, and the whole question this branch
   // asks is whether the work is recent enough to be worth reviewing.
   //
   // Testing `lastDeliveryAge !== null` first is what made the gate fail OPEN in
   // the two cases it most needed to close: a buyer whose only order carries no
   // usable date (7 order rows in the book have no order date and 61 no delivery
-  // date), and a buyer who inquired and never ordered at all — neither has a
+  // date), and a buyer who inquired and never ordered at all, neither has a
   // stale order, an unfinished one or a cold quote, so every other test passed
   // them and the ask was offered on an absent number.
   if (!stale.length && !us.length) {
@@ -344,7 +344,7 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
       reasons.push({
         what: 'No dated delivery to attach a review to',
         detail: html`Nothing in the order book under this username carries a date this page can read, so how
-          long ago the work landed is ${missing()}. A review ask is not sent on a MISSING — and if there is
+          long ago the work landed is ${missing()}. A review ask is not sent on a MISSING, and if there is
           no order here at all, there is nothing delivered to be reviewed.`,
       });
     } else if (lastDeliveryAge > toNumber(staleAfter)) {
@@ -360,7 +360,7 @@ function reviewGate({ runOk, rows, coldQuotes, staleAfter, lastDeliveryAge, hasA
 }
 
 // ============================================================================
-// 4. TEMPLATES — {username} substituted live
+// 4. TEMPLATES, {username} substituted live
 // ============================================================================
 
 const PLACEHOLDER = /\{([a-z0-9_]+)\}/gi;
@@ -401,13 +401,13 @@ function fillPlain(body, username) {
 }
 
 // ============================================================================
-// 5. THE COMPOSE FORM — every write is audited and carries an author
+// 5. THE COMPOSE FORM, every write is audited and carries an author
 // ============================================================================
 
 const KINDS = {
   note: { label: 'Note', glyph: 'idle', what: 'kept here, never sent' },
   sent: { label: 'Sent', glyph: 'info', what: 'a message that went to the buyer' },
-  flag: { label: 'Flag', glyph: 'crit', what: 'this buyer is dead — it changes the Orders page' },
+  flag: { label: 'Flag', glyph: 'crit', what: 'this buyer is dead, it changes the Orders page' },
 };
 
 function kindPill(kind) {
@@ -426,7 +426,7 @@ function composeForm({ ctx, buyer, response = null, prefill = '', open = false }
         <label for="${id}-body">What was said <span class="req">*</span></label>
         <textarea id="${id}-body" name="body" required rows="7">${prefill}</textarea>
         <p class="field-hint">
-          Logged against <b>${buyer}</b> with your name and the time. This hub does not send anything —
+          Logged against <b>${buyer}</b> with your name and the time. This hub does not send anything, 
           it records what you sent, so the next person can see it.
         </p>
       </div>
@@ -436,7 +436,7 @@ function composeForm({ ctx, buyer, response = null, prefill = '', open = false }
           ${join(
             Object.entries(KINDS).map(
               ([k, spec]) => html`<option value="${k}" ${safe(k === (open ? 'note' : 'sent') ? 'selected' : '')}>
-                  ${spec.label} — ${spec.what}
+                  ${spec.label}, ${spec.what}
                 </option>`
             )
           )}
@@ -457,13 +457,13 @@ function composeClosed(notice) {
   return html`<p class="note note--neg">
       ${glyph('crit')} <b>Logging is closed while the typed-records database is unreachable.</b>
       ${notice || 'Nothing typed here could be saved, and a box that silently loses a message is worse than no box.'}
-      The triage above still stands — it reads from <code class="mono">data/</code> and owes the database
+      The triage above still stands, it reads from <code class="mono">data/</code> and owes the database
       nothing.
     </p>`;
 }
 
 // ============================================================================
-// 6. THE PICKER — no buyer chosen yet
+// 6. THE PICKER, no buyer chosen yet
 // ============================================================================
 
 /**
@@ -471,7 +471,7 @@ function composeClosed(notice) {
  *
  * Union of three populations, in the order they matter: buyers with a late
  * order, buyers with a cold quote, buyers somebody has already written to.
- * Ranked by the first list they appear on — a stale order outranks a recent
+ * Ranked by the first list they appear on, a stale order outranks a recent
  * note, because the point of this page is the message that has not been sent.
  */
 function buildDirectory({ openRows, quoteRows, noteRows }) {
@@ -550,7 +550,7 @@ function directoryRow(row, { notesKnown, staleAfter }) {
     ? row.notes
       ? html`${num(row.notes)} logged · ${num(row.sent)} sent${row.oldest !== null ? html` · oldest thing here ${days(row.oldest)}` : ''}`
       : html`Nothing has ever been logged for this buyer${row.oldest !== null ? html` · oldest thing here ${days(row.oldest)}` : ''}`
-    : html`Message history ${missing()} — the typed store is unreachable`;
+    : html`Message history ${missing()}, the typed store is unreachable`;
 
   return html`<li class="thread">
       <a class="thread-btn thread-link" href="${buyerHref(row.display)}">
@@ -619,7 +619,7 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
           <strong class="mid">Triage first</strong>
           <p class="sub">
             Open a buyer and the page leads with their triage. The reply library sits underneath it, and a
-            review request is refused — with the order and its age printed — whenever that buyer is late or
+            review request is refused, with the order and its age printed, whenever that buyer is late or
             cold.
           </p>
         </div>
@@ -632,7 +632,7 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
 
     <section class="panel">
       ${panelHead(
-        html`Pick a buyer — ${num(filtered.length)} of ${num(directory.length)}`,
+        html`Pick a buyer, ${num(filtered.length)} of ${num(directory.length)}`,
         notesKnown ? 'live' : 'missing',
         notesKnown ? 'Live · engine rows + typed notes' : 'History MISSING · typed store unreachable'
       )}
@@ -651,20 +651,20 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
         ? empty(
             directory.length === 0
               ? 'No buyer has an open order, a cold quote or a logged message. That is a fact about the data, not a failure to load it.'
-              : 'No buyer matches that search. The list is not empty — this selection is.'
+              : 'No buyer matches that search. The list is not empty, this selection is.'
           )
         : html`<ul class="thread-list">${join(shown.map((r) => directoryRow(r, { notesKnown, staleAfter })))}</ul>`}
 
       ${filtered.length > shown.length
         ? html`<p class="caption">
-            ${num(filtered.length - shown.length)} more match. Narrow the search rather than scrolling — the
+            ${num(filtered.length - shown.length)} more match. Narrow the search rather than scrolling, the
             order of this list is the order the work is in.
           </p>`
         : ''}
 
       <div class="provenance-bar">
-        <span>Open orders and quotes — engine output, <code class="mono">latest-run.json</code>.</span>
-        <span>Message counts — typed here, <code class="mono">client_note</code>.</span>
+        <span>Open orders and quotes, engine output, <code class="mono">latest-run.json</code>.</span>
+        <span>Message counts, typed here, <code class="mono">client_note</code>.</span>
         <span>Buyers join on the Fiverr username, normalised.</span>
       </div>
     </section>`;
@@ -702,7 +702,7 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
               ? ''
               : html`<span class="cell-sub">${
                   !r.book_available
-                    ? 'book unreadable — cannot confirm'
+                    ? 'book unreadable, cannot confirm'
                     : r.matched
                       ? 'no amount in the book'
                       : 'no matching row in the book'
@@ -716,7 +716,7 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`Triage — ${num(rows.length)} open order${rows.length === 1 ? '' : 's'} for ${buyer}`,
+        html`Triage, ${num(rows.length)} open order${rows.length === 1 ? '' : 's'} for ${buyer}`,
         flagsKnown ? 'live' : 'missing',
         flagsKnown
           ? html`Live · recovery.open_orders · as of ${dateShort(open.as_of)}`
@@ -726,7 +726,7 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
       <p class="note note--neg">
         ${glyph('crit')} <b>Sort before you send.</b> The only bucket a check-in belongs in is
         <b>they owe a reply</b>. A "just checking in" note to a buyer who is waiting on us tells someone who
-        has already paid, in writing and with a timestamp, that we have not started — and that is how a
+        has already paid, in writing and with a timestamp, that we have not started, and that is how a
         late order becomes a dispute.
       </p>
 
@@ -782,7 +782,7 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
         ? ''
         : html`<p class="note note--warn">
             The <b>dead</b> bucket is ${missing()}, not empty. Nothing in the order book means dead, so it
-            comes from human flags in this hub — and the flag store is unreachable. Any row above may in
+            comes from human flags in this hub, and the flag store is unreachable. Any row above may in
             fact already have been closed by somebody.
           </p>`}
 
@@ -790,15 +790,15 @@ function triagePanel({ rows, flagsKnown, open, buyer, coldQuotes }) {
         'How each order lands in a bucket, and the one that is not in the data',
         html`<ul>
             <li>
-              <strong>We owe work</strong> — the book says <span class="mono">in_progress</span> or
+              <strong>We owe work</strong>, the book says <span class="mono">in_progress</span> or
               <span class="mono">revision</span>. The buyer has paid and is waiting.
             </li>
             <li>
-              <strong>They owe a reply</strong> — <span class="mono">delivered</span>, no acceptance and no
+              <strong>They owe a reply</strong>, <span class="mono">delivered</span>, no acceptance and no
               response. The only bucket where a polite check-in is the right message.
             </li>
             <li>
-              <strong>Dead</strong> — nothing in the order book means dead, so nothing here infers it. An
+              <strong>Dead</strong>, nothing in the order book means dead, so nothing here infers it. An
               order is dead when somebody flagged the buyer in this hub, by name and with a timestamp. Log
               a flag below to do that.
             </li>
@@ -821,7 +821,7 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             The typed-records database is unreachable, so the library cannot be listed and nothing can be
-            logged. It is MISSING, not empty — writing a reply from memory because the list did not load is
+            logged. It is MISSING, not empty, writing a reply from memory because the list did not load is
             exactly the failure this hub exists to stop.
           </p>
         </div>
@@ -832,7 +832,7 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
   if (responses.length === 0) {
     return html`<section class="panel">
         ${panelHead('The reply library', 'typed', 'Typed · response · 0 active')}
-        ${empty('The library has no active replies. That is the table saying none — add one on the Responses page.')}
+        ${empty('The library has no active replies. That is the table saying none, add one on the Responses page.')}
       </section>`;
   }
 
@@ -840,7 +840,7 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`The reply library — ${num(responses.length)} active, ${buyer} substituted`,
+        html`The reply library, ${num(responses.length)} active, ${buyer} substituted`,
         'typed',
         'Typed · response'
       )}
@@ -872,14 +872,14 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
               ${filled.unresolved.length
                 ? html`<p class="caption">
                     ${num(filled.unresolved.length)} placeholder${filled.unresolved.length === 1 ? '' : 's'}
-                    this page cannot fill —
+                    this page cannot fill, 
                     ${join(filled.unresolved.map((p) => html`<code class="mono">${p}</code>`), ' · ')}. Fill
                     them by hand before sending; a literal brace in a buyer's inbox is the message that gets
                     screenshotted.
                   </p>`
                 : ''}
 
-              ${r.when_to_use ? html`<p class="caption">When to use — ${r.when_to_use}</p>` : ''}
+              ${r.when_to_use ? html`<p class="caption">When to use, ${r.when_to_use}</p>` : ''}
 
               ${refused
                 ? html`<p class="note note--neg">
@@ -888,11 +888,11 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
                     three-star into a public one, and a public one cannot be taken back.
                   </p>
                   <ul class="steps">
-                    ${join(gate.reasons.map((x) => html`<li><strong>${x.what}</strong> — ${x.detail}</li>`))}
+                    ${join(gate.reasons.map((x) => html`<li><strong>${x.what}</strong>, ${x.detail}</li>`))}
                   </ul>
                   <p class="caption">
                     Clear the order first. When nothing is late, nothing is owed and the delivery is recent,
-                    this reply becomes available on its own — nobody has to override anything.
+                    this reply becomes available on its own, nobody has to override anything.
                   </p>`
                 : canWrite
                   ? why(
@@ -900,7 +900,7 @@ function libraryPanel({ ctx, buyer, responses, gate, canWrite, dbNotice }) {
                       composeForm({ ctx, buyer, response: r, prefill: fillPlain(r.body, buyer) })
                     )
                   : html`<p class="caption">
-                      Logging is closed — the typed-records database is unreachable, so this reply can be
+                      Logging is closed, the typed-records database is unreachable, so this reply can be
                       copied but not recorded.
                     </p>`}
             </article>`;
@@ -924,7 +924,7 @@ function historyPanel({ notes, buyer, dbNotice }) {
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             The typed-records database is unreachable. This is MISSING, not "nothing was ever said to this
-            buyer" — and the difference decides whether the next message repeats one they already had.
+            buyer", and the difference decides whether the next message repeats one they already had.
           </p>
         </div>
         ${dbNotice ? html`<p class="note note--warn">${dbNotice}</p>` : ''}
@@ -942,7 +942,7 @@ function historyPanel({ notes, buyer, dbNotice }) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`Everything ever logged for ${buyer} — ${num(notes.length)}`,
+        html`Everything ever logged for ${buyer}, ${num(notes.length)}`,
         'typed',
         'Typed · client_note'
       )}
@@ -962,7 +962,7 @@ function historyPanel({ notes, buyer, dbNotice }) {
         })
       )}
       <p class="caption">
-        Newest first. Every row carries the name of whoever wrote it — an unattributed note is a note nobody
+        Newest first. Every row carries the name of whoever wrote it, an unattributed note is a note nobody
         can be asked about six months later, which is the question this whole hub was built around.
       </p>
     </section>`;
@@ -971,7 +971,7 @@ function historyPanel({ notes, buyer, dbNotice }) {
 function ordersPanel({ orders, buyer }) {
   if (isMissing(orders)) {
     return html`<section class="panel">
-        ${panelHead(`Order history — ${buyer}`, 'missing', 'orders.jsonl absent')}
+        ${panelHead(`Order history, ${buyer}`, 'missing', 'orders.jsonl absent')}
         <div class="figure">
           <span class="cap">Orders on record</span>
           <strong class="mid">${missing()}</strong>
@@ -985,7 +985,7 @@ function ordersPanel({ orders, buyer }) {
 
   if (orders.length === 0) {
     return html`<section class="panel">
-        ${panelHead(`Order history — ${buyer}`, 'live', 'Live · orders.jsonl · 0 rows')}
+        ${panelHead(`Order history, ${buyer}`, 'live', 'Live · orders.jsonl · 0 rows')}
         ${empty('This username has never ordered. The order book answered; it is genuinely none.')}
       </section>`;
   }
@@ -999,7 +999,7 @@ function ordersPanel({ orders, buyer }) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`Order history — ${num(sorted.length)} order${sorted.length === 1 ? '' : 's'}`,
+        html`Order history, ${num(sorted.length)} order${sorted.length === 1 ? '' : 's'}`,
         'live',
         'Live · orders.jsonl'
       )}
@@ -1058,7 +1058,7 @@ function ordersPanel({ orders, buyer }) {
 function leadsPanel({ leads, buyer, benchmark }) {
   if (isMissing(leads)) {
     return html`<section class="panel">
-        ${panelHead(`Inquiry history — ${buyer}`, 'missing', 'leads.jsonl absent')}
+        ${panelHead(`Inquiry history, ${buyer}`, 'missing', 'leads.jsonl absent')}
         <div class="figure">
           <span class="cap">Inquiries on record</span>
           <strong class="mid">${missing()}</strong>
@@ -1069,9 +1069,9 @@ function leadsPanel({ leads, buyer, benchmark }) {
 
   if (leads.length === 0) {
     return html`<section class="panel">
-        ${panelHead(`Inquiry history — ${buyer}`, 'live', 'Live · leads.jsonl · 0 rows')}
+        ${panelHead(`Inquiry history, ${buyer}`, 'live', 'Live · leads.jsonl · 0 rows')}
         ${empty(
-          'No inquiry was ever logged under this username. That is common and not itself a finding — 28 inquiry rows carry a typed display name that can never be joined to an order.'
+          'No inquiry was ever logged under this username. That is common and not itself a finding, 28 inquiry rows carry a typed display name that can never be joined to an order.'
         )}
       </section>`;
   }
@@ -1080,7 +1080,7 @@ function leadsPanel({ leads, buyer, benchmark }) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`Inquiry history — ${num(leads.length)} logged`,
+        html`Inquiry history, ${num(leads.length)} logged`,
         'live',
         'Live · leads.jsonl'
       )}
@@ -1184,7 +1184,7 @@ export function render(ctx) {
   const canWrite = Boolean(notesQ?.ok && responsesQ?.ok);
 
   // The display spelling: the first one a source actually used, never the
-  // normalised join key — that key is a join artefact and no CSR should ever
+  // normalised join key, that key is a join artefact and no CSR should ever
   // see it.
   const firstOf = (rows, field) => {
     if (!Array.isArray(rows)) return null;
@@ -1254,7 +1254,7 @@ export function render(ctx) {
                   ${openValuePriced.length
                     ? html`They hold ${money(openValue)}${
                         openValuePriced.length < rows.length
-                          ? html` — a floor, since ${num(rows.length - openValuePriced.length)} carr${
+                          ? html`, a floor, since ${num(rows.length - openValuePriced.length)} carr${
                               rows.length - openValuePriced.length === 1 ? 'ies' : 'y'
                             } no amount`
                           : ''
@@ -1312,7 +1312,7 @@ export function render(ctx) {
             <p class="caption">
               This hub sends nothing. It records what was said so the next person does not repeat it, and so
               the sentence a buyer was given has an author. Every write carries your name through the audit
-              log in the same transaction — if the attribution cannot be written, neither is the note.
+              log in the same transaction, if the attribution cannot be written, neither is the note.
             </p>`
         : composeClosed(ctx.dbNotice)}
     </section>`;
@@ -1324,7 +1324,7 @@ export function render(ctx) {
       : 'nothing open';
 
   return {
-    title: `${buyer} — ${runOk ? staleLine : 'open orders MISSING'}`,
+    title: `${buyer}, ${runOk ? staleLine : 'open orders MISSING'}`,
     kicker: 'Messages',
     deck: html`<em>${call.short}.</em> ${
       gate.allowed ? 'A review request is permitted here.' : 'A review request is not.'
@@ -1364,7 +1364,7 @@ export function render(ctx) {
               <p class="sub">
                 The engine's run does not carry the open-order block, so no order can be sorted into
                 <em>we owe work</em>, <em>they owe a reply</em> or <em>dead</em>. Until it can, every reply
-                below is a guess about who is waiting — and the review requests are refused outright.
+                below is a guess about who is waiting, and the review requests are refused outright.
               </p>
             </div>
           </section>`,

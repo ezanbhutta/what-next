@@ -1,4 +1,4 @@
-// views/today.js — the landing view. A checklist, and the one number that
+// views/today.js, the landing view. A checklist, and the one number that
 // explains why the checklist is in this order.
 //
 // WHAT THIS VIEW IS
@@ -16,7 +16,7 @@
 //   because they fail separately: a database outage must not make a full list
 //   look cleared, and a missing run file must not make an empty page look
 //   like a quiet morning. When `ctx.data.byTask` is null the boxes are
-//   DISABLED and the progress rule reads MISSING — never 0 of 12.
+//   DISABLED and the progress rule reads MISSING, never 0 of 12.
 //
 // HOUSE RULES THIS FILE IS CARRYING
 //
@@ -24,15 +24,15 @@
 //       formatters render it.
 //   R3  The progress rule is a CENSUS of a complete list of 12, not a rate on
 //       a sample of 12. It draws no bar, no meter and no trend arrow, and its
-//       caption says so — see `progressRule`.
+//       caption says so, see `progressRule`.
 //   R4  The retired programme is never named. There is no volume instruction
-//       to print, so none is printed — not even a zero.
+//       to print, so none is printed, not even a zero.
 //   R6  A review request must never ride on a late or cold order. Two of the
 //       engine's own tasks carry a review-capture step for a buyer who is
 //       ALSO on the 60+ day list. The hub does not silently delete the step
 //       and it does not silently obey it: it marks the step, names the
 //       conflict and shows the order's age. Refereeing a disagreement between
-//       two systems is this hub's whole job — see `reviewConflict`.
+//       two systems is this hub's whole job, see `reviewConflict`.
 //   R7  The figure leads. Money at rest is the first thing on the page; the
 //       two traps that live in that money are in a `<details>` underneath it.
 
@@ -90,7 +90,7 @@ function splitOwner(owner) {
 }
 
 // ============================================================================
-// R6 — the review-request referee
+// R6, the review-request referee
 // ============================================================================
 
 const REVIEW_ASK = /review[ _-]?(?:request|capture|ask)|ask (?:them )?for a review|request a review/i;
@@ -118,11 +118,11 @@ function staleIndex(run) {
  */
 function reviewConflict(task, stale) {
   const steps = Array.isArray(task.steps) ? task.steps : [];
-  const text = [task.title, task.why, ...steps].filter(Boolean).join(' — ');
+  const text = [task.title, task.why, ...steps].filter(Boolean).join(', ');
   if (!REVIEW_ASK.test(text)) return null;
 
   const title = String(task.title ?? '');
-  const tail = normaliseBuyer(title.split(/[—–-]/).pop());
+  const tail = normaliseBuyer(title.split(/[, –-]/).pop());
   const whole = normaliseBuyer(title);
 
   for (const [key, row] of stale) {
@@ -133,7 +133,7 @@ function reviewConflict(task, stale) {
 }
 
 // ============================================================================
-// the lede — money at rest, and the health constraint beside it
+// the lede, money at rest, and the health constraint beside it
 // ============================================================================
 
 function moneyAtRest(run) {
@@ -180,9 +180,9 @@ function moneyAtRest(run) {
         </p>
         <p>
           <strong>Follow-up counts are not a measure of neglect.</strong> Of the
-          <strong>${num(followedN)}</strong> quoted leads anyone did chase, ${num(followedPlaced)} placed —
+          <strong>${num(followedN)}</strong> quoted leads anyone did chase, ${num(followedPlaced)} placed, 
           ${followed.ok ? followed.html : missing()}${followed.ok && followed.small
-            ? html` <span class="caption">(Wilson 95%, n=${num(followedN)} — too few to state as one number)</span>`
+            ? html` <span class="caption">(Wilson 95%, n=${num(followedN)}, too few to state as one number)</span>`
             : ''}. The ${num(neverN)} leads with no logged follow-up appear to convert far higher, but only
           because a follow-up is logged exactly when the buyer did not say yes immediately. Cost the chase
           on the rate <em>within</em> the chased group; never quote the raw split as if chasing were harmful.
@@ -212,7 +212,7 @@ function healthSide(run) {
 
   // The documented trap: a red BREACH badge over an empty reasons array, which
   // once printed "No breach" directly underneath itself. If the badge and the
-  // evidence disagree, the page says the evidence is absent — it does not
+  // evidence disagree, the page says the evidence is absent, it does not
   // quietly render the badge as if it were explained.
   const reasonBlock =
     breached === true && Array.isArray(reasons) && reasons.length === 0
@@ -326,18 +326,18 @@ function taskRow(task, { runDate, tick, canTick, csrfToken, backTo, conflict }) 
                   order book has <strong>${conflict.client}</strong> open ${days(conflict.age_days)} at
                   ${money(conflict.amount)} in status <em>${String(conflict.status || '').replace(/_/g, ' ')}</em>,
                   which is one of the stale orders counted at the top of this page. The hub does not delete
-                  the step and does not obey it — it marks it, and the marked step is the one to skip.
+                  the step and does not obey it, it marks it, and the marked step is the one to skip.
                 </p>`
               : ''}
             <ol class="steps">${stepList}</ol>
             <p class="caption">
-              Owner — ${owner.full || missing()}.
+              Owner, ${owner.full || missing()}.
               ${task.playbook ? html` Playbook <code class="mono">${task.playbook}</code>.` : ''}
               ${known(task.effort_hours) ? html` Estimated ${num(task.effort_hours, { dp: 1 })}h.` : ''}
               ${known(task.confidence) ? html` Confidence ${num(Number(task.confidence) * 100, { dp: 0 })}%.` : ''}
             </p>
             ${refs.length
-              ? html`<p class="caption">Evidence — ${join(refs.map((r) => html`<code class="mono">${r}</code>`), ' · ')}</p>`
+              ? html`<p class="caption">Evidence, ${join(refs.map((r) => html`<code class="mono">${r}</code>`), ' · ')}</p>`
               : ''}`
         )}
       </div>
@@ -351,7 +351,7 @@ function taskRow(task, { runDate, tick, canTick, csrfToken, backTo, conflict }) 
  * sample of 12, so R3 does not apply and nothing here draws a bar: the marks
  * are one per task, in list order, so the row is a map of the list rather than
  * a bar that happens to be made of squares. When the typed store is
- * unreachable the count is MISSING — a cleared-looking list during an outage
+ * unreachable the count is MISSING, a cleared-looking list during an outage
  * is the exact failure this repo exists to prevent.
  *
  * @param {boolean[]} state  one entry per task, in the order they are rendered
@@ -368,7 +368,7 @@ function progressRule(state, canTick) {
             aria-label="${canTick ? `${cleared} of ${total} tasks cleared` : `Tick state unavailable for all ${total} tasks`}">${marks}</span>
       <span class="progress-note">
         ${canTick
-          ? 'Cleared today. A count of a complete list of 12 — not a rate, so no interval and no bar.'
+          ? 'Cleared today. A count of a complete list of 12, not a rate, so no interval and no bar.'
           : 'Tick state could not be read. This is MISSING, not zero cleared.'}
       </span>
     </div>`;
@@ -398,7 +398,7 @@ function phasePanel(run) {
 
   return html`<section class="panel">
       ${panelHead(
-        html`${phase.label} — ${num(phase.days_remaining)} days left`,
+        html`${phase.label}, ${num(phase.days_remaining)} days left`,
         'live',
         'Live · latest-run.json'
       )}
@@ -490,13 +490,13 @@ export function render(ctx) {
     return {
       title: 'There is no task list to work',
       kicker: 'Today',
-      deck: html`The engine run could not be read, so today's list is <em>MISSING</em> — not empty.`,
+      deck: html`The engine run could not be read, so today's list is <em>MISSING</em>, not empty.`,
       html: html`<div class="figure">
           <span class="cap">Tasks for ${ctx.engine.runDate || 'today'}</span>
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             <code class="mono">latest-run.json</code> is absent or unreadable, so there is no task list, no
-            money-at-rest figure and no health verdict. Nothing typed into the hub is affected — ticks,
+            money-at-rest figure and no health verdict. Nothing typed into the hub is affected, ticks,
             entries and notes are all still there and still attributed.
           </p>
         </div>
@@ -543,7 +543,7 @@ export function render(ctx) {
 
     <section class="panel">
       ${panelHead(
-        html`The list — ${num(tasks.length)} tasks`,
+        html`The list, ${num(tasks.length)} tasks`,
         'live',
         html`Live · latest-run.json · ${dateShort(runDate)}`
       )}
@@ -559,14 +559,14 @@ export function render(ctx) {
         : html`<p class="note note--neg">
             ${glyph('crit')} <strong>Tick state could not be read.</strong>
             ${runDate
-              ? 'The typed-records database is unreachable, so the hub cannot tell what has already been cleared. The boxes are disabled rather than shown unticked — an unticked box you cannot trust is worse than none.'
+              ? 'The typed-records database is unreachable, so the hub cannot tell what has already been cleared. The boxes are disabled rather than shown unticked, an unticked box you cannot trust is worse than none.'
               : 'There is no run date to key the ticks on, so nothing can be saved against this list.'}
           </p>`}
       <ul class="tasks">${list}</ul>
       ${progressRule(doneState, canTick)}
       <div class="provenance-bar">
-        <span>Tasks — engine output, read from <code class="mono">data/latest-run.json</code>.</span>
-        <span>Ticks — typed here, stored against <code class="mono">(${runDate || 'no run date'}, task_id)</code>.</span>
+        <span>Tasks, engine output, read from <code class="mono">data/latest-run.json</code>.</span>
+        <span>Ticks, typed here, stored against <code class="mono">(${runDate || 'no run date'}, task_id)</code>.</span>
         ${lastTick
           ? html`<span>Last cleared by <strong>${lastTick.done_by}</strong>.</span>`
           : canTick

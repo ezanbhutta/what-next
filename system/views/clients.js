@@ -1,10 +1,10 @@
-// views/clients.js — one record per buyer, keyed on the Fiverr username.
+// views/clients.js, one record per buyer, keyed on the Fiverr username.
 //
 // WHAT THIS PAGE IS FOR
 //
 // The order book has 1,053 rows and no concept of a person. The inquiry log
 // has 319 rows and its own idea of who is who. This page is the only place the
-// two are collapsed onto one identifier — the Fiverr username — so that
+// two are collapsed onto one identifier, the Fiverr username, so that
 // "yasgard" is a client with a history rather than a string that appears in
 // two spreadsheets. Everything above the list exists to say the one thing the
 // row-level views cannot: 125 of the 912 buyers came back, and they are worth
@@ -14,7 +14,7 @@
 //
 //   orders.jsonl / leads.jsonl   the aggregate. Order counts, lifetime value,
 //                                first and last order, review capture, whether
-//                                the buyer ever reached the inquiry log — all
+//                                the buyer ever reached the inquiry log, all
 //                                of it is a GROUPING of engine rows, computed
 //                                here and nowhere else. No SQL sums anything.
 //   latest-run.json              only for the open-order picture on a client's
@@ -24,7 +24,7 @@
 //                                file invented.
 //   client_note                  typed, MySQL. Notes, sends and dead-flags.
 //   upsell                       typed, MySQL. The stage column, and nothing
-//                                else — no money on this page comes from it.
+//                                else, no money on this page comes from it.
 //
 // TWO RULES THIS FILE IS CARRYING, LOUDLY
 //
@@ -39,7 +39,7 @@
 //   R2  A buyer with no priced order has lifetime value MISSING, not $0. A
 //       buyer with an unpriced order among priced ones has a FLOOR, and the
 //       cell says so. When the typed store is unreachable the notes and upsell
-//       columns are MISSING — never "no notes", which during an outage is a
+//       columns are MISSING, never "no notes", which during an outage is a
 //       claim the hub is in no position to make.
 //
 // EXPORTED FOR REUSE
@@ -79,7 +79,7 @@ import {
 import { normaliseBuyer } from '../lib/reconcile.js';
 
 // ============================================================================
-// 1. THE RECORD — engine rows, grouped. Nothing here reads MySQL.
+// 1. THE RECORD, engine rows, grouped. Nothing here reads MySQL.
 // ============================================================================
 
 function round2(n) {
@@ -98,7 +98,7 @@ function isoOf(value) {
  *
  * 7 of 1,053 rows carry no order date and 61 carry no delivery date. Falling
  * back to the delivery date keeps those rows on the timeline instead of
- * silently dropping them out of first/last — and the record counts how often
+ * silently dropping them out of first/last, and the record counts how often
  * the fallback was used, so a client whose whole history is inferred from
  * delivery dates can say so rather than looking exact.
  */
@@ -275,7 +275,7 @@ function assemble(key, orderRows, leadRows, available, fallbackDisplay = null) {
     orders_undated: undated,
     orders_dated_from_delivery: datedFromDelivery,
 
-    // review capture — a count, never a prompt (R6)
+    // review capture, a count, never a prompt (R6)
     review_count: reviews,
     review_state: reviewState,
     rating_mean: reviews === 0 ? MISSING : round2(ratingSum / reviews),
@@ -305,7 +305,7 @@ function assemble(key, orderRows, leadRows, available, fallbackDisplay = null) {
  *
  * Pass rows in to reuse a set you already hold (the client route hands over
  * pre-filtered arrays); omit them and the engine's files are read. A MISSING
- * source arrives as MISSING and comes back out as MISSING — it is never
+ * source arrives as MISSING and comes back out as MISSING, it is never
  * flattened into an empty list.
  *
  * @param {string} buyer  any spelling of the Fiverr username
@@ -324,7 +324,7 @@ export function clientRecord(buyer, sources = {}) {
 /**
  * Every buyer in both logs, plus the book-wide totals the page leads with.
  *
- * Buyers who only ever inquired are included — they are in the index and out
+ * Buyers who only ever inquired are included, they are in the index and out
  * of every "client" total, because a lead who never ordered is a real record
  * and not a client, and conflating the two is how a conversion rate goes
  * wrong.
@@ -432,7 +432,7 @@ export function clientIndex(sources = {}) {
 }
 
 // ============================================================================
-// 2. THE TYPED SIDE — client_note and upsell, joined on the same key
+// 2. THE TYPED SIDE, client_note and upsell, joined on the same key
 // ============================================================================
 
 /** Stage precedence. "Current" is the furthest a buyer has been taken, with
@@ -445,7 +445,7 @@ const STAGE_TONE = { research: 'idle', pitch: 'info', followup: 'warn', won: 'ok
  *
  * `client_note.buyer` and `upsell.buyer` hold whatever spelling was typed, so
  * both sides are normalised before they meet the engine's rows. A store that
- * could not be read yields null — NOT an empty map, which would render as
+ * could not be read yields null. NOT an empty map, which would render as
  * "no notes" for all 912 buyers during an outage.
  */
 function typedIndex(result, fold) {
@@ -488,7 +488,7 @@ function currentStage(rows) {
 }
 
 // ============================================================================
-// 3. LIST STATE — plain GET, so a filtered list is a link you can send
+// 3. LIST STATE, plain GET, so a filtered list is a link you can send
 // ============================================================================
 
 const PAGE_SIZE = 50;
@@ -596,7 +596,7 @@ function renderList(ctx) {
     return {
       title: 'There is no client list to show',
       kicker: 'Clients',
-      deck: html`The order book could not be read, so every client record is <em>MISSING</em> — not empty.`,
+      deck: html`The order book could not be read, so every client record is <em>MISSING</em>, not empty.`,
       html: html`<div class="figure">
           <span class="cap">Buyers</span>
           <strong class="mid">${missing()}</strong>
@@ -607,7 +607,7 @@ function renderList(ctx) {
           </p>
         </div>
         <p class="note note--neg">
-          Notes and upsell rows typed into the hub are unaffected — they are still stored and still
+          Notes and upsell rows typed into the hub are unaffected, they are still stored and still
           attributed. They are just not shown here, because a client page with no orders on it would be a
           list of names pretending to be a book.
         </p>`,
@@ -688,7 +688,7 @@ function listLede(t, repeatShare, moneyShare, index) {
           <span class="cap">Buyers who ordered more than once</span>
           <strong class="big">${num(t.repeat_buyers)}</strong>
           <p class="sub">
-            of ${num(t.buyers)} — <b>${pct(repeatShare)}</b> of the names and <b>${pct(moneyShare)}</b> of
+            of ${num(t.buyers)}, <b>${pct(repeatShare)}</b> of the names and <b>${pct(moneyShare)}</b> of
             the money. Their ${num(t.repeat_orders)} orders are worth ${money(t.repeat_value)} against a
             book of ${money(t.lifetime_value)}.
           </p>
@@ -705,13 +705,13 @@ function listLede(t, repeatShare, moneyShare, index) {
               The repeat basket is <strong>smaller per order</strong>, not larger:
               ${money(perOrder(t.repeat_value, t.repeat_orders))} against
               ${money(perOrder(t.single_value, t.single_buyers))} for a buyer who ordered once. Repeat
-              business here is more orders, not bigger ones — a second logo, a stationery set, a social
+              business here is more orders, not bigger ones, a second logo, a stationery set, a social
               kit. Costing an upsell on the first-order average would overstate it by roughly a fifth.
             </p>
             <p>
               ${num(t.orders_unpriced)} orders in the book carry no amount at all. They are counted in the
               order totals and contribute nothing to the money, so every lifetime value on this page is a
-              floor for the buyers who own one — those cells say so.
+              floor for the buyers who own one, those cells say so.
             </p>`
         )}
       </div>
@@ -764,7 +764,7 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
 
   return html`<div class="panel">
       ${panelHead(
-        `Every buyer — ${String(index.totals.buyers)} clients`,
+        `Every buyer, ${String(index.totals.buyers)} clients`,
         'live',
         'Live · orders.jsonl + leads.jsonl, grouped on the username'
       )}
@@ -809,7 +809,7 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
       </form>
 
       ${shown.length === 0
-        ? empty('No buyer matches this search. The book is not empty — this selection is.')
+        ? empty('No buyer matches this search. The book is not empty, this selection is.')
         : html`<div class="tablewrap tablewrap--capped">
               <table class="table table--wide">
                 <thead>
@@ -844,7 +844,7 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
       <p class="note note--neg">
         ${glyph('crit')} <b>The review column is a record, not a task.</b> It says what the order book
         holds. Nothing on this page turns "never reviewed" into an ask, because the buyers who never
-        reviewed are overwhelmingly the ones who ordered longest ago — and a review request on a cold or
+        reviewed are overwhelmingly the ones who ordered longest ago, and a review request on a cold or
         late order is how a private three-star becomes a public one.
       </p>
 
@@ -852,7 +852,7 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
         ? html`<p class="note note--warn">
             The typed-records database is unreachable, so
             ${notesDown && stageDown ? 'the note counts and upsell stages are' : notesDown ? 'the note counts are' : 'the upsell stages are'}
-            MISSING rather than none. Every engine figure in this table still stands — they come from disk.
+            MISSING rather than none. Every engine figure in this table still stands, they come from disk.
           </p>`
         : ''}
 
@@ -862,12 +862,12 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
             One record per <strong>normalised Fiverr username</strong>: lowercased, non-alphanumerics
             stripped, so <span class="mono">Nativ_Shaibi</span>, <span class="mono">nativ shaibi</span> and
             <span class="mono">nativ_shaibi</span> are one buyer. The spelling shown is the first one the
-            sources actually used — the normalised key is a join artefact and is never what a CSR is shown.
+            sources actually used, the normalised key is a join artefact and is never what a CSR is shown.
           </p>
           <p>
             ${num(index.unjoinable.orders)} order rows and ${num(index.unjoinable.leads)} inquiry rows
             reduce to nothing under that rule and are in no record at all. Where an inquiry was logged
-            under a display name — "Adrian C", "Dami A." — no exact join can ever reach that buyer's
+            under a display name, "Adrian C", "Dami A.", no exact join can ever reach that buyer's
             orders, and this page does not guess: a fuzzy match would attach money to a buyer on the
             strength of a typo. The Inquiries page reports those cases as findings for a human.
           </p>
@@ -875,7 +875,7 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
             <strong>First and last are order dates</strong>, falling back to the delivery date where the
             book carries no order date. Lifetime value is amount plus tip, summed over the orders that
             carry a figure only. Neither is recomputed anywhere else in the hub, and neither is stored in
-            the database — the numbers here exist in exactly one place, which is the file on disk.
+            the database, the numbers here exist in exactly one place, which is the file on disk.
           </p>
           <p>
             What it cannot tell you: whether a one-order buyer is finished with us, what a rating of
@@ -886,8 +886,8 @@ function listPanel({ filters, rows, scoped, found, sorted, shown, page, pages, s
       )}
 
       <div class="provenance-bar">
-        <span>Counts, money and dates — engine output, grouped from <code class="mono">data/orders.jsonl</code> and <code class="mono">data/leads.jsonl</code>.</span>
-        <span>Notes and upsell stage — typed here, joined on the same username.</span>
+        <span>Counts, money and dates, engine output, grouped from <code class="mono">data/orders.jsonl</code> and <code class="mono">data/leads.jsonl</code>.</span>
+        <span>Notes and upsell stage, typed here, joined on the same username.</span>
       </div>
     </div>`;
 }
@@ -900,7 +900,7 @@ function listRow(row) {
   if (r.orders.length === 0) parts.push('inquiry only, never ordered');
 
   // A late order is marked; a repeat buyer is NOT. The row states are a
-  // warning vocabulary — putting one on the best clients in the book would
+  // warning vocabulary, putting one on the best clients in the book would
   // colour good news as a problem.
   return html`<tr${safe(row.stale ? ' class="row-late"' : '')}>
       <td>
@@ -950,7 +950,7 @@ function stageCell(row) {
 }
 
 /** Every open order the engine marked stale, keyed by the join key. Read from
- *  the run as published — this page does not decide what late means. */
+ *  the run as published, this page does not decide what late means. */
 function staleIndex(run) {
   const rows = pick(run, 'recovery.open_orders.orders');
   const map = new Map();
@@ -978,7 +978,7 @@ function renderClient(ctx, param) {
 
   // The live queue comes from the run, not from the order book: the engine
   // decides what is open and what is late, and without the run neither is
-  // known. `queueKnown` false means MISSING everywhere below — never "nothing
+  // known. `queueKnown` false means MISSING everywhere below, never "nothing
   // open", which during a failed deploy is a claim nobody can support.
   const open = pick(ctx.run, 'recovery.open_orders');
   const queueKnown = !isMissing(open) && Boolean(open) && Array.isArray(open.orders);
@@ -988,7 +988,7 @@ function renderClient(ctx, param) {
   const staleRows = openRows.filter((o) => o.stale === true);
 
   // Nothing in either engine file, under any spelling. That is a fact worth
-  // stating plainly rather than drawing an empty history for — and it is only
+  // stating plainly rather than drawing an empty history for, and it is only
   // a fact when BOTH files were readable.
   const unknownToEngine =
     rec.orders_available && rec.leads_available && rec.orders.length === 0 && rec.leads.length === 0;
@@ -1000,7 +1000,7 @@ function renderClient(ctx, param) {
   // MISSING until the file comes back.
   const historyKnown = rec.orders_available;
   // Inquired and never ordered. Not a client, and the page must not describe
-  // them as one — a $0 lifetime value here is a true zero, but "one order
+  // them as one, a $0 lifetime value here is a true zero, but "one order
   // only" would be a sentence about an order that does not exist.
   const leadOnly = historyKnown && rec.orders.length === 0 && rec.leads.length > 0;
 
@@ -1015,12 +1015,12 @@ function renderClient(ctx, param) {
 
   return {
     title: !historyKnown
-      ? `${label} — the order book could not be read`
+      ? `${label}, the order book could not be read`
       : unknownToEngine
         ? `${label} is not in either log`
         : leadOnly
           ? `${label} inquired and never ordered`
-          : `${label} — ${rec.orders.length} order${rec.orders.length === 1 ? '' : 's'}, ${plainMoney(rec.lifetime_value)}`,
+          : `${label}, ${rec.orders.length} order${rec.orders.length === 1 ? '' : 's'}, ${plainMoney(rec.lifetime_value)}`,
     kicker: 'Client',
     deck: !historyKnown
       ? html`This client's history is <em>MISSING</em>, not empty.`
@@ -1066,7 +1066,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
         </p>
       </div>
       <p class="note note--warn">
-        The hub joins on the exact normalised username and never guesses a near match — attaching money to
+        The hub joins on the exact normalised username and never guesses a near match, attaching money to
         a buyer on the strength of a typo is the failure it exists to prevent. Search the list for the
         spelling the sources use.
       </p>`;
@@ -1081,7 +1081,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
             <strong class="big">${num(0)}</strong>
             <p class="sub">
               This username is in the inquiry log ${num(rec.leads.length)} time${rec.leads.length === 1 ? '' : 's'}
-              — first on ${dateShort(rec.first_lead, { year: true })} — and nowhere in the order book.
+, first on ${dateShort(rec.first_lead, { year: true })}, and nowhere in the order book.
               ${known(rec.quoted) ? html`They were quoted ${money(rec.quoted)}.` : 'No quote was recorded.'}
             </p>
           </div>
@@ -1089,7 +1089,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
             ? html`<p class="note note--neg">
                 ${glyph('crit')} <b>The sheet says this inquiry was placed and the order book has no order
                 behind it.</b> That is one of the referee's three findings. It is usually a username typed
-                as a display name, or one character out — and the hub never guesses a near match, because
+                as a display name, or one character out, and the hub never guesses a near match, because
                 attaching money to a buyer on the strength of a typo is the failure it exists to prevent.
                 Resolve it, by hand, from the Inquiries page.
               </p>`
@@ -1137,7 +1137,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
           <p class="sub">
             across <b>${num(rec.orders.length)}</b> orders between ${dateShort(rec.first_order, { year: true })}
             and ${dateShort(rec.last_order, { year: true })}${
-              sinceLast === null ? '' : html` — ${days(sinceLast)} before the run date`
+              sinceLast === null ? '' : html`, ${days(sinceLast)} before the run date`
             }.
             ${rec.value_is_floor
               ? html`<b>${num(rec.orders_unpriced)} of them carry no amount</b>, so this is a floor.`
@@ -1162,7 +1162,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
                     entirely. `
                 : ''}
               Ages are measured to <strong>${asOf || 'the run date'}</strong>, the engine's own as-of date,
-              not to today — so every age here is a floor as well.
+              not to today, so every age here is a floor as well.
             </p>
             <p>
               By type: ${rec.by_type.length
@@ -1197,7 +1197,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
           ? html`<p class="note note--neg">
               ${glyph('crit')} <b>Sort before you send.</b>
               ${weOwe
-                ? html`The ball is with <b>us</b> on ${num(weOwe)} of these — a "just checking in" note to a
+                ? html`The ball is with <b>us</b> on ${num(weOwe)} of these, a "just checking in" note to a
                     buyer who has already paid tells them in writing that we have not started. `
                 : ''}
               ${theyOwe
@@ -1215,7 +1215,7 @@ function clientLede(rec, { openRows, staleRows, asOf, staleAfter, sinceLast, unk
               ? html`of ${num(rec.orders.length)} orders, mean ${num(rec.rating_mean, { dp: 1 })} of 5.`
               : rec.review_state === 'no'
                 ? html`The book carries no rating for this buyer. That is an absence of a record, not a bad
-                    review — and it is <b>not</b> a reason to ask for one.`
+                    review, and it is <b>not</b> a reason to ask for one.`
                 : 'The book does not track ratings for these rows.'}
           </p>
         </div>
@@ -1238,7 +1238,7 @@ function orderHistory(rec) {
 
   return html`<div class="panel">
       ${panelHead(
-        `Order history — ${String(rec.orders.length)} order${rec.orders.length === 1 ? '' : 's'}`,
+        `Order history, ${String(rec.orders.length)} order${rec.orders.length === 1 ? '' : 's'}`,
         'live',
         'Live · orders.jsonl'
       )}
@@ -1268,7 +1268,7 @@ function orderHistory(rec) {
                     <td>
                       ${d === null ? missing() : dateShort(d, { year: true })}
                       ${d !== null && isoOf(o.order_date) === null
-                        ? html`<span class="cell-sub">delivery date — no order date in the book</span>`
+                        ? html`<span class="cell-sub">delivery date, no order date in the book</span>`
                         : ''}
                     </td>
                     <td><span class="cell-name">${o.project ?? missing()}</span>${
@@ -1313,7 +1313,7 @@ function inquiryHistory(rec) {
   if (rec.leads.length === 0) {
     return html`<div class="panel">
         ${panelHead('In the inquiry log', 'live', 'Live · leads.jsonl')}
-        ${empty('No inquiry was ever logged for this username — the order arrived without one.')}
+        ${empty('No inquiry was ever logged for this username, the order arrived without one.')}
         <p class="caption">
           That is one of the referee's three findings, and it is common: most of the book never passed
           through the inquiry sheet at all. It is not evidence that a CSR missed anything.
@@ -1327,7 +1327,7 @@ function inquiryHistory(rec) {
 
   return html`<div class="panel">
       ${panelHead(
-        `In the inquiry log — ${String(rec.leads.length)} row${rec.leads.length === 1 ? '' : 's'}`,
+        `In the inquiry log, ${String(rec.leads.length)} row${rec.leads.length === 1 ? '' : 's'}`,
         'live',
         'Live · leads.jsonl'
       )}
@@ -1386,7 +1386,7 @@ function reconPanel(recon) {
     return html`<div class="panel">
         ${panelHead('Reconciliation', 'missing', 'typed records unreachable')}
         <p class="note note--warn">
-          Whether this disagreement was already resolved is MISSING — the typed-records database did not
+          Whether this disagreement was already resolved is MISSING, the typed-records database did not
           answer. It is not "unresolved".
         </p>
       </div>`;
@@ -1424,7 +1424,7 @@ function reconPanel(recon) {
         </table>
       </div>
       <p class="caption">
-        Resolve these from the Inquiries page. Nothing here edits the inquiry sheet or the order book —
+        Resolve these from the Inquiries page. Nothing here edits the inquiry sheet or the order book, 
         it records what somebody decided, and who decided it.
       </p>
     </div>`;
@@ -1476,7 +1476,7 @@ function upsellPanel(upsell) {
       </div>
       <p class="caption">
         Stage and next step are typed on the Money page. No money on this client page comes from this
-        table — <code class="mono">extra_earned</code> is somebody's estimate of a future sale, and it is
+        table, <code class="mono">extra_earned</code> is somebody's estimate of a future sale, and it is
         never added to a lifetime value the order book computed.
       </p>
     </div>`;
@@ -1490,7 +1490,7 @@ function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }
     !notes || notes.ok !== true
       ? html`<p class="note note--neg">
           ${glyph('crit')} <b>The notes could not be read.</b> This buyer's history of notes, logged sends
-          and flags is MISSING — not empty. Nothing is lost; the database did not answer.
+          and flags is MISSING, not empty. Nothing is lost; the database did not answer.
         </p>`
       : notes.rows.length === 0
         ? empty('Nothing has been written about this buyer yet.')
@@ -1516,7 +1516,7 @@ function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }
             ${staleRows.length
               ? html`An order of theirs has been open past ${days(staleAfter)}. `
               : html`Their last order was ${days(sinceLast)} ago. `}
-            No message from this page asks for a review — on a late or a cold order that is the surest way
+            No message from this page asks for a review, on a late or a cold order that is the surest way
             to turn a private three-star into a public one. If the ball is with us, deliver or send a dated
             commitment; a nudge is not a substitute for either.
           </p>`
@@ -1529,9 +1529,9 @@ function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }
           <div class="field">
             <label for="note-kind">What is this</label>
             <select id="note-kind" name="kind">
-              <option value="note">A note — something we learned</option>
-              <option value="sent">A send — what this buyer was told</option>
-              <option value="flag">A flag — this order is dead</option>
+              <option value="note">A note, something we learned</option>
+              <option value="sent">A send, what this buyer was told</option>
+              <option value="flag">A flag, this order is dead</option>
             </select>
             <p class="field-hint">
               A flag is the only thing in the hub that can call an order dead. It moves this buyer's open
@@ -1570,8 +1570,8 @@ function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }
       </form>
 
       <div class="provenance-bar">
-        <span>History above — engine output, read from disk.</span>
-        <span>Notes — typed here, keyed on <code class="mono">${label}</code> exactly as spelled.</span>
+        <span>History above, engine output, read from disk.</span>
+        <span>Notes, typed here, keyed on <code class="mono">${label}</code> exactly as spelled.</span>
       </div>
     </div>`;
 }

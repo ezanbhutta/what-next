@@ -1,12 +1,12 @@
-// views/reports-ceo.js — the owner half of Reports: what the shifts produced.
+// views/reports-ceo.js, the owner half of Reports: what the shifts produced.
 //
 // WHAT THIS VIEW IS
 //
 //   The CEO console of the shift logger, rebuilt inside the hub. Not a live
 //   feed and not a leaderboard: a settled account of a window of days. Who
 //   covered which profile on which shift, what they logged, what follow-ups
-//   that logging booked, how many of those got closed, and — the number this
-//   page leads with — how many are still open past the time they came due.
+//   that logging booked, how many of those got closed, and, the number this
+//   page leads with, how many are still open past the time they came due.
 //
 // WHY *THAT* NUMBER LEADS
 //
@@ -21,7 +21,7 @@
 //   1. The CEO console ranked CSRs by raw counts with no denominator anywhere
 //      near them, so a person who worked two shifts and a person who worked
 //      eleven were listed as if the comparison meant something. Here every
-//      rate carries its n, and under n<30 it is a RANGE with no bar — see R3
+//      rate carries its n, and under n<30 it is a RANGE with no bar, see R3
 //      and `meter()` in layout.js, which refuses to draw one.
 //   2. It counted an auto-cleared reminder as a reminder somebody cleared,
 //      which flattered whoever happened to log the next activity. Auto-clears
@@ -34,7 +34,7 @@
 //       a blank checklist count prints MISSING rather than 0 because "ticked
 //       but not counted" is not "none".
 //   R3  Every proportion goes through `rate()`/`meter()`. A CSR with 9 logged
-//       activities gets counts and an explicit "too few to rate" — no
+//       activities gets counts and an explicit "too few to rate", no
 //       percentage, no bar, no arrow. This is enforced by the helpers, and
 //       stated in prose next to the table so nobody reads the blank as a gap.
 //   R4  The retired programme is never named. Order type is Organic or
@@ -77,7 +77,7 @@ import {
 // ============================================================================
 
 /** The shifts, in the order a day runs. Must match views/reports.js SHIFTS and
- *  the ENUM in db/schema.sql — a name that is in one and not the others makes
+ *  the ENUM in db/schema.sql, a name that is in one and not the others makes
  *  a shift's whole output vanish from this page without erroring. */
 const SHIFT_ORDER = ['Morning', 'Evening', 'Night'];
 
@@ -118,8 +118,8 @@ const NOT_A_CLEAR = new Set([AUTO_CLEARED, 'held_no_ask']);
 // Every bucket on this page is a PAKISTAN calendar day. It has to be computed
 // here rather than in SQL: `at` and `opened_at` are TIMESTAMPs, so what a
 // `DATE()` in MySQL returns depends on the server's session time zone, and a
-// box configured in UTC silently files the whole Night shift — which runs
-// 1am–9am PKT — under the previous day. That is not a rounding error; it is an
+// box configured in UTC silently files the whole Night shift, which runs
+// 1am–9am PKT, under the previous day. That is not a rounding error; it is an
 // entire shift's work attributed to the wrong date and to nobody's day.
 
 const PKT_DAY = new Intl.DateTimeFormat('en-CA', {
@@ -156,7 +156,7 @@ function clockPKT(value) {
   }
 }
 
-/** How long something has been waiting, as words. Never negative — a reminder
+/** How long something has been waiting, as words. Never negative, a reminder
  *  that is not yet due is not "waiting -3h", it is simply not on this list. */
 function waited(dueValue, nowValue) {
   const a = parseAt(dueValue);
@@ -202,7 +202,7 @@ function bump(map, key, by = 1) {
 /**
  * R3, as one function.
  *
- * Under MIN_SAMPLE — or wherever the Wilson interval is too wide to call —
+ * Under MIN_SAMPLE, or wherever the Wilson interval is too wide to call, 
  * `meter()` renders the suppressed track: hatched, no fill, the interval as
  * the value. There is no argument and no flag that makes it draw a bar. The
  * word next to it is deliberate too: "9 logged" is a count and always true,
@@ -214,7 +214,7 @@ function shareCell(k, n, tone = '') {
 }
 
 /** Is this reminder open, and was it due before `now`? Snooze does not make it
- *  not-owed — five minutes later it is back — so a snoozed reminder past its
+ *  not-owed, five minutes later it is back, so a snoozed reminder past its
  *  due time is still counted here, and said so in the panel's own words. */
 function openPastDue(rem, nowMs) {
   if (!rem || rem.state === 'resolved') return false;
@@ -227,13 +227,13 @@ function isSnoozedNow(rem, nowMs) {
   return until !== null && until > nowMs;
 }
 
-/** A person cleared this one — as opposed to the system clearing it, or R6
+/** A person cleared this one, as opposed to the system clearing it, or R6
  *  refusing to let it be sent. */
 const clearedByAPerson = (rem) =>
   rem.state === 'resolved' && !NOT_A_CLEAR.has(String(rem.resolution || ''));
 
 /** The rule's number and its human name, from the engine's own table. Never a
- *  second copy of the thirteen logics — REMINDER-LOGICS.md has one authority
+ *  second copy of the thirteen logics. REMINDER-LOGICS.md has one authority
  *  and it is lib/reminders.js. */
 function ruleLabel(ruleKey) {
   const def = RULES[String(ruleKey)];
@@ -242,7 +242,7 @@ function ruleLabel(ruleKey) {
 }
 
 /** Short names for the rule stages, for a table head. The spec's own wording,
- *  shortened — the full sentence is on the reminder itself. */
+ *  shortened, the full sentence is on the reminder itself. */
 const RULE_NAMES = {
   inquiry_followup: '1st follow-up on a new inquiry',
   lead_followup_next: 'Next follow-up in the lead chain',
@@ -252,13 +252,13 @@ const RULE_NAMES = {
   review_private_ask: 'Ask for a private review',
   files_upsell: 'Upsell once files are with the designer',
   revision_check: 'Check the revision is done',
-  offer_fu1: 'Offer — 1st follow-up',
-  offer_fu2: 'Offer — 2nd follow-up',
-  offer_fu3: 'Offer — 3rd follow-up',
+  offer_fu1: 'Offer, 1st follow-up',
+  offer_fu2: 'Offer, 2nd follow-up',
+  offer_fu3: 'Offer, 3rd follow-up',
   delivery_followup: 'Follow up on what was delivered',
   shared_followup: 'Follow up on what was shared',
-  frustrated_alert: 'Frustrated client — standing caution',
-  disputed_alert: 'Open dispute — standing caution',
+  frustrated_alert: 'Frustrated client, standing caution',
+  disputed_alert: 'Open dispute, standing caution',
   custom: 'Custom reminder',
 };
 
@@ -267,7 +267,7 @@ const RULE_NAMES = {
 // ============================================================================
 //
 // GET links, not a JavaScript filter bar. The owner's day starts on a phone
-// and the state has to survive a share, a bookmark and a back button — a
+// and the state has to survive a share, a bookmark and a back button, a
 // filter that lives in memory produces two people looking at "the same page"
 // and reading different numbers, which is the argument this hub exists to end.
 
@@ -350,13 +350,13 @@ export function render(ctx) {
   //
   // Activities and reminders are attributed to shifts. With the shift list
   // unreadable there is no "who covered what" to attach anything to, and a
-  // page of unattributed totals is worse than no page — it looks like a
+  // page of unattributed totals is worse than no page, it looks like a
   // finding and it is an artefact of an outage.
   if (shiftRows === null) {
     return {
       title: 'The shift log cannot be read',
       kicker: 'Reports · owner view',
-      deck: html`Who covered what, and what it produced, are both <em>MISSING</em> — not "nothing happened".`,
+      deck: html`Who covered what, and what it produced, are both <em>MISSING</em>, not "nothing happened".`,
       html: html`<div class="figure">
           <span class="cap">Shifts covered · ${spanLabel}</span>
           <strong class="big">${missing()}</strong>
@@ -423,7 +423,7 @@ export function render(ctx) {
           <strong class="big">${remOk ? num(overdue.length) : missing()}</strong>
           <p class="sub">
             ${!remOk
-              ? html`The reminder ledger could not be read. Treat this as unknown, not as clear — an
+              ? html`The reminder ledger could not be read. Treat this as unknown, not as clear, an
                   all-clear during an outage is the most expensive sentence this page can print.`
               : overdue.length
                 ? html`Of <b>${num(booked)}</b> follow-up${booked === 1 ? '' : 's'} booked across ${scope} in
@@ -438,7 +438,7 @@ export function render(ctx) {
                   ? html`Every one of the <b>${num(booked)}</b> follow-ups booked in this window is either
                       closed or not yet due. Nothing is owed and overdue.`
                   : html`No follow-ups were booked across ${scope} in this window. That is a count, not a
-                      failure to read — the ledger answered.`}
+                      failure to read, the ledger answered.`}
           </p>
         </div>
         ${why(
@@ -449,8 +449,8 @@ export function render(ctx) {
               names work owed to somebody outside the company, so it leads and everything else sits under it.
             </p>
             <p>
-              A <strong>snoozed</strong> reminder past its due time is counted here. Snooze is five minutes —
-              it moves when you see it, not whether it is owed — and a queue that hid snoozed work would
+              A <strong>snoozed</strong> reminder past its due time is counted here. Snooze is five minutes, 
+              it moves when you see it, not whether it is owed, and a queue that hid snoozed work would
               report a clean window that the next shift inherits dirty.
             </p>
             <p>
@@ -471,7 +471,7 @@ export function render(ctx) {
                   ${actOk
                     ? html`<b>${num(activities.length)}</b> ${activities.length === 1 ? 'entry' : 'entries'} logged.`
                     : html`entries logged ${missing()}.`}`
-              : html`Nobody opened a shift on ${scope} in this window. The shift table answered — this is
+              : html`Nobody opened a shift on ${scope} in this window. The shift table answered, this is
                   none, not unknown.`}
           </p>
         </div>
@@ -489,10 +489,18 @@ export function render(ctx) {
     dayKeys.push(addDays(from, i));
   }
 
+  // `started_at`, NOT `opened_at`. REPORT_COLS in server.js selects
+  // `opened_at AS started_at`, so the raw column name reads back undefined on
+  // every row. This grouping used it, and the failure was exactly the silent
+  // one the seam test was written for: `pktDay(undefined)` is null, so no shift
+  // matched any day, and the page rendered "Day by day: 0 shifts, nobody" and
+  // "Who covered what: no shift was opened" directly underneath a masthead
+  // reading "Shifts 1 · Entries 19". HTTP 200, nothing in the log, and an owner
+  // being told the shift he is looking at did not happen.
   const shiftsByDay = new Map(dayKeys.map((k) => [k, []]));
   const strayDays = [];
   for (const s of shifts) {
-    const key = pktDay(s.opened_at);
+    const key = pktDay(s.started_at);
     if (key && shiftsByDay.has(key)) shiftsByDay.get(key).push(s);
     else if (key) strayDays.push(key);
   }
@@ -514,7 +522,7 @@ export function render(ctx) {
 
   const daysPanel = html`<section class="panel">
       ${panelHead(
-        html`Day by day — ${num(dayKeys.length)} ${dayKeys.length === 1 ? 'day' : 'days'}`,
+        html`Day by day, ${num(dayKeys.length)} ${dayKeys.length === 1 ? 'day' : 'days'}`,
         'typed',
         'Typed here'
       )}
@@ -559,7 +567,7 @@ export function render(ctx) {
           </p>`
         : ''}
       <p class="caption">
-        Counts, not rates — a day is one day and there is no denominator here worth taking a percentage of.
+        Counts, not rates, a day is one day and there is no denominator here worth taking a percentage of.
         A day with nobody on it is greyed, which is a fact about cover, not about effort.
       </p>
     </section>`;
@@ -572,13 +580,13 @@ export function render(ctx) {
       const rows = [...(shiftsByDay.get(key) || [])].sort((a, b) => {
         const s = SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift);
         if (s) return s;
-        return (parseAt(a.opened_at) ?? 0) - (parseAt(b.opened_at) ?? 0);
+        return (parseAt(a.started_at) ?? 0) - (parseAt(b.started_at) ?? 0);
       });
       return rows.map((s) => ({ key, s }));
     });
 
   const coveragePanel = html`<section class="panel">
-      ${panelHead(html`Who covered what — ${num(coverageRows.length)}`, 'typed', 'Typed here')}
+      ${panelHead(html`Who covered what, ${num(coverageRows.length)}`, 'typed', 'Typed here')}
       ${coverageRows.length
         ? html`<div class="tablewrap tablewrap--capped">
               <table class="table table--wide">
@@ -596,7 +604,7 @@ export function render(ctx) {
                       const rem = remByReport.get(s.id) || [];
                       const cl = rem.filter(clearedByAPerson).length;
                       const od = rem.filter((r) => openPastDue(r, nowMs)).length;
-                      const inAt = clockPKT(s.opened_at);
+                      const inAt = clockPKT(s.started_at);
                       const outAt = s.closed_at ? clockPKT(s.closed_at) : null;
                       const open = s.status === 'open';
                       return html`<tr class="${safe(od ? 'row-attn' : '')}">
@@ -618,7 +626,7 @@ export function render(ctx) {
                           ${s.handoff_note
                             ? html`<span class="caption">left a note</span>`
                             : open
-                              ? html`<span class="caption">—</span>`
+                              ? html`<span class="caption">None</span>`
                               : html`<span class="caption">no note</span>`}
                         </td>
                       </tr>`;
@@ -633,7 +641,7 @@ export function render(ctx) {
         'What "cleared" counts, and what it refuses to count',
         html`<p>
             <strong>Cleared</strong> is a reminder somebody closed with one of its buttons. It excludes
-            <em>auto-cleared</em> — the system noticing a later entry made the follow-up pointless — because
+            <em>auto-cleared</em>, the system noticing a later entry made the follow-up pointless, because
             crediting that to whoever happened to log the next activity rewards the wrong thing and was one of
             the two measurement bugs in the console this page replaces.
           </p>
@@ -654,7 +662,7 @@ export function render(ctx) {
 
   const kindPanel = html`<section class="panel">
       ${panelHead(
-        html`What was logged — ${actOk ? num(totalActs) : missing()}`,
+        html`What was logged, ${actOk ? num(totalActs) : missing()}`,
         actOk ? 'typed' : 'missing',
         actOk ? 'Typed here' : 'Entries unreadable'
       )}
@@ -706,14 +714,14 @@ export function render(ctx) {
             'Why some shares are a range with no bar',
             html`<p>
                 A share is drawn as a bar only where the denominator can carry one. Under
-                ${String(MIN_SAMPLE)} entries — or wherever the 95% interval is wider than 15 points — the
+                ${String(MIN_SAMPLE)} entries, or wherever the 95% interval is wider than 15 points, the
                 bar is replaced by the interval itself on a hatched track. Four of thirty-four is
                 4.7%–26.6%, and that range contains both "a crisis" and "nothing happened"; drawing 11.8% as
                 a bar would be this page picking one of them at random.
               </p>
               <p>
                 The last column counts reminders booked by that kind of entry across the window. Several
-                kinds book nothing at all by design — client conversation, meeting, spam — and a zero there
+                kinds book nothing at all by design, client conversation, meeting, spam, and a zero there
                 is the catalogue working, not a gap.
               </p>`
           )
@@ -741,7 +749,7 @@ export function render(ctx) {
   }
 
   // Anyone who closed a reminder in this window but did not open a shift in it
-  // still belongs on the page — reminders follow the profile, so the person who
+  // still belongs on the page, reminders follow the profile, so the person who
   // clears one is routinely not the person who booked it. Their "closed by them"
   // column is the honest one; their booked column stays at whatever their own
   // shifts produced, which for a visitor is zero and says so.
@@ -771,7 +779,7 @@ export function render(ctx) {
   const ratable = personRows.filter((p) => p.booked >= MIN_SAMPLE).length;
 
   const peoplePanel = html`<section class="panel">
-      ${panelHead(html`Per person — ${num(personRows.length)}`, 'typed', 'Typed here')}
+      ${panelHead(html`Per person, ${num(personRows.length)}`, 'typed', 'Typed here')}
       ${personRows.length
         ? html`<div class="tablewrap">
               <table class="table table--wide">
@@ -792,7 +800,7 @@ export function render(ctx) {
                           ${p.visitor ? html`<br><span class="caption">no shift of their own in this window</span>` : ''}
                         </td>
                         <td class="r cell-figure">${num(p.shifts)}</td>
-                        <td>${p.profiles.size ? join([...p.profiles], ', ') : html`<span class="caption">—</span>`}</td>
+                        <td>${p.profiles.size ? join([...p.profiles], ', ') : html`<span class="caption">None</span>`}</td>
                         <td class="r cell-figure">${actOk ? num(p.acts) : missing()}</td>
                         <td class="r cell-figure">${count(p.booked, remOk)}</td>
                         <td class="r cell-figure">${count(closed, remOk)}</td>
@@ -818,7 +826,7 @@ export function render(ctx) {
             ? html`Every person here has at least ${String(MIN_SAMPLE)} bookings, so every share is drawn.`
             : html`<b>${num(personRows.length - ratable)}</b> of ${num(personRows.length)}
                 ${personRows.length === 1 ? 'person has' : 'people have'} fewer than ${String(MIN_SAMPLE)}
-                bookings in this window. Their share shows as an interval on a hatched track and no bar — the
+                bookings in this window. Their share shows as an interval on a hatched track and no bar, the
                 counts beside it are the part that is safe to read.`
           : 'The reminder ledger could not be read, so no share on this table can be computed.'}
       </p>
@@ -826,14 +834,14 @@ export function render(ctx) {
         'Why nine entries does not get a percentage',
         html`<p>
             A rate is a claim about what would happen again. On nine bookings the 95% interval spans most of
-            the possible answers, so a single figure — 78%, 33%, whatever it comes to — reads as a finding
+            the possible answers, so a single figure, 78%, 33%, whatever it comes to, reads as a finding
             while carrying almost no information. Two people compared on such intervals are not being
             compared at all.
           </p>
           <p>
             So the rule is mechanical rather than a judgement call: below ${String(MIN_SAMPLE)}, or wherever
             the interval is wider than 15 points, the bar is suppressed and the interval is printed instead.
-            <code class="mono">meter()</code> in <code class="mono">views/layout.js</code> enforces it — this
+            <code class="mono">meter()</code> in <code class="mono">views/layout.js</code> enforces it, this
             page cannot opt out, and neither can the next one.
           </p>
           <p>
@@ -867,7 +875,7 @@ export function render(ctx) {
 
   const ledgerPanel = html`<section class="panel">
       ${panelHead(
-        html`Follow-ups booked — ${remOk ? num(booked) : missing()}`,
+        html`Follow-ups booked, ${remOk ? num(booked) : missing()}`,
         remOk ? 'typed' : 'missing',
         remOk ? 'Typed here' : 'Ledger unreadable'
       )}
@@ -907,7 +915,7 @@ export function render(ctx) {
                               <td class="r cell-figure">${num(row.booked)}</td>
                               <td class="r cell-figure">${num(row.cleared)}</td>
                               <td class="r cell-figure">${num(row.auto)}</td>
-                              <td class="r cell-figure">${row.held ? num(row.held) : html`<span class="caption">—</span>`}</td>
+                              <td class="r cell-figure">${row.held ? num(row.held) : html`<span class="caption">None</span>`}</td>
                               <td class="r cell-figure">${row.overdue ? html`<b class="warn">${num(row.overdue)}</b>` : num(0)}</td>
                             </tr>`;
                           })
@@ -926,7 +934,7 @@ export function render(ctx) {
             delivery and a chat share. The stage is what is booked, so the stage is what is counted.
           </p>
           <p>
-            There is one authority for all of it — <code class="mono">lib/reminders.js</code> — and this page
+            There is one authority for all of it, <code class="mono">lib/reminders.js</code>, and this page
             reads the rule table out of it rather than keeping a second copy. A rule renamed there changes
             this table; a rule renamed only here would be a lie that renders perfectly.
           </p>`
@@ -937,7 +945,7 @@ export function render(ctx) {
 
   const standingPanel = html`<section class="panel">
       ${panelHead(
-        html`Owed right now, across all time — ${standingOk ? num(standing.length) : missing()}`,
+        html`Owed right now, across all time, ${standingOk ? num(standing.length) : missing()}`,
         standingOk ? 'typed' : 'missing',
         standingOk ? `Typed here · ${scope}` : 'Queue unreadable'
       )}
@@ -952,7 +960,7 @@ export function render(ctx) {
                 ? html`<p class="note note--neg">
                     ${glyph('crit')} <strong>${num(standingAlerts.length)} standing
                     caution${standingAlerts.length === 1 ? '' : 's'}.</strong> Frustrated and disputed clients
-                    do not queue and cannot be snoozed — they sit on the profile until somebody marks them
+                    do not queue and cannot be snoozed, they sit on the profile until somebody marks them
                     solved. While one stands, no review ask goes to that buyer.
                   </p>`
                 : ''}
@@ -990,7 +998,7 @@ export function render(ctx) {
                 : ''}`}
       <p class="caption">
         This list ignores the window. It is everything open past its due time on ${scope} right now, however
-        long ago it was booked, oldest first${standing.length && waited(standing[0].due_at, nowMs) ? html` — the one at the top has waited ${waited(standing[0].due_at, nowMs)}` : ''}.
+        long ago it was booked, oldest first${standing.length && waited(standing[0].due_at, nowMs) ? html`, the one at the top has waited ${waited(standing[0].due_at, nowMs)}` : ''}.
         A follow-up is not made less owed by falling outside a date filter.
       </p>
     </section>`;

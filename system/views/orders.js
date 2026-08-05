@@ -1,4 +1,4 @@
-// views/orders.js — what is live, what stage, what is late.
+// views/orders.js, what is live, what stage, what is late.
 //
 // THE ONE THING THIS PAGE EXISTS TO PREVENT
 //
@@ -16,7 +16,7 @@
 //
 // So the decomposition is the headline of the stale bucket, its parts sum
 // exactly to the engine's own stale total, and the warning is printed at the
-// point of use — directly above the queue, where somebody is about to act —
+// point of use, directly above the queue, where somebody is about to act, 
 // not in a footnote nobody scrolls to.
 //
 // AND: no review request is attached to anything on this page. These are late
@@ -33,7 +33,7 @@
 //   orders.jsonl               the order book behind the queue, joined row for
 //                              row on (client, order_date, project) so the
 //                              queue can show what the engine's recovery block
-//                              had to flatten — specifically that four open
+//                              had to flatten, specifically that four open
 //                              orders carry NO amount at all, which the
 //                              recovery block reports as 0.0. A $0 that is
 //                              really "unpriced" is exactly the fabricated
@@ -60,7 +60,7 @@ import { MISSING, isMissing, pick, orders as engineOrders } from '../lib/data.js
 import { normaliseBuyer } from '../lib/reconcile.js';
 
 // ============================================================================
-// STAGES — shape first, colour second (G1)
+// STAGES, shape first, colour second (G1)
 // ============================================================================
 
 const STAGE = {
@@ -112,7 +112,7 @@ function clientHref(name) {
 }
 
 // ============================================================================
-// THE QUEUE — the engine's rows, joined back to the order book
+// THE QUEUE, the engine's rows, joined back to the order book
 // ============================================================================
 
 /**
@@ -146,8 +146,8 @@ function buildQueue(engineRows, bookRows, flagged) {
   return engineRows.map((o) => {
     const match = book.get(orderKey(o)) || null;
     // With the book in hand, "priced" is exactly what the book says. Without
-    // it, a recovery amount of 0.0 is ambiguous — it is either a free order or
-    // a null the recovery block flattened — and an ambiguous figure is MISSING.
+    // it, a recovery amount of 0.0 is ambiguous, it is either a free order or
+    // a null the recovery block flattened, and an ambiguous figure is MISSING.
     const priced = match ? Number.isFinite(match.amount) : Number.isFinite(o.amount) && o.amount !== 0;
     const isFlagged = flagged ? flagged.has(normaliseBuyer(o.client)) : false;
     const stage = STAGE[o.status] || null;
@@ -224,7 +224,7 @@ export function render(ctx) {
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             The engine's run does not carry the open-order block. That is a run that did not land or a
-            deploy that did not carry <span class="mono">data/latest-run.json</span> — it is not an empty
+            deploy that did not carry <span class="mono">data/latest-run.json</span>, it is not an empty
             queue, and this page will not print one.
           </p>
         </div>
@@ -301,7 +301,7 @@ function lede(open, split, unpricedOpen) {
               The count is the number that is exactly right, which is why it is the big one.
             </p>
             <p>
-              Ages are measured to <strong>${String(open.as_of)}</strong>, the engine's run date — not to
+              Ages are measured to <strong>${String(open.as_of)}</strong>, the engine's run date, not to
               today. Every age on this page is therefore a floor as well: an order is at least as old as
               the number shown, and older by however many days have passed since the run.
             </p>`
@@ -320,7 +320,7 @@ function lede(open, split, unpricedOpen) {
         <p class="note note--neg">
           ${glyph('crit')} <b>Do not send a check-in to this bucket.</b> A "just checking in" note to a
           buyer who is waiting on us tells them, in writing and with a timestamp, that we have not
-          started. That is how a late order becomes a dispute. Deliver, or send a dated commitment —
+          started. That is how a late order becomes a dispute. Deliver, or send a dated commitment, 
           never a nudge.
         </p>
       </div>
@@ -334,7 +334,7 @@ function decomposition(open, split, flags) {
     {
       key: 'us',
       label: 'We owe work',
-      sub: 'in progress or in revision — the buyer is waiting on us',
+      sub: 'in progress or in revision, the buyer is waiting on us',
       glyph: 'crit',
       rows: split.us,
     },
@@ -348,7 +348,7 @@ function decomposition(open, split, flags) {
     {
       key: 'dead',
       label: 'Dead',
-      sub: 'a human looked and called it — flagged in the hub',
+      sub: 'a human looked and called it, flagged in the hub',
       glyph: 'idle',
       rows: split.dead,
     },
@@ -389,7 +389,7 @@ function decomposition(open, split, flags) {
             ${join(
               rows.map((b) => {
                 const v = sumValue(b.rows);
-                // With the flag store down there is no dead bucket to report —
+                // With the flag store down there is no dead bucket to report, 
                 // and 0 would be a claim. An empty count here would say "nobody
                 // has called anything dead", which is precisely the fact the hub
                 // has just lost access to.
@@ -421,7 +421,7 @@ function decomposition(open, split, flags) {
                 ${countMatches && valueMatches
                   ? dbDown
                     ? html`The buckets above sum to the engine's ${num(open.stale_count)} /
-                        ${money(open.stale_value)} — but with the dead bucket ${missing()}, some of them
+                        ${money(open.stale_value)}, but with the dead bucket ${missing()}, some of them
                         may in fact be dead.`
                     : html`Sums exactly to the engine's ${num(open.stale_count)} / ${money(open.stale_value)}.`
                   : html`<b class="neg">Does not match the engine's ${num(open.stale_count)} /
@@ -435,14 +435,14 @@ function decomposition(open, split, flags) {
       <p class="note note--neg">
         ${glyph('crit')} <b>Sort before you send.</b> The only bucket a check-in belongs in is
         <b>they owe a reply</b>. Sending one to a buyer who is waiting on us is how a late order becomes
-        a dispute — and none of these orders gets a review request attached to it, ever: a review ask on
+        a dispute, and none of these orders gets a review request attached to it, ever: a review ask on
         a late delivery is the surest way to turn a private three-star into a public one.
       </p>
 
       ${dbDown
         ? html`<p class="note note--warn">
             The <b>dead</b> bucket is ${missing()}, not zero. It is the one call the order book cannot
-            make, so it comes from human flags in the hub — and the flag store is unreachable. Any of the
+            make, so it comes from human flags in the hub, and the flag store is unreachable. Any of the
             rows above may in fact be dead.
           </p>`
         : ''}
@@ -451,15 +451,15 @@ function decomposition(open, split, flags) {
         'How each order lands in a bucket',
         html`<ul>
             <li>
-              <strong>We owe work</strong> — the order book says <span class="mono">in_progress</span> or
+              <strong>We owe work</strong>, the order book says <span class="mono">in_progress</span> or
               <span class="mono">revision</span>. The buyer has paid and is waiting.
             </li>
             <li>
-              <strong>They owe a reply</strong> — <span class="mono">delivered</span>, no acceptance and
+              <strong>They owe a reply</strong>, <span class="mono">delivered</span>, no acceptance and
               no response. This is the only bucket where a polite check-in is the right message.
             </li>
             <li>
-              <strong>Dead</strong> — nothing in the order book means dead, so nothing here infers it. An
+              <strong>Dead</strong>, nothing in the order book means dead, so nothing here infers it. An
               order is dead when somebody flagged the buyer in this hub, by name and with a timestamp.
               Flag one from its client page.
             </li>
@@ -524,7 +524,7 @@ function bandsPanel(open) {
         </table>
       </div>
       <p class="caption">
-        Measured as of ${dateShort(open.as_of)} — the engine's run date, not today. Stale is anything past
+        Measured as of ${dateShort(open.as_of)}, the engine's run date, not today. Stale is anything past
         ${num(open.stale_after_days)} days.
       </p>
     </div>`;
@@ -538,7 +538,7 @@ function queuePanel(open, queue, filtered, filters, flagsDown) {
 
   return html`<div class="panel">
       ${panelHead(
-        `The live queue — ${String(open.open_count)} orders`,
+        `The live queue, ${String(open.open_count)} orders`,
         'live',
         `Live · recovery.open_orders · as of ${String(open.as_of)}`
       )}
@@ -602,7 +602,7 @@ function queuePanel(open, queue, filtered, filters, flagsDown) {
       </form>
 
       ${filtered.length === 0
-        ? empty('No open order matches these filters. The queue is not empty — this selection is.')
+        ? empty('No open order matches these filters. The queue is not empty, this selection is.')
         : html`<div class="tablewrap tablewrap--capped">
               <table class="table table--wide">
                 <thead>
@@ -627,7 +627,7 @@ function queuePanel(open, queue, filtered, filters, flagsDown) {
         Filters live in the URL, so a filtered queue is a link you can send to whoever owns it.
         ${flagsDown
           ? html`<b>The dead filter is empty because the flag store is unreachable</b>, not because
-              nothing is dead — and every row's "who is waiting" is therefore the order book's answer
+              nothing is dead, and every row's "who is waiting" is therefore the order book's answer
               only.`
           : ''}
       </p>
@@ -642,7 +642,7 @@ function queueRow(row) {
       : row.owes === 'them'
         ? pill('warn', 'Them')
         : row.owes === 'dead'
-          ? pill('idle', 'Dead — flagged')
+          ? pill('idle', 'Dead, flagged')
           : missing();
 
   return html`<tr class="${safe(rowClass)}">
@@ -658,7 +658,7 @@ function queueRow(row) {
           ? ''
           : html`<span class="cell-sub">${
               !row.book_available
-                ? 'book unreadable — cannot confirm'
+                ? 'book unreadable, cannot confirm'
                 : row.matched
                   ? 'no amount in the book'
                   : 'no matching row in the book'
@@ -715,7 +715,7 @@ function bookPanel(bookRows, open) {
         </div>
       </dl>
       <p class="caption">
-        Counts of rows in the order book, grouped — not an engine figure. The engine's own revenue and
+        Counts of rows in the order book, grouped, not an engine figure. The engine's own revenue and
         rating figures are scoped to its window and live on the Money page; nothing here restates them.
         ${noStatus
           ? html`${num(noStatus)} rows carry no status at all: they are neither in the queue nor counted as

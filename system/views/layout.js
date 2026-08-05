@@ -1,4 +1,4 @@
-// views/layout.js — the shell every section is rendered into, and the small
+// views/layout.js, the shell every section is rendered into, and the small
 // set of helpers every section shares.
 //
 // ============================================================================
@@ -8,15 +8,15 @@
 //   views/<name>.js   export function render(ctx) -> string | Safe | Result
 //
 // A view returns the INSIDE of the section slot. It never returns a <head>, a
-// <body>, the rail, or the masthead — those belong to this file, so that a
+// <body>, the rail, or the masthead, those belong to this file, so that a
 // change to the frame is one edit and not nine.
 //
 //   Result = {
 //     html:    string | Safe        the section body (required). A plain string
-//                                   here is treated as MARKUP, not text — it is
+//                                   here is treated as MARKUP, not text, it is
 //                                   your output. Escape the DATA you put in it
 //                                   with esc() or the html`` tag.
-//     title?:  string               <h2> in the .slug — the finding, not the
+//     title?:  string               <h2> in the .slug, the finding, not the
 //                                   section name. "17 orders past 60 days"
 //     kicker?: string               small caps above it; defaults to the
 //                                   section label
@@ -29,7 +29,7 @@
 //     head?:   string | Safe        extra <head> content (rare)
 //   }
 //
-// ESCAPING — read this before writing a view.
+// ESCAPING, read this before writing a view.
 //
 // `esc()` is the single chokepoint. It escapes HTML *and* scrubs the retired
 // programme's internal names out of every user-visible string. That scrub is
@@ -138,7 +138,7 @@ export function join(list, separator = '') {
 }
 
 // ============================================================================
-// 2. VALUE FORMATTERS  — R2: absent is MISSING, never zero, never a guess
+// 2. VALUE FORMATTERS. R2: absent is MISSING, never zero, never a guess
 // ============================================================================
 
 /** The rendered form of "we do not know". */
@@ -157,7 +157,7 @@ const usd0 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD'
 const usd2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /**
- * Money. Accepts a number OR the string mysql2 returns for DECIMAL — the pool
+ * Money. Accepts a number OR the string mysql2 returns for DECIMAL, the pool
  * keeps DECIMAL as a string on purpose so exactness survives the trip, and
  * formatting is the edge where it becomes a float, once.
  */
@@ -216,7 +216,7 @@ export function days(n, { word = 'day' } = {}) {
 }
 
 // ============================================================================
-// 3. RATES  — R3: a rate on a small denominator is a RANGE, never a point
+// 3. RATES. R3: a rate on a small denominator is a RANGE, never a point
 // ============================================================================
 
 /**
@@ -234,13 +234,13 @@ export const MAX_INTERVAL_WIDTH = 0.15;
  *   rate(4, 34)   → "4.7%–26.6%"
  *   rate(612, 900)→ "68.0%"
  *
- * `small` — meaning "do not state this as one number" — is true when the
+ * `small`, meaning "do not state this as one number", is true when the
  * denominator is under MIN_SAMPLE **or** the interval is wider than
  * MAX_INTERVAL_WIDTH. Both tests are needed and n≥30 alone is not enough: 4 of
  * 34 clears the denominator rule and still spans 4.7%–26.6%, an interval that
  * contains both "crisis" and "nothing happened". Printing 11.8% there is the
  * precise failure the house rule was written about. Nothing may draw a bar or
- * a trend arrow while `small` is true — see `meter()`.
+ * a trend arrow while `small` is true, see `meter()`.
  */
 export function rate(successes, trials, { dp = 1, force = null } = {}) {
   const k = Number(successes);
@@ -272,7 +272,7 @@ export function rate(successes, trials, { dp = 1, force = null } = {}) {
 }
 
 /**
- * The `.range` figure — a band and a point drawn on a STATED axis.
+ * The `.range` figure, a band and a point drawn on a STATED axis.
  *
  * Every element is positioned by its real value on the axis printed in the
  * caption. The prototype laid the labels out with space-between while the band
@@ -287,7 +287,7 @@ export function rangeFigure({ k, n, axisMin = 0, axisMax = null, note = null, dp
   const r = rate(k, n, { dp });
   if (!r.ok || r.lo === null || r.hi === null) return missing();
 
-  // The smallest nice bound that CONTAINS the interval — no decorative
+  // The smallest nice bound that CONTAINS the interval, no decorative
   // headroom. Padding above the top of the interval shrinks the band on the
   // track and makes a wide, uncertain rate look tighter than it is, which is
   // the one thing this component exists to prevent.
@@ -322,7 +322,7 @@ function niceCeil(x) {
  * A proportion of a known whole.
  *
  * R3 is enforced here rather than trusted: under MIN_SAMPLE this returns the
- * suppressed track — hatched, no fill — with the interval as the value. There
+ * suppressed track, hatched, no fill, with the interval as the value. There
  * is no argument that makes it draw a bar on n<30.
  */
 export function meter({ value, total, tone = '', label = null, dp = 1 }) {
@@ -343,11 +343,11 @@ export function meter({ value, total, tone = '', label = null, dp = 1 }) {
 }
 
 // ============================================================================
-// 4. STATUS COMPONENTS  — shape AND colour, never colour alone
+// 4. STATUS COMPONENTS, shape AND colour, never colour alone
 // ============================================================================
 
 // The five shapes are circle / triangle / diamond / ring / square and NO TWO
-// STATUSES MAY SHARE ONE — see the glyph block in app.css, which documents the
+// STATUSES MAY SHARE ONE, see the glyph block in app.css, which documents the
 // same table. `info` was drawn as a circle here, which is byte-identical to
 // `ok`: in greyscale, on a projector, or to a deuteranope an info glyph drawn
 // as a circle IS an ok glyph, and the colour was doing all the work alone.
@@ -359,7 +359,7 @@ const GLYPHS = {
   info: '<rect x="1.9" y="1.9" width="7.2" height="7.2" rx="1.4"/>',
 };
 
-/** A status shape. Never render one without an adjacent word — see `pill`. */
+/** A status shape. Never render one without an adjacent word, see `pill`. */
 export function glyph(kind = 'idle') {
   const shape = GLYPHS[kind] || GLYPHS.idle;
   return new Safe(
@@ -377,7 +377,7 @@ export function pill(kind, label) {
  * before the reader reaches a number.
  *   kind: 'live'    engine JSON on disk
  *         'typed'   a row a human entered into MySQL
- *         'sample'  placeholder — dashed, must never read as fact
+ *         'sample'  placeholder, dashed, must never read as fact
  *         'missing' the source is absent
  */
 export function stamp(kind, text) {
@@ -401,12 +401,12 @@ export function banner(level, title, body) {
     </div>`;
 }
 
-/** A `<details>` block. R7: this is where reasoning goes — never above a figure. */
+/** A `<details>` block. R7: this is where reasoning goes, never above a figure. */
 export function why(summary, body) {
   return html`<details><summary>${summary}</summary><div class="details-body">${body}</div></details>`;
 }
 
-/** An empty result. Says it is empty, which is a fact — unlike MISSING. */
+/** An empty result. Says it is empty, which is a fact, unlike MISSING. */
 export function empty(text) {
   return html`<p class="empty">${text}</p>`;
 }
@@ -433,7 +433,7 @@ export const SECTIONS = Object.freeze([
     question: 'What is live, what stage, what is late',
     icon: '<path d="M2.5 5.5 9 2.5l6.5 3v7L9 15.5l-6.5-3z"/><path d="M2.5 5.5 9 8.6l6.5-3.1M9 8.6v6.9"/>' },
   { key: 'clients', href: '/clients', label: 'Clients', group: 'The work',
-    question: 'One record per buyer — history, value, what we owe',
+    question: 'One record per buyer, history, value, what we owe',
     icon: '<circle cx="9" cy="6" r="2.8"/><path d="M3.5 15.5a5.5 5.5 0 0 1 11 0"/>' },
   { key: 'messages', href: '/messages', label: 'Messages', group: 'Words',
     question: 'What this buyer was already told',
@@ -450,11 +450,17 @@ export const SECTIONS = Object.freeze([
   { key: 'reports', href: '/reports', label: 'Reports', group: 'People & money',
     question: 'Who is on shift, what they logged, and what is still owed a follow-up',
     icon: '<path d="M3.5 15.5V8.5M7.2 15.5V4.5M10.8 15.5v-5M14.5 15.5v-9"/><path d="M2.5 15.5h13"/>' },
+  // Last on purpose. This is a weekly job for Ezan with the order sheet open
+  // beside him, not something a CSR opens mid-shift, and putting it higher
+  // would push the daily work down for everyone who does not own it.
+  { key: 'errors', href: '/errors', label: 'Errors', group: 'People & money',
+    question: 'Rows in the order sheet that cannot be true',
+    icon: '<path d="M9 2.8 16.2 15H1.8z"/><path d="M9 7v3.4M9 12.6v.1"/>' },
 ]);
 
 // The keycap is PRINTED on every rail link, so every keycap has to work. The
 // handler in SHELL_JS reads ONE character, which leaves exactly ten usable
-// keys — so the tenth section is '0', not '10'. A two-character keycap renders
+// keys, so the tenth section is '0', not '10'. A two-character keycap renders
 // perfectly and does nothing: an affordance advertising a shortcut the page
 // does not have, which is worse than printing no keycap at all.
 const KEYCAPS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
@@ -619,7 +625,7 @@ function noticeStack(ctx) {
 export function layout(ctx, result) {
   const view = result instanceof Safe || typeof result === 'string' ? { html: result } : result || {};
 
-  // `html` and `head` ARE the section's markup — a view that builds a string by
+  // `html` and `head` ARE the section's markup, a view that builds a string by
   // concatenation is emitting HTML, so escaping its own output would render the
   // tags as visible text. Escaping applies to the DATA a view interpolates, and
   // `esc`/`html` are where that happens.
@@ -692,7 +698,7 @@ ${navRail(ctx)}
 
 /**
  * The error page. Says what broke and what to do about it. Never a stack
- * trace, never an error code on its own, never a blank 500 — a page that does
+ * trace, never an error code on its own, never a blank 500, a page that does
  * not say what happened is indistinguishable from a page that lost the data.
  */
 export function errorPage(ctx, { status = 500, heading, what, why: reason = null, next = null }) {

@@ -1,10 +1,10 @@
-// views/inquiries.js — who asked, who converted, which CSR, which shift.
+// views/inquiries.js, who asked, who converted, which CSR, which shift.
 //
 // THE HEADLINE IS THE DISAGREEMENT, NOT THE VOLUME.
 //
 // 319 inquiries is a number anybody can read off the sheet. The thing nobody
-// could see is that 25 buyers marked "Not Placed" had already ordered — 27
-// orders, $3,628 — because the CSR who logs Monday's inquiry never sees
+// could see is that 25 buyers marked "Not Placed" had already ordered, 27
+// orders, $3,628, because the CSR who logs Monday's inquiry never sees
 // Thursday's order land. That finding leads the page and every one of the 25
 // is a row a human can resolve, which is the only loop this hub runs.
 //
@@ -19,12 +19,12 @@
 //     grouping of raw rows is not an engine figure.
 //   - It never writes to a sheet. The only write on this page is
 //     POST /inquiries/resolve, which records what a human decided about a
-//     disagreement — never a correction to either source.
+//     disagreement, never a correction to either source.
 //
 // R3, SPECIFICALLY
 //
 // Conversion is drawn as a Wilson band on a stated axis with its denominator
-// printed, never as a bare point — including the all-time rates, where n=310
+// printed, never as a bare point, including the all-time rates, where n=310
 // would technically license a point. Two rates that are meant to be compared
 // are drawn on the SAME axis, or the comparison is a drawing trick.
 //
@@ -32,7 +32,7 @@
 // Night 12, Evening 10 in the engine's window; 18 named-CSR rows at the very
 // most across the whole log. Those intervals overlap everything. The table
 // states counts and the interval and then says, in words, that the sample
-// cannot rank people — because a reader who sees a sorted table will rank
+// cannot rank people, because a reader who sees a sorted table will rank
 // them whatever the footnote says, so the sort order is by volume, never by
 // rate.
 
@@ -56,7 +56,7 @@ import { MISSING, isMissing, pick, leads as engineLeads, orders as engineOrders 
 import { normaliseBuyer } from '../lib/reconcile.js';
 
 // ============================================================================
-// FILTERS — plain GET state. No JS, so a filtered view is a shareable URL.
+// FILTERS, plain GET state. No JS, so a filtered view is a shareable URL.
 // ============================================================================
 
 const LEAD_STATUSES = ['placed', 'not_placed', 'unknown'];
@@ -223,7 +223,7 @@ export function render(ctx) {
             report 912 buyers who never inquired, which is a confident falsehood.
           </p>
         </div>
-        <p class="note note--neg">Absent: <b>${absent}</b>. This is a broken deploy or a run that did not land — not an empty log.</p>`,
+        <p class="note note--neg">Absent: <b>${absent}</b>. This is a broken deploy or a run that did not land, not an empty log.</p>`,
     };
   }
 
@@ -234,7 +234,7 @@ export function render(ctx) {
   const noInquiry = report.findings.order_without_inquiry;
 
   // Resolution state is TYPED, not computed. When the store is unreachable the
-  // ticks are MISSING — an unticked box during an outage reads as "nobody has
+  // ticks are MISSING, an unticked box during an outage reads as "nobody has
   // dealt with this", which is a fact the hub does not have.
   const resolvedBy = tracked?.ok
     ? new Map(tracked.rows.map((r) => [`${normaliseBuyer(r.buyer)}::${r.finding}`, r]))
@@ -252,7 +252,7 @@ export function render(ctx) {
 
   // The engine scores a window, not the whole log. Both are shown, because the
   // window is the sample its conversion figure is computed on and it is far too
-  // small to carry a per-person split — which is the point being made.
+  // small to carry a per-person split, which is the point being made.
   const windowStart = pick(ctx.run, 'window.start');
   const windowLabel = pick(ctx.run, 'window.label');
   const windowLeads =
@@ -318,7 +318,7 @@ function lede(summary, conversion) {
           html`<p>
               The inquiry log and the order book are kept by different people at different times. A CSR
               logs Monday's inquiry and closes it; the order lands on Thursday under the same Fiverr
-              username and nothing walks back to the earlier row. Neither record is a lie — they simply
+              username and nothing walks back to the earlier row. Neither record is a lie, they simply
               never meet.
             </p>
             <p>
@@ -340,7 +340,7 @@ function lede(summary, conversion) {
           <span class="cap">Gap between the sheet and the order book</span>
           <strong class="mid">${num(conversion.gap_points, { dp: 1 })} points</strong>
           <p class="sub">
-            Both rates below sit on the same axis and the same denominator —
+            Both rates below sit on the same axis and the same denominator, 
             <b>${num(conversion.denominator)} ${conversion.denominator_basis}</b>. A buyer who asked twice
             is one chance to convert, not two.
           </p>
@@ -385,7 +385,7 @@ function identity(s) {
       <div class="stack-sm">
       <dl class="stats">
         <div class="stat">
-          <dt>Agreed — placed and ordered</dt>
+          <dt>Agreed, placed and ordered</dt>
           <dd>${num(s.placed_and_ordered)}</dd>
         </div>
         <div class="stat">
@@ -425,19 +425,19 @@ function findingsPanel(rows, resolvedBy, ctx) {
 
   return html`<div class="panel">
       ${panelHead(
-        `Marked lost, ordered anyway — ${total} buyers`,
+        `Marked lost, ordered anyway, ${total} buyers`,
         dbDown ? 'missing' : 'typed',
         dbDown ? 'Resolution state MISSING' : 'Typed · reconciliation'
       )}
       <p class="note">
         Each row is one buyer to settle: check what actually happened, then record it here. The tick is
-        the hub's own record of a human decision — <b>the inquiry sheet and the order book are never
+        the hub's own record of a human decision, <b>the inquiry sheet and the order book are never
         touched</b>.
       </p>
       ${dbDown
         ? html`<p class="note note--neg">
             The typed-records store is unreachable, so whether these were already resolved is
-            ${missing()} — not "no". The boxes are disabled rather than shown empty, because an empty
+            ${missing()}, not "no". The boxes are disabled rather than shown empty, because an empty
             box would be a fact the hub does not have.
           </p>`
         : ''}
@@ -486,7 +486,7 @@ function findingRow(f, resolvedBy, dbDown, ctx) {
           <div class="field">
             <label for="${inputId}-note">What was decided</label>
             <textarea id="${inputId}-note" name="resolution" rows="2"
-                      placeholder="e.g. order confirmed, inquiry row was closed early — logged with the CSR"
+                      placeholder="e.g. order confirmed, inquiry row was closed early, logged with the CSR"
                       ${safe(dbDown ? 'disabled' : '')}>${stored?.resolution || ''}</textarea>
             <p class="field-hint">
               Stored against <span class="mono">${f.buyer}</span> in the hub, with your name and the time.
@@ -529,7 +529,7 @@ function wonNoOrderPanel(rows, resolvedBy) {
   const displayNamed = rows.filter((r) => r.logged_as_display_name).length;
 
   return html`<div class="panel">
-      ${panelHead(`Marked won, no order behind it — ${rows.length}`, 'live', 'Live · leads.jsonl ⋈ orders.jsonl')}
+      ${panelHead(`Marked won, no order behind it, ${rows.length}`, 'live', 'Live · leads.jsonl ⋈ orders.jsonl')}
       ${rows.length === 0
         ? empty('Every lead marked placed has an order behind it.')
         : html`<div class="tablewrap">
@@ -556,7 +556,7 @@ function wonNoOrderPanel(rows, resolvedBy) {
                           <td>${f.csr}</td>
                           <td>${
                             f.logged_as_display_name
-                              ? 'Logged as a typed name, not a Fiverr username — no exact join can reach this buyer.'
+                              ? 'Logged as a typed name, not a Fiverr username, no exact join can reach this buyer.'
                               : 'Username-shaped, and no order carries it. Either the order is under a different account or the win was logged early.'
                           }</td>
                           <td>${dbDown ? missing() : stored?.resolved === 1 ? pill('ok', 'Resolved') : pill('warn', 'Open')}</td>
@@ -570,8 +570,8 @@ function wonNoOrderPanel(rows, resolvedBy) {
       ${why(
         'Why these are not simply corrected',
         html`<p>
-            ${num(displayNamed)} of ${num(rows.length)} were logged as a typed display name — "Adrian C",
-            "Andrew" — and a display name cannot be joined to anything. The rest are username-shaped and
+            ${num(displayNamed)} of ${num(rows.length)} were logged as a typed display name, "Adrian C",
+            "Andrew", and a display name cannot be joined to anything. The rest are username-shaped and
             still find nothing.
           </p>
           <p>
@@ -600,7 +600,7 @@ function windowFunnel(ctx) {
 
   return html`<div class="panel">
       ${panelHead(
-        `The engine's window — ${isMissing(label) ? 'window MISSING' : String(label)}`,
+        `The engine's window, ${isMissing(label) ? 'window MISSING' : String(label)}`,
         isMissing(n) ? 'missing' : 'live',
         'Live · latest-run.json · metrics.funnel'
       )}
@@ -632,7 +632,7 @@ function windowFunnel(ctx) {
     </div>`;
 }
 
-// ------------------------------------- 6. shift and CSR — counts, never a rank
+// ------------------------------------- 6. shift and CSR, counts, never a rank
 
 function splitPanel(title, kind, groups, filters, scoped = { label: MISSING, groups: null }) {
   const named = groups.filter((g) => g.key !== '');
@@ -647,7 +647,7 @@ function splitPanel(title, kind, groups, filters, scoped = { label: MISSING, gro
   if (!total) return '';
 
   return html`<div class="panel">
-      ${panelHead(title, 'live', 'Grouped from leads.jsonl — not an engine figure')}
+      ${panelHead(title, 'live', 'Grouped from leads.jsonl, not an engine figure')}
 
       <p class="note note--warn">
         ${glyph('warn')} <b>This table cannot rank anybody and is not sorted as if it could.</b>
@@ -700,7 +700,7 @@ function splitPanel(title, kind, groups, filters, scoped = { label: MISSING, gro
       <p class="caption">
         ${num(attributed)} of ${num(total)} inquiries carry a ${kind === 'csr' ? 'CSR' : 'shift'}.
         ${kind === 'csr' && blank
-          ? html`The ${num(blank.n)} with none are not a person's column — they are the column nobody filled
+          ? html`The ${num(blank.n)} with none are not a person's column, they are the column nobody filled
               in, and they hold most of the log.`
           : ''}
       </p>
@@ -716,7 +716,7 @@ function splitPanel(title, kind, groups, filters, scoped = { label: MISSING, gro
           </p>
           <p>
             "Buyer ever ordered" counts inquiry <strong>rows</strong> whose buyer appears anywhere in the
-            order book — including orders placed months later, and including a buyer who appears on more
+            order book, including orders placed months later, and including a buyer who appears on more
             than one row. The referee counts each buyer once, so these columns will not add up to its
             figures and are not meant to. They are here to show that the sheet's "placed" column is the
             lower one in every single group, which is the finding; they are not here to score anybody.
@@ -741,7 +741,7 @@ function windowSplit(kind, scoped) {
   if (!total) return '';
 
   return html`<div class="block">
-      <h3>${isMissing(scoped.label) ? 'The engine window' : `The engine window — ${String(scoped.label)}`}</h3>
+      <h3>${isMissing(scoped.label) ? 'The engine window' : `The engine window, ${String(scoped.label)}`}</h3>
       <div class="tablewrap">
         <table class="table table--narrow">
           <thead>
@@ -789,7 +789,7 @@ function noInquiryPanel(summary, rows) {
         <b>This is a scope statement, not a task list.</b> The inquiry log covers
         ${num(summary.lead_buyers)} of the ${num(summary.order_buyers)} buyers in the order book. Most
         orders simply arrive without a logged conversation, so this number describes what the log is,
-        not what anybody failed to do — and it is the reason every rate on this page states its
+        not what anybody failed to do, and it is the reason every rate on this page states its
         denominator.
       </p>
       ${why(
@@ -825,7 +825,7 @@ function logPanel(leadRows, filtered, filters, lostKeys, orderedBuyers) {
           <span class="cap">The inquiry log</span>
           <strong class="mid">${missing()}</strong>
           <p class="sub">
-            <span class="mono">data/leads.jsonl</span> is not readable. That is not an empty log — no row
+            <span class="mono">data/leads.jsonl</span> is not readable. That is not an empty log, no row
             count, no conversion and no shift split can be stated from here.
           </p>
         </div>
@@ -892,7 +892,7 @@ function logPanel(leadRows, filtered, filters, lostKeys, orderedBuyers) {
       ${completeness(leadRows)}
 
       ${filtered.length === 0
-        ? empty('No inquiry matches these filters. The log is not empty — this selection is.')
+        ? empty('No inquiry matches these filters. The log is not empty, this selection is.')
         : html`<div class="tablewrap tablewrap--capped">
               <table class="table table--wide table--zebra">
                 <thead>
@@ -946,7 +946,7 @@ function completeness(rows) {
       ${join(
         gaps.map(([label, k]) => html`<b>${num(k)}</b> ${label}`),
         ', '
-      )}. Those cells read ${missing()} rather than blank or 0 — a quote that was never recorded is not a
+      )}. Those cells read ${missing()} rather than blank or 0, a quote that was never recorded is not a
       quote of nothing, and it is why every value on this page is stated as a floor.
     </p>`;
 }

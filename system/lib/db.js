@@ -1,6 +1,6 @@
-// lib/db.js — MySQL pool, query helpers, and honest failure.
+// lib/db.js. MySQL pool, query helpers, and honest failure.
 //
-// SCOPE: this connection reaches exactly one database — the hub's own MySQL,
+// SCOPE: this connection reaches exactly one database, the hub's own MySQL,
 // which holds only what a human typed. Nothing computed lives here. If you
 // are about to write SQL that recomputes a number the Python engine already
 // produced, stop and read it from data/ instead (lib/data.js).
@@ -16,9 +16,9 @@
 // must not arrive in the same shape.
 //
 // Two ways to call, and the choice is the whole design:
-//   query()/queryOne()/run()  throw on failure — use when the page cannot
+//   query()/queryOne()/run()  throw on failure, use when the page cannot
 //                             honestly render without the answer.
-//   tryQuery()/attempt()      return {ok:false, error} — use when the page
+//   tryQuery()/attempt()      return {ok:false, error}, use when the page
 //                             can render around the hole, and then it MUST
 //                             say the hole is there (unavailableNotice()).
 // There is deliberately no third option that quietly yields nothing.
@@ -33,7 +33,7 @@ export class DbError extends Error {
     this.name = 'DbError';
     this.code = code;
     // `unavailable` = the store could not be reached or entered at all.
-    // False means MySQL answered and rejected us — that is a bug in our SQL,
+    // False means MySQL answered and rejected us, that is a bug in our SQL,
     // not an outage, and it should reach the developer, not a status banner.
     this.unavailable = unavailable;
     this.sql = sql;
@@ -44,7 +44,7 @@ export class DbError extends Error {
 export class DbConfigError extends DbError {
   constructor(missing) {
     super(
-      `Database is not configured — missing environment variable(s): ${missing.join(', ')}. ` +
+      `Database is not configured, missing environment variable(s): ${missing.join(', ')}. ` +
         'Set them in the Hostinger Web App environment panel (or .env locally).',
       { code: 'DB_NOT_CONFIGURED', unavailable: true }
     );
@@ -54,7 +54,7 @@ export class DbConfigError extends DbError {
 }
 
 // Connection-level codes: the store was not reached, or would not let us in.
-// Access-denied and unknown-database are included on purpose — from a page's
+// Access-denied and unknown-database are included on purpose, from a page's
 // point of view "wrong credentials" is the same event as "server is down":
 // no data, and nobody should pretend otherwise.
 const UNAVAILABLE_CODES = new Set([
@@ -138,7 +138,7 @@ const status = {
   ok: null, // null = never tried
   lastOkAt: null,
   lastFailAt: null,
-  lastError: null, // { code, message } — already redacted
+  lastError: null, // { code, message }, already redacted
 };
 
 function buildPool() {
@@ -170,7 +170,7 @@ function buildPool() {
     // DATE columns come back as 'YYYY-MM-DD' strings, not JS Dates. A DATE
     // parsed into a Date is midnight in the server's zone, and printing it
     // anywhere east or west of that silently shifts run_date and entry_date
-    // by a day — a whole day of entries landing on the wrong row.
+    // by a day, a whole day of entries landing on the wrong row.
     dateStrings: ['DATE'],
 
     // DECIMAL stays a string. Money is DECIMAL(10,2) in the schema; turning
@@ -251,7 +251,7 @@ function noteFail(err) {
  *
  * Without this, an unreachable database costs every single request the full
  * connect timeout. The process is alive and the port is bound, but each page
- * sits there waiting, and a proxy in front gives up first — which reads to
+ * sits there waiting, and a proxy in front gives up first, which reads to
  * everyone as "the site is down" when in fact only the typed-records half is.
  *
  * So the first failure opens the breaker and subsequent calls fail instantly
@@ -291,10 +291,10 @@ export function dbStatus() {
  *  never let the absence read as "nothing to do". */
 export function unavailableNotice(err) {
   if (err instanceof DbConfigError) {
-    return 'Database not configured — typed records cannot be read or saved. This is MISSING, not zero.';
+    return 'Database not configured, typed records cannot be read or saved. This is MISSING, not zero.';
   }
   return (
-    'Database unreachable — typed records (ticks, notes, scores, entries) could not be read. ' +
+    'Database unreachable, typed records (ticks, notes, scores, entries) could not be read. ' +
     'What is shown below is MISSING, not zero, and nothing was saved.'
   );
 }
@@ -381,7 +381,7 @@ export async function raw(sql) {
 /**
  * Run several writes as one. `fn` receives {query, queryOne, queryValue, run,
  * connection} bound to a single connection. Rolls back on any throw and
- * rethrows — a partial write is a number nobody can trust later.
+ * rethrows, a partial write is a number nobody can trust later.
  */
 export async function transaction(fn) {
   const p = getPool();
@@ -450,7 +450,7 @@ export async function transaction(fn) {
 
 /**
  * The only sanctioned way to carry on without the database.
- * Returns {ok:true, rows} or {ok:false, error, notice} — a shape the caller
+ * Returns {ok:true, rows} or {ok:false, error, notice}, a shape the caller
  * cannot mistake for data. Renderers must print `notice` when ok is false.
  */
 export async function tryQuery(sql, params = []) {
@@ -467,7 +467,7 @@ export async function attempt(fn) {
     return { ok: true, value: await fn() };
   } catch (error) {
     if (error instanceof DbError) return { ok: false, error, notice: unavailableNotice(error) };
-    throw error; // not a database problem — do not disguise it as one
+    throw error; // not a database problem, do not disguise it as one
   }
 }
 
@@ -483,7 +483,7 @@ export async function ping() {
 
 /**
  * Express middleware: refresh health for the masthead and hang the status on
- * res.locals. Does NOT block the request — a page that needs the database
+ * res.locals. Does NOT block the request, a page that needs the database
  * says so itself; a page that does not (everything read from data/) still
  * works during an outage, which is most of the hub.
  */

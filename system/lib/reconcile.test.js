@@ -1,9 +1,9 @@
-// lib/reconcile.test.js — run with `node --test lib/`
+// lib/reconcile.test.js, run with `node --test lib/`
 //
 // These assertions are the verified ground truth of the finding this hub was
 // built on. They are pinned against the committed engine output in data/.
 //
-// If one of them fails, the join changed — not the truth. Fix the join. The
+// If one of them fails, the join changed, not the truth. Fix the join. The
 // only legitimate reason for these numbers to move is a genuinely newer
 // data/ from the engine, and in that case the new numbers must be re-verified
 // against the sheets by hand before this file is edited. Never adjust an
@@ -75,7 +75,7 @@ test('true conversion is 29.4% against the sheet-claimed 22.9%', () => {
   assert.ok(conversion.gap > 0);
 
   // Rates are not pre-rounded to display width. If they were, formatting them
-  // would round a second time and move the number — 29.4% would print 29.3%.
+  // would round a second time and move the number, 29.4% would print 29.3%.
   assert.equal((conversion.true_rate * 100).toFixed(2), '29.35');
 });
 

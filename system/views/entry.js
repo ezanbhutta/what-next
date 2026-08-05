@@ -1,9 +1,9 @@
-// views/entry.js — the daily metrics form. The only page in the hub whose job
+// views/entry.js, the daily metrics form. The only page in the hub whose job
 // is to put a number INTO the system rather than take one out of it.
 //
 // WHAT IS TYPED, AND WHAT IS NEVER TYPED
 //
-//   Typed: the raw cells Fiverr shows — impressions, clicks, orders and their
+//   Typed: the raw cells Fiverr shows, impressions, clicks, orders and their
 //   value, queue depth, reviews, ratings, cancellations. Fourteen numbers and
 //   an optional per-gig split.
 //
@@ -21,13 +21,13 @@
 //   a rate has a denominator at all. So a blank input posts an empty string,
 //   `numOrNull` turns it into NULL, and every derived figure that depends on a
 //   blank renders MISSING rather than quietly treating it as 0. A total with
-//   one blank half is MISSING — not the other half.
+//   one blank half is MISSING, not the other half.
 //
 // R3 LIVES ON THE CLIENT TOO
 //
 //   The derived rates are recomputed in the browser as you type, so the house
 //   rule about small denominators has to hold there as well. `LIVE_JS` carries
-//   the same Wilson interval `lib/reconcile.js` computes, and the same test —
+//   the same Wilson interval `lib/reconcile.js` computes, and the same test, 
 //   n < 30 or an interval wider than 15 points means the figure prints as a
 //   RANGE. Four orders out of five is not "80%". The server renders the same
 //   values for anyone without JavaScript, and the script recomputes once on
@@ -57,7 +57,7 @@ import {
 // 1. THE FIELDS
 // ============================================================================
 //
-// `name` is the daily_entry column and the POST field name — they are the same
+// `name` is the daily_entry column and the POST field name, they are the same
 // string on purpose, so a column added to the schema is one line here and
 // cannot be mistyped into a silently ignored form field.
 
@@ -72,7 +72,7 @@ const SECTIONS = [
   },
   {
     legend: 'Orders taken',
-    note: 'Split by how the order arrived. Type 0 where none arrived — 0 is a measurement, a blank is not.',
+    note: 'Split by how the order arrived. Type 0 where none arrived, 0 is a measurement, a blank is not.',
     fields: [
       { name: 'organic_orders', label: 'Organic orders', mode: 'numeric' },
       { name: 'organic_value', label: 'Organic value', mode: 'decimal', kind: 'money' },
@@ -100,7 +100,7 @@ const SECTIONS = [
         name: 'profile_rating',
         label: 'Profile rating',
         mode: 'decimal',
-        help: 'A number only — never "5 star". The unit suffix has silently voided hundreds of real ratings before.',
+        help: 'A number only, never "5 star". The unit suffix has silently voided hundreds of real ratings before.',
       },
       { name: 'success_score', label: 'Success score', mode: 'numeric', help: 'Whole number, 1–10.' },
       { name: 'msg_ratio', label: 'Message response ratio', mode: 'decimal', help: 'Percent as Fiverr states it, e.g. 92.00.' },
@@ -152,7 +152,7 @@ function numberOrNull(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-/** What goes in the input's `value`. Null stays EMPTY — never "0". */
+/** What goes in the input's `value`. Null stays EMPTY, never "0". */
 function inputValue(value) {
   const n = numberOrNull(value);
   if (n === null) return '';
@@ -160,7 +160,7 @@ function inputValue(value) {
 }
 
 // ============================================================================
-// 3. DERIVED FIGURES — displayed, never stored
+// 3. DERIVED FIGURES, displayed, never stored
 // ============================================================================
 //
 // `sum` is deliberately strict: a total with one blank half is MISSING, not
@@ -250,7 +250,7 @@ function derived(v) {
         id: 'd-completion',
         label: 'Completion ratio',
         value: completion === null ? missing() : html`${num(completion, { dp: 2 })}×`,
-        note: 'Completed ÷ taken. Can exceed 1 — not a proportion, so no interval applies.',
+        note: 'Completed ÷ taken. Can exceed 1, not a proportion, so no interval applies.',
       },
       {
         id: 'd-cancel',
@@ -287,7 +287,7 @@ const LIVE_JS = `
   function sum(a, b){ return (a == null || b == null) ? null : a + b; }
   function ratio(a, b){ return (a == null || b == null || b === 0) ? null : a / b; }
 
-  // Wilson 95% — the same interval lib/reconcile.js computes on the server.
+  // Wilson 95%, the same interval lib/reconcile.js computes on the server.
   function wilson(k, n){
     var p = k / n, z2 = 3.8416;
     var denom = 1 + z2 / n;
@@ -376,7 +376,7 @@ function fieldBlock(field, { saved, previous, previousIso, previousState }) {
     </div>`;
 }
 
-/** The per-gig split. Rows are (entry_date, profile, gig) — see the caption. */
+/** The per-gig split. Rows are (entry_date, profile, gig), see the caption. */
 function gigRows(saved, suggested) {
   const rows = [];
   const seen = new Set();
@@ -418,7 +418,7 @@ function gigRows(saved, suggested) {
   );
 }
 
-/** What the engine last saw. Not a hint under a field — a separate provenance. */
+/** What the engine last saw. Not a hint under a field, a separate provenance. */
 function engineSide(run) {
   const capturedOn = pick(run, 'metrics.gig.captured_on');
   const rows = [
@@ -439,7 +439,7 @@ function engineSide(run) {
       </dl>
       <p class="caption">
         These are the engine's figures from its own capture, not defaults for the boxes above. If what Fiverr
-        shows you today disagrees with one of them by a lot, type what Fiverr shows and say so — the gap is
+        shows you today disagrees with one of them by a lot, type what Fiverr shows and say so, the gap is
         the finding, and overwriting it hides the finding.
       </p>
     </section>`;
@@ -538,7 +538,7 @@ export function render(ctx) {
           <strong class="big" id="d-ctr">${view.ctr.value}</strong>
           <p class="caption" id="d-ctr-n">${view.ctr.note}</p>
           <p class="sub">
-            Type the two raw numbers. The rate is derived on screen and is not a column in the database —
+            Type the two raw numbers. The rate is derived on screen and is not a column in the database, 
             there is exactly one copy of it and it is computed from the cells above it.
           </p>
         </div>
@@ -552,13 +552,13 @@ export function render(ctx) {
             </p>
             <p>
               <strong>A blank is not a zero.</strong> Leave a box empty and it is stored as NULL, meaning
-              "not recorded" — a different fact from "recorded as none". Any total or rate that depends on a
+              "not recorded", a different fact from "recorded as none". Any total or rate that depends on a
               blank renders MISSING rather than treating the gap as zero, so a skipped box can never inflate
               a denominator or invent a day of no reach.
             </p>
             <p>
               Rates on small denominators print as a <strong>range</strong>, not a point. Four orders out of
-              five is not "80%" — with n that small the honest interval spans most of the axis, and the
+              five is not "80%", with n that small the honest interval spans most of the axis, and the
               range says so. The threshold is n &lt; ${String(MIN_SAMPLE)} or an interval wider than 15
               points, the same test the engine applies.
             </p>`
@@ -574,7 +574,7 @@ export function render(ctx) {
                   cannot show what is already saved for this day and will not let you overwrite it blind.`
               : saved
                 ? html`${pill('ok', 'Saved')} Entered by <b>${saved.entered_by || missing()}</b>. Saving again
-                    updates the same row — one row per profile per day, keyed on both.`
+                    updates the same row, one row per profile per day, keyed on both.`
                 : html`${pill('warn', 'Nothing recorded yet')} No row exists for
                     ${dateShort(date)} on <b>${profile || missing()}</b>.`}
           </p>
@@ -618,12 +618,12 @@ export function render(ctx) {
         ${fieldSections}
 
         <fieldset class="form-section">
-          <legend>Per gig — optional</legend>
+          <legend>Per gig, optional</legend>
           ${gigRows(savedGigs, suggestedGigs)}
           <p class="caption">
             Optional, and only worth filling when the gig-level split is actually visible. Rows are keyed on
             the gig NAME, so retyping a name creates a second row rather than renaming the first. Leave a row
-            blank to ignore it. These figures are stored as typed and are never added into the totals above —
+            blank to ignore it. These figures are stored as typed and are never added into the totals above, 
             the profile-level impressions box is the number the derived rate uses.
           </p>
         </fieldset>
@@ -642,12 +642,12 @@ export function render(ctx) {
   // ---- derived strip -------------------------------------------------------
 
   const derivedStrip = html`<section class="panel">
-      ${panelHead('Derived — displayed, never stored', 'typed', 'From the boxes above')}
+      ${panelHead('Derived, displayed, never stored', 'typed', 'From the boxes above')}
       <dl class="stats">
         ${join(
           view.stats.map(
             // A <div> grouping dt/dd is the one wrapper a <dl> permits, so the
-            // per-figure note is a <span> rather than a <p> — same rendering,
+            // per-figure note is a <span> rather than a <p>, same rendering,
             // valid content model.
             (s) => html`<div class="stat">
               <dt>${s.label}</dt>
@@ -733,7 +733,7 @@ export function render(ctx) {
     ${lede}
     <section class="panel">
       ${panelHead(
-        html`Today's figures — ${profile || missing()}`,
+        html`Today's figures, ${profile || missing()}`,
         'typed',
         html`Typed here · MySQL · one row per profile per day`
       )}
@@ -747,8 +747,8 @@ export function render(ctx) {
 
   return {
     // Three states, not two. Every other cell on this page already separates
-    // "not logged" from "we cannot tell" — the saved stamp, the form, the
-    // ticker — and the headline was the one place that collapsed them, which
+    // "not logged" from "we cannot tell", the saved stamp, the form, the
+    // ticker, and the headline was the one place that collapsed them, which
     // is where it does the most damage: during an outage it told whoever
     // opened the page that today had not been entered, when the honest answer
     // was that the table could not be read.
@@ -776,7 +776,7 @@ export function render(ctx) {
   };
 }
 
-/** Plain text form of a date, for `title` — which is prose, not markup. */
+/** Plain text form of a date, for `title`, which is prose, not markup. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function dateShortText(iso) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));

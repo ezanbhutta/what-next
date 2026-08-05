@@ -1,8 +1,8 @@
-// lib/reminders.test.js — run with `node --test`
+// lib/reminders.test.js, run with `node --test`
 //
 // One block per rule in REMINDER-LOGICS.md, numbered the same way, asserting
 // the three things the spec actually promises for each: that it books at the
-// right offset, that the right buttons appear, and — where the rule says so —
+// right offset, that the right buttons appear, and, where the rule says so, 
 // that it chains, clears itself, or books nothing at all.
 //
 // The offsets are the spec's, not the code's. If one of these fails because a
@@ -20,6 +20,8 @@ import {
   RULES,
   RULE_KEYS,
   RULE_NUMBERS,
+  REVIEW_ASK_RULE_KEYS,
+  canHoldReviewAsk,
   ACTIVITY_KIND_KEYS,
   SNOOZE_MINUTES,
   UNDO_WINDOW_MS,
@@ -85,7 +87,7 @@ function only(drafts, ruleKey) {
 test('the thirteen rules are all present, numbered 1 to 13', () => {
   assert.deepEqual(RULE_NUMBERS, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   // Rule 9 is a three-stage chain and rule 10 has two entry points, so there
-  // are more keys than numbers — but every key carries a number in range.
+  // are more keys than numbers, but every key carries a number in range.
   for (const key of RULE_KEYS) {
     const n = RULES[key].rule;
     assert.ok(Number.isInteger(n) && n >= 1 && n <= 13, `${key} has rule ${n}`);
@@ -196,7 +198,7 @@ test('rule 3 · "Next shift" snoozes 8 hours instead of closing it', () => {
   const [r] = rulesFor(act('new_order', { detail: { order_via: 'Via Chat' } }), { now: T0 });
   const out = resolve(r, 'next_shift', { now: T0 + 30 * MIN, by: 'Hadi' });
 
-  assert.equal(out.reminder.state, 'snoozed', 'the order still is not assigned — it must come back');
+  assert.equal(out.reminder.state, 'snoozed', 'the order still is not assigned, it must come back');
   assert.equal(parseAt(out.reminder.snoozed_until) - (T0 + 30 * MIN), 8 * HOUR);
   assert.equal(isDue(out.reminder, T0 + 30 * MIN), false);
   assert.equal(isDue(out.reminder, T0 + 9 * HOUR), true);
@@ -222,7 +224,7 @@ test('rule 4 · a Direct Order books the upsell immediately, Via Chat books noth
 
   const r = only(direct, 'order_upsell');
   assert.equal(offsetMinutes(r), 0, '"immediate" is zero minutes, not now-ish');
-  assert.equal(r.heading, "Potential upsell for thisguy07 — what's missing? Especially a Website");
+  assert.equal(r.heading, "Potential upsell for thisguy07, what's missing? Especially a Website");
   assert.deepEqual(keysOf(r), ['no_need', 'upsell_done', 'snooze']);
   assert.equal(isDue(r, T0), true, 'it must show on the page that just booked it');
 
@@ -263,7 +265,7 @@ test('rule 5 · books NOTHING for an order flagged late or disputed', () => {
 test('rule 5 · auto-clears when the review already landed', () => {
   const [r] = rulesFor(act('order_completed'), { now: T0 });
   const cleared = autoClears(act('review_received', { id: 2 }), [r], { now: T0 + 20 * MIN });
-  assert.equal(cleared.length, 1, 'no point asking — they already left one');
+  assert.equal(cleared.length, 1, 'no point asking, they already left one');
 });
 
 // ================================================================== rule 6
@@ -333,7 +335,7 @@ test('rule 8 · the revision check uses the typed time, blank means 24 hours', (
   assert.deepEqual(keysOf(r), ['followup_done', 'revision_done', 'snooze']);
 });
 
-test('rule 8 · always books — there is no condition on it', () => {
+test('rule 8 · always books, there is no condition on it', () => {
   assert.equal(rulesFor(act('revision_assigned', { client: null, detail: {} }), { now: T0 }).length, 1);
 });
 
@@ -352,7 +354,7 @@ test('rule 9 · an offer books the 1st follow-up 2 hours out', () => {
 test('rule 9 · the chain advances 16h then 36h, timed from the tap', () => {
   const [fu1] = rulesFor(act('offer', { detail: { scope: 'full identity' } }), { now: T0 });
 
-  // Tapped late — the next stage counts from the click, not from the offer.
+  // Tapped late, the next stage counts from the click, not from the offer.
   const tap1 = T0 + 5 * HOUR;
   const step2 = resolve(fu1, 'fu1_done', { now: tap1, by: 'Tayyab' });
   assert.equal(step2.reminder.state, 'resolved');
@@ -440,7 +442,7 @@ test('rule 11 · a frustrated client raises a red box immediately', () => {
   assert.equal(r.rule, 11);
   assert.equal(r.alert, 1);
   assert.equal(offsetMinutes(r), 0);
-  assert.equal(r.heading, 'thisguy07 is frustrated — handle with caution');
+  assert.equal(r.heading, 'thisguy07 is frustrated, handle with caution');
   assert.deepEqual(keysOf(r), ['solved'], 'no snooze on a red alert');
   assert.equal(isDue(r, T0), true);
 });
@@ -452,7 +454,7 @@ test('rule 12 · a disputed client raises a red box immediately', () => {
   assert.equal(r.rule, 12);
   assert.equal(r.alert, 1);
   assert.equal(offsetMinutes(r), 0);
-  assert.equal(r.heading, "thisguy07's dispute is OPEN — on the verge of cancelling, treat cautiously");
+  assert.equal(r.heading, "thisguy07's dispute is OPEN, on the verge of cancelling, treat cautiously");
   assert.deepEqual(keysOf(r), ['solved']);
 });
 
@@ -647,7 +649,7 @@ test('due() shows red alerts first, then the most overdue', () => {
 });
 
 test('a stored DATETIME is read as UTC, never as local time', () => {
-  // 'YYYY-MM-DD HH:MM:SS' handed to `new Date()` is LOCAL — on a PKT box every
+  // 'YYYY-MM-DD HH:MM:SS' handed to `new Date()` is LOCAL, on a PKT box every
   // reminder would move five hours, and nothing about it would look wrong.
   assert.equal(parseAt('2026-08-05 09:00:00'), Date.parse('2026-08-05T09:00:00Z'));
   assert.equal(parseAt('2026-08-05T09:00:00Z'), Date.parse('2026-08-05T09:00:00Z'));
@@ -678,7 +680,7 @@ test('"remind me in" parsing accepts the documented forms and nothing else', () 
   assert.equal(parseRemindIn('30'), null);
 });
 
-test('a reminder without a profile is refused — it would be unroutable', () => {
+test('a reminder without a profile is refused, it would be unroutable', () => {
   assert.throws(
     () => rulesFor(act('inquiry', { profile: '' }), { now: T0 }),
     (e) => e.code === 'NO_PROFILE'
@@ -691,4 +693,35 @@ test('a buyer with no username still books, and stores no invented name', () => 
   assert.equal(r.client, null, 'no fabricated buyer is stored');
   assert.equal(r.client_key, null);
   assert.equal(r.heading, 'Send the 1st follow-up to the client');
+});
+
+test('"Close without asking" reaches the two review asks and nothing else', () => {
+  // `held_no_ask` is house rule 5's escape hatch: it closes a review ask
+  // WITHOUT sending it. It is deliberately not in any rule's button set, which
+  // is exactly why it never passes through buttonsFor(), and buttonsFor() is
+  // the check that stops a red alert being closed by anything but Solved.
+  // Ungated it closed every rule, so an open dispute could be swept off the
+  // profile and filed as a review somebody declined to ask for.
+  assert.deepEqual([...REVIEW_ASK_RULE_KEYS], ['completed_public_review', 'review_private_ask']);
+
+  assert.ok(canHoldReviewAsk({ rule_key: 'completed_public_review' }), 'rule 5 asks for a public review');
+  assert.ok(canHoldReviewAsk({ rule_key: 'review_private_ask' }), 'rule 6 asks for a private review');
+
+  for (const key of ['frustrated_alert', 'disputed_alert']) {
+    assert.equal(canHoldReviewAsk({ rule_key: key }), false, `${key} is a red alert, only Solved clears it`);
+  }
+  for (const key of RULE_KEYS.filter((k) => !RULES[k].review)) {
+    assert.equal(canHoldReviewAsk({ rule_key: key }), false, `${key} never asks for a review`);
+  }
+  assert.equal(canHoldReviewAsk({}), false);
+  assert.equal(canHoldReviewAsk(null), false);
+});
+
+test('no rule lists held_no_ask as one of its own buttons', () => {
+  // If a rule ever did, buttonsFor() would accept it and the gate above would
+  // be answering a question that no longer exists.
+  for (const key of RULE_KEYS) {
+    const keys = buttonsFor({ rule_key: key }).map((b) => b.key);
+    assert.ok(!keys.includes('held_no_ask'), `${key} must not carry held_no_ask`);
+  }
 });

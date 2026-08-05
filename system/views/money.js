@@ -1,4 +1,4 @@
-// views/money.js — revenue, money sitting still, and the upsell pipeline.
+// views/money.js, revenue, money sitting still, and the upsell pipeline.
 //
 // THE ONE SENTENCE THIS PAGE EXISTS TO SAY
 //
@@ -7,13 +7,13 @@
 // More money is standing still than the agency has booked in five weeks, and
 // not one dollar of the standing money needs new traffic, a marketplace lever
 // or anybody's permission. So the at-rest figure leads and the earned figure
-// sits beside it for scale — that ordering is the finding, not a layout
+// sits beside it for scale, that ordering is the finding, not a layout
 // preference.
 //
 // THE DECOMPOSITION IS THE PROOF
 //
 // A headline nobody can check is a slogan. $8,007 is printed with its two
-// parts — stale open orders and quotes that never became orders — their counts,
+// parts, stale open orders and quotes that never became orders, their counts,
 // their values, and a footer that adds them up and says out loud whether the
 // sum matches the engine's own `recovery.total_at_rest`. If it ever stops
 // matching, the page says so rather than quietly showing a total that is not
@@ -24,7 +24,7 @@
 //   1. An open order is not one thing. Sorting into "we owe work" / "they owe
 //      a reply" / "dead" happens on the Orders page, which owns that split.
 //      This page links there and refuses to imply that "chase the 17" is an
-//      instruction — a check-in to a buyer who is waiting on US is how a late
+//      instruction, a check-in to a buyer who is waiting on US is how a late
 //      order becomes a dispute.
 //
 //   2. Follow-up counts are not a measure of neglect. Quoted leads with no
@@ -37,7 +37,7 @@
 //      its denominator. The engine's `economics.upsell_rate` is a census over
 //      every order in the window; that is a different quantity and it is
 //      labelled as one here. Where the offered group is empty the take-up rate
-//      is MISSING — never 0%, which would read as "we asked and they said no".
+//      is MISSING, never 0%, which would read as "we asked and they said no".
 //
 // WHAT COMES FROM WHERE
 //
@@ -102,7 +102,7 @@ function utcDay(value) {
  *
  * Reported in whole days AND in weeks, because the deck says "weeks" and a
  * reader who wants to check it needs the days the rounding came from. Returns
- * null rather than guessing when either end is unreadable — a window with no
+ * null rather than guessing when either end is unreadable, a window with no
  * measurable length gets no week count in the deck at all.
  */
 function windowSpan(startIso, endIso) {
@@ -124,7 +124,7 @@ function weekWord(weeks) {
  * Known keys get a written label. Anything else is title-cased and handed to
  * the escaping template, which is where the retired programme's internal name
  * is turned into its one permitted label. That is deliberate: this file never
- * writes the retired name, and it does not scrub at the call site either — it
+ * writes the retired name, and it does not scrub at the call site either, it
  * lets the single chokepoint do the job, so a key that does not exist yet is
  * handled by the same rule as the ones that do.
  */
@@ -152,7 +152,7 @@ function sumField(rows, field) {
   return total;
 }
 
-/** A share of a KNOWN TOTAL — arithmetic on a census, not a rate on a sample. */
+/** A share of a KNOWN TOTAL, arithmetic on a census, not a rate on a sample. */
 function shareOf(part, whole) {
   const p = n(part);
   const w = n(whole);
@@ -165,7 +165,7 @@ function clientHref(buyer) {
 }
 
 // ============================================================================
-// 2. THE UPSELL BOARD — the sheet's three columns, and what settles them
+// 2. THE UPSELL BOARD, the sheet's three columns, and what settles them
 // ============================================================================
 //
 // The XStudioz sheet runs RESEARCH -> OPPORTUNITY -> SELLING. The `upsell`
@@ -177,7 +177,7 @@ const COLUMNS = [
     key: 'research',
     column: 'Research',
     tone: 'idle',
-    what: 'a buyer worth studying — no gap named yet',
+    what: 'a buyer worth studying, no gap named yet',
   },
   {
     key: 'pitch',
@@ -219,7 +219,7 @@ const OPEN_STAGES = new Set(['research', 'pitch', 'followup']);
 /**
  * Read the typed board.
  *
- * `ok:false` is an outage and `rows:[]` is a fact — they are kept apart all the
+ * `ok:false` is an outage and `rows:[]` is a fact, they are kept apart all the
  * way to the render, because "nobody is on the board" and "the board could not
  * be read" produce the same empty screen if they are ever merged, and only one
  * of them means there is nothing to do.
@@ -249,7 +249,7 @@ function readBoard(result) {
   };
 }
 
-/** Settled rows where nobody ticked `asked` — a hole in the record, not a zero. */
+/** Settled rows where nobody ticked `asked`, a hole in the record, not a zero. */
 function settledWithoutAsk(board) {
   return board.rows.filter(
     (r) => (String(r.stage) === 'won' || String(r.stage) === 'lost') && Number(r.asked) !== 1
@@ -267,20 +267,20 @@ export function render(ctx) {
   const board = readBoard(ctx.data?.upsell);
 
   // Nothing computed is readable. Say that, and do not draw a money page out of
-  // the one store that happens to be up — a revenue figure of MISSING beside a
+  // the one store that happens to be up, a revenue figure of MISSING beside a
   // typed board reads as "we earned nothing", which is a lie with a layout.
   if (isMissing(econ) && isMissing(recovery)) {
     return {
       title: 'No money figure can be stated',
       kicker: 'Money',
-      deck: html`Revenue and money-at-rest are <em>MISSING</em> — not zero, and not "a quiet month".`,
+      deck: html`Revenue and money-at-rest are <em>MISSING</em>, not zero, and not "a quiet month".`,
       html: html`<div class="figure">
           <span class="cap">metrics.economics + recovery</span>
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             <code class="mono">data/latest-run.json</code> is absent or unreadable, so there is no revenue
             figure, no money-at-rest figure and no follow-up benchmark. The upsell board below is typed
-            into this hub and is unaffected — but it is a list of intentions, never a revenue number.
+            into this hub and is unaffected, but it is a list of intentions, never a revenue number.
           </p>
         </div>
         <p class="note note--neg">
@@ -323,7 +323,7 @@ export function render(ctx) {
           so the comparison between them is not made here.`
       : surplus > 0
         ? html`<em>${money(revenue)} earned. ${money(atRest)} waiting.</em> More money is standing still
-            than the agency has booked ${bookedIn} — ${money(surplus)} more, and none of it needs new
+            than the agency has booked ${bookedIn}, ${money(surplus)} more, and none of it needs new
             traffic.`
         : html`<em>${money(revenue)} earned. ${money(atRest)} waiting.</em> The booked figure is ahead of
             the standing one by ${money(Math.abs(surplus))}; the standing money still needs no new traffic.`;
@@ -340,7 +340,7 @@ export function render(ctx) {
       },
       { label: 'Sitting still', value: money(atRest), sub: 'no new traffic needed' },
       {
-        label: `Open past ${known(staleAfter) ? String(staleAfter) : '—'} days`,
+        label: `Open past ${known(staleAfter) ? String(staleAfter) : '?'} days`,
         value: money(staleValue),
         sub: known(staleCount) ? `${staleCount} orders · floor` : null,
       },
@@ -374,7 +374,7 @@ export function render(ctx) {
 }
 
 // ============================================================================
-// 4. THE LEDE — the standing money, with the booked money beside it for scale
+// 4. THE LEDE, the standing money, with the booked money beside it for scale
 // ============================================================================
 
 function lede(run, { revenue, atRest, surplus, span, windowLabel }) {
@@ -410,7 +410,7 @@ function lede(run, { revenue, atRest, surplus, span, windowLabel }) {
               <strong>Earned</strong> is closed business inside the engine's window:
               ${isMissing(windowLabel) ? 'the current window' : String(windowLabel)}${
                 span ? html`, ${num(span.days)} days` : ''
-              }. <strong>Sitting still</strong> is not scoped to any window — it is every open order past
+              }. <strong>Sitting still</strong> is not scoped to any window, it is every open order past
               ${days(staleAfter)} and every quote still unplaced, however old. Comparing them says one
               thing only, and it is the thing worth saying: the pile nobody is working is bigger than the
               pile everybody is.
@@ -428,7 +428,7 @@ function lede(run, { revenue, atRest, surplus, span, windowLabel }) {
           <span class="cap">Earned ${isMissing(windowLabel) ? '' : String(windowLabel)}</span>
           <strong class="mid">${money(revenue)}</strong>
           <p class="sub">
-            across <b>${num(orders)}</b> orders. Typical order ${money(median)} — the median; the mean is
+            across <b>${num(orders)}</b> orders. Typical order ${money(median)}, the median; the mean is
             ${money(aov)}.
             ${unpricedInWindow
               ? html` ${num(unpricedInWindow)} of those orders carries no amount at all, so the revenue is
@@ -445,7 +445,7 @@ function lede(run, { revenue, atRest, surplus, span, windowLabel }) {
 }
 
 // ============================================================================
-// 5. MONEY AT REST — decomposed, and added back up in front of the reader
+// 5. MONEY AT REST, decomposed, and added back up in front of the reader
 // ============================================================================
 
 function atRestPanel(run) {
@@ -482,7 +482,7 @@ function atRestPanel(run) {
     partsValue !== null && total !== null && Math.abs(partsValue - total) < 0.005;
 
   // How much of the stale bucket carries no amount. The engine counts an
-  // unpriced order as 0.0, so the value is a floor — and saying "floor" is only
+  // unpriced order as 0.0, so the value is a floor, and saying "floor" is only
   // meaningful if the page can say how many rows made it one.
   const openRows = pick(run, 'recovery.open_orders.orders');
   const staleRows = Array.isArray(openRows) ? openRows.filter((r) => r && r.stale === true) : null;
@@ -514,7 +514,7 @@ function atRestPanel(run) {
             <tr>
               <td>
                 <a class="cell-name" href="/orders?band=60%2B">${glyph('crit')} Open orders past
-                  ${known(staleAfter) ? String(staleAfter) : '—'} days</a>
+                  ${known(staleAfter) ? String(staleAfter) : '?'} days</a>
                 ${staleUnpriced
                   ? html`<span class="cell-sub">${num(staleUnpriced)} of them carry no amount</span>`
                   : ''}
@@ -524,7 +524,7 @@ function atRestPanel(run) {
                 staleUnpriced ? html`<span class="cell-sub">floor</span>` : ''
               }</td>
               <td>
-                Paid work that has not closed. <strong>Sort before you send</strong> — the Orders page
+                Paid work that has not closed. <strong>Sort before you send</strong>, the Orders page
                 splits these into <em>we owe work</em>, <em>they owe a reply</em> and <em>dead</em>, and
                 only the middle one takes a check-in.
               </td>
@@ -582,7 +582,7 @@ function atRestPanel(run) {
             <strong>An open order is not one thing.</strong> Before a single message goes out, each one is
             sorted into <em>we owe work</em>, <em>they owe a reply</em>, or <em>dead</em>. A "just checking
             in" note sent to a buyer who is waiting on us tells them, in writing and with a timestamp,
-            that we have not started. That is how a late order becomes a dispute — so the count of 17 is
+            that we have not started. That is how a late order becomes a dispute, so the count of 17 is
             never an instruction to send 17 messages. The
             <a href="/orders?band=60%2B">Orders page</a> owns that split and proves it sums to the same
             ${money(pick(run, 'recovery.open_orders.stale_value'))}.
@@ -596,7 +596,7 @@ function atRestPanel(run) {
                 ? html`<strong>${num(staleUnpriced)} of the stale orders carry no amount at all</strong>,
                     and the engine counts an unpriced order as zero.
                     ${money(pick(run, 'recovery.open_orders.stale_value'))} is therefore a floor, not a
-                    total — the pile is at least that big and cannot be smaller.`
+                    total, the pile is at least that big and cannot be smaller.`
                 : html`Every stale order carries an amount, so
                     ${money(pick(run, 'recovery.open_orders.stale_value'))} is a total rather than a
                     floor.`}
@@ -604,7 +604,7 @@ function atRestPanel(run) {
           <p>
             The quote pile is the cheaper of the two to work and the one with no dispute risk attached: a
             buyer who never ordered cannot be made late. It is also the pile where the follow-up numbers
-            are read backwards most often — see the benchmark directly below.
+            are read backwards most often, see the benchmark directly below.
           </p>`
       )}
     </div>`;
@@ -615,7 +615,7 @@ function atRestPanel(run) {
  *
  * Deliberately NOT highlighted by follow-up count. Marking the untouched rows
  * as the urgent ones would print the exact inference the benchmark below
- * exists to refute — that a missing follow-up is a missing effort. They are
+ * exists to refute, that a missing follow-up is a missing effort. They are
  * ordered by money, which is the only ordering that survives that objection.
  */
 function quotesTable(run) {
@@ -669,7 +669,7 @@ function quotesTable(run) {
       </div>
       <p class="caption">
         Ordered by value, not by follow-up count. A quote with no logged follow-up is not a neglected one
-        and this table does not colour it as though it were — the reason is the benchmark below. Ages are
+        and this table does not colour it as though it were, the reason is the benchmark below. Ages are
         measured to ${dateShort(pick(run, 'recovery.quotes.as_of'))}, the engine's run date, so every one
         is a floor.
       </p>
@@ -677,7 +677,7 @@ function quotesTable(run) {
 }
 
 // ============================================================================
-// 6. THE FOLLOW-UP BENCHMARK — the number that is read backwards
+// 6. THE FOLLOW-UP BENCHMARK, the number that is read backwards
 // ============================================================================
 
 function followupPanel(run) {
@@ -714,7 +714,7 @@ function followupPanel(run) {
         <p class="sub">
           ${num(followedPlaced)} of the <b>${num(followedN)}</b> quoted leads anyone followed up went on to
           place. ${chased.ok && chased.small
-            ? html`On ${num(followedN)} leads that is a range, not a number — the interval below is the
+            ? html`On ${num(followedN)} leads that is a range, not a number, the interval below is the
                 honest width of it.`
             : ''}
           This is the rate the chase is costed on.
@@ -758,7 +758,7 @@ function followupPanel(run) {
       <p class="note note--neg">
         ${glyph('crit')} <b>Do not read the second row as evidence that chasing hurts.</b> A follow-up is
         logged exactly when the buyer did <em>not</em> say yes immediately. Every lead who agreed on the
-        first message lands in the bottom row by construction, which is why it converts higher — the split
+        first message lands in the bottom row by construction, which is why it converts higher, the split
         measures when the log gets written, not how well anyone sold. The number that costs the work is the
         one <em>within</em> the chased group, and it is the figure at the top of this panel.
       </p>
@@ -772,7 +772,7 @@ function followupPanel(run) {
             than the data.
           </p>
           <p>
-            Neither row is a controlled comparison. The two groups were not assigned — a CSR decides who to
+            Neither row is a controlled comparison. The two groups were not assigned, a CSR decides who to
             chase, and that decision is made knowing something about the lead. Any difference between the
             rows therefore contains selection as well as effect, in an unknown mix. The only clean way to
             get the effect size is to chase a randomly chosen half of the next batch and compare, which is
@@ -799,7 +799,7 @@ function revenuePanel(run) {
     return html`<div class="panel">
         ${panelHead('Where the revenue came from', 'missing', 'metrics.economics absent')}
         <p class="note note--warn">
-          The economics block is ${missing()} from this run. No revenue, average or spread is shown —
+          The economics block is ${missing()} from this run. No revenue, average or spread is shown, 
           rather than a zero that would read as a month with no orders.
         </p>
       </div>`;
@@ -927,7 +927,7 @@ function revenuePanel(run) {
               html`<p>
                   These are orders <strong>already booked</strong>. The directed-volume controller is
                   switched off as policy, so nothing here is a lever to pull and there is no volume
-                  instruction on this page — the split is history, and its use is to show what each kind of
+                  instruction on this page, the split is history, and its use is to show what each kind of
                   order is worth when it does arrive.
                 </p>
                 <p>
@@ -989,7 +989,7 @@ function revenuePanel(run) {
             <p class="caption">
               ${unattributedOrders
                 ? html`The "no designer recorded" row is the remainder between the named rows and the
-                    headline revenue, shown rather than dropped — without it the table would appear to
+                    headline revenue, shown rather than dropped, without it the table would appear to
                     account for ${money(designerSum)} of ${money(econ.revenue)} while looking complete.`
                 : html`The named rows account for the whole of ${money(econ.revenue)}.`}
               Average order per designer is not a performance ranking: designers are not assigned work at
@@ -1012,7 +1012,7 @@ function boardPanel(ctx, board, { typical }) {
   //
   // open rows x the typical order value, halved. Every term is printed beside
   // it so the arithmetic can be checked in one glance, and the label says
-  // ceiling because the calculation assumes every open row closes — which no
+  // ceiling because the calculation assumes every open row closes, which no
   // pipeline has ever done.
   const openCount = board.ok ? board.open.length : null;
   const pool =
@@ -1047,7 +1047,7 @@ function boardPanel(ctx, board, { typical }) {
       ${board.ok
         ? ''
         : html`<p class="note note--neg">
-            ${glyph('crit')} <b>The board could not be read.</b> Every figure in this section is MISSING —
+            ${glyph('crit')} <b>The board could not be read.</b> Every figure in this section is MISSING, 
             not zero, and not "nobody is on the board". The database did not answer; nothing typed has been
             lost.
           </p>`}
@@ -1055,7 +1055,7 @@ function boardPanel(ctx, board, { typical }) {
       <div class="cols cols--two">
         <div>
           <div class="figure">
-            <span class="cap">Pool on the board — a ceiling, not a forecast</span>
+            <span class="cap">Pool on the board, a ceiling, not a forecast</span>
             <strong class="mid">${pool === null ? missing() : money(pool)}</strong>
             <p class="sub">
               ${openCount === null
@@ -1073,12 +1073,12 @@ function boardPanel(ctx, board, { typical }) {
               ${offeredN
                 ? html`<b>${num(tookUp)}</b> of the <b>${num(offeredN)}</b> rows marked <em>asked</em> came
                     back won.${takeup.small
-                      ? html` On a denominator of ${num(offeredN)} that is a range, not a point — and no
+                      ? html` On a denominator of ${num(offeredN)} that is a range, not a point, and no
                           bar is drawn on it.`
                       : ''}`
                 : board.ok
                   ? html`No row on the board is marked <em>asked</em>, so this rate has no denominator. It
-                      is MISSING — <b>not 0%</b>, which would say we offered and were turned down.`
+                      is MISSING, <b>not 0%</b>, which would say we offered and were turned down.`
                   : html`The board is unreadable, so the offered group cannot be counted.`}
             </p>
           </div>
@@ -1091,7 +1091,7 @@ function boardPanel(ctx, board, { typical }) {
             ${openCount === null
               ? 'The arithmetic is open rows × the typical order value ÷ 2.'
               : ''}
-            <strong>Open rows</strong> are the ones still in Research, Opportunity or Selling — won and
+            <strong>Open rows</strong> are the ones still in Research, Opportunity or Selling, won and
             lost are settled and contribute nothing. <strong>Typical order</strong> is the median of the
             window, ${money(typical)}, not the mean ${money(pick(run, 'metrics.economics.aov'))}: a single
             $800 order sits in this window and costing a pipeline on the mean would quietly build that one
@@ -1099,12 +1099,12 @@ function boardPanel(ctx, board, { typical }) {
           </p>
           <p>
             The halving is the only thing in the figure that is not measured, and it is there because the
-            unhalved number assumes every open row closes at a full typical order — which is a ceiling
+            unhalved number assumes every open row closes at a full typical order, which is a ceiling
             twice over. Even halved this is <strong>not a forecast</strong>.
             ${takeup.ok
               ? html`The measured take-up is ${takeup.html} on ${num(offeredN)} offered rows${
                   takeup.small
-                    ? ' — an interval that spans almost the whole scale, so substituting it for the ÷ 2 would swap a stated ceiling for a false precision'
+                    ? ', an interval that spans almost the whole scale, so substituting it for the ÷ 2 would swap a stated ceiling for a false precision'
                     : ', and it is now narrow enough to replace the ÷ 2 with'
                 }.`
               : html`There is no measured take-up on this board to multiply by yet, so nothing here is
@@ -1121,14 +1121,14 @@ function boardPanel(ctx, board, { typical }) {
           : html`It reports <b>${num(engineWithUpsell)}</b> of ${num(engineUpsellDenom)} orders in the
               window as carrying an upsell.`}
         Its denominator is <em>every order</em>, including all the buyers nobody ever offered anything to,
-        so it measures how often an upsell happened — not how often one was accepted when it was put.
+        so it measures how often an upsell happened, not how often one was accepted when it was put.
         ${!known(leadsWithAttempt)
           ? ''
           : Number(leadsWithAttempt) === 0
             ? html` The inquiry log records no lead with an upsell attempt against it either, so there is no
                 offered group on that side to take a rate on.`
             : html` The inquiry log records ${num(leadsWithAttempt)} leads with an upsell attempt against
-                them — an offered group, but one of inquiries rather than of orders, and not the
+                them, an offered group, but one of inquiries rather than of orders, and not the
                 denominator above.`}
       </p>
 
@@ -1188,7 +1188,7 @@ function stageBoard(board) {
                           .map(
                             (r) => html`<li>
                                 <a href="${clientHref(r.buyer)}">${r.buyer}</a>
-                                ${r.gap ? html` — ${r.gap}` : ''}
+                                ${r.gap ? html`, ${r.gap}` : ''}
                               </li>`
                           )
                       )}
@@ -1225,7 +1225,7 @@ function repeatBaseNote(run) {
   const repeat = edges.find((e) => e && e.id === 'repeat_base');
   if (!repeat) return '';
   return why(
-    'Why the board is worth filling — the engine’s own note',
+    'Why the board is worth filling, the engine’s own note',
     html`<p><strong>${repeat.title}</strong></p>
       <p>${repeat.detail}</p>
       <p class="caption">
@@ -1244,14 +1244,14 @@ function rowsList(ctx, board, back) {
         <h3>Every row on the board</h3>
         ${empty('Nobody has been put on the upsell board yet.')}
         <p class="caption">
-          That is a fact about the board, not about the clients — the order book has repeat buyers on it
+          That is a fact about the board, not about the clients, the order book has repeat buyers on it
           either way. Add the first row below.
         </p>
       </div>`;
   }
 
   return html`<div class="block">
-      <h3>Every row on the board — ${String(board.rows.length)}</h3>
+      <h3>Every row on the board, ${String(board.rows.length)}</h3>
       ${join(board.rows.map((row) => rowArticle(ctx, row, back)))}
     </div>`;
 }
@@ -1273,7 +1273,7 @@ function rowArticle(ctx, row, back) {
         ${known(row.extra_earned) ? html` · Typed extra ${money(row.extra_earned)}` : ''}
       </p>
       ${row.next_step ? html`<p class="snippet-body">${row.next_step}</p>` : ''}
-      ${row.result ? html`<p class="caption">Result — ${row.result}</p>` : ''}
+      ${row.result ? html`<p class="caption">Result, ${row.result}</p>` : ''}
       ${why('Edit this row', rowForm(ctx, row, back))}
     </article>`;
 }
@@ -1282,7 +1282,7 @@ function rowArticle(ctx, row, back) {
 //
 // Both forms carry EVERY column. The write is an upsert on (buyer, gap) and it
 // updates every field from the values posted, so a form that omitted a field
-// would blank it on save — a partial form here silently deletes somebody's
+// would blank it on save, a partial form here silently deletes somebody's
 // next step.
 
 function stageSelect(id, value) {
@@ -1371,7 +1371,7 @@ function newRowForm(ctx, back) {
           <label for="new-buyer">Fiverr username <span class="req">*</span></label>
           <input id="new-buyer" name="buyer" maxlength="120" required placeholder="dcleanglobe">
           <p class="field-hint">
-            The username, not the display name — it is what joins this row to the order book.
+            The username, not the display name, it is what joins this row to the order book.
           </p>
         </div>
         <div class="field">
@@ -1414,7 +1414,7 @@ function newRowForm(ctx, back) {
       </label>
       <p class="note note--neg">
         ${glyph('crit')} A row here is never a reason to message a buyer whose order is late or cold. Check
-        the <a href="/orders?band=60%2B">open queue</a> first — and no upsell message carries a review
+        the <a href="/orders?band=60%2B">open queue</a> first, and no upsell message carries a review
         request with it.
       </p>
       <div class="form-actions">
@@ -1424,18 +1424,18 @@ function newRowForm(ctx, back) {
 }
 
 // ============================================================================
-// 9. PROVENANCE — which store each figure on this page came from
+// 9. PROVENANCE, which store each figure on this page came from
 // ============================================================================
 
 function provenance(ctx, board) {
   return html`<div class="provenance-bar">
-      <span>Revenue and money at rest — engine output, read from
+      <span>Revenue and money at rest, engine output, read from
         <code class="mono">data/latest-run.json</code>.</span>
-      <span>The upsell board — typed here, stored in <code class="mono">upsell</code>, keyed on the Fiverr
+      <span>The upsell board, typed here, stored in <code class="mono">upsell</code>, keyed on the Fiverr
         username.</span>
       <span>${board.ok
         ? html`Board readable.`
-        : html`Board ${missing()} — the typed store did not answer.`}</span>
+        : html`Board ${missing()}, the typed store did not answer.`}</span>
       <span>No figure on this page exists in both stores.</span>
     </div>`;
 }

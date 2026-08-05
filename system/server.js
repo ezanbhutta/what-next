@@ -1,4 +1,4 @@
-// server.js — the Express application.
+// server.js, the Express application.
 //
 // WHAT THIS FILE IS RESPONSIBLE FOR
 //
@@ -20,7 +20,7 @@
 //
 //   So an unreachable database degrades the hub; it does not stop it. Every
 //   route that could not read its typed rows says so in a banner and renders
-//   the disk-based half. `q()` returns rows:null on failure — never [] — so a
+//   the disk-based half. `q()` returns rows:null on failure, never [], so a
 //   view that forgets to check `.ok` throws instead of quietly rendering
 //   "nothing to do" during an outage. That failure mode is the reason this
 //   repo exists.
@@ -83,7 +83,7 @@ import {
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
 
 // The thirteen reminder logics, as code. server.js does not decide when a
-// follow-up is owed — it asks this module and writes down the answer inside
+// follow-up is owed, it asks this module and writes down the answer inside
 // the same transaction as the entry that caused it.
 import {
   RULES as REMINDER_RULES,
@@ -97,6 +97,7 @@ import {
   rulesFor,
   autoClears,
   resolve as resolveReminder,
+  canHoldReviewAsk,
   buttonsFor,
   buyerKey,
   parseRemindIn,
@@ -135,14 +136,14 @@ export const app = express();
 // Compress before anything writes a body.
 //
 // Measured without it: / was 56 KB, /clients 53 KB, /money 57 KB and
-// /inquiries 340 KB — all sent uncompressed even when the browser asked for
+// /inquiries 340 KB, all sent uncompressed even when the browser asked for
 // gzip. Server render time was 12-71ms, so none of the slowness was compute;
 // it was payload, over a phone connection. Server-rendered HTML is extremely
 // repetitive markup and compresses about 8:1, so this is the single biggest
 // thing available and it costs one line.
 //
 // It must be mounted BEFORE express.static and before the routes, because
-// compression works by wrapping res.write/res.end — middleware registered
+// compression works by wrapping res.write/res.end, middleware registered
 // after a response has already been written cannot compress it.
 app.use(compression({
   threshold: 1024,          // below this the gzip header costs more than it saves
@@ -161,7 +162,7 @@ app.set('etag', 'strong');
 // HEX, not base64, and that is not cosmetic. layout() runs the retired-name
 // scrub over the finished document; a base64 nonce can contain the substring
 // it rewrites (roughly one response in a million), and the rewrite would edit
-// the nonce in the HTML while the CSP header kept the original — the shell's
+// the nonce in the HTML while the CSP header kept the original, the shell's
 // scripts would be blocked, giving a white flash to a dark-mode user and a
 // dead theme toggle, intermittently and unreproducibly. Hex cannot contain it.
 app.use((req, res, next) => {
@@ -171,7 +172,7 @@ app.use((req, res, next) => {
 
 app.use(
   helmet({
-    // useDefaults:false — the policy below is the whole policy. A default that
+    // useDefaults:false, the policy below is the whole policy. A default that
     // silently widens is not a policy anyone can reason about.
     contentSecurityPolicy: {
       useDefaults: false,
@@ -189,7 +190,7 @@ app.use(
         // Stylesheets come from /app.css and nowhere else. Inline style
         // ATTRIBUTES are allowed because the design system positions its range
         // bands and meter fills by writing a custom property per element
-        // (style="--lo:15.7%") — that is data, computed per row, and it cannot
+        // (style="--lo:15.7%"), that is data, computed per row, and it cannot
         // live in a static file. style-src-attr is the narrow permission for
         // exactly that; inline <style> blocks stay forbidden.
         'style-src': ["'self'"],
@@ -237,7 +238,7 @@ app.use((req, res, next) => {
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // ============================================================================
-// 2. REQUEST CONTEXT — the shape every view receives
+// 2. REQUEST CONTEXT, the shape every view receives
 // ============================================================================
 
 const ROLE_RANK = { csr: 0, manager: 1, owner: 2 };
@@ -261,7 +262,7 @@ const FLASH_OK = {
   logged_activity: 'Entry saved, and every reminder it books was booked with it.',
   removed_activity: 'Entry removed, along with the reminders nobody had answered yet.',
   reminder_done: 'Reminder closed.',
-  reminder_held: 'Closed without asking. No review request was sent — the order is late or disputed.',
+  reminder_held: 'Closed without asking. No review request was sent, the order is late or disputed.',
   reminder_already: 'Somebody else had already closed that one. Nothing changed.',
   reminder_undone: 'Put back. If that tap had advanced a chain, the stage it booked went with it.',
   handoff_read: 'Marked read. The shift that wrote it can see it landed.',
@@ -276,7 +277,7 @@ const FLASH_ERR = {
   db: 'The typed-records database could not be written to. Nothing was saved.',
   noshift: 'You have no shift open, so there is nothing to log against. Nothing was written.',
   reminder:
-    'That entry would have booked a reminder the rules could not build — most often a custom reminder ' +
+    'That entry would have booked a reminder the rules could not build, most often a custom reminder ' +
     'with no date and time on it. The entry was NOT saved, because an entry that books nothing is the ' +
     'failure this section exists to prevent.',
 };
@@ -294,7 +295,7 @@ function shortMoney(value) {
 }
 
 /** The six standing figures. Every one goes through a formatter that renders
- *  MISSING as MISSING — none of them can print a zero it did not compute. */
+ *  MISSING as MISSING, none of them can print a zero it did not compute. */
 function defaultTicker(run, stale) {
   const verdict = pick(run, 'metrics.health.verdict');
   const breached = pick(run, 'metrics.health.breached');
@@ -416,7 +417,7 @@ function buildCtx(req, res, sectionKey, { access = null, headline = null, chrome
       title: 'The engine run could not be read.',
       body: html`Every computed figure on this page is MISSING, not zero. ${
         stale.exists ? 'latest-run.json is present but unreadable' : 'latest-run.json is not in data/'
-      } — the last deploy did not carry it, or the engine did not run. Nothing typed into the hub is affected.`,
+      }, the last deploy did not carry it, or the engine did not run. Nothing typed into the hub is affected.`,
     });
   } else if (ctx.engine.stale) {
     ctx.notices.push({
@@ -448,7 +449,7 @@ function noteDbOutage(ctx) {
 /**
  * A read that a page can render around.
  *
- * On failure it returns `rows:null` — deliberately not `[]`. An empty array is
+ * On failure it returns `rows:null`, deliberately not `[]`. An empty array is
  * a fact about the data ("nobody has typed anything"); an outage is a fact
  * about the system. A view that treats them the same prints "all caught up"
  * during an outage, which is the exact bug the shift logger ships today.
@@ -463,7 +464,7 @@ function makeQ(ctx) {
 }
 
 // ============================================================================
-// 3. SECTION ACCESS — data, not code, so locking never needs a deploy
+// 3. SECTION ACCESS, data, not code, so locking never needs a deploy
 // ============================================================================
 
 let accessCache = { at: 0, value: null };
@@ -503,7 +504,7 @@ function invalidateAccess() {
 /**
  * Gate a section.
  *
- * A section absent from `section_access` is open — a section should be visibly
+ * A section absent from `section_access` is open, a section should be visibly
  * locked, never invisibly missing, so a CSR who cannot open Money is told it
  * is restricted rather than left thinking the hub is broken.
  *
@@ -551,7 +552,7 @@ function atLeast(minRole, sectionKey) {
       locked_by: 'the hub itself',
       locked_at: null,
       reason:
-        'This page reports on named people — how many entries each logged and how much they left open. ' +
+        'This page reports on named people, how many entries each logged and how much they left open. ' +
         'It is restricted in code rather than by a setting, so there is no row anybody can forget to add.',
     }, req.access);
   };
@@ -575,9 +576,9 @@ function renderLocked(req, res, sectionKey, rule, access) {
           <div class="stat"><dt>Minimum role</dt><dd>${String(rule.min_role)}</dd></div>
         </dl>
         ${rule.reason ? html`<p class="note">${rule.reason}</p>` : ''}
-        <p class="note">Ezan can change this from inside the hub. Nothing is hidden from the rail — a locked section says it is locked.</p>`
+        <p class="note">Ezan can change this from inside the hub. Nothing is hidden from the rail, a locked section says it is locked.</p>`
     : html`<div class="figure">
-          <span class="cap">Restricted — lock list unreadable</span>
+          <span class="cap">Restricted, lock list unreadable</span>
           <strong class="mid">${label}</strong>
           <p class="sub">
             The database that holds the section locks is unreachable, so the hub cannot tell whether you
@@ -609,7 +610,7 @@ async function loadView(key, sectionKey = key) {
     mod = await import(new URL(`./views/${key}.js`, import.meta.url).href);
   } catch (err) {
     if (err?.code !== 'ERR_MODULE_NOT_FOUND') throw err;
-    mod = null; // genuinely not written yet — distinct from written and broken
+    mod = null; // genuinely not written yet, distinct from written and broken
   }
   const render = typeof mod?.render === 'function' ? mod.render : typeof mod?.default === 'function' ? mod.default : null;
   const entry = { module: mod, render };
@@ -627,7 +628,7 @@ function notBuiltYet(key) {
         <strong class="mid">views/${key}.js</strong>
         <p class="sub">
           The route, its data and its permissions are live; the view module has not been written. Nothing
-          is broken and nothing is missing from the data — this page simply has no renderer yet.
+          is broken and nothing is missing from the data, this page simply has no renderer yet.
         </p>
       </div>
       <p class="note">It answers one question: <b>${s.question}</b>.</p>`,
@@ -637,7 +638,7 @@ function notBuiltYet(key) {
 /**
  * GET one section: gate, load its material, hand it to the view.
  *
- * `view` names a module other than the section's own — Reports has two halves
+ * `view` names a module other than the section's own. Reports has two halves
  * that share one rail entry, one lock and one set of tables, and they are two
  * files because "log my shift" and "read what the shifts produced" are two
  * pages, not two modes of one. The section key still decides the chrome, so
@@ -666,7 +667,7 @@ function page(key, loader, { view = key } = {}) {
 // EXPORTED so tests/wiring.test.js can run each one against a stub `q` and
 // check it supplies every `ctx.data` key its view actually reads. That is not
 // a hypothetical: this table and views/ are written separately, and three of
-// them had already drifted apart — Messages was handed `sent` while its view
+// them had already drifted apart. Messages was handed `sent` while its view
 // read `buyer`, `directory`, `orders` and `leads`, so the per-buyer half of
 // the section could not be reached at all, and the picker was the only thing
 // anyone had ever seen. Nothing about that renders as an error. The page is
@@ -696,7 +697,7 @@ export const loaders = {
         'SELECT entry_date, COUNT(*) AS profiles, MAX(updated_at) AS updated ' +
           'FROM daily_entry GROUP BY entry_date ORDER BY entry_date DESC LIMIT 21'
       ),
-      // The last entry BEFORE this date, per profile — the figure printed under
+      // The last entry BEFORE this date, per profile, the figure printed under
       // each box so a typo of 41,200 for 4,120 is visible while it is being
       // typed. It is the latest earlier row for each profile rather than the
       // whole of the previous calendar day, because a profile that was not
@@ -708,7 +709,7 @@ export const loaders = {
           ') m ON m.profile = e.profile AND m.d = e.entry_date',
         [date]
       ),
-      // The gig rows of those same entries — the view reads only their names,
+      // The gig rows of those same entries, the view reads only their names,
       // to offer the gigs that were logged last time as the rows to fill in.
       previousGigs: await q(
         'SELECT g.* FROM daily_entry_gig g JOIN (' +
@@ -722,7 +723,7 @@ export const loaders = {
 
   async inquiries(ctx, q) {
     return {
-      report: reconcile(), // the referee — engine rows only, no MySQL
+      report: reconcile(), // the referee, engine rows only, no MySQL
       tracked: await q(
         'SELECT * FROM reconciliation ORDER BY resolved ASC, amount DESC, first_seen ASC'
       ),
@@ -768,7 +769,7 @@ export const loaders = {
   },
 
   // No buyer chosen: the picker. `directory` is one row per buyer that has ever
-  // been written to here — counts only, because the picker never shows a
+  // been written to here, counts only, because the picker never shows a
   // message body and pulling 300 of them to render a list of names is waste.
   // It is merged in the view with the engine's open orders and cold quotes, so
   // the picker still names every buyer who needs one during a database outage.
@@ -787,7 +788,7 @@ export const loaders = {
   // One buyer. Same section, same lock, its own material. `notes` carries the
   // reply's name through the join so the history can say which template was
   // sent; `orders` and `leads` are this buyer's rows out of the engine's own
-  // files — a filter of published data, never a second computation of it.
+  // files, a filter of published data, never a second computation of it.
   async message(ctx, q, req) {
     const buyer = String(req.params.buyer || '').slice(0, 120);
     const key = normaliseBuyer(buyer);
@@ -828,7 +829,7 @@ export const loaders = {
       // The lock list itself, so the owner-only access panel can print the
       // minimum role and who set it rather than inferring "above csr" from the
       // rail. `readAccess()` already has this, but it is cached for 15s and
-      // carries no reason text — the panel states a stored fact, so it reads it.
+      // carries no reason text, the panel states a stored fact, so it reads it.
       access: await q(
         'SELECT section, min_role, locked_by, locked_at, reason FROM section_access ORDER BY section'
       ),
@@ -853,7 +854,7 @@ export const loaders = {
   // Every SELECT here aliases into the names views/reports.js reads. That is
   // deliberate and it is the seam: the view was written against the shift
   // logger's vocabulary and the tables use the hub's, and one place has to own
-  // the translation. This is that place — see REPORT_COLS / REMINDER_COLS.
+  // the translation. This is that place, see REPORT_COLS / REMINDER_COLS.
   async reports(ctx, q, req) {
     const now = new Date();
     const date = pktToday(now);
@@ -864,7 +865,7 @@ export const loaders = {
     const person = ctx.user?.name || null;
 
     // EVERY KEY, ON EVERY PATH. The early returns below are the branches where
-    // there is nothing to load — no shift open, or the shift table unreadable —
+    // there is nothing to load, no shift open, or the shift table unreadable, 
     // and it would be natural to return only what they filled in. That is the
     // bug tests/wiring.test.js was written for: a view handed nothing takes the
     // branch written for "there is nothing here yet" and renders a calm,
@@ -872,8 +873,8 @@ export const loaders = {
     // anywhere. So the shape is fixed and only the contents vary.
     //
     // The two fillers are NOT interchangeable. `EMPTY` says "there is no shift,
-    // so there is no queue belonging to one" — a fact. A failed `q` result says
-    // "we could not ask" — and the view prints those differently, on purpose.
+    // so there is no queue belonging to one", a fact. A failed `q` result says
+    // "we could not ask", and the view prints those differently, on purpose.
     const EMPTY = { ok: true, rows: [], notice: null };
     const base = {
       date,
@@ -920,7 +921,7 @@ export const loaders = {
     }
 
     const [queue, activities, handled, handoff] = await Promise.all([
-      // The whole open queue for this profile, due or not. The view splits it —
+      // The whole open queue for this profile, due or not. The view splits it, 
       // it needs the scheduled ones to say "nothing else until 4:35pm", and a
       // count of what is waiting is not the same claim as a list of what is due.
       q(
@@ -984,8 +985,8 @@ export const loaders = {
   // ---- Reports: the owner half ---------------------------------------------
   //
   // A window of days, not a live feed. The view buckets everything into
-  // Pakistan calendar days itself — see its header for why that cannot be done
-  // in SQL — so this loader's only job is to hand it the right rows and the
+  // Pakistan calendar days itself, see its header for why that cannot be done
+  // in SQL, so this loader's only job is to hand it the right rows and the
   // window they belong to.
   async reportsCeo(ctx, q, req) {
     const now = new Date();
@@ -995,7 +996,7 @@ export const loaders = {
     const from = shiftIsoDay(date, -(days - 1));
     const profile = str(req?.query?.profile, 80);
 
-    // PKT is UTC+5 all year — no daylight saving — so a day's bounds are an
+    // PKT is UTC+5 all year, no daylight saving, so a day's bounds are an
     // exact offset and never need a time zone table on the database server.
     const startUtc = new Date(`${from}T00:00:00+05:00`);
     const endUtc = new Date(`${shiftIsoDay(date, 1)}T00:00:00+05:00`);
@@ -1054,15 +1055,15 @@ export const loaders = {
 };
 
 // ============================================================================
-// 5b. REPORTS — the shared vocabulary
+// 5b. REPORTS, the shared vocabulary
 // ============================================================================
 //
 // THE ONE PLACE THE TWO NAMES MEET.
 //
 // views/reports.js was ported from the shift logger and reads its column
 // names; db/schema.sql uses the hub's. Rather than let each query invent its
-// own aliases — which is how half a section ends up rendering blank while the
-// other half works — every read of these three tables goes through the column
+// own aliases, which is how half a section ends up rendering blank while the
+// other half works, every read of these three tables goes through the column
 // lists below, and every rule key goes through RULE_KEY_TO_VIEW.
 //
 // tests/wiring.test.js asserts the rule map is total in both directions. A
@@ -1144,7 +1145,7 @@ const REPORT_WINDOWS = new Set(['1', '7', '30']);
 
 /** Map a q() result's rows without losing the ok/rows:null distinction. A
  *  `.map()` straight onto `rows` would throw on an outage, and a `|| []`
- *  guard would turn the outage into an empty list — the one substitution this
+ *  guard would turn the outage into an empty list, the one substitution this
  *  whole seam exists to prevent. */
 function mapRows(result, fn) {
   if (!result || !result.ok) return result;
@@ -1216,7 +1217,7 @@ function isDueRow(row, nowMs) {
 }
 
 /** Designer names the engine has actually seen on an order. A datalist, not a
- *  validated list — a new designer must be typeable on their first day. */
+ *  validated list, a new designer must be typeable on their first day. */
 function designersFromEngine() {
   const orders = engineOrders();
   if (isMissing(orders)) return [];
@@ -1231,13 +1232,13 @@ function designersFromEngine() {
 }
 
 /**
- * Buyers a review ask must never be sent to — HOUSE RULE 5.
+ * Buyers a review ask must never be sent to. HOUSE RULE 5.
  *
  * Two sources, because there are two ways to be unsafe to ask:
- *   · the engine's stale-order set — an order open past the stale threshold
+ *   · the engine's stale-order set, an order open past the stale threshold
  *   · a frustrated or disputed caution still standing on this profile
  *
- * Returns `null` — meaning UNKNOWN, hold everything — if either source cannot
+ * Returns `null`, meaning UNKNOWN, hold everything, if either source cannot
  * be read. That is the deliberate asymmetry: an ask the hub cannot prove is
  * safe is exactly the ask the rule was written about, and "we could not check"
  * must never render the same as "we checked and it is fine".
@@ -1280,7 +1281,7 @@ async function flaggedBuyers(q, profile) {
   return out;
 }
 
-/** Profile names, taken from the engine's own flow rows — never a hand-kept
+/** Profile names, taken from the engine's own flow rows, never a hand-kept
  *  second list of profiles that can drift from the data. */
 function profilesFromEngine() {
   const rows = engineRun();
@@ -1311,7 +1312,7 @@ app.get('/clients/:buyer', requireAuth, gate('clients'), (req, res, next) => {
 });
 
 // One buyer's message history and what may be said to them next. This is the
-// href every "write to this buyer" link on the hub points at — the compose
+// href every "write to this buyer" link on the hub points at, the compose
 // form's own `back` field is `/messages/<buyer>`, so without this route every
 // logged message bounced to a 404 and the section could only ever show its
 // picker.
@@ -1333,7 +1334,7 @@ app.get('/messages/:buyer', requireAuth, gate('messages'), page('messages', load
 // Reports to owner and the CEO half follows it up, never down.
 //
 // It is a code floor rather than a `section_access` row on purpose. A section
-// absent from that table is OPEN — which is the right default for a section
+// absent from that table is OPEN, which is the right default for a section
 // and exactly the wrong one here, because forgetting to insert one row would
 // publish every CSR's per-person figures to every CSR, silently, with the page
 // looking completely normal.
@@ -1352,7 +1353,7 @@ app.get(
 /**
  * One transaction: the change and the audit row together.
  *
- * If the audit insert fails the change rolls back. That is the point — a
+ * If the audit insert fails the change rolls back. That is the point, a
  * silently unattributed write is worth less than no write, because it becomes
  * a number nobody can settle an argument about six months later.
  */
@@ -1400,7 +1401,7 @@ const todayIso = () => {
 };
 
 /** Post/Redirect/Get. `back` is validated so a form cannot bounce off-site,
- *  and the message is a CODE, not free text — nothing a client sends is ever
+ *  and the message is a CODE, not free text, nothing a client sends is ever
  *  rendered back into the page. */
 function done(req, res, fallback, code = 'saved', kind = 'ok') {
   const to = safeNext(req.body?.back, fallback);
@@ -1637,8 +1638,8 @@ app.post(
 );
 
 // A reply was taken out of the library. The button that posts here only fires
-// AFTER the clipboard write succeeded — views/responses.js refuses to post if
-// the browser declined — so this records something that actually happened.
+// AFTER the clipboard write succeeded, views/responses.js refuses to post if
+// the browser declined, so this records something that actually happened.
 //
 // It moves the same counter a logged send moves, which is why the page labels
 // the figure "taken" and not "sent": one number, two producers, and the page
@@ -1651,7 +1652,7 @@ app.post(
 
     // Confirm the reply is there BEFORE the audited write, so the log never
     // carries a `response_copy` line for a copy of something that does not
-    // exist — an audit that records attempts has to be filtered before it can
+    // exist, an audit that records attempts has to be filtered before it can
     // be counted, and then it is not an audit.
     //
     // Deliberately NOT done by throwing out of the transaction to roll the
@@ -1828,8 +1829,8 @@ app.post(
 //
 // Not "shortly after", not "in an afterwards hook". If the reminder inserts
 // fail, the entry rolls back with them. An entry that saved and booked nothing
-// is the exact failure the shift logger was built to prevent — a follow-up
-// nobody ever hears about again — and it is invisible from the outside: the
+// is the exact failure the shift logger was built to prevent, a follow-up
+// nobody ever hears about again, and it is invisible from the outside: the
 // CSR sees "saved", the timeline shows the entry, and the buyer is simply
 // never contacted. Half-written is worse than not written, because not written
 // is something a person notices.
@@ -1846,7 +1847,7 @@ const SHIFT_NAMES = ['Morning', 'Evening', 'Night'];
  *
  * `transaction()` wraps whatever is thrown inside it in a DbError and keeps
  * the original on `.cause`, so a bare `instanceof` check here would classify
- * "your custom reminder has no time on it" as a database outage — and tell the
+ * "your custom reminder has no time on it" as a database outage, and tell the
  * CSR nothing was saved because the store is down, which is both untrue and
  * unfixable from their end. Walk the chain.
  */
@@ -1882,13 +1883,13 @@ function detailFrom(body) {
 /** Read a reminder for update, inside the transaction, with its row locked.
  *  `FOR UPDATE` matters: two CSRs on the same profile can tap the same card in
  *  the same second, and without the lock both reads see it pending and both
- *  write a resolution — the second silently overwriting the first's button. */
+ *  write a resolution, the second silently overwriting the first's button. */
 async function lockReminder(t, id) {
   return t.queryOne('SELECT * FROM reminder WHERE id = ? FOR UPDATE', [id]);
 }
 
 /** Write one drafted reminder. The draft comes from lib/reminders.js and its
- *  keys are the column names on purpose — one shape, no per-call mapping. */
+ *  keys are the column names on purpose, one shape, no per-call mapping. */
 async function insertReminder(t, draft) {
   return t.run(
     'INSERT INTO reminder (report_id, activity_id, `rule`, rule_key, chain_step, profile, client, client_key, ' +
@@ -1943,7 +1944,7 @@ app.post(
       await auditedWrite(req, 'shift_open', { profile, shift }, async (t) => {
         const already = await openShiftOf(t, person);
         if (already) {
-          // Not an error worth losing their place over — they already have one
+          // Not an error worth losing their place over, they already have one
           // open, which is what they were trying to achieve.
           return;
         }
@@ -1980,7 +1981,7 @@ app.post(
 
     // Rule 6 keys on the average of three star scores, and it is computed here
     // rather than typed so it can never disagree with the scores it comes
-    // from. Rounded to one decimal BEFORE the 4.7 test — 5+5+4 is 4.666…, the
+    // from. Rounded to one decimal BEFORE the 4.7 test, 5+5+4 is 4.666…, the
     // page shows 4.7, and a rule reading the unrounded number would refuse a
     // review the CSR can see qualifying on screen.
     if (kind === 'review_received') {
@@ -2005,7 +2006,7 @@ app.post(
 
         // HOUSE RULE 5, at the point of booking. A completion for a buyer with
         // a standing caution or a stale order books NO public-review ask at
-        // all — it is a suppression, not a delay. The CSR page holds the ask a
+        // all, it is a suppression, not a delay. The CSR page holds the ask a
         // second time for buyers who become flagged after it was booked; both
         // layers are needed because the two failures happen at different
         // moments and neither catches the other's.
@@ -2044,7 +2045,7 @@ app.post(
 
         // 2. What this entry makes pointless. "They converted", "the upsell
         //    happened", "the review already landed", "they came back with a
-        //    revision" — those clear themselves rather than asking somebody to
+        //    revision", those clear themselves rather than asking somebody to
         //    close work they never needed to do.
         const open = await t.query(
           "SELECT * FROM reminder WHERE profile = ? AND state <> 'resolved'",
@@ -2122,10 +2123,20 @@ app.post(
           if (row.state === 'resolved') return 'already';
 
           // HOUSE RULE 5's own button. `held_no_ask` is not one of the rule's
-          // buttons and never can be — it means "closed WITHOUT asking",
+          // buttons and never can be, it means "closed WITHOUT asking",
           // which the spec has no word for because the spec assumes the ask is
           // always safe to send. It is recorded as its own resolution so the
           // owner's page can count how often the rule actually fired.
+          //
+          // It is gated to the two review-ask rules, and the gate is the point.
+          // Not being in a button set is what keeps this button away from
+          // buttonsFor(), which is also the check that stops a red alert being
+          // closed by anything except Solved. Ungated, a POST of
+          // button=held_no_ask closed ANY reminder: an open dispute could be
+          // cleared off the profile and filed as a review somebody declined to
+          // ask for, which is rules 11 and 12 defeated by a button that has
+          // nothing to do with them.
+          if (button === 'held_no_ask' && !canHoldReviewAsk(row)) return 'nobutton';
           if (button === 'held_no_ask') {
             await saveReminderState(t, {
               ...row,
@@ -2142,7 +2153,7 @@ app.post(
           await saveReminderState(t, reminder);
           // The next chain stage is written in the SAME transaction as the tap
           // that earned it, and timed from the tap rather than from the
-          // original offer — rule 9 is explicit about that.
+          // original offer, rule 9 is explicit about that.
           if (booked) await insertReminder(t, booked);
           return 'ok';
         }
@@ -2150,6 +2161,9 @@ app.post(
       if (outcome === 'notfound') return { error: 'notfound' };
       if (outcome === 'already') return { ok: 'reminder_already' };
       if (outcome === 'held') return { ok: 'reminder_held' };
+      // "Close without asking" aimed at a rule that never asks for a review.
+      // Nothing on the page can produce it, so it is a forged or stale POST.
+      if (outcome === 'nobutton') return { error: 'invalid' };
     } catch (err) {
       if (reminderFault(err)) return { error: 'reminder' };
       throw err;
@@ -2177,7 +2191,7 @@ app.post(
       if (!row) return 'notfound';
       if (row.state !== 'resolved') return 'notresolved';
 
-      // If the tap advanced a chain, the stage it booked goes back with it —
+      // If the tap advanced a chain, the stage it booked goes back with it, 
       // otherwise undoing "1st F/U done" leaves the 2nd follow-up standing,
       // which is a reminder for work the CSR just said they had not done.
       const button = (REMINDER_RULES[row.rule_key]?.buttons || []).find((b) => b.key === row.resolution);
@@ -2288,8 +2302,8 @@ app.post(
  * logged four seconds ago has to count, and a check made before the
  * transaction opened would miss it.
  *
- * A read that fails does not reach here — it throws, and the whole entry rolls
- * back — which is the right way round. The alternative is booking a review ask
+ * A read that fails does not reach here, it throws, and the whole entry rolls
+ * back, which is the right way round. The alternative is booking a review ask
  * because the flag query happened to be unavailable, and that is precisely the
  * ask the rule exists to stop.
  */
@@ -2324,7 +2338,7 @@ async function reviewFlagsFor(t, profile, client) {
 //
 // APP_PASSWORD proves you are the team. The name says which of the team you
 // are. The name picker is a SIGNATURE on every write, not a security boundary,
-// and lib/auth.js says so in as many words — do not let a later reader mistake
+// and lib/auth.js says so in as many words, do not let a later reader mistake
 // it for one.
 
 function loginPage(req, res, { error = null } = {}) {
@@ -2352,7 +2366,7 @@ function loginPage(req, res, { error = null } = {}) {
       <div class="lede-side">
         <p class="caption">This page carries client names, revenue and the dead pipeline. It is not indexed and it is not public.</p>
         ${!cfg.ok
-          ? html`<p class="note note--neg">Login is not configured on this server — ${cfg.missing.join(' and ')} not set. Nobody can sign in until they are.</p>`
+          ? html`<p class="note note--neg">Login is not configured on this server, ${cfg.missing.join(' and ')} not set. Nobody can sign in until they are.</p>`
           : ''}
         ${cfg.warning ? html`<p class="note note--warn">${cfg.warning}</p>` : ''}
       </div>
@@ -2362,7 +2376,7 @@ function loginPage(req, res, { error = null } = {}) {
 }
 
 // Step two, on a new device only: who is holding it. Asked once, then never
-// again — but not optional, because an unsigned tick is a tick nobody can be
+// again, but not optional, because an unsigned tick is a tick nobody can be
 // asked about, and that is the failure this whole hub was built to fix.
 function claimPage(req, res, { error = null, users = null, usersError = null } = {}) {
   const ctx = buildCtx(req, res, null, { headline: '', chrome: 'minimal' });
@@ -2385,7 +2399,7 @@ function claimPage(req, res, { error = null, users = null, usersError = null } =
             ${picker}
             <p class="field-error">${error || ''}</p>
             <p class="field-hint">
-              Asked once for this browser. Your name signs every tick, note and score you write —
+              Asked once for this browser. Your name signs every tick, note and score you write, 
               it is attribution, not a second password.
             </p>
           </div>
@@ -2395,7 +2409,7 @@ function claimPage(req, res, { error = null, users = null, usersError = null } =
         </form>
       </div>
       <div class="lede-side">
-        <p class="caption">Sign out at any time to hand this device to someone else — that is the one thing that makes it ask again.</p>
+        <p class="caption">Sign out at any time to hand this device to someone else, that is the one thing that makes it ask again.</p>
         ${usersError ? html`<p class="note note--warn">${usersError}</p>` : ''}
       </div>
     </div>`;
@@ -2437,7 +2451,7 @@ app.post(
     const result = await claimDevice({ req, res, name: String(req.body.name || '').slice(0, 80) });
     if (result.ok) return res.redirect(303, safeNext(req.body.next, '/'));
     const { users, usersError } = await usersOrNotice();
-    // Expired proof means the password must be typed again — do not leave them
+    // Expired proof means the password must be typed again, do not leave them
     // on a form that cannot succeed.
     if (result.reason === 'expired') {
       return res.status(401).send(loginPage(req, res, { error: result.message }));
@@ -2453,14 +2467,14 @@ app.post(
   wrap(async (req, res) => {
     const result = await attemptLogin({ req, res, password: req.body.password });
 
-    // Password accepted on a device nobody has claimed yet — one more step.
+    // Password accepted on a device nobody has claimed yet, one more step.
     if (result.ok && result.needsName) {
       const to = encodeURIComponent(safeNext(req.body.next, '/'));
       return res.redirect(303, `/claim?next=${to}`);
     }
     if (result.ok) return res.redirect(303, safeNext(req.body.next, '/'));
 
-    // 4xx so the limiter counts the attempt — it skips successful requests.
+    // 4xx so the limiter counts the attempt, it skips successful requests.
     res
       .status(result.reason === 'not_configured' ? 503 : 401)
       .send(loginPage(req, res, { error: result.message }));
@@ -2476,7 +2490,7 @@ app.post(
   })
 );
 
-// A GET must not log anyone out — an <img src="/logout"> anywhere would do it.
+// A GET must not log anyone out, an <img src="/logout"> anywhere would do it.
 app.get('/logout', (req, res) => {
   const ctx = buildCtx(req, res, null, { headline: 'Sign out', chrome: 'minimal' });
   res.send(
@@ -2498,8 +2512,8 @@ app.get('/logout', (req, res) => {
 // ============================================================================
 //
 // Two independent facts, never merged into one boolean:
-//   the engine data on disk  — without it there is nothing to render
-//   MySQL                    — without it the hub degrades but still works
+//   the engine data on disk, without it there is nothing to render
+//   MySQL, without it the hub degrades but still works
 //
 // So an unreachable database is `degraded` and still 200: the deploy is fine
 // and the pages that read from disk are correct. A missing run file is `down`
@@ -2568,7 +2582,7 @@ app.use((req, res) => {
 });
 
 /**
- * The last stop. It says what broke and never shows a stack — a stack trace in
+ * The last stop. It says what broke and never shows a stack, a stack trace in
  * a browser is a map of the server for anyone who can reach the login page,
  * and it tells the person who hit the error nothing they can act on.
  */
@@ -2587,7 +2601,7 @@ app.use((err, req, res, next) => {
   if (err instanceof DbError) {
     heading = err.unavailable ? 'The typed-records database is unreachable' : 'A database query failed';
     what = err.unavailable
-      ? html`Everything typed into the hub — ticks, entries, notes, scores — could not be read or written. The engine's figures are unaffected and every page that reads from <code class="mono">data/</code> still works.`
+      ? html`Everything typed into the hub, ticks, entries, notes, scores, could not be read or written. The engine's figures are unaffected and every page that reads from <code class="mono">data/</code> still works.`
       : html`The query behind this page was rejected. That is a bug in the hub, not an outage, and it needs a developer.`;
     reason = unavailableNotice(err);
   } else if (status === 403) {
@@ -2609,7 +2623,7 @@ app.use((err, req, res, next) => {
         heading,
         what,
         why: reason,
-        next: html`<span class="caption">Reference <code class="mono">${ref}</code> — quote it if you report this.</span>`,
+        next: html`<span class="caption">Reference <code class="mono">${ref}</code>, quote it if you report this.</span>`,
       })
     );
   } catch (renderErr) {
@@ -2641,8 +2655,8 @@ const PORT = Number(process.env.PORT || 3000);
  * Safe to repeat: schema.sql is CREATE TABLE IF NOT EXISTS throughout and the
  * seed inserts only names it does not already find.
  *
- * A failure here must NOT stop the server. The engine-data pages — Today,
- * Orders, Inquiries, Money — read from disk and are still completely valid
+ * A failure here must NOT stop the server. The engine-data pages. Today,
+ * Orders, Inquiries, Money, read from disk and are still completely valid
  * without a database. Refusing to boot would take away the pages that work in
  * order to punish the ones that do not.
  */
@@ -2654,18 +2668,18 @@ async function prepareDatabase() {
     const { created, drift } = await migrate({ log: hush });
     console.log(
       created.length
-        ? `[boot] schema: created ${created.length} table(s) — ${created.join(', ')}`
+        ? `[boot] schema: created ${created.length} table(s), ${created.join(', ')}`
         : '[boot] schema: up to date'
     );
     // Drift means a table exists but is missing a column this build expects.
     // CREATE TABLE IF NOT EXISTS cannot fix that, so it must be said out loud
     // rather than discovered later as a column-not-found on someone's save.
     if (drift.length) {
-      console.warn(`[boot] schema DRIFT — ${drift.length} table(s) missing expected columns:`);
+      console.warn(`[boot] schema DRIFT, ${drift.length} table(s) missing expected columns:`);
       for (const d of drift) console.warn(`[boot]   ${d.table}: ${(d.missing || []).join(', ')}`);
     }
   } catch (err) {
-    console.error(`[boot] schema migration FAILED — ${err.message}`);
+    console.error(`[boot] schema migration FAILED, ${err.message}`);
     console.error('[boot] typed records will not work until this is fixed. Engine pages are unaffected.');
     return;
   }
@@ -2673,38 +2687,38 @@ async function prepareDatabase() {
     const { seed } = await import('./db/seed.js');
     const { users } = await seed({ log: hush });
     if (users?.inserted?.length) {
-      console.log(`[boot] seed: added ${users.inserted.length} user(s) — ${users.inserted.join(', ')}`);
+      console.log(`[boot] seed: added ${users.inserted.length} user(s), ${users.inserted.join(', ')}`);
     }
   } catch (err) {
-    console.error(`[boot] seed failed — ${err.message}`);
+    console.error(`[boot] seed failed, ${err.message}`);
   }
 }
 
 if (process.env.NODE_ENV !== 'test') {
   const cfg = authConfig();
   if (!cfg.ok) {
-    console.warn(`[boot] ${cfg.missing.join(' and ')} not set — nobody can sign in until they are.`);
+    console.warn(`[boot] ${cfg.missing.join(' and ')} not set, nobody can sign in until they are.`);
   }
   if (cfg.warning) console.warn(`[boot] ${cfg.warning}`);
-  // Length only, never the value — enough to tell a mistyped password from a
+  // Length only, never the value, enough to tell a mistyped password from a
   // pasted trailing space without putting the secret in a log file.
   console.log(`[boot] APP_PASSWORD: ${passwordShape()}`);
   if (!dbConfigured()) {
     console.warn(
-      `[boot] database not configured (missing ${missingEnv().join(', ')}) — typed records are unavailable; ` +
+      `[boot] database not configured (missing ${missingEnv().join(', ')}), typed records are unavailable; ` +
         'the engine-data pages still work.'
     );
   }
   const st = staleness();
   console.log(
-    `[boot] engine data: ${st.ok ? `run ${st.run_date}, ${st.label}` : 'MISSING — latest-run.json not readable'}`
+    `[boot] engine data: ${st.ok ? `run ${st.run_date}, ${st.label}` : 'MISSING, latest-run.json not readable'}`
   );
 
   // Listen FIRST, migrate after.
   //
   // These were the other way round and it took the site down with a 503. The
   // schema work opens a MySQL connection, and an unreachable or slow database
-  // makes that await hang for its full connect timeout — during which the
+  // makes that await hang for its full connect timeout, during which the
   // process is alive but nothing is bound to the port, so the proxy in front
   // has nobody to talk to and returns 503.
   //
@@ -2719,7 +2733,7 @@ if (process.env.NODE_ENV !== 'test') {
   });
 
   prepareDatabase().catch((err) => {
-    console.error(`[boot] database preparation errored — ${err.message}`);
+    console.error(`[boot] database preparation errored, ${err.message}`);
   });
 }
 

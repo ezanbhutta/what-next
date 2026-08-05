@@ -1,4 +1,4 @@
-// lib/reminders.js — the thirteen reminder logics, as pure functions.
+// lib/reminders.js, the thirteen reminder logics, as pure functions.
 //
 // WHAT THIS FILE IS
 //
@@ -6,7 +6,7 @@
 // with an exact delay, an exact button set, and in two cases a chain. This
 // module is that document expressed as data plus the transitions between
 // states. Nothing here touches the database, the clock is always passed in,
-// and every function returns a value rather than performing an effect — which
+// and every function returns a value rather than performing an effect, which
 // is what makes all thirteen testable without a MySQL server or a fake timer.
 //
 // The caller (server.js) does the effects: it hands an activity to rulesFor(),
@@ -18,7 +18,7 @@
 // THE SHARED RULES (they apply to every reminder unless a rule says otherwise)
 //
 //   - Profile-scoped. A reminder belongs to the PROFILE, not the person. It
-//     pops for whoever is covering that profile — any shift, any CSR.
+//     pops for whoever is covering that profile, any shift, any CSR.
 //   - Persistent. It never expires on its own. due() will keep returning it
 //     until somebody resolves it, however many days late.
 //   - Snooze is 5 minutes, and RED alerts (frustrated, disputed) have none.
@@ -30,13 +30,13 @@
 //
 //   1. TIME. due_at is stored as MySQL DATETIME holding UTC, which reads back
 //      as 'YYYY-MM-DD HH:MM:SS'. Handing that string to `new Date()` parses it
-//      as LOCAL time — on a PKT box every reminder would move five hours, and
+//      as LOCAL time, on a PKT box every reminder would move five hours, and
 //      nothing about the number would look wrong. parseAt() is the only
 //      sanctioned way to turn a stored value into an instant, and toSqlUtc()
 //      the only way back. Never call `new Date(row.due_at)`.
 //   2. "IMMEDIATE" IS ZERO, NOT NOW-ISH. Rules 4, 7, 11 and 12 are due the
 //      moment the activity is logged. due_at equals the log time exactly, so a
-//      reminder booked at 12:00:00.400 is due at 12:00:00.400 — never a second
+//      reminder booked at 12:00:00.400 is due at 12:00:00.400, never a second
 //      later, which would make it vanish from the page that just booked it.
 //
 // The retired volume programme is never named. An order's type is Organic or
@@ -52,7 +52,7 @@ export const SNOOZE_MINUTES = 5;
 export const UNDO_WINDOW_MS = 5_000;
 
 /** Resolution recorded when a later activity made the reminder unnecessary.
- *  It is the one resolution that may be booked again — see alreadyBooked(). */
+ *  It is the one resolution that may be booked again, see alreadyBooked(). */
 export const AUTO_CLEARED = 'auto_cleared';
 
 export const REMINDER_STATES = Object.freeze(['pending', 'snoozed', 'resolved']);
@@ -60,7 +60,7 @@ export const REMINDER_STATES = Object.freeze(['pending', 'snoozed', 'resolved'])
 /** An order is Organic or Directed. The shift logger's third word is retired. */
 export const ORDER_TYPES = Object.freeze(['Organic', 'Directed']);
 
-/** How the order came in — this is what rule 4 keys on. */
+/** How the order came in, this is what rule 4 keys on. */
 export const ORDER_ROUTES = Object.freeze(['Via Chat', 'Direct Order']);
 
 export const FOLLOWUP_ATTEMPTS = Object.freeze(['1st', '2nd', '3rd', '4th+']);
@@ -151,7 +151,7 @@ export function toSqlUtc(ms) {
 
 /**
  * "Remind me in" free text → minutes. Accepts 30m · 45 m · 2h · 5 H · 1.5h.
- * Returns null for anything else, including blank — rule 8 turns that null
+ * Returns null for anything else, including blank, rule 8 turns that null
  * into its stated 24-hour default rather than guessing here.
  */
 export function parseRemindIn(value) {
@@ -180,7 +180,7 @@ const txt = (v, max = 200) => {
 };
 const orderRefOf = (a) => txt(a?.order_ref ?? detailOf(a).project, 160);
 const clientName = (a) => txt(a?.client ?? detailOf(a).client, 120);
-/** Who the reminder names when no username was typed. Not a fabricated buyer —
+/** Who the reminder names when no username was typed. Not a fabricated buyer, 
  *  a placeholder in a sentence, and client/client_key stay null underneath. */
 const who = (a) => clientName(a) || 'the client';
 const joinBody = (...parts) => parts.map((p) => txt(p, 400)).filter(Boolean).join(' · ') || null;
@@ -205,8 +205,8 @@ export function ratingAverage(detail = {}) {
  *
  * House rule 5: never attach a review request to a late or cold order. Rule 5
  * of the spec books exactly that ask on completion, so the two meet here. The
- * flags come from the caller — the engine's late-order set, or a frustrated /
- * disputed activity already logged against this buyer on this profile — and
+ * flags come from the caller, the engine's late-order set, or a frustrated /
+ * disputed activity already logged against this buyer on this profile, and
  * `detail.late` / `detail.disputed` on the completion entry itself.
  *
  * A review ask on a late delivery is the most reliable way to turn a private
@@ -259,7 +259,7 @@ const SOLVED_BUTTONS = Object.freeze([
 /**
  * The thirteen logics.
  *
- * Keyed by `rule_key` — the exact stage — because rule 9 is a three-step chain
+ * Keyed by `rule_key`, the exact stage, because rule 9 is a three-step chain
  * and rule 10 is reachable from two activities. `rule` is the number in
  * REMINDER-LOGICS.md, and that is what the CEO ledger groups by.
  *
@@ -277,7 +277,7 @@ export const RULES = Object.freeze({
     rule: 1,
     on: 'inquiry',
     delay: () => 25,
-    cancelOn: 'new_order', // they converted — no need to chase
+    cancelOn: 'new_order', // they converted, no need to chase
     heading: (a) => `Send the 1st follow-up to ${who(a)}`,
     body: (a) => joinBody('New inquiry', detailOf(a).agenda),
     buttons: FOLLOWUP_BUTTONS,
@@ -313,7 +313,7 @@ export const RULES = Object.freeze({
         kind: 'snooze',
         minutes: 8 * HOURS,
         variant: 'subtle',
-        hint: 'Will assign on the next shift — reminds again in 8 hours',
+        hint: 'Will assign on the next shift, reminds again in 8 hours',
       }),
       B('assigned', 'Assigned', { variant: 'ok', hint: 'Order assigned to a designer' }),
     ],
@@ -327,7 +327,7 @@ export const RULES = Object.freeze({
     when: (a) => detailOf(a).order_via === 'Direct Order',
     delay: () => 0,
     cancelOn: 'upsell',
-    heading: (a) => `Potential upsell for ${who(a)} — what's missing? Especially a Website`,
+    heading: (a) => `Potential upsell for ${who(a)}, what's missing? Especially a Website`,
     body: (a) => joinBody('Direct Order', serviceList(a)),
     buttons: UPSELL_BUTTONS,
   },
@@ -337,9 +337,10 @@ export const RULES = Object.freeze({
   completed_public_review: {
     rule: 5,
     on: 'order_completed',
+    review: true,
     when: (a, ctx) => reviewAskAllowed(a, ctx),
     delay: () => 30,
-    cancelOn: 'review_received', // they already left one — no point asking
+    cancelOn: 'review_received', // they already left one, no point asking
     heading: (a) => `Ask ${who(a)} for a Public Review`,
     body: (a) => joinBody(orderRefOf(a), detailOf(a).completion),
     buttons: [
@@ -354,6 +355,7 @@ export const RULES = Object.freeze({
   review_private_ask: {
     rule: 6,
     on: 'review_received',
+    review: true,
     when: (a) => {
       const avg = ratingAverage(detailOf(a));
       return avg !== null && avg >= 4.7 && avg <= 5;
@@ -401,7 +403,7 @@ export const RULES = Object.freeze({
     heading: (a) => `Send the 1st follow-up on the offer to ${who(a)}`,
     body: (a) => joinBody(detailOf(a).scope, detailOf(a).value && `Offer value: ${detailOf(a).value}`),
     buttons: [
-      B('order_placed', 'Order placed', { variant: 'ok', hint: 'Offer converted — no more reminders' }),
+      B('order_placed', 'Order placed', { variant: 'ok', hint: 'Offer converted, no more reminders' }),
       Object.freeze({
         key: 'fu1_done', label: '1st F/U done', kind: 'chain', next: 'offer_fu2',
         variant: 'solid', hint: 'Books the 2nd follow-up reminder (16h)',
@@ -418,7 +420,7 @@ export const RULES = Object.freeze({
     heading: (a) => `Send the 2nd follow-up on the offer to ${who(a)}`,
     body: (a) => joinBody(detailOf(a).scope, detailOf(a).value && `Offer value: ${detailOf(a).value}`),
     buttons: [
-      B('order_placed', 'Order placed', { variant: 'ok', hint: 'Offer converted — no more reminders' }),
+      B('order_placed', 'Order placed', { variant: 'ok', hint: 'Offer converted, no more reminders' }),
       Object.freeze({
         key: 'fu2_done', label: '2nd F/U done', kind: 'chain', next: 'offer_fu3',
         variant: 'solid', hint: 'Books the 3rd follow-up reminder (36h)',
@@ -436,7 +438,7 @@ export const RULES = Object.freeze({
     body: (a) => joinBody(detailOf(a).scope, detailOf(a).value && `Offer value: ${detailOf(a).value}`),
     buttons: [
       B('order_placed', 'Order placed', { variant: 'ok', hint: 'Offer converted' }),
-      B('fu3_done', '3rd F/U done', { variant: 'solid', hint: 'Chain ends — no more reminders for this offer' }),
+      B('fu3_done', '3rd F/U done', { variant: 'solid', hint: 'Chain ends, no more reminders for this offer' }),
     ],
   },
 
@@ -471,7 +473,7 @@ export const RULES = Object.freeze({
     on: 'frustrated',
     alert: true,
     delay: () => 0,
-    heading: (a) => `${who(a)} is frustrated — handle with caution`,
+    heading: (a) => `${who(a)} is frustrated, handle with caution`,
     body: (a) => joinBody(detailOf(a).what, orderRefOf(a)),
     buttons: SOLVED_BUTTONS,
   },
@@ -482,7 +484,7 @@ export const RULES = Object.freeze({
     on: 'disputed',
     alert: true,
     delay: () => 0,
-    heading: (a) => `${who(a)}'s dispute is OPEN — on the verge of cancelling, treat cautiously`,
+    heading: (a) => `${who(a)}'s dispute is OPEN, on the verge of cancelling, treat cautiously`,
     body: (a) => joinBody(detailOf(a).reason, orderRefOf(a)),
     buttons: SOLVED_BUTTONS,
   },
@@ -517,6 +519,23 @@ export const RULES = Object.freeze({
 });
 
 export const RULE_KEYS = Object.freeze(Object.keys(RULES));
+
+/**
+ * The rules that ask a buyer for a review, the only ones house rule 5 can
+ * hold, and therefore the only ones the CSR page's "Close without asking"
+ * button may close.
+ *
+ * That button (`held_no_ask`) is not in any rule's button set: it exists so a
+ * held ask can be cleared WITHOUT sending it. Because it is not in a button
+ * set, it never passes through buttonsFor(), which is what stops a red alert
+ * being closed by anything but Solved. Left ungated it would close ANY
+ * reminder, alerts included, recorded as a review the CSR declined to ask for.
+ * The gate belongs next to the rules, not in the route.
+ */
+export const REVIEW_ASK_RULE_KEYS = Object.freeze(RULE_KEYS.filter((k) => RULES[k].review));
+
+/** May this reminder be closed with "Close without asking"? */
+export const canHoldReviewAsk = (reminder) => REVIEW_ASK_RULE_KEYS.includes(String(reminder?.rule_key ?? ''));
 
 /** The thirteen numbers, ascending. Rule 9 has three stages and rule 10 two
  *  entry points, so there are more keys than numbers. */
@@ -555,7 +574,7 @@ export function rulesForKind(kind) {
  * One reminder per entry per rule.
  *
  * The one exception is the reason this is a function and not a UNIQUE index:
- * a reminder that was AUTO-CLEARED may be booked again — an edit that makes
+ * a reminder that was AUTO-CLEARED may be booked again, an edit that makes
  * the rule true once more should restore it. A reminder a HUMAN resolved must
  * never come back, or every edit resurrects work they already finished.
  */
@@ -581,7 +600,7 @@ export function alreadyBooked(existing, activityId, ruleKey) {
  *   existing – reminders already booked against this entry (for the one-per-rule check).
  *   flags    – {late, disputed, frustrated} about this order, from the caller.
  * @returns {Array} reminder rows ready to INSERT. Empty for spam and for every
- *   other activity that books nothing — that emptiness is a fact, not a failure.
+ *   other activity that books nothing, that emptiness is a fact, not a failure.
  */
 export function rulesFor(activity, ctx = {}) {
   if (!activity || !activity.kind) throw new ReminderError('activity.kind is required', 'NO_KIND');
@@ -591,7 +610,7 @@ export function rulesFor(activity, ctx = {}) {
   // A reminder with no profile is unroutable: it belongs to the profile, and
   // there is nobody to pop it for. Fail here rather than write an orphan.
   const profile = txt(activity.profile, 80);
-  if (!profile) throw new ReminderError('activity.profile is required — reminders are profile-scoped', 'NO_PROFILE');
+  if (!profile) throw new ReminderError('activity.profile is required, reminders are profile-scoped', 'NO_PROFILE');
 
   const now = nowOf(ctx);
   const bookedAt = parseAt(activity.at) ?? now;
@@ -665,7 +684,7 @@ export function isDue(reminder, now = Date.now()) {
 /**
  * What shows now, for a profile's queue.
  *
- * Alerts first — they are standing caution boxes and outrank any card — then
+ * Alerts first, they are standing caution boxes and outrank any card, then
  * oldest due first, so the most overdue thing is the thing at the top.
  */
 export function due(reminders, now = Date.now()) {
@@ -685,7 +704,7 @@ export function partitionDue(reminders, now = Date.now()) {
   return { alerts: list.filter(isAlert), cards: list.filter((r) => !isAlert(r)) };
 }
 
-/** Booked, not yet due — the "scheduled" column of the CEO ledger. */
+/** Booked, not yet due, the "scheduled" column of the CEO ledger. */
 export function scheduled(reminders, now = Date.now()) {
   const t = nowOf({ now });
   return (reminders || [])
@@ -730,12 +749,12 @@ function assertOpen(reminder) {
 
 /**
  * Snooze. Five minutes by default; rule 3's "Next shift" passes 8 hours.
- * Refuses on a red alert — frustrated and disputed do not go away for a while.
+ * Refuses on a red alert, frustrated and disputed do not go away for a while.
  */
 export function snooze(reminder, { now = Date.now(), minutes = SNOOZE_MINUTES } = {}) {
   assertOpen(reminder);
   if (!canSnooze(reminder)) {
-    throw new ReminderError('A red alert cannot be snoozed — only Solved clears it', 'SNOOZE_FORBIDDEN');
+    throw new ReminderError('A red alert cannot be snoozed, only Solved clears it', 'SNOOZE_FORBIDDEN');
   }
   const t = nowOf({ now });
   const next = { ...reminder, state: 'snoozed', snoozed_until: toSqlUtc(t + minutes * 60_000) };
@@ -818,7 +837,7 @@ function matches(rule, reminder, activity) {
 }
 
 /**
- * Logging an activity can make a pending reminder pointless — they converted,
+ * Logging an activity can make a pending reminder pointless, they converted,
  * the upsell happened, the review already landed, the client came back with a
  * revision. Those clear themselves rather than asking a CSR to close work they
  * never needed to do.
@@ -857,7 +876,7 @@ export function autoClears(activity, reminders, { now = Date.now(), by = null } 
  *
  * A threshold newly met books the reminder; one no longer met clears it; one
  * still met has its wording brought back into step, because a reminder naming
- * the wrong buyer is worse than none. Resolved reminders are left alone —
+ * the wrong buyer is worse than none. Resolved reminders are left alone, 
  * re-opening finished work is not a correction.
  *
  * @returns {{book: Array, clear: Array, update: Array}}
@@ -910,6 +929,8 @@ export default {
   RULES,
   RULE_KEYS,
   RULE_NUMBERS,
+  REVIEW_ASK_RULE_KEYS,
+  canHoldReviewAsk,
   ACTIVITY_KINDS,
   ACTIVITY_KIND_KEYS,
   SNOOZE_MINUTES,

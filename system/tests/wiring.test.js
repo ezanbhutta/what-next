@@ -300,3 +300,81 @@ test('every reminder rule maps between the engine and the CSR view, both ways', 
       'that nothing can ever book — no engine rule maps to them'
   );
 });
+
+/**
+ * The two tables of thirteen delays, held to the same numbers.
+ *
+ * views/reports.js keeps a rule table because the LOG FORM has to say what
+ * saving an entry will book before any reminder exists ("this books a reminder
+ * — 25 minutes"). lib/reminders.js keeps one because it does the booking. Two
+ * tables of the same thirteen offsets is the exact shape of the bug this repo
+ * exists to referee: they agree on the day they are written and nowhere else,
+ * and when they part the form promises 25 minutes while the engine books 30 —
+ * with nothing on either side looking wrong.
+ *
+ * So the numbers are compared, not trusted. REMINDER-LOGICS.md is the
+ * authority for both; if this fails, fix the table that moved rather than the
+ * expectation.
+ */
+test('both rule tables state the same delay, buttons and cancel for all thirteen', async () => {
+  const { RULE_KEY_TO_VIEW } = await import('../server.js');
+  const { RULES: ENGINE_RULES, RULE_KEYS } = await import('../lib/reminders.js');
+  const { RULES: VIEW_RULES } = await import('../views/reports.js');
+
+  // One entry per stage, carrying whatever detail its delay/condition reads.
+  const sample = {
+    inquiry_followup: {},
+    lead_followup_next: { attempt: '1st' },
+    order_assign: {},
+    order_upsell: { order_via: 'Direct Order' },
+    completed_public_review: {},
+    review_private_ask: { rating: 5 },
+    files_upsell: {},
+    revision_check: {},
+    offer_fu1: {},
+    offer_fu2: {},
+    offer_fu3: {},
+    delivery_followup: { stage: 'Final files' },
+    shared_followup: { elements: ['Final files'] },
+    frustrated_alert: {},
+    disputed_alert: {},
+    custom: {},
+  };
+
+  for (const key of RULE_KEYS) {
+    const engine = ENGINE_RULES[key];
+    const view = VIEW_RULES[RULE_KEY_TO_VIEW[key]];
+    const detail = sample[key];
+    assert.ok(detail, `add a sample entry for the new rule ${key}`);
+    const where = `rule ${engine.rule} (${key} / ${RULE_KEY_TO_VIEW[key]})`;
+
+    // Rule 13's delay is an absolute moment rather than an offset, so there is
+    // no shared number to compare — the two tables agree that it is whatever
+    // the CSR picked, which both express by reading `remind_at`.
+    if (key !== 'custom') {
+      const engineDelay = engine.delay({ kind: engine.on, detail }, {});
+      const viewDelay =
+        typeof view.delay === 'function' ? view.delay({ details: detail }) : view.delay;
+      assert.equal(engineDelay, viewDelay, `${where}: the two tables disagree about the delay`);
+    }
+
+    const shape = (b) => `${b.key}/${b.label}/${b.kind}/${b.minutes ?? ''}/${b.next ?? ''}`;
+    assert.deepEqual(
+      engine.buttons.map(shape),
+      view.buttons.map(shape),
+      `${where}: the two tables disagree about the buttons`
+    );
+
+    assert.equal(Boolean(engine.alert), Boolean(view.alert), `${where}: they disagree about the red alert`);
+    assert.equal(
+      engine.cancelOn ?? null,
+      view.cancelOn ?? null,
+      `${where}: they disagree about what auto-clears it`
+    );
+    assert.equal(
+      Boolean(engine.chained),
+      Boolean(view.chained),
+      `${where}: they disagree about whether logging can book it`
+    );
+  }
+});

@@ -1,4 +1,4 @@
-// lib/data.js — the engine's output, read from disk. Nothing here computes.
+// lib/data.js, the engine's output, read from disk. Nothing here computes.
 //
 // SCOPE: this module is the ONLY way the hub reads data/. Everything in that
 // directory is produced by the Python growth engine, committed to git, and
@@ -10,8 +10,8 @@
 // A file that is not there is not an empty file, and neither is zero. Those
 // are three different facts and they must arrive in three different shapes:
 //
-//   MISSING   the source is absent — we do not know
-//   []        the source is present and holds no rows — we know, it is none
+//   MISSING   the source is absent, we do not know
+//   []        the source is present and holds no rows, we know, it is none
 //   0         a number the engine computed and it came out zero
 //
 // So a reader that cannot find orders.jsonl returns MISSING, not []. Every
@@ -21,7 +21,7 @@
 //
 // A NOTE ON THE RETIRED PROGRAMME
 //
-// The engine's raw JSON still carries its internal metric keys — flow.jsonl
+// The engine's raw JSON still carries its internal metric keys, flow.jsonl
 // has `vvro_orders`, latest-run.json has `metrics.health.vvro_share_7d`. This
 // module deliberately does NOT rewrite them: silently editing engine output
 // would make the reader disagree with its own source, which is the exact
@@ -39,7 +39,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * The absent-source sentinel. Frozen, unique, and renderable in every place a
  * value normally goes: string interpolation, JSON, and a truthiness check
- * (`isMissing`, never `!value` — MISSING is an object and therefore truthy,
+ * (`isMissing`, never `!value`. MISSING is an object and therefore truthy,
  * which is on purpose: `value || 0` must not quietly turn it into a number).
  */
 export const MISSING = Object.freeze({
@@ -60,7 +60,7 @@ export function isMissing(value) {
   return value === MISSING;
 }
 
-/** True when `value` is real data — anything that is neither MISSING nor null. */
+/** True when `value` is real data, anything that is neither MISSING nor null. */
 export function isPresent(value) {
   return value !== MISSING && value !== null && value !== undefined;
 }
@@ -110,7 +110,7 @@ export const SOURCES = Object.freeze({
 // ------------------------------------------------------------------- cache
 //
 // Cached by (mtime, size). The container is long-lived and the files only
-// change on deploy, so re-reading 580 KB of JSONL on every request is waste —
+// change on deploy, so re-reading 580 KB of JSONL on every request is waste, 
 // but a cache that cannot notice a redeploy is worse than no cache, so the
 // stat is checked every call. stat is cheap; parsing 1,053 lines is not.
 
@@ -155,7 +155,7 @@ function parseJsonl(text) {
 }
 
 /**
- * Load one named source. Returns a record describing what happened — the
+ * Load one named source. Returns a record describing what happened, the
  * public readers below unwrap it. Never throws for a missing file; that is a
  * fact to report, not an exception to handle. A file that exists but is
  * corrupt DOES surface as an error, because that is a broken deploy and
@@ -233,7 +233,7 @@ function load(name) {
   return record;
 }
 
-/** The raw load record for a source — file path, mtime, parse errors, value. */
+/** The raw load record for a source, file path, mtime, parse errors, value. */
 export function source(name) {
   return load(name);
 }
@@ -292,7 +292,7 @@ function utcMidnight(value) {
  * How old the run is.
  *
  * Age is measured in whole UTC days between the run's own `today` field and
- * now — not from the file's mtime, because a redeploy touches every file and
+ * now, not from the file's mtime, because a redeploy touches every file and
  * would make a three-day-old run look minutes fresh. The mtime is reported
  * alongside so the two can be compared when they disagree, which is itself a
  * signal: a new mtime with an old run date means the engine did not run.
@@ -307,7 +307,7 @@ function utcMidnight(value) {
  * self-check's data_freshness result.
  *
  * A run is only as fresh as its inputs. The engine can run today against
- * sheets nobody updated since Saturday, and it says so — but it says so in
+ * sheets nobody updated since Saturday, and it says so, but it says so in
  * prose inside a self-check result, which no consumer reads. Meanwhile the
  * run's own `today` field is genuinely today, so a page trusting that shows a
  * confident "fresh" badge over four-day-old numbers.

@@ -1,4 +1,4 @@
-// lib/auth.js — one shared password to get in, then say who you are.
+// lib/auth.js, one shared password to get in, then say who you are.
 //
 // The model, and why it is this one:
 //
@@ -7,8 +7,8 @@
 //
 // Splitting those two is the point. A single shared login with no name means
 // every row in `audit`, every tick in `task_state`, every resolved
-// reconciliation says "someone". The finding this whole hub exists for —
-// 25 buyers marked Not Placed who had actually ordered — turned on the
+// reconciliation says "someone". The finding this whole hub exists for, 
+// 25 buyers marked Not Placed who had actually ordered, turned on the
 // question "who marked this, and when". A system that cannot answer that
 // question produces disagreements nobody can settle.
 //
@@ -21,7 +21,7 @@
 // sameSite=lax and secure. It is stateless: no session table, so a restart or
 // a database outage does not log the team out mid-shift.
 //
-// NEVER log a credential — not APP_PASSWORD, not what someone typed, not the
+// NEVER log a credential, not APP_PASSWORD, not what someone typed, not the
 // cookie value. Failed logins are logged as an event, without the attempt.
 
 import crypto from 'node:crypto';
@@ -42,7 +42,7 @@ const TOKEN_VERSION = 'v1';
  * how long it is, and whether the panel added anything. Never the value.
  *
  * This exists because "that password was not accepted" is otherwise a dead
- * end — the operator cannot see what the server holds, so a pasted trailing
+ * end, the operator cannot see what the server holds, so a pasted trailing
  * space is indistinguishable from typing it wrong. Comparing the length you
  * expect against the length the server has settles it in one glance.
  */
@@ -62,7 +62,7 @@ export function authConfig() {
   if (!process.env.APP_PASSWORD) missing.push('APP_PASSWORD');
   const weak =
     process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32
-      ? 'SESSION_SECRET is shorter than 32 characters — generate a long random string.'
+      ? 'SESSION_SECRET is shorter than 32 characters, generate a long random string.'
       : null;
   return { ok: missing.length === 0, missing, warning: weak };
 }
@@ -76,8 +76,8 @@ function secret() {
   if (!s) {
     // No fallback, no generated-at-boot default. A generated secret would make
     // logins work locally and then silently invalidate every cookie on each
-    // restart in production — a bug that looks like "the site logs me out".
-    throw new Error('SESSION_SECRET is not set — refusing to sign sessions.');
+    // restart in production, a bug that looks like "the site logs me out".
+    throw new Error('SESSION_SECRET is not set, refusing to sign sessions.');
   }
   return s;
 }
@@ -98,7 +98,7 @@ export function cookieOptions(maxAgeMs = SESSION_TTL_MS) {
   if (!secure && !insecureCookieWarned) {
     insecureCookieWarned = true;
     console.warn(
-      '[auth] cookie secure=false — permitted only for http://localhost development. ' +
+      '[auth] cookie secure=false, permitted only for http://localhost development. ' +
         'In production NODE_ENV=production must be set, which turns it back on.'
     );
   }
@@ -117,7 +117,7 @@ const b64url = (buf) => Buffer.from(buf).toString('base64url');
 
 /**
  * Constant-time string comparison. Both sides are hashed first so the compare
- * runs over equal-length buffers — timingSafeEqual throws on a length
+ * runs over equal-length buffers, timingSafeEqual throws on a length
  * mismatch, and catching that throw would itself leak the length of the real
  * password to anyone who can time a login.
  */
@@ -133,7 +133,7 @@ export function timingSafeEqualStr(a, b) {
  * reliably adds when you paste into it: surrounding whitespace, and a pair of
  * wrapping quotes.
  *
- * Both produce a silent, unexplainable "that password was not accepted" — the
+ * Both produce a silent, unexplainable "that password was not accepted", the
  * value looks correct in the panel, the person types it correctly, and the
  * comparison fails on a character nobody can see. Neither a leading space nor
  * a wrapping quote is plausibly part of a team password someone chose, so
@@ -175,7 +175,7 @@ export function signSession({ name, role, sid, iat, exp }) {
   return `${TOKEN_VERSION}.${body}.${sig}`;
 }
 
-/** Verify and decode a cookie value. Returns the session or null — never a
+/** Verify and decode a cookie value. Returns the session or null, never a
  *  partially-trusted object. */
 export function verifySessionToken(token) {
   if (typeof token !== 'string') return null;
@@ -187,7 +187,7 @@ export function verifySessionToken(token) {
   try {
     expected = crypto.createHmac('sha256', subkey('session')).update(body).digest();
   } catch {
-    return null; // SESSION_SECRET missing — treat every cookie as invalid
+    return null; // SESSION_SECRET missing, treat every cookie as invalid
   }
   const given = Buffer.from(sig, 'base64url');
   if (given.length !== expected.length) return null;
@@ -221,17 +221,17 @@ export function verifySessionToken(token) {
 // already proved it knows the password" and lasts a quarter. Keeping them
 // separate lets the session refresh on its own cadence, lets the audit trail
 // tell a fresh login from a resumed one, and keeps the name out of the weekly
-// re-sign. Logging out clears BOTH — see logout() for why it must.
+// re-sign. Logging out clears BOTH, see logout() for why it must.
 //
 // The name is asked once, at device claim, and never again. It is not
 // decoration: every tick, note and score is written with an author, and the
-// question that started this whole project — "who marked this inquiry Not
-// Placed?" — is unanswerable without it.
+// question that started this whole project, "who marked this inquiry Not
+// Placed?", is unanswerable without it.
 //
 // REVOCATION: the device token is a bearer credential. Anyone holding the
 // laptop is inside, which is the trade being asked for and is reasonable for
-// an internal tool. To invalidate every device at once — someone leaves, a
-// laptop is lost — rotate SESSION_SECRET in the Hostinger environment panel.
+// an internal tool. To invalidate every device at once, someone leaves, a
+// laptop is lost, rotate SESSION_SECRET in the Hostinger environment panel.
 // Every device token and every session dies with it.
 
 export const DEVICE_COOKIE = 'xs_device';
@@ -246,7 +246,7 @@ function signDevice({ name, role, did, exp }) {
   return `${DEVICE_VERSION}.${body}.${sig}`;
 }
 
-/** Verify a device cookie. Returns {name, role, did} or null — never partial. */
+/** Verify a device cookie. Returns {name, role, did} or null, never partial. */
 export function verifyDeviceToken(token) {
   if (typeof token !== 'string') return null;
   const parts = token.split('.');
@@ -257,7 +257,7 @@ export function verifyDeviceToken(token) {
   try {
     expected = crypto.createHmac('sha256', subkey('device')).update(body).digest();
   } catch {
-    return null; // SESSION_SECRET missing — no device is trusted
+    return null; // SESSION_SECRET missing, no device is trusted
   }
   const given = Buffer.from(sig, 'base64url');
   if (given.length !== expected.length) return null;
@@ -369,7 +369,7 @@ export function requireCsrf(req, res, next) {
  * Per-IP limit on login attempts. Successful logins are not counted, so a
  * working team is never locked out by its own usage.
  *
- * server.js must set `app.set('trust proxy', 1)` behind Hostinger's proxy —
+ * server.js must set `app.set('trust proxy', 1)` behind Hostinger's proxy, 
  * one hop, not `true`. With `true`, any client can spoof X-Forwarded-For and
  * every attempt looks like a different address, which turns this limiter off
  * without any visible sign that it is off.
@@ -389,13 +389,13 @@ export function makeLoginLimiter({ windowMs = 10 * 60 * 1000, max = 8 } = {}) {
   });
 }
 
-/** Default limiter — mount on the login POST route. */
+/** Default limiter, mount on the login POST route. */
 export const loginLimiter = makeLoginLimiter();
 
 // ------------------------------------------------------------------ people
 
 /** Active team members, for the name picker. Throws DbError if MySQL is
- *  unreachable — the login page then says so instead of showing an empty
+ *  unreachable, the login page then says so instead of showing an empty
  *  dropdown that reads like "nobody works here". */
 export async function listUsers({ includeInactive = false } = {}) {
   const sql = includeInactive
@@ -444,7 +444,7 @@ export async function attemptLogin({ req, res, password }) {
     return {
       ok: false,
       reason: 'not_configured',
-      message: `Login is not configured — ${cfg.missing.join(' and ')} not set on the server.`,
+      message: `Login is not configured, ${cfg.missing.join(' and ')} not set on the server.`,
     };
   }
 
@@ -457,14 +457,14 @@ export async function attemptLogin({ req, res, password }) {
     // boot log does not already print.
     const sent = typeof password === 'string' ? password.trim().length : 0;
     const want = configuredPassword()?.length ?? 0;
-    console.warn(`[auth] failed login from ${req?.ip ?? 'unknown ip'} — sent ${sent} chars, configured is ${want}`);
+    console.warn(`[auth] failed login from ${req?.ip ?? 'unknown ip'}, sent ${sent} chars, configured is ${want}`);
     await recordAudit(null, 'login_failed', { reason: 'bad_password', ip: req?.ip ?? null });
     return {
       ok: false,
       reason: 'bad_password',
       message:
         sent === want
-          ? `That password was not accepted. You typed ${sent} characters, which is the right length — so the characters themselves differ.`
+          ? `That password was not accepted. You typed ${sent} characters, which is the right length, so the characters themselves differ.`
           : `That password was not accepted. You typed ${sent} characters; the server is configured with ${want}.`,
     };
   }
@@ -521,11 +521,11 @@ function verifyPending(token) {
  *
  * Asked exactly once per device, then never again. Without it every row this
  * person writes is signed by nobody, and "who marked this inquiry Not Placed"
- * — the question that produced the $3,628 finding — has no answer.
+ *, the question that produced the $3,628 finding, has no answer.
  */
 export async function claimDevice({ req, res, name }) {
   if (!verifyPending(readCookie(req, PENDING_COOKIE))) {
-    return { ok: false, reason: 'expired', message: 'That took too long — enter the password again.' };
+    return { ok: false, reason: 'expired', message: 'That took too long, enter the password again.' };
   }
 
   let user;
@@ -575,7 +575,7 @@ export function attachUser(req, res, next) {
   let session = readSession(req);
 
   // No session, but this device already proved the password and said who it
-  // belongs to — resume silently. This is what makes the password a one-time
+  // belongs to, resume silently. This is what makes the password a one-time
   // thing: the session lasts a week, the device lasts a quarter, and only the
   // device expiring ever puts the login form back in front of anyone.
   //

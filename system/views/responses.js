@@ -1,4 +1,4 @@
-// views/responses.js — the reply library, searchable.
+// views/responses.js, the reply library, searchable.
 //
 // WHAT THIS PAGE IS
 //
@@ -11,13 +11,13 @@
 //   `response` is a MySQL table; nothing here comes out of the engine except
 //   the demand figures in the lede, which say how many messages are actually
 //   waiting to be written today. So when the database is unreachable this page
-//   has no content at all — and it says MISSING rather than rendering a blank
+//   has no content at all, and it says MISSING rather than rendering a blank
 //   page that reads as "we have no replies".
 //
 // THE TOKEN RULE
 //
 //   `{username}` is left standing in every body shown here, and the copy button
-//   copies exactly what is on screen — token included. Messages substitutes it,
+//   copies exactly what is on screen, token included. Messages substitutes it,
 //   because Messages knows which buyer it is talking about. This page does not,
 //   and a half-substituted message is the one that gets screenshotted. Marking
 //   the token is not decoration: an unfilled `{price}` reads as ordinary prose
@@ -27,7 +27,7 @@
 //
 //   server.js increments `response.uses` when a send is LOGGED against a buyer,
 //   and this page increments it again when a reply is COPIED. So the column
-//   means "taken out of the library", not "messages a buyer received" — one
+//   means "taken out of the library", not "messages a buyer received", one
 //   number with two producers. It is labelled `taken` here and the difference
 //   is stated in the open rather than left for somebody to discover by
 //   comparing it against client_note six months from now.
@@ -40,7 +40,7 @@
 //   R3  Nothing on this page is a rate. The counts are a census of a complete
 //       list, and the caption says so, so no bar and no interval appear.
 //   R6  A review request must never ride on a late or cold order. This page
-//       cannot check that — no buyer is chosen here — so every reply that asks
+//       cannot check that, no buyer is chosen here, so every reply that asks
 //       for a review is marked, and the mark says where the check does happen.
 //   R7  The figure leads. Every explanation is in a <details> underneath it.
 //   R8  Add, edit, deactivate and copy all post through the audited writes in
@@ -68,7 +68,7 @@ import { pick } from '../lib/data.js';
 // 1. VOCABULARY
 // ============================================================================
 
-/** Where a reply came from. The enum is fiverr | extra | hub — see db/schema.sql. */
+/** Where a reply came from. The enum is fiverr | extra | hub, see db/schema.sql. */
 const SOURCE = {
   fiverr: {
     label: 'Fiverr',
@@ -100,7 +100,7 @@ const IMPORT_FILE = 'data/responses.json';
  * Those are not comparable costs.
  *
  * NOTE: this pattern exists in two files now. It is a RULE, not a figure, so it
- * does not break the one-copy-of-every-number rule — but it should be lifted
+ * does not break the one-copy-of-every-number rule, but it should be lifted
  * into a shared module the next time either file is touched, because a rule
  * that drifts is the same failure one step later.
  */
@@ -108,21 +108,21 @@ const REVIEW_ASK =
   /\breviews?\b|\brating\b|\brate\s+(?:us|your|the|this|our)\b|\b\d\s*stars?\b|\bfive[-\s]star\b|\bleave\s+(?:us\s+)?(?:a|your)\b|\bfeedback\s+on\s+fiverr\b/i;
 
 function asksForReview(row) {
-  const text = [row.name, row.category, row.when_to_use, row.body].filter(Boolean).join(' — ');
+  const text = [row.name, row.category, row.when_to_use, row.body].filter(Boolean).join(', ');
   return REVIEW_ASK.test(text);
 }
 
 /** Words that suggest a reply is for a buyer who has gone quiet. A KEYWORD
- *  match, not a taxonomy — the table has no field that says which situation a
+ *  match, not a taxonomy, the table has no field that says which situation a
  *  reply belongs to, and the caption that renders this says so. */
 const FOLLOWUP_HINT = /follow[\s-]?up|check[\s-]?in|chase|nudge|quiet|no reply|reminder|still interested/i;
 
 function looksLikeFollowUp(row) {
-  return FOLLOWUP_HINT.test([row.name, row.category, row.when_to_use].filter(Boolean).join(' — '));
+  return FOLLOWUP_HINT.test([row.name, row.category, row.when_to_use].filter(Boolean).join(', '));
 }
 
 // ============================================================================
-// 2. FILTERS — they live in the URL, so a filtered library is a link
+// 2. FILTERS, they live in the URL, so a filtered library is a link
 // ============================================================================
 
 const STATES = ['active', 'retired', 'all'];
@@ -210,7 +210,7 @@ function markTokens(body) {
 }
 
 // ============================================================================
-// 4. THE LEDE — the library, and the demand for it
+// 4. THE LEDE, the library, and the demand for it
 // ============================================================================
 
 function libraryFigure(counts) {
@@ -220,7 +220,7 @@ function libraryFigure(counts) {
       <p class="sub">
         ${counts.categories
           ? html`across <b>${num(counts.categories)}</b> categor${counts.categories === 1 ? 'y' : 'ies'}.`
-          : html`and not one of them is filed under a category — the search is the only way in.`}
+          : html`and not one of them is filed under a category, the search is the only way in.`}
         ${counts.retired
           ? html`<b>${num(counts.retired)}</b> more ${counts.retired === 1 ? 'is' : 'are'} retired and still
               readable.`
@@ -234,7 +234,7 @@ function libraryFigure(counts) {
     ${why(
       'What "taken" counts, and what it does not',
       html`<p>
-          <strong>${num(counts.taken)}</strong> is every time a reply left this library — copied here, or
+          <strong>${num(counts.taken)}</strong> is every time a reply left this library, copied here, or
           logged as a send against a buyer on Messages. It is <em>not</em> a count of messages a buyer
           received. Two things move one column, so a reply copied five times and never sent reads exactly
           like one sent five times.
@@ -242,7 +242,7 @@ function libraryFigure(counts) {
         <p>
           The count that means "a buyer was actually told this" lives in <code class="mono">client_note</code>
           and is on the Messages page, keyed to the buyer. If the two ever need to be told apart, that is the
-          table to ask — not this number.
+          table to ask, not this number.
         </p>
         <p>
           <strong>${num(counts.active)} of ${num(counts.total)}</strong> is a census of a complete list, not a
@@ -272,21 +272,21 @@ function demandFigure(run, rows) {
       </p>
     </div>
     <p class="note note--neg">
-      ${glyph('crit')} <b>Sort before you send.</b> A late order is one of three different problems — we owe
-      work, they owe a reply, or it is dead — and only one of them takes a check-in. The bucket is on the
+      ${glyph('crit')} <b>Sort before you send.</b> A late order is one of three different problems, we owe
+      work, they owe a reply, or it is dead, and only one of them takes a check-in. The bucket is on the
       <a href="/orders">Orders</a> page. No reply on this page knows which bucket a buyer is in.
     </p>
     ${why(
       'Whether the library covers what is waiting',
       html`<p>
           <strong>${num(followUps)}</strong> active repl${followUps === 1 ? 'y reads' : 'ies read'} like a
-          follow-up — that is a keyword match on the name, category and when-to-use note, not a taxonomy.
+          follow-up, that is a keyword match on the name, category and when-to-use note, not a taxonomy.
           The <code class="mono">response</code> table has no field that says which situation a reply is
           for, so this is a hint about coverage and nothing may be costed on it.
         </p>
         <p>
           Of the quoted leads anyone did chase, the conversion <em>within</em> the chased group is what the
-          chase is worth — the leads with no logged follow-up look better only because a follow-up gets
+          chase is worth, the leads with no logged follow-up look better only because a follow-up gets
           logged exactly when the buyer did not say yes immediately. The figure is on Today; never read the
           raw split as if chasing were harmful.
         </p>`
@@ -317,7 +317,7 @@ function snippet(row, { ctx, back }) {
 
       <p class="snippet-body" id="${bodyId}">${marked.html}</p>
 
-      ${row.when_to_use ? html`<p class="caption">When to use — ${row.when_to_use}</p>` : ''}
+      ${row.when_to_use ? html`<p class="caption">When to use, ${row.when_to_use}</p>` : ''}
 
       ${marked.tokens.length
         ? html`<p class="caption">
@@ -326,7 +326,7 @@ function snippet(row, { ctx, back }) {
             } as written. Copying takes ${marked.tokens.length === 1 ? 'it' : 'them'} along, so a
             half-substituted message is impossible to send by accident.${others.length
               ? html` Messages fills <code class="mono">{username}</code> from the buyer it is open on;
-                  ${join(others.map((t) => html`<code class="mono">${t}</code>`), ' and ')} nothing fills —
+                  ${join(others.map((t) => html`<code class="mono">${t}</code>`), ' and ')} nothing fills, 
                   ${others.length === 1 ? 'it' : 'they'} must be typed by hand.`
               : ''}
           </p>`
@@ -334,7 +334,7 @@ function snippet(row, { ctx, back }) {
 
       ${reviewAsk
         ? html`<p class="note note--warn">
-            ${glyph('warn')} <b>This asks for a review.</b> It must never go to a late or cold order — a
+            ${glyph('warn')} <b>This asks for a review.</b> It must never go to a late or cold order, a
             review ask on a late delivery is the most reliable way to turn a private three-star into a
             public one. This page cannot check that, because no buyer is chosen here; open the buyer on
             <a href="/messages">Messages</a> and it checks before it offers.
@@ -364,7 +364,7 @@ function snippet(row, { ctx, back }) {
       ${why('Edit this reply', editForm({ ctx, row, back }))}
 
       <p class="caption">
-        ${spec ? html`${spec.label} — ${spec.what}.` : html`This reply carries no source.`}
+        ${spec ? html`${spec.label}, ${spec.what}.` : html`This reply carries no source.`}
         Last changed ${row.updated_at ? dateTimeShort(row.updated_at) : missing()}.
       </p>
     </article>`;
@@ -397,7 +397,7 @@ function editForm({ ctx, row, back }) {
         <label for="body-${safe(id)}">The reply <span class="req">*</span></label>
         <textarea id="body-${safe(id)}" name="body" rows="9" required>${row.body}</textarea>
         <p class="field-hint">
-          Leave <code class="mono">{username}</code> exactly as it is — Messages substitutes it per buyer.
+          Leave <code class="mono">{username}</code> exactly as it is. Messages substitutes it per buyer.
           Typing a name here makes the reply usable for one person only.
         </p>
       </div>
@@ -499,7 +499,7 @@ function toolbar(filters, categories, shown, total) {
 
 // Reached only when the table answered, so there is always something to write
 // to. The unreachable case is handled once, at the top of render(), by not
-// drawing the page at all — a form that accepted text and dropped it would be
+// drawing the page at all, a form that accepted text and dropped it would be
 // worse than no form.
 function addPanel(ctx, back) {
   return html`<section class="panel">
@@ -511,10 +511,10 @@ function addPanel(ctx, back) {
           <div class="field">
             <label for="new-name">Name <span class="req">*</span></label>
             <input id="new-name" name="name" maxlength="120" required
-                   placeholder="Delivery is late — dated commitment">
+                   placeholder="Delivery is late, dated commitment">
             <p class="field-hint">
               Names are unique. Saving under a name that already exists <b>replaces that reply's text</b>
-              rather than adding a second one — check the library above first.
+              rather than adding a second one, check the library above first.
             </p>
           </div>
           <div class="field">
@@ -551,7 +551,7 @@ function addPanel(ctx, back) {
 // ============================================================================
 //
 // The button is rendered `hidden` and this script un-hides it. Without
-// JavaScript there is no copy button at all — and that is deliberate. A button
+// JavaScript there is no copy button at all, and that is deliberate. A button
 // that posted "taken" without putting anything on the clipboard would move a
 // count for something that did not happen, which is the one thing this hub is
 // built not to do. The text is selectable in place either way.
@@ -562,7 +562,7 @@ function addPanel(ctx, back) {
 // does not move.
 //
 // The copied text is `textContent` of the rendered body, so what lands on the
-// clipboard is character-for-character what is on screen — `{username}` and all.
+// clipboard is character-for-character what is on screen, `{username}` and all.
 
 const COPY_JS = `
 (function(){
@@ -613,8 +613,8 @@ const COPY_JS = `
     var text = node.textContent;
 
     function done(ok){
-      if (ok) { say(form, 'Copied — recording it', false); form.submit(); }
-      else { selectNode(node); say(form, 'Clipboard refused — the text is selected, copy it by hand. Nothing was counted.', true); }
+      if (ok) { say(form, 'Copied, recording it', false); form.submit(); }
+      else { selectNode(node); say(form, 'Clipboard refused, the text is selected, copy it by hand. Nothing was counted.', true); }
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -637,7 +637,7 @@ export function render(ctx) {
   const filters = readFilters(ctx.query || {});
   const back = href(filters);
 
-  // ---- the table could not be read. Not empty — MISSING. -------------------
+  // ---- the table could not be read. Not empty. MISSING. -------------------
   if (!Array.isArray(rows)) {
     return {
       title: 'The reply library cannot be read',
@@ -649,7 +649,7 @@ export function render(ctx) {
           <strong class="big">${missing()}</strong>
           <p class="sub">
             The <code class="mono">response</code> table is unreachable, so the hub cannot say how many
-            replies exist, which are retired, or what any of them says. Nothing has been lost — this page
+            replies exist, which are retired, or what any of them says. Nothing has been lost, this page
             holds no copy of the library and never did.
           </p>
         </div>
@@ -667,7 +667,7 @@ export function render(ctx) {
     active: rows.filter((r) => Number(r.active) === 1).length,
     retired: rows.filter((r) => Number(r.active) !== 1).length,
     // Real categories only. A blank one is not a category with no name, it is
-    // a reply nobody filed — counting it would inflate the heading by one on
+    // a reply nobody filed, counting it would inflate the heading by one on
     // any library that has a single unfiled reply in it.
     categories: new Set(
       rows
@@ -686,7 +686,7 @@ export function render(ctx) {
       title: 'The reply library has not been imported yet',
       kicker: 'Responses',
       deck: html`The <em>response</em> table is reachable and holds nothing. That is an import that has not
-        run — not a team without replies.`,
+        run, not a team without replies.`,
       html: html`<div class="figure">
           <span class="cap">Replies on record</span>
           <strong class="big">${num(0)}</strong>
@@ -700,7 +700,7 @@ export function render(ctx) {
           <ol class="steps">
             <li>
               Export the saved replies and the extra-responses sheet into
-              <code class="mono">${IMPORT_FILE}</code> — a list of
+              <code class="mono">${IMPORT_FILE}</code>, a list of
               <code class="mono">{ name, body, when_to_use, category, source }</code>, where
               <code class="mono">source</code> is <code class="mono">fiverr</code> or
               <code class="mono">extra</code>.
@@ -758,7 +758,7 @@ export function render(ctx) {
           const unfiled = key === UNFILED;
           return html`<section class="block">
               <h3>
-                ${unfiled ? 'Not categorised' : key} — ${num(list.length)}
+                ${unfiled ? 'Not categorised' : key}, ${num(list.length)}
                 repl${list.length === 1 ? 'y' : 'ies'}
               </h3>
               ${unfiled
@@ -773,7 +773,7 @@ export function render(ctx) {
       )
     : empty(
         anyFilter(filters)
-          ? 'No reply matches this search. The library is not empty — this selection is.'
+          ? 'No reply matches this search. The library is not empty, this selection is.'
           : 'No reply is in use. Every one of them is retired; switch to Retired or Everything to see them.'
       );
 
@@ -784,7 +784,7 @@ export function render(ctx) {
 
     <section class="panel">
       ${panelHead(
-        html`The library — ${num(visible.length)} shown of ${num(rows.length)}`,
+        html`The library, ${num(visible.length)} shown of ${num(rows.length)}`,
         'typed',
         html`Typed · response · ${num(counts.taken)} taken`
       )}
@@ -794,21 +794,21 @@ export function render(ctx) {
         ? html`<p class="note note--warn">
             ${glyph('warn')} <b>${num(reviewAsks)} of these ${reviewAsks === 1 ? 'asks' : 'ask'} for a
             review.</b> They are marked where they appear. None of them may go to a late or cold order, and
-            this page cannot tell which buyer is which — Messages checks that per buyer before it offers one.
+            this page cannot tell which buyer is which. Messages checks that per buyer before it offers one.
           </p>`
         : ''}
 
       ${groupBlocks}
 
       <div class="provenance-bar">
-        <span>Every reply — typed, stored in <code class="mono">response</code>.</span>
-        <span>The waiting figures — engine output, read from <code class="mono">data/latest-run.json</code>.</span>
+        <span>Every reply, typed, stored in <code class="mono">response</code>.</span>
+        <span>The waiting figures, engine output, read from <code class="mono">data/latest-run.json</code>.</span>
         <span>Copying, editing and retiring all carry the name you signed in with.</span>
       </div>
 
       <p class="caption">
         The copy button needs JavaScript, and without it there is no button rather than one that counts a
-        copy that did not happen — the text is selectable in place either way. Counts on this page are a
+        copy that did not happen, the text is selectable in place either way. Counts on this page are a
         census of a complete list, so none of them is a rate and none of them draws a bar.
       </p>
     </section>

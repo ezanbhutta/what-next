@@ -1,4 +1,4 @@
-// views/team.js — the weekly review, and the decisions log.
+// views/team.js, the weekly review, and the decisions log.
 //
 // WHAT THIS PAGE IS
 //
@@ -16,7 +16,7 @@
 //
 //   So this page leads with the GAP and not with the score. Two people who both
 //   said 3 and were both given 3 need nothing from anybody. A 5 against a 3 is a
-//   conversation — in one direction or the other, and which direction is the
+//   conversation, in one direction or the other, and which direction is the
 //   finding.
 //
 //   The lock is a PROCESS rule, not a security boundary, and the page says so
@@ -32,7 +32,7 @@
 //
 //   Their sheet says in as many words: do not give a 4 just to make someone
 //   happy. A team averaging 4.2 has stopped measuring anything, and the first
-//   casualty is the gap this page is built around — you cannot see a
+//   casualty is the gap this page is built around, you cannot see a
 //   disagreement between two numbers that are both pinned to the ceiling. The
 //   word "normal" is drawn on 3 every time the scale appears.
 //
@@ -40,8 +40,8 @@
 //
 //   The review programme and the people doing the work are not the same set,
 //   and nobody had put the two lists side by side. It is the same shape as the
-//   finding that started this repo — two systems, each holding part of the
-//   truth, neither aware of the other — so it is reported here rather than
+//   finding that started this repo, two systems, each holding part of the
+//   truth, neither aware of the other, so it is reported here rather than
 //   quietly reconciled. The names and counts are computed live from the `csr`
 //   column of the engine's own files against `app_user`; nothing is hard-coded,
 //   so the panel keeps telling the truth after somebody is hired or leaves.
@@ -50,7 +50,7 @@
 //
 //   team_week, decision, app_user   typed here, MySQL. The only writes.
 //   orders.jsonl, leads.jsonl       engine output on disk. The `csr` column is
-//                                   COUNTED — no figure the engine published is
+//                                   COUNTED, no figure the engine published is
 //                                   recomputed.
 //   calibration.json                the engine's own scored forecasts, shown
 //                                   beside the decisions log because it answers
@@ -59,7 +59,7 @@
 // HOUSE RULES THIS FILE IS CARRYING
 //
 //   R2  A database that did not answer is MISSING. A table nobody has typed
-//       into is EMPTY. They are different facts and they render differently —
+//       into is EMPTY. They are different facts and they render differently, 
 //       and only one of them leaves the forms open.
 //   R3  Promise-kept and decision-hit rates are proportions on single-figure
 //       denominators, so they print as ranges and draw no bar. The 1–5 marks
@@ -97,7 +97,7 @@ import {
 } from '../lib/data.js';
 
 // ============================================================================
-// 1. THE SCALE — their words, not a paraphrase
+// 1. THE SCALE, their words, not a paraphrase
 // ============================================================================
 
 const SCALE = Object.freeze([
@@ -142,7 +142,7 @@ function rowsOf(result) {
 
 /** A DATE column back to 'YYYY-MM-DD'. mysql2 hands back a Date at LOCAL
  *  midnight, and `toISOString()` on that prints the day before anywhere west of
- *  UTC — a quiet off-by-one that would file a review under the wrong week. */
+ *  UTC, a quiet off-by-one that would file a review under the wrong week. */
 function isoOf(value) {
   if (!value) return null;
   if (value instanceof Date) {
@@ -172,7 +172,7 @@ function weekdayOf(iso) {
 const DAY_NAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** Today, in the server's own calendar. A review week is about now, not about
- *  the engine's run date — the engine can be three days behind and this week is
+ *  the engine's run date, the engine can be three days behind and this week is
  *  still this week. */
 function todayIso() {
   const d = new Date();
@@ -231,7 +231,7 @@ function plainSigned(value, dp = 1) {
 // Five cells on a scale with known bounds, filled to the score. This is not a
 // bar and R3 does not apply to it: a bar claims a proportion of a whole that
 // was estimated from a sample, and a score of 3 is not an estimate of anything
-// — it is the value itself, on an axis that is printed beside it. Self is the
+//, it is the value itself, on an axis that is printed beside it. Self is the
 // grey fill, manager is the accent fill, both defined in app.css for exactly
 // this component.
 
@@ -349,7 +349,7 @@ function weekNav(selected, current, weeks, dow, inferred) {
 }
 
 // ============================================================================
-// 5. THE LEDE — the gap, and the scale
+// 5. THE LEDE, the gap, and the scale
 // ============================================================================
 
 function gapFigure(week, dbUp) {
@@ -359,7 +359,7 @@ function gapFigure(week, dbUp) {
         <strong class="big">${missing()}</strong>
         <p class="sub">
           The typed-records database did not answer, so no score can be read and none is invented. This is
-          MISSING, not "nobody was scored" — an unscored week and an unreachable one look identical from a
+          MISSING, not "nobody was scored", an unscored week and an unreachable one look identical from a
           phone, and only one of them means somebody skipped the review.
         </p>
       </div>`;
@@ -374,7 +374,7 @@ function gapFigure(week, dbUp) {
           ${week && week.people.length
             ? html`<b>${num(week.people.length)}</b> ${week.people.length === 1 ? 'person has' : 'people have'} a
                 record this week, but no one has both a self score and a manager score yet, and a gap needs two
-                numbers. Enter the self scores first — that is step 1, and it is what unlocks the manager field.`
+                numbers. Enter the self scores first, that is step 1, and it is what unlocks the manager field.`
             : html`Nothing has been recorded for this week. That is a fact about the review, not about the
                 database: the table answered and holds no row for this week ending.`}
         </p>
@@ -392,7 +392,7 @@ function gapFigure(week, dbUp) {
           : week.gapMean < 0
             ? html`People are marking themselves <b>below</b> the manager's mark. Chronic under-marking hides
                 good work and is its own coaching problem, in the opposite direction.`
-            : html`Self and manager marks agree on average this week. Agreement is the goal, not the ceiling —
+            : html`Self and manager marks agree on average this week. Agreement is the goal, not the ceiling, 
                 check the individual rows, because two large gaps in opposite directions also average to zero.`}
         ${widest
           ? html` The widest single gap is <b>${widest.person}</b>: self ${num(widest.self)} against manager
@@ -403,15 +403,15 @@ function gapFigure(week, dbUp) {
     ${why(
       'Why the gap, and not the score',
       html`<p>
-          The score on its own is nearly uninformative — everyone drifts to 4, and a column of 4s cannot be
+          The score on its own is nearly uninformative, everyone drifts to 4, and a column of 4s cannot be
           acted on. The <strong>difference</strong> between what someone says about their week and what their
           manager says about the same week is a specific, checkable disagreement, and it is the thing a
           one-to-one can actually be about.
         </p>
         <p>
           <strong>This is a mean, not a rate.</strong> It is the average of
-          ${num(pairs.length)} complete pairs — a census of the people who were reviewed this week, not an
-          estimate drawn from a sample of them — so it carries no confidence interval and nothing here draws a
+          ${num(pairs.length)} complete pairs, a census of the people who were reviewed this week, not an
+          estimate drawn from a sample of them, so it carries no confidence interval and nothing here draws a
           bar. Rates on this page (promises kept, decisions called right) are a different kind of number and
           are printed as ranges, because they are proportions on single-figure denominators.
         </p>
@@ -429,15 +429,15 @@ function scaleFigure() {
       <strong class="mid">3 = normal</strong>
       <p class="sub">
         Not a disappointment. <b>Normal</b> is what a good week looks like, and it is where most marks should
-        sit. Do not give a 4 just to make someone happy — a 4 that was not earned costs you the only signal
+        sit. Do not give a 4 just to make someone happy, a 4 that was not earned costs you the only signal
         this review produces.
       </p>
     </div>
     <dl class="stats">
       ${join(
         // The number is the figure and the word is its label, so the number
-        // takes the `dd` — the serif, tabular slot the design system gives to
-        // every figure on the page — and the word takes the `dt`.
+        // takes the `dd`, the serif, tabular slot the design system gives to
+        // every figure on the page, and the word takes the `dt`.
         SCALE.map(
           (s) => html`<div class="stat">
             <dt>${s.word}</dt>
@@ -450,7 +450,7 @@ function scaleFigure() {
 }
 
 // ============================================================================
-// 6. THE REVIEW FORM — one per person, self score first
+// 6. THE REVIEW FORM, one per person, self score first
 // ============================================================================
 
 /** The self / manager selects. A blank option exists and is not "0": leaving a
@@ -478,7 +478,7 @@ function scoreSelect({ id, name, value, disabled, roleLocked = false, describedB
  *
  * `locked` is the sequencing rule: no stored self score means the manager field
  * is disabled from the server, so the two-step survives with JavaScript off.
- * `outOfSequence` is the case the rule is supposed to make impossible — a
+ * `outOfSequence` is the case the rule is supposed to make impossible, a
  * manager score with no self score behind it. It is never hidden and never
  * quietly deleted: the field is left open so it can be corrected, and the row
  * says what happened.
@@ -489,7 +489,7 @@ function scoreSelect({ id, name, value, disabled, roleLocked = false, describedB
  * from what was posted, so a field the browser omits is stored as NULL. The
  * role lock therefore had a hole with teeth: a CSR opening their own row to
  * edit a note saw the manager's score rendered and greyed, and saving the note
- * posted no `manager_score` at all — wiping the manager's mark, under the
+ * posted no `manager_score` at all, wiping the manager's mark, under the
  * CSR's name in the audit log. The lock is meant to stop a score being
  * ENTERED, never to delete one already there. So whenever the select is
  * disabled and a score exists, a hidden input carries the stored value back
@@ -505,11 +505,11 @@ function personForm(person, row, { week, csrfToken, backTo, canScoreManager, isS
   const idBase = `p-${nameKey(person).replace(/[^a-z0-9]/g, '') || 'x'}`;
 
   const managerHint = !canScoreManager
-    ? html`This is the manager's step. You are signed in with a CSR role, so the field is closed here — the
+    ? html`This is the manager's step. You are signed in with a CSR role, so the field is closed here, the
         hub records who made every write, and a score with the wrong name on it is worse than a missing one.`
     : locked
       ? html`Locked until the self score is saved. That is step 1 of the review and the reason both numbers
-          exist — a manager mark entered first is a verdict, and a self mark typed under one is an argument
+          exist, a manager mark entered first is a verdict, and a self mark typed under one is an argument
           with it.`
       : html`Now answer it. Mark the week you saw, not the one you were told about.`;
 
@@ -521,14 +521,14 @@ function personForm(person, row, { week, csrfToken, backTo, canScoreManager, isS
 
       <fieldset class="form-section">
         <legend>
-          ${person}${isSelf ? ' — you' : ''}
+          ${person}${isSelf ? ', you' : ''}
           ${outOfSequence ? pill('warn', 'Out of sequence') : self !== null && manager !== null ? pill('ok', 'Both scores in') : self !== null ? pill('info', 'Awaiting manager') : pill('idle', 'Not started')}
         </legend>
 
         ${outOfSequence
           ? html`<p class="note note--warn">
               This row carries a manager score with no self score behind it, which the sequence is meant to
-              prevent. The field is left open rather than wiped — ask for the self mark, enter it, and the two
+              prevent. The field is left open rather than wiped, ask for the self mark, enter it, and the two
               will line up into a gap.
             </p>`
           : ''}
@@ -600,7 +600,7 @@ function personForm(person, row, { week, csrfToken, backTo, canScoreManager, isS
     </form>`;
 }
 
-/** Enable the manager field the moment a self score is chosen — and put it back
+/** Enable the manager field the moment a self score is chosen, and put it back
  *  when the self score is cleared, so the stored pair can never end up with a
  *  manager mark and no self mark behind it. Without JavaScript the server has
  *  already rendered the same lock and the review is a genuine two-step. */
@@ -683,13 +683,13 @@ function weekTable(week, roster) {
     </div>
     <p class="caption">
       Grey marks are the self score, accent marks are the manager's. A gap of two points or more is flagged on
-      the row — not because it is wrong, but because two people looking at the same week and landing two points
+      the row, not because it is wrong, but because two people looking at the same week and landing two points
       apart is the conversation this review exists to produce.
     </p>`;
 }
 
 // ============================================================================
-// 8. HISTORY — one row per week
+// 8. HISTORY, one row per week
 // ============================================================================
 
 function historyTable(weeks, selected) {
@@ -730,7 +730,7 @@ function historyTable(weeks, selected) {
     <p class="caption">
       Means are a census of whoever was reviewed that week, so they carry no interval. The promise-kept column
       IS a rate, on a denominator of the people who answered the question at all, so it prints as a Wilson
-      range below n=${String(MIN_SAMPLE)} — which, on a team this size, is every week.
+      range below n=${String(MIN_SAMPLE)}, which, on a team this size, is every week.
     </p>`;
 }
 
@@ -741,7 +741,7 @@ function historyTable(weeks, selected) {
 // Counted live from the `csr` column of the engine's two files. This is a
 // count of published rows, not a recomputation of anything the engine
 // published, and it is the only honest way to answer "who is actually doing
-// the work" — the review sheet cannot answer it, because the review sheet is
+// the work", the review sheet cannot answer it, because the review sheet is
 // one of the two lists that disagree.
 
 function engineWorkload() {
@@ -795,8 +795,8 @@ function rosterPanel(people, workload) {
           <strong class="mid">${missing()}</strong>
           <p class="sub">
             The roster lives in <code class="mono">app_user</code> and the database did not answer, so the two
-            lists cannot be put side by side. The engine's side of the comparison is still readable — see the
-            names below — but which of them are reviewed is unknown, and unknown is not "none".
+            lists cannot be put side by side. The engine's side of the comparison is still readable, see the
+            names below, but which of them are reviewed is unknown, and unknown is not "none".
           </p>
         </div>
         ${available ? workloadTable([...workload.map.values()].sort(byWork), null) : ''}
@@ -844,7 +844,7 @@ function rosterPanel(people, workload) {
           ${available
             ? html`<b>${num(outside.length)}</b> name${outside.length === 1 ? '' : 's'} appear in the order book or
                 the inquiry log and are not in the weekly review, between them handling ${num(outsideOrders)}
-                orders — against ${num(insideOrders)} handled by the ${num(inProgramme.length)} people who are
+                orders, against ${num(insideOrders)} handled by the ${num(inProgramme.length)} people who are
                 reviewed every week.
                 ${invisible.length
                   ? html` In the other direction,
@@ -924,7 +924,7 @@ function rosterPanel(people, workload) {
             <h3>Doing the work, not in the programme</h3>
             ${outside.length ? workloadTable(outside, retiredByKey) : empty('Everyone in the data is reviewed.')}
             <p class="caption">
-              "Retired here" means the name exists in <code class="mono">app_user</code> and was deactivated —
+              "Retired here" means the name exists in <code class="mono">app_user</code> and was deactivated, 
               deliberately kept rather than deleted, because deleting a name orphans every order attributed to
               it and makes the past unexplainable. "Not known here" means the name appears in the engine's data
               and has never been added to the hub at all.
@@ -980,7 +980,7 @@ function workloadTable(rows, retiredByKey) {
 function decisionsPanel(decisions, { csrfToken, backTo, today }) {
   if (decisions === null) {
     return html`<section class="panel">
-        ${panelHead('Decisions — was I right', 'missing', 'decision unreachable')}
+        ${panelHead('Decisions, was I right', 'missing', 'decision unreachable')}
         <div class="figure">
           <span class="cap">Decisions on the record</span>
           <strong class="mid">${missing()}</strong>
@@ -1101,7 +1101,7 @@ function decisionsPanel(decisions, { csrfToken, backTo, today }) {
             <textarea id="r-actual" name="actual" rows="3" placeholder="What actually happened, and how you know."></textarea>
             <p class="field-hint">
               This replaces whatever is already in the row for that decision. The original decision and the
-              expectation are never overwritten — only the outcome is.
+              expectation are never overwritten, only the outcome is.
             </p>
           </div>
           <div class="form-actions">
@@ -1112,7 +1112,7 @@ function decisionsPanel(decisions, { csrfToken, backTo, today }) {
     : '';
 
   return html`<section class="panel">
-      ${panelHead('Decisions — was I right', 'typed', 'Typed here · MySQL')}
+      ${panelHead('Decisions, was I right', 'typed', 'Typed here · MySQL')}
       <div class="lede">
         <div class="lede-main">
           <div class="figure">
@@ -1128,7 +1128,7 @@ function decisionsPanel(decisions, { csrfToken, backTo, today }) {
             'Why "partly" is not in that number, and why it is a range',
             html`<p>
                 <strong>Partly is excluded from the denominator, not scored as a half.</strong> A half-right
-                outcome is not a coin landing on its edge — it is usually a decision that was never sharp
+                outcome is not a coin landing on its edge, it is usually a decision that was never sharp
                 enough to be scored, and folding it in at 0.5 would let vague calls quietly improve the record.
                 It is counted and shown separately so the vagueness stays visible.
               </p>
@@ -1154,7 +1154,7 @@ function decisionsPanel(decisions, { csrfToken, backTo, today }) {
  * It belongs here because it answers the same question about the same person:
  * the engine states a confidence on every forecast, resolves it on a date, and
  * records what actually happened. Its medium-confidence band is the most useful
- * thing on this page — stated confidence and realised accuracy are not the same
+ * thing on this page, stated confidence and realised accuracy are not the same
  * number, and knowing that is the whole reason for a "was I right" column.
  */
 function calibrationFigure() {
@@ -1225,7 +1225,7 @@ function calibrationFigure() {
         </p>
         <p>
           The hit counts are recovered as realised × n from the engine's own published fraction and
-          denominator — an exact reconstruction of the integer behind them, stated so that nobody mistakes it
+          denominator, an exact reconstruction of the integer behind them, stated so that nobody mistakes it
           for a figure the engine emitted directly. Each band is a rate on a small denominator, so each one
           prints as a range.
         </p>
@@ -1238,7 +1238,7 @@ function calibrationFigure() {
 }
 
 // ============================================================================
-// 11. SECTION ACCESS — owner only, and it is the one lock that is enforced
+// 11. SECTION ACCESS, owner only, and it is the one lock that is enforced
 // ============================================================================
 
 function accessPanel(ctx) {
@@ -1247,7 +1247,7 @@ function accessPanel(ctx) {
   const sections = ctx.nav || [];
   // `undefined` (the loader does not select section_access today) and `null`
   // (it did and the database refused) are both "this page cannot state the
-  // minimum role" — collapsed here so the column never contradicts the State
+  // minimum role", collapsed here so the column never contradicts the State
   // column beside it by printing "csr" next to "Restricted".
   const stored = rowsOf(ctx.data?.access) ?? null;
   const byKey = new Map((stored || []).map((r) => [String(r.section), r]));
@@ -1309,9 +1309,9 @@ function accessPanel(ctx) {
             <div class="field">
               <label for="a-role">Minimum role</label>
               <select id="a-role" name="min_role">
-                <option value="csr">csr — open to everyone who can sign in</option>
-                <option value="manager">manager — managers and the owner</option>
-                <option value="owner">owner — Ezan only</option>
+                <option value="csr">csr, open to everyone who can sign in</option>
+                <option value="manager">manager, managers and the owner</option>
+                <option value="owner">owner. Ezan only</option>
               </select>
               <p class="field-hint">Setting csr removes the restriction entirely.</p>
             </div>
@@ -1338,7 +1338,7 @@ function accessPanel(ctx) {
           <p>
             This is the one restriction on this page that the server actually enforces. The manager-score lock
             above is a <em>process</em> rule: it shapes the order the review is done in, and every write here
-            carries the name of whoever made it — the hub attributes rather than prevents, and it says so
+            carries the name of whoever made it, the hub attributes rather than prevents, and it says so
             rather than implying a boundary it does not have.
           </p>`
       )}
@@ -1365,7 +1365,7 @@ export function render(ctx) {
   const workload = engineWorkload();
 
   // Everyone who should have a row this week: the current roster, widened by
-  // anyone already recorded against this week. Never narrower than what exists —
+  // anyone already recorded against this week. Never narrower than what exists, 
   // a person taken off the roster mid-quarter must not make their own saved
   // review disappear from the week it belongs to.
   const names = [];
@@ -1426,7 +1426,7 @@ export function render(ctx) {
 
     <section class="panel">
       ${panelHead(
-        html`The review — week ending ${dateShort(selected, { year: true })}`,
+        html`The review, week ending ${dateShort(selected, { year: true })}`,
         dbUp ? 'typed' : 'missing',
         dbUp ? 'Typed here · MySQL' : 'team_week unreachable'
       )}
@@ -1440,25 +1440,25 @@ export function render(ctx) {
       <p class="note">
         ${glyph('info')} <strong>Self score first, every time.</strong> The manager field stays locked until the
         self score is in, because the value of this review is the difference between two independent answers to
-        the same question — and a mark that was allowed to see the other one first is not independent.
+        the same question, and a mark that was allowed to see the other one first is not independent.
       </p>
       ${forms}
     </section>
 
     <section class="panel">
       ${panelHead(
-        html`Self against manager — ${dateShort(selected)}`,
+        html`Self against manager, ${dateShort(selected)}`,
         dbUp ? 'typed' : 'missing',
         dbUp ? 'Typed here · MySQL' : 'team_week unreachable'
       )}
-      ${dbUp ? weekTable(week, roster) : empty('MISSING — the store did not answer.')}
+      ${dbUp ? weekTable(week, roster) : empty('MISSING, the store did not answer.')}
     </section>
 
     <section class="panel">
       ${panelHead('Every week recorded', dbUp ? 'typed' : 'missing', dbUp ? 'Typed here · MySQL' : 'team_week unreachable')}
       ${dbUp
         ? historyTable(weeks, selected)
-        : html`<p class="note note--neg">The history is MISSING, not empty. Nothing has been lost — it could not be read.</p>`}
+        : html`<p class="note note--neg">The history is MISSING, not empty. Nothing has been lost, it could not be read.</p>`}
     </section>
 
     ${rosterPanel(peopleRows === undefined ? null : peopleRows, workload)}
@@ -1472,8 +1472,8 @@ export function render(ctx) {
     ${accessPanel(ctx)}
 
     <div class="provenance-bar">
-      <span>Scores, notes, promises and decisions — typed here, stored in <code class="mono">team_week</code> and <code class="mono">decision</code>.</span>
-      <span>Order and inquiry counts — engine output, read from <code class="mono">data/</code>.</span>
+      <span>Scores, notes, promises and decisions, typed here, stored in <code class="mono">team_week</code> and <code class="mono">decision</code>.</span>
+      <span>Order and inquiry counts, engine output, read from <code class="mono">data/</code>.</span>
       <span>Every save carries the name of whoever made it.</span>
     </div>
 
@@ -1493,7 +1493,7 @@ export function render(ctx) {
     title,
     kicker: dbUp ? `Week ending ${selected}` : 'Team · store unreachable',
     deck: html`The score is not the signal. The <em>gap</em> between what someone says about their week and
-      what their manager says about it is — and 3 is normal.`,
+      what their manager says about it is, and 3 is normal.`,
     ticker: [
       { label: 'Week ending', value: dateShort(selected, { year: true }), sub: selected === current ? 'this week' : null },
       {

@@ -1,4 +1,4 @@
-// views/reports.js — the CSR half of Reports: a shift, logged from a phone.
+// views/reports.js, the CSR half of Reports: a shift, logged from a phone.
 //
 // WHAT THIS VIEW IS
 //
@@ -7,7 +7,7 @@
 //   earlier entries booked, and closes with a note for whoever is next.
 //
 //   The authority for the reminder behaviour is the owner-written spec,
-//   shift-logger/REMINDER-LOGICS.md — thirteen rules, their exact delays and
+//   shift-logger/REMINDER-LOGICS.md, thirteen rules, their exact delays and
 //   their exact buttons. `RULES` below is that document as data. When the two
 //   disagree the document is right and this file is the bug.
 //
@@ -29,7 +29,7 @@
 //
 //   R2  Counts are counts. When a read fails the number is MISSING, never 0.
 //       "Nothing due" and "we could not ask" are different facts and this page
-//       never prints the first when it means the second — that exact bug is
+//       never prints the first when it means the second, that exact bug is
 //       what the original shipped, and an all-clear during an outage is the
 //       most expensive false statement this section can make.
 //   R3  Nothing here is a rate, so nothing here draws a bar or an arrow. The
@@ -38,8 +38,8 @@
 //       Organic and Directed, and `esc()` scrubs anything that gets past that.
 //   R6  A review ask never rides on a late or disputed order. Rule 5 of the
 //       spec books "ask for a Public Review" 30 minutes after completion; this
-//       page HOLDS that reminder — visibly, with the reason and the order's
-//       age — whenever the buyer is on the stale-order list or carries an open
+//       page HOLDS that reminder, visibly, with the reason and the order's
+//       age, whenever the buyer is on the stale-order list or carries an open
 //       dispute, and holds it too when the flag list itself could not be read.
 //       See `reviewHold`. The reminder is never silently deleted and never
 //       silently obeyed.
@@ -96,7 +96,7 @@ export const CHECKLIST = [
 //
 // `key` is the stored `type` and the value of the `type` POST field. `name` on
 // a field is the key it is stored under inside the entry's JSON detail, and it
-// is the POST field name — the same string on purpose, so a field added here
+// is the POST field name, the same string on purpose, so a field added here
 // is one line and cannot be mistyped into something the server silently drops.
 //
 // Field types: text · textarea · segment · multiselect · select · designer ·
@@ -187,8 +187,8 @@ export const ACTIVITIES = [
         required: true,
         hint: 'A Direct Order books the upsell nudge as well. An order taken in chat does not.',
       },
-      { name: 'service', label: 'Services — pick any', type: 'multiselect', options: SERVICES },
-      { name: 'service_other', label: 'Other service — please specify', type: 'text', hint: 'Only if you ticked Other above.' },
+      { name: 'service', label: 'Services, pick any', type: 'multiselect', options: SERVICES },
+      { name: 'service_other', label: 'Other service, please specify', type: 'text', hint: 'Only if you ticked Other above.' },
       { name: 'value', label: 'Price', type: 'text', mode: 'decimal' },
     ],
   },
@@ -270,7 +270,7 @@ export const ACTIVITIES = [
       { name: 'client', label: 'Client or username', type: 'text', required: true },
       { name: 'project', label: 'Project', type: 'text' },
       { name: 'elements', label: 'What did you share? Pick any', type: 'multiselect', options: SHARE_ELEMENTS, required: true },
-      { name: 'other_text', label: 'Other — please specify', type: 'text', hint: 'Only if you ticked Other above.' },
+      { name: 'other_text', label: 'Other, please specify', type: 'text', hint: 'Only if you ticked Other above.' },
     ],
   },
 
@@ -428,14 +428,14 @@ const QUICK = ['inquiry', 'client_conversation', 'new_order', 'shared', 'revisio
 // ============================================================================
 //
 // REMINDER-LOGICS.md as data, and the ONLY copy of it. `server.js` imports
-// this table to book, cancel and chain — it does not keep its own timings.
+// this table to book, cancel and chain, it does not keep its own timings.
 // Two tables of thirteen delays is precisely the shape of every bug this repo
 // exists to referee: they agree on the day they are written and nowhere else.
 //
 //   on          the activity that books it (a rule id doubles as its trigger)
 //   chained     booked ONLY by a chain button, never by logging
 //   delay       minutes from the tap/log to due. A number, or a function of
-//               the entry. Returning null means "book nothing" — the spec's
+//               the entry. Returning null means "book nothing", the spec's
 //               4th lead follow-up, and the rating below the threshold.
 //   when        predicate on the entry; the rule only books when it is true
 //   whenText    that predicate in the CSR's words
@@ -443,7 +443,7 @@ const QUICK = ['inquiry', 'client_conversation', 'new_order', 'shared', 'revisio
 //               constant. Never hand-written where it could be derived.
 //   cancelOn    logging THAT activity for the same client (same profile,
 //               still pending) auto-clears this reminder
-//   cancelKey   'project' — match on the project instead of the client, for a
+//   cancelKey   'project', match on the project instead of the client, for a
 //               trigger that carries no client of its own
 //   cancelMatchProject  require client AND project to match
 //   note        what to stamp on the reminder as its context line
@@ -453,7 +453,7 @@ const QUICK = ['inquiry', 'client_conversation', 'new_order', 'shared', 'revisio
 //                 kind 'snooze'   re-books it `minutes` out ("Next shift" 8h)
 //                 kind 'chain'    closes it AND books `next`, timed from the tap
 //   alert       a standing red caution box, not a card, and NEVER snoozed
-//   review      R6 applies — see reviewHold(). The server must apply the same
+//   review      R6 applies, see reviewHold(). The server must apply the same
 //               test before booking; this page applies it again at render,
 //               because a buyer can dispute an hour AFTER the ask was booked
 //               and only the render-side check catches that one.
@@ -519,7 +519,7 @@ export const RULES = {
         label: 'Next shift',
         kind: 'snooze',
         minutes: 8 * 60,
-        hint: 'Will be assigned on the next shift — comes back in 8 hours',
+        hint: 'Will be assigned on the next shift, comes back in 8 hours',
       },
       { key: 'assigned', label: 'Assigned', kind: 'resolve', primary: true, hint: 'Order is with a designer' },
     ],
@@ -529,12 +529,12 @@ export const RULES = {
     on: 'new_order',
     delay: 0,
     when: (e) => detail(e, 'order_via') === 'Direct Order',
-    whenText: 'only for a Direct Order — an order taken in chat books nothing',
+    whenText: 'only for a Direct Order, an order taken in chat books nothing',
     cancelOn: 'upsell',
-    title: (r) => `Potential upsell for ${who(r)} — what is missing? Especially a website`,
+    title: (r) => `Potential upsell for ${who(r)}, what is missing? Especially a website`,
     buttons: UPSELL_BUTTONS,
   },
-  // 5 — the rule R6 governs.
+  // 5, the rule R6 governs.
   order_completed: {
     on: 'order_completed',
     delay: 30,
@@ -572,14 +572,14 @@ export const RULES = {
   revision_assigned: {
     on: 'revision_assigned',
     delay: (e) => parseRemindTime(detail(e, 'remind_in')) ?? H(24),
-    afterText: 'the time typed into "Remind me in" — blank means 24 hours',
+    afterText: 'the time typed into "Remind me in", blank means 24 hours',
     title: (r) => `Check if ${possessive(r)} revision is done`,
     buttons: [
       { key: 'followup_done', label: 'Follow-up done', kind: 'resolve', hint: 'Checked in with the designer' },
       { key: 'revision_done', label: 'Revision done', kind: 'resolve', primary: true, hint: 'The revision is finished' },
     ],
   },
-  // 9 — a chain. Each stage is booked only when its button is tapped, and its
+  // 9, a chain. Each stage is booked only when its button is tapped, and its
   // timer starts from that tap, not from the offer.
   offer: {
     on: 'offer',
@@ -587,7 +587,7 @@ export const RULES = {
     cancelOn: 'new_order',
     title: (r) => `Send the 1st follow-up on the offer to ${who(r)}`,
     buttons: [
-      { key: 'order_placed', label: 'Order placed', kind: 'resolve', primary: true, hint: 'Offer converted — the chain ends' },
+      { key: 'order_placed', label: 'Order placed', kind: 'resolve', primary: true, hint: 'Offer converted, the chain ends' },
       { key: 'fu1_done', label: '1st F/U done', kind: 'chain', next: 'offer_fu2', hint: 'Books the 2nd follow-up, 16 hours from now' },
     ],
   },
@@ -599,7 +599,7 @@ export const RULES = {
     cancelOn: 'new_order',
     title: (r) => `Send the 2nd follow-up on the offer to ${who(r)}`,
     buttons: [
-      { key: 'order_placed', label: 'Order placed', kind: 'resolve', primary: true, hint: 'Offer converted — the chain ends' },
+      { key: 'order_placed', label: 'Order placed', kind: 'resolve', primary: true, hint: 'Offer converted, the chain ends' },
       { key: 'fu2_done', label: '2nd F/U done', kind: 'chain', next: 'offer_fu3', hint: 'Books the 3rd follow-up, 36 hours from now' },
     ],
   },
@@ -612,7 +612,7 @@ export const RULES = {
     title: (r) => `Send the 3rd follow-up on the offer to ${who(r)}`,
     buttons: [
       { key: 'order_placed', label: 'Order placed', kind: 'resolve', primary: true, hint: 'Offer converted' },
-      { key: 'fu3_done', label: '3rd F/U done', kind: 'resolve', hint: 'The chain ends here — no more reminders for this offer' },
+      { key: 'fu3_done', label: '3rd F/U done', kind: 'resolve', hint: 'The chain ends here, no more reminders for this offer' },
     ],
   },
   // 10
@@ -651,8 +651,8 @@ export const RULES = {
     alert: true,
     delay: 0,
     note: (e) => String(detail(e, 'what') || ''),
-    title: (r) => `${who(r, 'A client')} is frustrated — handle with caution`,
-    buttons: [{ key: 'solved', label: 'Solved', kind: 'resolve', primary: true, hint: 'Client calmed, issue fixed — removes the caution' }],
+    title: (r) => `${who(r, 'A client')} is frustrated, handle with caution`,
+    buttons: [{ key: 'solved', label: 'Solved', kind: 'resolve', primary: true, hint: 'Client calmed, issue fixed, removes the caution' }],
   },
   // 12
   disputed: {
@@ -660,8 +660,8 @@ export const RULES = {
     alert: true,
     delay: 0,
     note: (e) => String(detail(e, 'reason') || ''),
-    title: (r) => `${possessive(r, 'A client')} dispute is OPEN — on the verge of cancelling, treat cautiously`,
-    buttons: [{ key: 'solved', label: 'Solved', kind: 'resolve', primary: true, hint: 'Dispute closed — removes the caution' }],
+    title: (r) => `${possessive(r, 'A client')} dispute is OPEN, on the verge of cancelling, treat cautiously`,
+    buttons: [{ key: 'solved', label: 'Solved', kind: 'resolve', primary: true, hint: 'Dispute closed, removes the caution' }],
   },
   // 13
   custom_reminder: {
@@ -709,7 +709,7 @@ export function rulesTriggeredBy(activityType) {
   return Object.entries(RULES).filter(([, rule]) => !rule.chained && rule.on === activityType);
 }
 
-/** A reminder row whose rule is gone — an older rule set, or a renamed key.
+/** A reminder row whose rule is gone, an older rule set, or a renamed key.
  *  It still has to be clearable, so it gets a stated fallback rather than a
  *  row with no way out of it. */
 const ORPHAN_RULE = {
@@ -721,6 +721,37 @@ const ORPHAN_RULE = {
 };
 
 const ruleFor = (rem) => RULES[String(rem?.rule ?? '')] || ORPHAN_RULE;
+
+/**
+ * WHAT A REMINDER IS CALLED, the stored heading, always.
+ *
+ * `lib/reminders.js` writes `heading` at booking time from the entry's own
+ * detail, and that string is what REMINDER-LOGICS.md specifies, what the audit
+ * row carries, and what the owner's ledger prints. Re-deriving it here from the
+ * columns that survived into the queue produced a DIFFERENT sentence on four of
+ * the thirteen rules, because the two rule tables were written from the same
+ * spec on different days:
+ *
+ *   rule 2   the engine books "Send the 2nd follow-up" after a 1st is logged;
+ *            this file rebuilt it from `note`, the engine's `body` column,
+ *            which reads "1st follow-up logged", and told the CSR to send the
+ *            1st again. The wrong follow-up, on the rule whose entire content
+ *            is which follow-up comes next.
+ *   rules 5,6 hardcoded "the client" and dropped the buyer the engine had.
+ *   rule 10  printed the project name where the delivered ITEM belongs
+ *            ("the india draft" for what was booked as "the initial draft").
+ *
+ * A card is a title plus buttons; if the title can drift from the rule that
+ * booked it, the buttons are answering a different question than the sentence
+ * above them. So the rule table keeps its delays, buttons and prose, the
+ * things the log form needs before a reminder exists, and stops being a second
+ * opinion about what an existing one says. `title()` is the fallback for a row
+ * with no heading, which the NOT NULL column means is only ever an orphan.
+ */
+function titleOf(rem) {
+  const stored = String(rem?.heading ?? '').trim();
+  return stored || ruleFor(rem).title(rem);
+}
 
 function who(rem, fallback = 'the client') {
   const name = String(rem?.client ?? '').trim();
@@ -810,19 +841,35 @@ function clockPKT(value) {
 const activityLabel = (key) => ACTIVITY_BY_KEY[String(key ?? '')]?.label || null;
 
 /** The one-line context under a reminder's title. Nothing invented: every
- *  part is omitted when it is absent rather than filled with a placeholder. */
+ *  part is omitted when it is absent rather than filled with a placeholder.
+ *
+ *  `note` is the engine's `body`, and several rules already open it with the
+ *  order ref, rule 7's is "Foxtrot Set · Designer: Nadir". Printing the
+ *  generic `Project:` part as well read "Project: Foxtrot Set · Foxtrot Set ·
+ *  Designer: Nadir", which looks like two different projects at a glance. The
+ *  note is the rule's own sentence and wins; the generic part fills in only
+ *  where the rule left the project out. */
 function reminderMeta(rem, rule) {
+  const note = String(rem.note ?? '').trim();
+  const project = String(rem.project ?? '').trim();
+  const noteNamesProject =
+    project !== '' &&
+    note
+      .split('·')
+      .map((s) => s.trim())
+      .includes(project);
+
   const bits = [
     rule.on ? activityLabel(rule.on) : null,
     rem.client || null,
-    rem.project ? `Project: ${rem.project}` : null,
-    rem.note || null,
+    project && !noteNamesProject ? `Project: ${project}` : null,
+    note || null,
   ].filter(Boolean);
   return bits;
 }
 
 // ============================================================================
-// 5. R6 — THE REVIEW-ASK REFEREE
+// 5. R6. THE REVIEW-ASK REFEREE
 // ============================================================================
 //
 // Rule 5 of the spec books a Public Review ask 30 minutes after an order is
@@ -831,7 +878,7 @@ function reminderMeta(rem, rule) {
 // is where the collision is settled.
 //
 // `flagged` is a map from the join key (the normalised Fiverr username) to the
-// reason that buyer must not be asked — a stale order out of the engine's
+// reason that buyer must not be asked, a stale order out of the engine's
 // recovery block, or an open dispute logged on this very page. A HELD reminder
 // still shows: it is named, the reason is stated with the order's age, and it
 // can be closed without the ask. It is never deleted (the CSR would never know
@@ -946,7 +993,7 @@ function fieldBlock(activity, field) {
 }
 
 /** The chooser. Six chips for the six that get used, then the whole catalogue
- *  behind one disclosure — so the common case is one tap and the rare case is
+ *  behind one disclosure, so the common case is one tap and the rare case is
  *  two, and neither buries the reminders above it. */
 function activityChooser(open) {
   const link = (key) => `/reports?log=${encodeURIComponent(key)}`;
@@ -986,7 +1033,7 @@ function activityForm(activity, { csrfToken, reportId, backTo }) {
         Saving this books
         ${join(
           books.map(
-            (b) => html`<strong>${b.alert ? 'a standing caution' : 'a reminder'}</strong> — ${b.after || missing('when')}${b.when ? html`, ${b.when}` : ''}`
+            (b) => html`<strong>${b.alert ? 'a standing caution' : 'a reminder'}</strong>, ${b.after || missing('when')}${b.when ? html`, ${b.when}` : ''}`
           ),
           ', and '
         )}. It belongs to the profile, so it pops for whoever is covering it, on any shift.
@@ -1024,7 +1071,7 @@ function activityForm(activity, { csrfToken, reportId, backTo }) {
 //
 // Frustrated and disputed clients are not cards in the queue. They are a
 // standing block at the top of the page that every shift sees until someone
-// marks it solved, and there is no snooze button on them at all — not a
+// marks it solved, and there is no snooze button on them at all, not a
 // disabled one, not a hidden one. A caution you can dismiss for five minutes
 // is a caution nobody reads.
 
@@ -1032,7 +1079,7 @@ function alertBlock(alerts, { csrfToken, backTo }) {
   if (!alerts.length) return '';
 
   return html`<section class="block" aria-labelledby="reports-care">
-      <h3 id="reports-care">${glyph('crit')} Handle with care — ${num(alerts.length)}</h3>
+      <h3 id="reports-care">${glyph('crit')} Handle with care, ${num(alerts.length)}</h3>
       ${join(
         alerts.map((rem) => {
           const rule = ruleFor(rem);
@@ -1041,7 +1088,7 @@ function alertBlock(alerts, { csrfToken, backTo }) {
             rem.created_by ? `Logged by ${rem.created_by}` : null,
           ].filter(Boolean);
           return html`<div class="note note--neg">
-            <strong>${rule.title(rem)}</strong>
+            <strong>${titleOf(rem)}</strong>
             ${rem.note ? html`<p>${rem.note}</p>` : ''}
             ${meta.length ? html`<p class="caption">${join(meta, ' · ')} · ${dateTimeShort(rem.created_at)}</p>` : ''}
             <form method="post" action="/reports/reminder" class="btnrow" style="margin-top:10px">
@@ -1060,7 +1107,7 @@ function alertBlock(alerts, { csrfToken, backTo }) {
       )}
       <p class="caption" style="margin-top:12px">
         These stay on the profile across every shift until someone marks them solved. They cannot be snoozed.
-        While one is standing, no review ask goes to that buyer — the hub holds it and says so.
+        While one is standing, no review ask goes to that buyer, the hub holds it and says so.
       </p>
     </section>`;
 }
@@ -1076,7 +1123,7 @@ function reminderCard(rem, { csrfToken, backTo, now, flagged }) {
   const meta = reminderMeta(rem, rule);
 
   // A held review ask keeps one button and loses the rest. Nothing that could
-  // be read as "send it anyway" is rendered — the CSR's only move is to close
+  // be read as "send it anyway" is rendered, the CSR's only move is to close
   // it without asking, and the close is recorded as exactly that.
   const buttons = hold
     ? [{ key: 'held_no_ask', label: 'Close without asking', kind: 'resolve', primary: true }]
@@ -1098,7 +1145,7 @@ function reminderCard(rem, { csrfToken, backTo, now, flagged }) {
 
   return html`<li class="snippet">
       <div class="snippet-head">
-        <h4>${rule.title(rem)}</h4>
+        <h4>${titleOf(rem)}</h4>
         ${waited ? html`<span class="uses">${waited}</span>` : html`<span class="uses">${missing('when')}</span>`}
       </div>
       ${meta.length ? html`<p class="caption">${join(meta, ' · ')}</p>` : ''}
@@ -1133,7 +1180,7 @@ export function render(ctx) {
   // ---- the store is down: say which fact is missing, and stop -------------
   //
   // This is the branch the original got wrong. With Supabase unreachable its
-  // reminder list resolved to [] and the dashboard printed "All caught up" —
+  // reminder list resolved to [] and the dashboard printed "All caught up", 
   // a calm, confident, false all-clear over an unknown number of open
   // disputes. An outage is a fact about the system, never a fact about the
   // work, and the two must not render the same.
@@ -1141,7 +1188,7 @@ export function render(ctx) {
     return {
       title: 'The shift log cannot be read',
       kicker: 'Reports',
-      deck: html`Whether a shift is open, and what is due on it, are both <em>MISSING</em> — not "nothing".`,
+      deck: html`Whether a shift is open, and what is due on it, are both <em>MISSING</em>, not "nothing".`,
       html: html`<div class="figure">
           <span class="cap">Due now</span>
           <strong class="big">${missing()}</strong>
@@ -1203,13 +1250,13 @@ export function render(ctx) {
           <strong class="big">${dueUnknown ? missing() : num(queue.length)}</strong>
           <p class="sub">
             ${dueUnknown
-              ? html`The reminder queue could not be read. This is MISSING, not an empty queue — do not treat
+              ? html`The reminder queue could not be read. This is MISSING, not an empty queue, do not treat
                   this page as an all-clear.`
               : alerts.length
                 ? html`<b>${num(alerts.length)}</b> client${alerts.length === 1 ? '' : 's'} to handle with care
                     first, then ${queue.length ? html`<b>${num(queue.length)}</b> follow-up${queue.length === 1 ? '' : 's'} ready when you are.` : 'nothing else waiting.'}`
                 : queue.length
-                  ? html`Ready when you are — one at a time, and they will wait.
+                  ? html`Ready when you are, one at a time, and they will wait.
                       ${nextAt ? html`Nothing else is due until ${nextAt}.` : ''}`
                   : html`Nothing waiting on ${report.profile}.
                       ${Array.isArray(waitingRows) && waitingRows.length
@@ -1226,13 +1273,13 @@ export function render(ctx) {
             </p>
             <p>
               Snooze is ${String(SNOOZE_MINUTES)} minutes and it is on every ordinary reminder. It is not on a
-              red caution — those clear only when someone marks them solved. Logging one activity books at most
+              red caution, those clear only when someone marks them solved. Logging one activity books at most
               one reminder from each rule, and several rules can fire on the same entry.
             </p>
             <p>
               <strong>No review ask rides on a late or disputed order.</strong> The completion reminder is
               held, named and explained rather than deleted, so nobody has to remember the rule at the moment
-              it matters. Where the flag list itself cannot be read, the ask is held too — an ask this hub
+              it matters. Where the flag list itself cannot be read, the ask is held too, an ask this hub
               cannot prove is safe is the one the rule was written about.
             </p>`
         )}
@@ -1282,7 +1329,7 @@ export function render(ctx) {
         </form>
         <p class="caption" style="margin-top:8px">
           Marking it read tells the last shift their note landed. A note aimed at two shifts has to be read by
-          both — the other one still sees it as unread.
+          both, the other one still sees it as unread.
         </p>
       </section>`
     : '';
@@ -1291,7 +1338,7 @@ export function render(ctx) {
 
   const queueBlock = html`<section class="panel">
       ${panelHead(
-        html`Due now — ${dueUnknown ? missing() : num(queue.length)}`,
+        html`Due now, ${dueUnknown ? missing() : num(queue.length)}`,
         dueUnknown ? 'missing' : 'typed',
         dueUnknown ? 'Queue unreadable' : html`Typed here · ${report.profile}`
       )}
@@ -1315,12 +1362,11 @@ export function render(ctx) {
             html`<ul class="steps">
               ${join(
                 waitingRows.slice(0, 12).map((rem) => {
-                  const rule = ruleFor(rem);
                   const at = clockPKT(rem.due_at);
                   const snoozed = toMs(rem.snoozed_until) !== null;
                   return html`<li>
-                    ${rule.title(rem)}
-                    <span class="caption">— ${snoozed ? 'snoozed until' : 'due'} ${at || dateTimeShort(rem.due_at)}</span>
+                    ${titleOf(rem)}
+                    <span class="caption">, ${snoozed ? 'snoozed until' : 'due'} ${at || dateTimeShort(rem.due_at)}</span>
                   </li>`;
                 })
               )}
@@ -1336,13 +1382,13 @@ export function render(ctx) {
   //
   // The spec asks for five seconds of undo on every reminder action. A toast
   // needs JavaScript and disappears; this is the same promise kept in a way
-  // that survives a page load, a dropped connection and a locked screen — the
+  // that survives a page load, a dropped connection and a locked screen, the
   // ones you cleared, with the button you tapped, and a way back.
 
   const handledBlock =
     Array.isArray(handledRows) && handledRows.length
       ? html`<section class="panel">
-          ${panelHead(html`Handled this shift — ${num(handledRows.length)}`, 'typed', 'Typed here')}
+          ${panelHead(html`Handled this shift, ${num(handledRows.length)}`, 'typed', 'Typed here')}
           <ul class="stack-sm">
             ${join(
               handledRows.map((rem) => {
@@ -1356,7 +1402,7 @@ export function render(ctx) {
                       : String(rem.resolution || 'closed'));
                 return html`<li class="snippet">
                   <div class="snippet-head">
-                    <h4>${rule.title(rem)}</h4>
+                    <h4>${titleOf(rem)}</h4>
                     <span class="uses">${clockPKT(rem.resolved_at) || dateTimeShort(rem.resolved_at)}</span>
                   </div>
                   <p class="caption">${label} · ${rem.resolved_by || missing()}</p>
@@ -1387,7 +1433,7 @@ export function render(ctx) {
       ${openLog
         ? activityForm(openLog, { csrfToken, reportId: report.id, backTo })
         : html`<p class="caption" style="margin-top:14px">
-            Pick what happened and its form opens here. Two taps and a save — the reminders it books appear
+            Pick what happened and its form opens here. Two taps and a save, the reminders it books appear
             above, on this profile, for whoever is covering it when they come due.
           </p>`}
       <datalist id="reports-designers">
@@ -1399,13 +1445,13 @@ export function render(ctx) {
 
   const timelineBlock = html`<section class="panel">
       ${panelHead(
-        html`This shift — ${Array.isArray(activityRows) ? num(activityRows.length) : missing()}`,
+        html`This shift, ${Array.isArray(activityRows) ? num(activityRows.length) : missing()}`,
         Array.isArray(activityRows) ? 'typed' : 'missing',
         Array.isArray(activityRows) ? 'Typed here' : 'Entries unreadable'
       )}
       ${!Array.isArray(activityRows)
         ? html`<p class="note note--neg">
-            ${glyph('crit')} The entries for this shift could not be read. Anything you saved is still saved —
+            ${glyph('crit')} The entries for this shift could not be read. Anything you saved is still saved, 
             this list is MISSING, not empty.
           </p>`
         : activityRows.length
@@ -1418,7 +1464,7 @@ export function render(ctx) {
                       <span class="uses">${clockPKT(a.created_at) || dateTimeShort(a.created_at)}</span>
                     </div>
                     <p class="caption">
-                      ${join([a.client || null, a.project ? `Project: ${a.project}` : null, a.summary || null].filter(Boolean), ' · ') || '—'}
+                      ${join([a.client || null, a.project ? `Project: ${a.project}` : null, a.summary || null].filter(Boolean), ' · ') || 'No detail'}
                     </p>
                     <div class="snippet-actions">
                       <form method="post" action="/reports/activity/remove" class="btnrow">
@@ -1434,7 +1480,7 @@ export function render(ctx) {
             </ul>`
           : empty('Nothing logged yet this shift.')}
       <p class="caption">
-        Removing an entry also clears the reminders it booked — that is the point of removing it. A reminder
+        Removing an entry also clears the reminders it booked, that is the point of removing it. A reminder
         someone has already closed stays closed.
       </p>
     </section>`;
@@ -1469,7 +1515,7 @@ export function render(ctx) {
                 </label>
                 ${item.count
                   ? html`<div class="field">
-                      <label for="c-${item.id}">${item.label} — how many</label>
+                      <label for="c-${item.id}">${item.label}, how many</label>
                       <input id="c-${item.id}" name="count_${item.id}" type="text" inputmode="numeric"
                              value="${savedChecks[`count_${item.id}`] ?? ''}" autocomplete="off">
                       <p class="field-hint">Optional. A blank is "not counted", which is not the same as none.</p>
@@ -1509,7 +1555,7 @@ export function render(ctx) {
       ${handoff
         ? html`<p class="note note--warn">
             ${glyph('warn')} There is an unread note from the last shift above. Read it and mark it noted
-            before closing — it was written for you.
+            before closing, it was written for you.
           </p>`
         : ''}
       <p class="caption">
@@ -1566,7 +1612,7 @@ export function render(ctx) {
 // The name is not a field. It is whoever is signed in, and it is the reason
 // this half of the section needs no roster: an attributed write already knows
 // who made it. What is chosen is the profile being covered and the shift being
-// worked — the two things that decide which reminders are yours.
+// worked, the two things that decide which reminders are yours.
 
 function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
   const suggested = SHIFT_KEYS.includes(String(shiftNow)) ? String(shiftNow) : null;
@@ -1584,7 +1630,7 @@ function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
         <label for="open-profile">Profile you are covering <span class="req" aria-hidden="true">*</span></label>
         <input id="open-profile" name="profile" type="text" autocomplete="off" required>
         <p class="field-hint">
-          No profile list reached the hub from the engine, so type the one you are on. The spelling matters —
+          No profile list reached the hub from the engine, so type the one you are on. The spelling matters, 
           it is what the reminders key on.
         </p>
       </div>`;
@@ -1607,7 +1653,7 @@ function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
         <div class="field">
           <span class="field-label">Signed in as</span>
           <p class="note" style="margin-top:0">
-            <strong>${ctx.user ? ctx.user.name : missing()}</strong> — the shift is logged against this name and
+            <strong>${ctx.user ? ctx.user.name : missing()}</strong>, the shift is logged against this name and
             every entry on it is attributed to it. There is no name field, so there is nothing to mistype.
           </p>
         </div>
@@ -1649,7 +1695,7 @@ function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
           <p>
             It does not create any reminder and it does not clear any. Reminders belong to the profile and
             were booked by whatever was logged before you arrived, possibly by somebody else, possibly on a
-            different shift. They are waiting for whoever covers it — which, once you press this, is you.
+            different shift. They are waiting for whoever covers it, which, once you press this, is you.
           </p>`
       )}
     </section>`;
