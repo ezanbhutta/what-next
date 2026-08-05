@@ -198,4 +198,33 @@ export function deskNow(now = new Date()) {
   };
 }
 
-export default { ROSTER, HANDOVERS, PKT_OFFSET_MINUTES, pktNow, onDutyAt, nextHandover, clock, deskNow };
+export default { ROSTER, HANDOVERS, PKT_OFFSET_MINUTES, pktNow, onDutyAt, nextHandover, clock, deskNow, shiftBand };
+
+/**
+ * Which shift band an hour falls in, using the hub's own three names.
+ *
+ * The roster is people-shaped (Amrah 9-5, Hasnain 5pm-1am, Nadir 9pm-9am) and
+ * those overlap, so "who is on" cannot be turned into one band without a
+ * choice. The choice made here is the handover that OPENS each band, which is
+ * how the desk actually talks about it:
+ *
+ *   Morning  09:00, the day opens
+ *   Evening  17:00, Hasnain joins
+ *   Night    21:00, Nadir joins
+ *
+ * It matches shift_report.shift so an activity row and a shift report can be
+ * compared. Storing the clock instead, which is what this replaced, put
+ * "22:38 PKT" in a column named `shift` and made that comparison impossible.
+ */
+export function shiftBand(hour) {
+  // Number(null) is 0, which is finite, so a bare Number.isFinite check let
+  // null through and reported it as Night. An hour nobody supplied is not
+  // midnight.
+  if (typeof hour !== 'number' && typeof hour !== 'string') return null;
+  if (hour === '') return null;
+  const h = Number(hour);
+  if (!Number.isFinite(h) || h < 0 || h > 23) return null;
+  if (h >= 9 && h < 17) return 'Morning';
+  if (h >= 17 && h < 21) return 'Evening';
+  return 'Night';
+}

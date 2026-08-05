@@ -370,9 +370,27 @@ CREATE TABLE IF NOT EXISTS shift_handoff_read (
 -- one field for both — "Order Assigned to Designer" put the project name in the
 -- column called `client` — which is why its reminders could only ever be
 -- matched by project. Here they are two columns.
+-- WHY report_id IS NULLABLE
+--
+-- It was NOT NULL, which meant a CSR had to open and submit a shift report in
+-- this hub before they could log a single thing they had done. That is the
+-- wrong shape here: the shift report is a UNIVERSAL system shared by all ten
+-- profiles and it stays where it is. What XStudioz wants in its own hub is the
+-- work itself — every inquiry, follow-up, conversation and order a CSR handles.
+--
+-- So an activity row now stands on its own. `author` is whoever is signed in
+-- (never a typed name, so it cannot be filed under a misspelling), `at` is
+-- when, and `shift` is what the ROSTER says was on the desk at that moment.
+-- The shift is stored rather than derived on read because the roster changes:
+-- deriving it later would silently rewrite who was on duty last month.
+--
+-- report_id stays, and stays a foreign key, so a row logged during a shift
+-- that IS open in the hub still attaches to it. NULL means "logged without an
+-- open shift", which is now the normal case, not an error.
 CREATE TABLE IF NOT EXISTS activity (
   id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-  report_id   BIGINT NOT NULL,
+  report_id   BIGINT NULL,
+  shift       VARCHAR(20) NULL,
   kind        ENUM('inquiry','lead_followup','client_conversation',
                    'new_order','order_assigned','files_assigned','order_completed',
                    'revision_assigned',
@@ -392,6 +410,8 @@ CREATE TABLE IF NOT EXISTS activity (
     REFERENCES shift_report(id) ON DELETE CASCADE,
   INDEX idx_activity_report (report_id, at),
   INDEX idx_activity_kind (kind, at),
+  -- "what did this person do today", the query the log page runs on load.
+  INDEX idx_activity_author (author, at),
   INDEX idx_activity_client (client_key, at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

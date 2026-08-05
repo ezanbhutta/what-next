@@ -84,7 +84,7 @@ import {
 } from './lib/data.js';
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
-import { deskNow } from './lib/roster.js';
+import { deskNow, shiftBand } from './lib/roster.js';
 import { loadDueDates, setDueDate, clearDueDate } from './lib/duedates.js';
 
 // The six owner-written documents. Read from data/handbook/, parsed out of
@@ -2136,6 +2136,12 @@ app.post(
 //
 // `lib/reminders.js` decides WHAT is owed. This code only writes it down.
 
+// This hub is XStudioz and only XStudioz. The shift-report system it grew out
+// of served ten profiles, so every row there carries a profile column; here
+// there is exactly one, and asking a CSR to pick it on every entry would be a
+// field whose only possible wrong answer is somebody else's data.
+const HUB_PROFILE = 'X Studioz';
+
 const REPORT_BACK = '/reports';
 
 /** Must match the ENUM in db/schema.sql and SHIFTS in views/reports.js. */
@@ -2271,8 +2277,12 @@ app.post(
   ...write('reports', REPORT_BACK, async (req) => {
     const person = str(req.user?.name, 80);
     const kind = oneOf(req.body.type, ACTIVITY_KIND_KEYS);
+    // report_id is now OPTIONAL. The shift report is the universal system
+    // shared by all ten profiles and it stays there; this hub logs the work
+    // itself. Requiring an open shift here meant a CSR had to submit a report
+    // in two places before they could record a single inquiry.
     const reportId = intOrNull(req.body.report_id);
-    if (!person || !kind || reportId === null) return { error: 'invalid' };
+    if (!person || !kind) return { error: 'invalid' };
 
     const detail = detailFrom(req.body);
     const client = str(detail.client, 120);
@@ -2298,10 +2308,19 @@ app.post(
 
     try {
       const outcome = await auditedWrite(req, 'shift_activity', { kind, client, order_ref: orderRef }, async (t) => {
-        const shift = await openShiftOf(t, person, reportId);
-        // Not an exception. A shift closed in another tab is an ordinary thing
-        // that happens, and it deserves a sentence rather than a stack trace.
-        if (!shift) return 'noshift';
+        // An open shift is used when there is one, because a row that belongs
+        // to a shift should say so. When there is not, the roster answers both
+        // questions the row needs: which shift this hour is, and that the hub
+        // is XStudioz. Neither is typed, so neither can be filed wrong.
+        const shift = reportId === null
+          ? await openShiftOf(t, person)
+          : await openShiftOf(t, person, reportId);
+        if (reportId !== null && !shift) return 'noshift';
+
+        const desk = deskNow();
+        const reportRef = shift ? shift.id : null;
+        const profile = shift ? shift.profile : HUB_PROFILE;
+        const shiftName = shift ? shift.shift : shiftBand(desk.hour);
 
         // HOUSE RULE 5, at the point of booking. A completion for a buyer with
         // a standing caution or a stale order books NO public-review ask at
@@ -2309,12 +2328,14 @@ app.post(
         // second time for buyers who become flagged after it was booked; both
         // layers are needed because the two failures happen at different
         // moments and neither catches the other's.
-        const flags = await reviewFlagsFor(t, shift.profile, client);
+        const flags = await reviewFlagsFor(t, profile, client);
 
         const res = await t.run(
-          'INSERT INTO activity (report_id, kind, client, client_key, order_ref, detail, author) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO activity (report_id, shift, kind, client, client_key, order_ref, detail, author) ' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
           [
-            shift.id,
+            reportRef,
+            shiftName,
             kind,
             client,
             client ? buyerKey(client) : null,
@@ -2327,8 +2348,10 @@ app.post(
 
         const activity = {
           id: activityId,
-          report_id: shift.id,
-          profile: shift.profile,
+          report_id: reportRef,
+          // Reminders are profile-scoped and this hub is one profile, so the
+          // reminder still keys correctly with no shift open.
+          profile,
           kind,
           client,
           order_ref: orderRef,
@@ -2348,7 +2371,7 @@ app.post(
         //    close work they never needed to do.
         const open = await t.query(
           "SELECT * FROM reminder WHERE profile = ? AND state <> 'resolved'",
-          [shift.profile]
+          [profile]
         );
         for (const { reminder } of autoClears(activity, open, { by: person })) {
           await saveReminderState(t, reminder);
@@ -2378,11 +2401,13 @@ app.post(
     if (!person || activityId === null) return { error: 'invalid' };
 
     const removed = await auditedWrite(req, 'shift_activity_remove', { activity_id: activityId }, async (t) => {
-      const shift = await openShiftOf(t, person);
-      if (!shift) return false;
-      const row = await t.queryOne('SELECT id, kind FROM activity WHERE id = ? AND report_id = ?', [
+      // Scoped to the AUTHOR, not to an open shift. Matching on report_id
+      // meant an entry logged without a shift could never be removed, which
+      // is every entry now. Author is the right scope anyway: you can undo
+      // what you logged, and only what you logged.
+      const row = await t.queryOne('SELECT id, kind FROM activity WHERE id = ? AND author = ?', [
         activityId,
-        shift.id,
+        person,
       ]);
       if (!row) return false;
 

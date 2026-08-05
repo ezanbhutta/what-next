@@ -49,6 +49,7 @@
 //       coarse pointer. No table, so nothing scrolls sideways at 375px.
 
 import { normaliseBuyer } from '../lib/reconcile.js';
+import { deskNow, clock } from '../lib/roster.js';
 
 import {
   html,
@@ -1042,7 +1043,9 @@ function activityForm(activity, { csrfToken, reportId, backTo }) {
 
   return html`<form method="post" action="/reports/activity">
       <input type="hidden" name="_csrf" value="${csrfToken}">
-      <input type="hidden" name="report_id" value="${String(reportId)}">
+      ${reportId === null || reportId === undefined
+        ? ''
+        : html`<input type="hidden" name="report_id" value="${String(reportId)}">`}
       <input type="hidden" name="type" value="${activity.key}">
       <input type="hidden" name="back" value="${backTo}">
       <fieldset class="form-section">
@@ -1207,9 +1210,20 @@ export function render(ctx) {
 
   const profiles = Array.isArray(d.profiles) ? d.profiles : [];
 
-  // ---- no shift open: the only thing to do is open one --------------------
+  // ---- no shift open ------------------------------------------------------
+  //
+  // This used to return openShiftView() and stop: nothing could be logged
+  // until a shift was opened here. That was right when this page WAS the
+  // shift-report system. It is not any more — the shift report is the
+  // universal system across all ten profiles and it stays there, and what
+  // this hub wants is the work: every inquiry, follow-up and conversation,
+  // logged as it happens.
+  //
+  // So logging is always open. The roster already knows which shift this hour
+  // is and who should be on it, and the signed-in name says who actually is,
+  // so nothing here needs to be typed or chosen first.
   if (!report) {
-    return openShiftView(ctx, { csrfToken, profiles, shiftNow: d.shiftNow, date: d.date });
+    return logOnlyView(ctx, { csrfToken, date: d.date });
   }
 
   // ---- a shift is open ----------------------------------------------------
@@ -1610,6 +1624,75 @@ export function render(ctx) {
 // this half of the section needs no roster: an attributed write already knows
 // who made it. What is chosen is the profile being covered and the shift being
 // worked, the two things that decide which reminders are yours.
+
+/**
+ * The page when no shift is open in this hub, which is the normal case.
+ *
+ * Everything a CSR does is logged from here. There is no "open a shift" step,
+ * because the shift report lives in the universal system shared by all ten
+ * profiles, and asking somebody to declare a shift twice before recording one
+ * inquiry is how a log stops being kept.
+ *
+ * The roster supplies the context the entry needs: which shift this hour is,
+ * and who should be on it. The signed-in name supplies who actually is. If
+ * those two disagree the page says so — quietly, as information, not as an
+ * error, because covering somebody else's shift is a normal Tuesday and the
+ * log should record it rather than argue about it.
+ */
+function logOnlyView(ctx, { csrfToken, date }) {
+  const desk = deskNow();
+  const me = ctx.user?.name || null;
+  const rostered = desk.names || [];
+  const onRoster = me ? rostered.includes(me) : false;
+  const openLog = ctx.query?.log ? ACTIVITY_BY_KEY[String(ctx.query.log)] : null;
+
+  const context = html`<div class="figure">
+      <span class="cap">On the desk now</span>
+      <strong class="mid">${rostered.length ? rostered.join(', ') : missing()}</strong>
+      <p class="sub">
+        ${desk.label}, ${desk.day}.
+        ${me
+          ? onRoster
+            ? html`You are on the roster for this hour, so anything you log is filed under
+                <b>${me}</b> and this shift.`
+            : html`The roster does not have <b>${me}</b> on right now. That is fine and it is
+                logged as it is. Covering someone is normal, and the entry records who actually did
+                the work rather than who was scheduled to.`
+          : ''}
+      </p>
+    </div>`;
+
+  const body = html`${context}
+    ${why(
+      'Why there is no shift to open here',
+      html`<p>
+          The shift report is one system shared by every profile, and it stays there. This hub wants
+          the work: every inquiry, follow-up, conversation, order and delivery, logged as it happens.
+        </p>
+        <p>
+          Nothing below needs a shift to be declared first. Your name comes from being signed in, so
+          an entry cannot be filed under a misspelling, and the shift is whatever the roster says this
+          hour is. Both are recorded on the row.
+        </p>`
+    )}
+    <h2 class="sec">Log what you just did</h2>
+    ${activityChooser(openLog?.key || null)}
+    ${openLog
+      ? activityForm(openLog, { csrfToken, reportId: null, backTo: '/reports' })
+      : html`<p class="caption">Pick what happened. Each one asks only for what it needs.</p>`}`;
+
+  return {
+    title: 'Log',
+    kicker: 'Reports',
+    ticker: [
+      { label: 'On the desk', value: String(desk.depth), sub: desk.alone ? 'one person' : 'people' },
+      { label: 'Now', value: desk.label, sub: desk.day },
+      { label: 'Next handover', value: desk.next ? clock(desk.next.hour) : missing(),
+        sub: desk.next ? desk.next.what : 'PKT' },
+    ],
+    html: body,
+  };
+}
 
 function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
   const suggested = SHIFT_KEYS.includes(String(shiftNow)) ? String(shiftNow) : null;

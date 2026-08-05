@@ -239,6 +239,26 @@ export async function migrate({ dryRun = false, log = console.log } = {}) {
     }
   }
 
+  // activity.report_id was NOT NULL, which forced a CSR to open a shift report
+  // in this hub before logging anything. The shift report is the universal
+  // cross-profile system and stays there; the hub logs the work. Widening a
+  // column to NULL cannot lose a row.
+  if (after.has('activity')) {
+    const nullable = await query(
+      "SELECT is_nullable FROM information_schema.columns " +
+        "WHERE table_schema = DATABASE() AND table_name = 'activity' AND column_name = 'report_id'"
+    );
+    if (nullable[0] && String(nullable[0].is_nullable).toUpperCase() === 'NO') {
+      await raw('ALTER TABLE activity MODIFY COLUMN report_id BIGINT NULL');
+      fixups.push('activity.report_id widened to NULL (logging no longer needs an open shift)');
+    }
+    const cols = await existingColumns('activity');
+    if (![...cols].some((c) => c.toLowerCase() === 'shift')) {
+      await raw('ALTER TABLE activity ADD COLUMN shift VARCHAR(20) NULL AFTER report_id');
+      fixups.push('activity.shift added (what the roster said was on the desk)');
+    }
+  }
+
   for (const f of fixups) log(`[migrate] fixup: ${f}`);
 
   // Drift check. The part IF NOT EXISTS cannot do for you.
