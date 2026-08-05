@@ -603,7 +603,7 @@ const SHELL_JS = `
       list=document.getElementById('replies-list'),
       q=document.getElementById('replies-q');
   if(!openBtn||!panel||!list) return;
-  var all=null, where='', loaded=false;
+  var all=null, kind='', loaded=false;
 
   function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
 
@@ -616,8 +616,7 @@ const SHELL_JS = `
   function draw(){
     var needle=(q&&q.value||'').trim().toLowerCase();
     var rows=(all||[]).filter(function(r){
-      if(where==='fiverr' && r.source!=='fiverr') return false;
-      if(where==='hub' && r.source==='fiverr') return false;
+      if(kind && r.kind!==kind) return false;
       if(!needle) return true;
       return ((r.name||'')+' '+(r.when_to_use||'')+' '+(r.body||'')+' '+(r.category||''))
         .toLowerCase().indexOf(needle)>=0;
@@ -659,10 +658,10 @@ const SHELL_JS = `
   if(q) q.addEventListener('input',draw);
 
   panel.addEventListener('click',function(e){
-    var seg=e.target.closest('[data-where]');
+    var seg=e.target.closest('[data-kind]');
     if(seg){
-      where=seg.getAttribute('data-where')||'';
-      panel.querySelectorAll('[data-where]').forEach(function(b){
+      kind=seg.getAttribute('data-kind')||'';
+      panel.querySelectorAll('[data-kind]').forEach(function(b){
         b.setAttribute('aria-current', b===seg ? 'true' : 'false');
       });
       draw(); return;
@@ -859,10 +858,10 @@ function repliesDrawer(ctx) {
       <div class="replies-tools">
         <label class="sr-only" for="replies-q">Search replies</label>
         <input id="replies-q" type="search" placeholder="Search what they asked" autocomplete="off">
-        <div class="segment segment--sm" role="group" aria-label="Where the reply lives">
-          <button type="button" data-where="" aria-current="true">All</button>
-          <button type="button" data-where="fiverr">In Fiverr</button>
-          <button type="button" data-where="hub">Hub only</button>
+        <div class="segment segment--sm" role="group" aria-label="Kind of reply">
+          <button type="button" data-kind="" aria-current="true">All</button>
+          <button type="button" data-kind="quick">Templates</button>
+          <button type="button" data-kind="case">Cases</button>
         </div>
       </div>
       <div class="replies-list" id="replies-list">

@@ -17,6 +17,10 @@ import { query, run, closePool, dbConfigured, missingEnv, DbError } from '../lib
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RESPONSES_PATH = path.join(HERE, '..', 'data', 'responses.json');
+//: The owner's real quick-replies, exported from the XStudioz Resources sheet.
+//: Loaded alongside the talk projection; the two are different KINDS and the
+//: page keeps them apart.
+const QUICK_PATH = path.join(HERE, '..', 'data', 'quick-responses.json');
 
 // ------------------------------------------------------------------ people
 //
@@ -186,33 +190,44 @@ export function normaliseResponses(parsed) {
       when_to_use: item?.when_to_use ?? item?.when ?? null,
       category: item?.category ? String(item.category).slice(0, 60) : null,
       source,
+      kind: ['quick', 'case'].includes(item?.kind) ? item.kind : 'quick',
     });
   }
   return { usable, rejected };
 }
 
 async function seedResponses(log, { refresh = false } = {}) {
-  if (!fs.existsSync(RESPONSES_PATH)) {
+  // Both libraries, in one pass. The sheet's quick replies go first so that if
+  // a name ever collides, the owner's real template wins the unique key and the
+  // derived line is the one skipped.
+  const sources = [QUICK_PATH, RESPONSES_PATH].filter((f) => fs.existsSync(f));
+  if (!sources.length) {
     log(`[seed] response: skipped, no ${path.relative(process.cwd(), RESPONSES_PATH)}`);
     return { skipped: true };
   }
 
-  let parsed;
-  try {
-    parsed = JSON.parse(fs.readFileSync(RESPONSES_PATH, 'utf8'));
-  } catch (err) {
-    log(`[seed] response: SKIPPED, ${path.basename(RESPONSES_PATH)} is not valid JSON (${err.message})`);
-    return { skipped: true, error: err.message };
+  const usable = [];
+  const rejected = [];
+  for (const file of sources) {
+    let parsed;
+    try {
+      parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (err) {
+      // One unreadable file must not silently drop the other. Say which.
+      log(`[seed] response: SKIPPED ${path.basename(file)}, not valid JSON (${err.message})`);
+      continue;
+    }
+    const part = normaliseResponses(parsed);
+    usable.push(...part.usable);
+    rejected.push(...part.rejected);
   }
-
-  const { usable, rejected } = normaliseResponses(parsed);
   let inserted = 0;
   let refreshed = 0;
 
   for (const r of usable) {
     const result = await run(
-      'INSERT IGNORE INTO response (name, body, when_to_use, category, source) VALUES (?, ?, ?, ?, ?)',
-      [r.name, r.body, r.when_to_use, r.category, r.source]
+      'INSERT IGNORE INTO response (name, body, when_to_use, category, source, kind) VALUES (?, ?, ?, ?, ?, ?)',
+      [r.name, r.body, r.when_to_use, r.category, r.source, r.kind]
     );
     if (result.affectedRows) {
       inserted += 1;

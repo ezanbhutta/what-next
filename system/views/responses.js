@@ -526,6 +526,13 @@ function toolbar(filters, categories, shown, total) {
 function addPanel(ctx, back) {
   return html`<section class="panel">
       ${panelHead('Add a reply', 'typed', 'Typed here · MySQL · source hub')}
+      <div class="field">
+        <label for="new-kind">What kind</label>
+        <select id="new-kind" name="kind">
+          <option value="quick" selected>Quick response, a whole message ready to send</option>
+          <option value="case">Case, one line answering one thing a buyer said</option>
+        </select>
+      </div>
       <form method="post" action="/responses" class="stack-sm">
         <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
         <input type="hidden" name="back" value="${back}">

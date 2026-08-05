@@ -259,6 +259,17 @@ export async function migrate({ dryRun = false, log = console.log } = {}) {
     }
   }
 
+  if (after.has('response')) {
+    const cols = await existingColumns('response');
+    if (![...cols].some((c) => c.toLowerCase() === 'kind')) {
+      await raw("ALTER TABLE response ADD COLUMN kind ENUM('quick','case') NOT NULL DEFAULT 'quick' AFTER source");
+      // Everything already loaded came from the talk playbook, so it is a case.
+      // New rows default to 'quick', which is what a person typing one means.
+      await raw("UPDATE response SET kind = 'case' WHERE category <> 'Quick responses'");
+      fixups.push('response.kind added, existing rows classified as cases');
+    }
+  }
+
   for (const f of fixups) log(`[migrate] fixup: ${f}`);
 
   // Drift check. The part IF NOT EXISTS cannot do for you.

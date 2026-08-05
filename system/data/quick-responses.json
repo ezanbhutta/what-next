@@ -1,0 +1,93 @@
+[
+ {
+  "name": "Final General",
+  "body": "Hi {username},\n\nYour assets are ready, and everything is attached to this delivery.\n\nI have also added a Drive link below so you can download everything in one go.\n{drive link}\n\nEverything from your package is in there and ready to use straight away. If you are happy with how it turned out, you can go ahead and mark the order as complete whenever you get a moment.\n\nIt was a good project to work on. If you need anything for the brand later, just message me right here. I already have your files and your style saved, so future work will be faster and more consistent.\n\nThanks,\nTeam XStudioz",
+  "when_to_use": "When delivering the Logo files or for a general use.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Final Logo+Addon",
+  "body": "Hi {username},\n\nYour complete brand package is ready and attached to this delivery. The full folder is also available at the link below if you prefer a single download.\n{drive link}\n\nThe package includes your logo, [stationery / brand guidelines / full identity set] and all supporting files, arranged in clearly labeled folders. Once you have reviewed everything, you can mark the order as complete.\n\nIt has been a pleasure working on this project. If you need anything further for the brand, you can reach us here at any time.\n\nThanks,\nTeam XStudioz",
+  "when_to_use": "When sharing the logo and any additional items.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks General",
+  "body": "Hi {username},\n\nThank you for placing your order with us. It has been received and passed to our team.\n\nYour requirements are now with the team and the design stage begins from there. If anything needs clarifying once we have been through them, we will come back to you here before going any further.\n\nYour first designs will be with you within the delivery date shown on your order. These show you the direction we have taken. Have a proper look when they arrive and let us know what you think.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "A general thank you message for anything.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks Basic",
+  "body": "Hi {username},\n\nThank you for placing your order with us. It has been received and passed to our team.\n\nYour requirements are now with the team and the design stage begins from there. If anything needs clarifying once we have been through them, we will come back to you here before going any further.\n\nYour first logo designs will be with you within the delivery date shown on your order. These show you the direction we have taken. Have a proper look when they arrive and let us know what you think.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "Thank you message for Basic Package. Change when the requirements message are already shared.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks Standard",
+  "body": "Hi {username},\n\nThank you for placing your order with us. It has been received and passed to our team.\n\nYour requirements are now with the team and the design stage begins from there. If anything needs clarifying once we have been through them, we will come back to you here before going any further.\n\nYour first logo designs will be with you within the delivery date shown on your order. These show you the direction we have taken. Have a proper look when they arrive and let us know what you think.\n\nOnce you have told us which one you would like to go with, we produce your stationery design kit. So taking them in this order keeps the whole set consistent and means you only look at each item once.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "Thank you message for Standard Package. Change when the requirements message are already shared.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks Premium",
+  "body": "Hi {username},\n\nThank you for placing your order with us. It has been received and passed to our team.\n\nYour requirements are now with the team and the design stage begins from there. If anything needs clarifying once we have been through them, we will come back to you here before going any further.\n\nYour first logo designs will be with you by the delivery date shown on your order. These show you the direction we have taken. Have a proper look when they arrive and let us know what you think.\n\nOnce you have told us which one you would like to go with, we produce everything else in your package using it. Working this way keeps the whole set consistent and saves you from looking at the same thing twice.\n\nYou will hear from us as each stage is ready rather than everything arriving at the end.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "Thank you message for Premium Package. Change when the requirements message are already shared.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks W/O Requirements",
+  "body": "Hi {username},\n\nThank you for choosing us for your project. We are glad to have you with us.\n\nThe next step is the requirements form on your order page. Once you have completed that, everything comes through to our team and we get started.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "Share when the order is placed but requirements are not filled.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "After Delivery F-UP",
+  "body": "Hi {username},\n\nWe are writing to confirm that your delivery has reached you on the order page and that everything has downloaded correctly.\n\nKindly let us know once you have reviewed it. If you are satisfied with the work, you may mark the order as complete at your convenience.\n\nBest regards,\nTeam XStudioz",
+  "when_to_use": "Follow up after final delivery.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Initial-Complete-F-UP",
+  "body": "Hi {username},\n\nThank you for marking the order as complete.\n\nJust to confirm, what has been shared so far is the first stage of your project. We will continue working with you here until everything is finalised, and anything remaining will be sent across in this chat.\n\nKindly let us know your thoughts whenever you are ready.\n\nBest regards,\nTeam XStudioz",
+  "when_to_use": "When client completes the order on initial draft.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Initial-A-Complete F-UP",
+  "body": "Hi {username},\n\nYour order now shows as complete on the order page. This happens automatically three days after a delivery is sent, so no action was needed from you.\n\nNothing has changed on our side. We have attached everything here again for your convenience, and this remains the first stage of your project. We will carry on working with you here until it is finalised.\n\nKindly let us know your thoughts whenever it suits you.\n\nBest regards,\nTeam XStudioz",
+  "when_to_use": "When client's order auto completes on initial draft.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Final-Complete-F-UP",
+  "body": "Hi {username},\n\nThank you for marking the order as complete, and for working with us on this project.\n\nEverything is available for you on the order page. Should you have any difficulty opening or downloading it, do let us know and we will send it across again.\n\nBest regards,\nTeam XStudioz",
+  "when_to_use": "When client completes the order on final draft.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Final-A-Complete F-UP",
+  "body": "Hi {username},\n\nYour order now shows as complete on the order page. This happens automatically three days after a delivery is sent.\n\nWe have attached everything here again so you have it all to hand. Kindly confirm you have been able to download it, and if anything needs attention, do let us know here.\n\nBest regards,\nTeam XStudioz",
+  "when_to_use": "When client's order auto completes on final draft.",
+  "category": "Quick responses",
+  "source": "fiverr"
+ },
+ {
+  "name": "Thanks Vector",
+  "body": "Hi {username},\n\nThank you for placing your order with us. It has been received and passed to our team.\n\nYour order is now with the team and the work begins from there. If anything needs clarifying once we have been through it, we will come back to you here before going any further.\n\nYour files will be with you by the delivery date shown on your order.\n\nKind regards,\nTeam XStudioz",
+  "when_to_use": "When the order is an image-to-vector conversion of the logo.",
+  "category": "Quick responses",
+  "source": "extra"
+ }
+]

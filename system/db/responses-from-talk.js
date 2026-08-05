@@ -65,6 +65,7 @@ export function build() {
         when_to_use: when,
         category: card.heading || null,
         source: inFiverr ? 'fiverr' : 'extra',
+        kind: 'case',
       });
     }
   }

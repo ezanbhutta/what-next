@@ -1796,8 +1796,8 @@ app.get(
   wrap(async (req, res) => {
     try {
       const rows = await query(
-        'SELECT id, name, body, when_to_use, category, source, uses FROM response ' +
-          'WHERE active = 1 ORDER BY source = \'fiverr\' DESC, category IS NULL, category, name'
+        'SELECT id, name, body, when_to_use, category, source, kind, uses FROM response ' +
+          "WHERE active = 1 ORDER BY kind = 'quick' DESC, source = 'fiverr' DESC, name"
       );
       res.set('Cache-Control', 'no-store').json({ ok: true, replies: rows });
     } catch (err) {
@@ -2012,6 +2012,9 @@ app.post(
     if (!name || !body) return { error: 'invalid' };
     const whenToUse = str(req.body.when_to_use, 4000);
     const category = str(req.body.category, 60);
+    // A whole message by default, because that is what somebody typing a new
+    // reply almost always means. A conversation line is the deliberate choice.
+    const kind = oneOf(req.body.kind, ['quick', 'case']) || 'quick';
 
     await auditedWrite(req, id ? 'response_update' : 'response_create', { id, name }, (t) =>
       id
@@ -2020,9 +2023,11 @@ app.post(
             [name, body, whenToUse, category, id]
           )
         : t.run(
-            "INSERT INTO response (name, body, when_to_use, category, source) VALUES (?, ?, ?, ?, 'hub') " +
-              'ON DUPLICATE KEY UPDATE body = VALUES(body), when_to_use = VALUES(when_to_use), category = VALUES(category)',
-            [name, body, whenToUse, category]
+            'INSERT INTO response (name, body, when_to_use, category, source, kind) ' +
+              "VALUES (?, ?, ?, ?, 'hub', ?) " +
+              'ON DUPLICATE KEY UPDATE body = VALUES(body), when_to_use = VALUES(when_to_use), ' +
+              'category = VALUES(category), kind = VALUES(kind)',
+            [name, body, whenToUse, category, kind]
           )
     );
     return { ok: 'response' };

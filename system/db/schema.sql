@@ -149,6 +149,12 @@ CREATE TABLE IF NOT EXISTS response (
   when_to_use  TEXT         NULL,
   category     VARCHAR(60)  NULL,
   source       ENUM('fiverr','extra','hub') NOT NULL DEFAULT 'hub',
+  -- WHAT KIND OF REPLY THIS IS, which is not the same as where it lives.
+  --   quick  a whole message, ready to send: "Thanks Standard", "Final General".
+  --   case   one line for one thing a buyer said, out of the talk playbook.
+  -- They mix badly in a single list: a CSR hunting for the delivery template
+  -- should not be scrolling past forty answers to "that is too expensive".
+  kind         ENUM('quick','case') NOT NULL DEFAULT 'quick',
   active       TINYINT(1)   NOT NULL DEFAULT 1,
   uses         INT          NOT NULL DEFAULT 0,
   updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
