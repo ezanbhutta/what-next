@@ -63,6 +63,7 @@ import {
   loginLimiter,
   listUsers,
   authConfig,
+  passwordShape,
   authConfigured,
   safeNext,
 } from './lib/auth.js';
@@ -1515,6 +1516,9 @@ if (process.env.NODE_ENV !== 'test') {
     console.warn(`[boot] ${cfg.missing.join(' and ')} not set — nobody can sign in until they are.`);
   }
   if (cfg.warning) console.warn(`[boot] ${cfg.warning}`);
+  // Length only, never the value — enough to tell a mistyped password from a
+  // pasted trailing space without putting the secret in a log file.
+  console.log(`[boot] APP_PASSWORD: ${passwordShape()}`);
   if (!dbConfigured()) {
     console.warn(
       `[boot] database not configured (missing ${missingEnv().join(', ')}) — typed records are unavailable; ` +

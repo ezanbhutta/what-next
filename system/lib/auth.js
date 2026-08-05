@@ -37,6 +37,25 @@ const TOKEN_VERSION = 'v1';
 // ------------------------------------------------------------------ config
 
 /** What is missing before login can work at all. */
+/**
+ * A one-line description of the configured password that is safe to print:
+ * how long it is, and whether the panel added anything. Never the value.
+ *
+ * This exists because "that password was not accepted" is otherwise a dead
+ * end — the operator cannot see what the server holds, so a pasted trailing
+ * space is indistinguishable from typing it wrong. Comparing the length you
+ * expect against the length the server has settles it in one glance.
+ */
+export function passwordShape() {
+  const raw = process.env.APP_PASSWORD;
+  if (typeof raw !== 'string' || raw.length === 0) return 'not set';
+  const clean = configuredPassword();
+  const notes = [];
+  if (raw !== raw.trim()) notes.push('surrounding whitespace was trimmed');
+  if (clean && clean.length !== raw.trim().length) notes.push('wrapping quotes were removed');
+  return `${clean ? clean.length : 0} characters${notes.length ? ` (${notes.join(', ')})` : ''}`;
+}
+
 export function authConfig() {
   const missing = [];
   if (!process.env.SESSION_SECRET) missing.push('SESSION_SECRET');
@@ -109,14 +128,41 @@ export function timingSafeEqualStr(a, b) {
 }
 
 /** Does this match APP_PASSWORD? Never logs, never echoes the candidate. */
+/**
+ * The configured password, cleaned of the two things a hosting control panel
+ * reliably adds when you paste into it: surrounding whitespace, and a pair of
+ * wrapping quotes.
+ *
+ * Both produce a silent, unexplainable "that password was not accepted" — the
+ * value looks correct in the panel, the person types it correctly, and the
+ * comparison fails on a character nobody can see. Neither a leading space nor
+ * a wrapping quote is plausibly part of a team password someone chose, so
+ * accepting the cleaned form costs nothing and removes a failure mode that is
+ * genuinely undiagnosable from the outside.
+ */
+export function configuredPassword() {
+  const raw = process.env.APP_PASSWORD;
+  if (typeof raw !== 'string') return null;
+  let value = raw.trim();
+  if (value.length >= 2) {
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' || first === "'") && first === last) value = value.slice(1, -1);
+  }
+  return value.length ? value : null;
+}
+
 export function checkPassword(candidate) {
-  const expected = process.env.APP_PASSWORD;
+  const expected = configuredPassword();
   if (!expected) return false; // unconfigured means nobody gets in, not everybody
   if (typeof candidate !== 'string' || candidate.length === 0) {
     timingSafeEqualStr('', expected); // keep the timing flat for empty input too
     return false;
   }
-  return timingSafeEqualStr(candidate, expected);
+  // Trim the typed value too: phone keyboards add a trailing space after
+  // autocomplete, and a password whose last character is a space is not a
+  // thing anyone chose on purpose.
+  return timingSafeEqualStr(candidate.trim(), expected);
 }
 
 // ----------------------------------------------------------------- tokens
