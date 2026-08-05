@@ -1652,9 +1652,6 @@ def test_no_engine_output_mentions_the_disabled_subject():
         path = ROOT / "reports" / name
         if path.exists():
             _scan_rendered(path.read_text(), name)
-    for site in (ROOT / "site" / "index.html", ROOT / "site" / "api" / "brief.js"):
-        if site.exists():
-            _scan_rendered(site.read_text(), str(site.relative_to(ROOT)))
     for item in R.edge(_team_cfg()):
         _scan(item["title"] + " " + item["detail"], f"edge:{item['id']}")
     for duty in R.STANDING_CEO + R.STANDING_LEAD + R.STANDING_CSR:
@@ -1662,146 +1659,36 @@ def test_no_engine_output_mentions_the_disabled_subject():
 
 
 # =========================================================================
-# The password gate — a server boundary, not a hidden div
+# The password gate is gone, because the site it gated is gone
 # =========================================================================
 #
-# The first version of the gate shipped the whole brief inside
-# `<div id="brief" hidden>` and revealed it in JavaScript after /api/auth
-# answered. `curl` returned every client name and revenue figure without a
-# password, and the live site was in that state when it was found. These tests
-# exist so that specific mistake cannot come back.
+# The brief used to be published to Vercel as a serverless function behind a
+# password. That whole surface was retired on 2026-08-05: the hub at
+# system.xstudioz.com is the one place the team reads, and a second gated copy
+# of the same numbers on a second domain was one more thing to keep in sync,
+# one more password to hand out, and one more place to leak from.
+#
+# The original leak is worth keeping written down, because it is the reason
+# the deleted tests existed. The first version of the gate shipped the whole
+# brief inside `<div id="brief" hidden>` and revealed it in JavaScript after
+# /api/auth answered, so `curl` returned every client name and revenue figure
+# without a password. The live site was in that state when it was found.
+#
+# What replaces those tests is the one below: nothing may put that surface
+# back without a person deciding to. `site/` reappearing is not a small
+# accident — it means a static page or an ungated function is being served
+# from somewhere nobody is looking at.
 
-import shutil            # noqa: E402
-import subprocess        # noqa: E402
-
-sys.path.insert(0, str(ROOT / "scripts"))
-import publish_site as PS  # noqa: E402
-
-#: Strings that must never appear in a response served without a session.
-_CONFIDENTIAL = ("Albalawi", "selmaprof", "5,472", "Hasnain", "AOV")
-
-
-def test_login_page_carries_no_business_data():
-    # readable() strips the embedded font, whose base64 contains "AOV" by
-    # chance. The size budget is measured on the same stripped text: the rule
-    # is "a form, not a document", and 106 KB of glyph outlines is neither.
-    page = readable(PS.login_page())
-    for s in _CONFIDENTIAL:
-        assert s not in page, s
-    assert "Access password" in page
-    assert len(page) < 12000, "the login page should be a form, not a document"
-
-
-def test_gated_publish_deletes_the_static_page(tmp_path):
-    """Vercel checks the filesystem before it applies rewrites, so a leftover
-    site/index.html would be served in front of the gate — the exact shape of
-    the original leak."""
-    (tmp_path / "reports").mkdir()
-    (tmp_path / "site" / "api").mkdir(parents=True)
-    (tmp_path / "reports" / "dashboard.html").write_text(
-        "<title>T</title><p>Albalawi</p>")
-    stale = tmp_path / "site" / "index.html"
-    stale.write_text("<html>Albalawi</html>")
-
-    argv = sys.argv
-    sys.argv = ["publish_site", "--root", str(tmp_path), "--gate"]
-    try:
-        assert PS.main() == 0
-    finally:
-        sys.argv = argv
-
-    assert not stale.exists()
-    fn = tmp_path / "site" / "api" / "brief.js"
-    assert fn.exists()
-    body = fn.read_text()
-    assert "APP_PASSWORD" in body and "verifyToken" in body
-
-
-def test_ungated_publish_removes_the_function(tmp_path):
-    """The inverse: leaving brief.js behind would keep the rewrite live and
-    serve a stale brief from a URL nobody is regenerating."""
-    (tmp_path / "reports").mkdir()
-    (tmp_path / "site" / "api").mkdir(parents=True)
-    (tmp_path / "reports" / "dashboard.html").write_text("<title>T</title><p>x</p>")
-    fn = tmp_path / "site" / "api" / "brief.js"
-    fn.write_text("// stale")
-
-    argv = sys.argv
-    sys.argv = ["publish_site", "--root", str(tmp_path)]
-    try:
-        assert PS.main() == 0
-    finally:
-        sys.argv = argv
-
-    assert not fn.exists()
-    assert (tmp_path / "site" / "index.html").exists()
-
-
-def test_repo_never_ships_both_a_static_page_and_the_gate():
+def test_the_published_site_stays_retired():
     site = ROOT / "site"
-    assert not ((site / "index.html").exists()
-                and (site / "api" / "brief.js").exists()), \
-        "index.html shadows /api/brief — the gate would be bypassed"
-
-
-def test_vercel_rewrites_the_root_to_the_gated_function():
-    cfg = json.loads((ROOT / "site" / "vercel.json").read_text())
-    assert {"source": "/", "destination": "/api/brief"} in cfg["rewrites"]
-
-
-@pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
-def test_gate_refuses_an_unauthenticated_request(tmp_path):
-    """End to end against the real function: no cookie, forged cookie and
-    missing APP_PASSWORD must all return the login page and nothing else."""
-    api = ROOT / "site" / "api"
-    if not (api / "brief.js").exists():
-        pytest.skip("run scripts/publish_site.py --gate first")
-    shutil.copytree(api, tmp_path / "api")
-    (tmp_path / "run.mjs").write_text(r"""
-import handler from './api/brief.js';
-import auth from './api/auth.js';
-process.env.APP_PASSWORD = 'pw';
-const mkRes = () => { const r = {code:0, body:'', cookies:[]};
-  r.setHeader=(k,v)=>{ if(k.toLowerCase()==='set-cookie') r.cookies.push(v); };
-  r.status=(c)=>{r.code=c;return r}; r.send=(b)=>{r.body=b;return r};
-  r.json=(b)=>{r.body=JSON.stringify(b);return r}; r.end=()=>r; return r; };
-const out = {};
-let res = mkRes(); await handler({method:'GET', headers:{}}, res);
-out.anon = {code: res.code, body: res.body};
-res = mkRes();
-await handler({method:'GET', headers:{cookie:'__Host-xsbrief_session=aa.bb'}}, res);
-out.forged = {code: res.code, body: res.body};
-let a = mkRes();
-await auth({method:'POST', headers:{'content-type':'application/json'},
-            body:{action:'login', password:'pw'}}, a);
-const cookie = a.cookies[0].split(';')[0];
-res = mkRes(); await handler({method:'GET', headers:{cookie}}, res);
-out.authed = {code: res.code, body: res.body};
-delete process.env.APP_PASSWORD;
-res = mkRes(); await handler({method:'GET', headers:{cookie}}, res);
-out.nopw = {code: res.code, body: res.body};
-// Strip embedded font payloads before looking for anything. 106 KB of
-// base64 contains any three-letter token by chance (the Inter blob holds
-// "AOV"), and a glyph outline is not a leak. Every real string still counts,
-// and the length comparison below only means something on stripped text.
-const strip = s => String(s).replace(/data:[a-z0-9/+.-]+;base64,[A-Za-z0-9+/=]+/g,'');
-console.log(JSON.stringify({anon:{code:out.anon.code,len:strip(out.anon.body).length,
-  leak:CONF.filter(s=>strip(out.anon.body).includes(s))},
-  forged:{code:out.forged.code, leak:CONF.filter(s=>strip(out.forged.body).includes(s))},
-  authed:{code:out.authed.code, len:strip(out.authed.body).length},
-  nopw:{code:out.nopw.code, leak:CONF.filter(s=>strip(out.nopw.body).includes(s))}}));
-""".replace("CONF", json.dumps(list(_CONFIDENTIAL))))
-    proc = subprocess.run(["node", "run.mjs"], cwd=tmp_path,
-                          capture_output=True, text=True, timeout=60)
-    assert proc.returncode == 0, proc.stderr
-    r = json.loads(proc.stdout.strip().splitlines()[-1])
-
-    assert r["anon"]["code"] == 401 and r["anon"]["leak"] == []
-    assert r["forged"]["code"] == 401 and r["forged"]["leak"] == []
-    # Fail CLOSED: a missing password is a misconfiguration, not an open door.
-    assert r["nopw"]["code"] == 503 and r["nopw"]["leak"] == []
-    assert r["authed"]["code"] == 200
-    assert r["authed"]["len"] > 5 * r["anon"]["len"]
+    assert not site.exists(), (
+        f"{site} is back. The Vercel site was retired deliberately: the hub at "
+        f"system.xstudioz.com is the only place the brief is read. If it is "
+        f"genuinely being brought back, restore the gate tests with it — an "
+        f"ungated site/index.html is served in front of any rewrite and that is "
+        f"exactly how the whole brief leaked the first time.")
+    assert not (ROOT / "scripts" / "publish_site.py").exists(), \
+        "publish_site.py is back without the site it publishes to"
 
 
 # --------------------------------------------------------------------------
@@ -2007,42 +1894,28 @@ def test_breach_reasons_survive_serialisation():
 # A media query is the wrong mechanism for a stated product decision. If a dark
 # mode is ever wanted it belongs behind a control the reader operates.
 
-_RENDERED = ("reports/dashboard.html", "site/api/brief.js")
+#: The brief now renders to one file. The Vercel function that used to
+#: carry a second copy was retired; see test_the_published_site_stays_retired.
+_RENDERED = ("reports/dashboard.html",)
 
 
 def readable(text: str) -> str:
     """The rendered output as a person would actually see it.
 
-    Two transforms, and both exist because the raw file on disk is not the
-    thing these tests are about:
+    Fonts are embedded as base64 data: URIs, because the artifact's CSP blocks
+    external hosts. 106 KB of base64 will contain any short token by chance —
+    the Inter blob currently holds "vvro", a retired programme name that the
+    content scan looks for. That is not a leak; it is three letters of a glyph
+    outline. Replacing the payloads means a match inside them cannot mean
+    anything, while every genuine string on the page is still scanned.
 
-    1. `site/api/brief.js` carries its HTML as JSON string literals, so
-       `id="themer"` is stored as `id=\\"themer\\"`. A test grepping the raw
-       file for an attribute silently never matches, and passes for the wrong
-       reason the day the attribute is removed. The literals are decoded back.
-
-    2. Fonts are embedded as base64 data: URIs, because the artifact's CSP
-       blocks external hosts. 106 KB of base64 will contain any short token by
-       chance — the Inter blob currently holds "vvro" and "AOV", which are a
-       retired programme name and a business metric that content tests look
-       for. Those are not leaks; they are three letters of a glyph outline.
-       The payloads are replaced, so a match inside them cannot mean anything
-       while every genuine string on the page is still scanned.
+    This used to also decode the JSON string literals that site/api/brief.js
+    wrapped its HTML in. That file is gone with the rest of the Vercel site,
+    and the decoding went with it: it matched on `= "..." ;` which also matches
+    a CSS `content:"";`, so keeping it would have quietly rewritten stylesheet
+    rules in the text under test for no remaining benefit.
     """
-    out = []
-    i = 0
-    # Decode the JS string literals brief.js wraps its HTML in.
-    for m in re.finditer(r'=\s*("(?:[^"\\]|\\.)*")\s*;', text):
-        try:
-            decoded = json.loads(m.group(1))
-        except (ValueError, TypeError):
-            continue
-        out.append(text[i:m.start(1)])
-        out.append(decoded)
-        i = m.end(1)
-    out.append(text[i:])
-    joined = "".join(out)
-    return re.sub(r"data:[a-z0-9/+.-]+;base64,[A-Za-z0-9+/=]+", "data:<embedded>", joined)
+    return re.sub(r"data:[a-z0-9/+.-]+;base64,[A-Za-z0-9+/=]+", "data:<embedded>", text)
 
 
 def _rendered_outputs():

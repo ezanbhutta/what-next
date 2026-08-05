@@ -73,11 +73,10 @@ Read the `[BLOCK]` lines on stderr and act:
   your message; do not present stale numbers as current.
 - `predictions_falsifiable`, `all_tasks_owned` — a generation bug. Fix, do not paper over.
 
-### 4. Rebuild and publish the dashboard
+### 4. Rebuild the dashboard
 
 ```bash
 python3 scripts/build_dashboard.py     # reports/dashboard.html
-python3 scripts/publish_site.py --gate # site/api/brief.js (password gated)
 ```
 
 The brief is **six views behind a tab bar**, not one long scroll: Today, Money,
@@ -93,6 +92,15 @@ Each view leads with the number and the instruction. Reasoning goes inside a
 `<details>` underneath, never in front. If you find yourself writing a
 paragraph before a figure, the figure is in the wrong place.
 
+It ships **dark by default with a light toggle**, remembered in `localStorage`
+under `xs-theme` and applied by an inline script before the stylesheet so the
+wrong palette never flashes. There is no `prefers-color-scheme` rule and there
+must not be one: that hands a stated product decision to the reader's OS, which
+is how everyone with a dark laptop once opened a dark page having asked for a
+light one. Inter and JetBrains Mono are base64-embedded from `assets/fonts/`
+rather than linked, because the artifact's CSP blocks every external host and a
+`<link>` to Google Fonts fails there silently while looking fine elsewhere.
+
 Then republish the artifact to the same URL so the link you and Ezan already
 have stays current:
 
@@ -103,17 +111,19 @@ have stays current:
 Passing `url` is what keeps the URL stable from a fresh session. Do not change
 the `<title>` or the favicon — the page is found by its name and tab icon.
 
-`site/api/brief.js` is generated, never hand-edited. Committing it in step 6
-is what deploys it: Vercel redeploys on push, so the team's page is current by
-07:15 PKT without anyone touching it. If the Vercel project is not linked yet,
-the file is still committed and simply waits — see `site/README.md`.
+**There is no website to publish to any more.** The Vercel site was retired on
+2026-08-05: `site/`, `scripts/publish_site.py` and the whole password gate are
+gone, and `xstudioz-manage.vercel.app` with them. **The one domain is
+system.xstudioz.com**, the hub on Hostinger, and it is the only place the team
+reads. A second gated copy of the same numbers on a second domain was one more
+thing to keep in sync, one more password to hand out and one more place to leak
+from.
 
-**Never publish without `--gate`, and never commit a `site/index.html`.** The
-page carries client names, revenue and the dead pipeline. Vercel checks the
-filesystem before it applies rewrites, so a static `index.html` is served *in
-front of* the gate and silently reopens the whole page to anyone with the URL.
-`tests/test_engine.py` fails if both exist; do not delete that test to make a
-run pass.
+`test_the_published_site_stays_retired` fails if `site/` or `publish_site.py`
+comes back. Do not delete it to make a run pass. If that surface is ever
+genuinely wanted again, restore the gate tests along with it — the original
+leak shipped the entire brief inside a hidden `<div>` and `curl` returned every
+client name and revenue figure without a password.
 
 ### 5. Report to the user
 
@@ -133,31 +143,25 @@ git config user.name  "XStudioz Growth Engine"
 git add -A && git commit -m "daily: <date> brief" && git push -u origin main
 ```
 
-**Push to `main`.** It is the default branch and Vercel's production branch, so
-pushing there is what deploys. The engine used to push to a long-lived
-`claude/…` branch; that branch is history and nothing should target it.
+**Push to `main`.** It is the default branch. The engine used to push to a
+long-lived `claude/…` branch; that branch is history and nothing should target
+it.
 
 **Set the email every run — it is not optional.** The container is fresh each
 morning and defaults to `haseeb53810@gmail.com`, which is not attached to the
-GitHub account. Vercel refuses to build a commit whose author it cannot match to
-a GitHub user, and the deployment comes back `BLOCKED` with no build log at all.
-The site then silently keeps serving yesterday's page, so a run can look
-successful while nothing reached the team. If a push does not produce a new
-READY deployment, check the commit author before anything else.
+GitHub account. An unattributable commit author has already cost one silent
+failed deploy, and it is two seconds to set.
 
-**`READY` is not the check — `target` is.** A deployment built from a branch
-that is not Vercel's production branch comes back `READY` and looks perfect,
-but it is a *preview*: the production domain stays on whatever it last built
-and the team keeps reading yesterday's numbers. Confirm both fields on the
-deployment the push produced:
+**Pushing does not deploy the hub.** system.xstudioz.com runs on Hostinger, not
+on a build triggered by this push. Nothing in this repo is a deploy hook. If a
+change needs to reach the team today, confirm it is actually live rather than
+assuming the push did it — hit a route that only exists in the new code and
+check for a redirect rather than a 404:
 
-    state:  READY
-    target: production        # null means preview — nothing reached the team
+    curl -s -o /dev/null -w "%{http_code} %{redirect_url}" https://system.xstudioz.com/<new-route>
 
-The production branch is set in the Vercel dashboard under
-**Settings → Environments → Production → Branch Tracking**, not under
-Settings → Git, which is where it used to live and where most guides still
-point. It must name the branch this step pushes to.
+A route that 404s is old code; a route that redirects to /login is deployed and
+gated, which is the healthy answer for anything behind auth.
 
 The container is ephemeral. Uncommitted state is lost. Commit every run.
 

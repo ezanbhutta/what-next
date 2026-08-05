@@ -1,5 +1,0 @@
-# Nothing here should be reachable as a static asset. The brief is served from
-# api/brief.js behind the password check; anything else in this directory would
-# be published to the public production domain, which Vercel's Standard
-# Deployment Protection does NOT cover.
-README.md
