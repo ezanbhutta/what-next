@@ -212,14 +212,18 @@
   --sans:  "Inter",-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",Arial,sans-serif;
   --mono:  "JetBrains Mono",ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,monospace;
 
-  --t-xs:   .6875rem;   /* 11px */
-  --t-sm:   .75rem;     /* 12px */
-  --t-base: .875rem;    /* 14px */
-  --t-md:   1rem;       /* 16px */
-  --t-lg:  1.3125rem;   /* 21px */
-  --t-xl:  1.75rem;     /* 28px */
-  --t-2xl: 2.25rem;     /* 36px */
-  --t-3xl: 3rem;        /* 48px */
+  /* Type. Six steps, not eight — a scale you can hold in your head.
+     Raised across the board: 11px labels and 14px body read as a dense
+     admin tool no matter how much padding sits around them. The smallest
+     size on the page is now 12px and it is used for one thing (labels). */
+  --t-xs:   .75rem;     /* 12px · labels, the smallest on the page */
+  --t-sm:   .8125rem;   /* 13px · captions under a figure          */
+  --t-base: .9375rem;   /* 15px · body                             */
+  --t-md:   1.0625rem;  /* 17px · lead paragraph                   */
+  --t-lg:  1.5rem;      /* 24px · section heading                  */
+  --t-xl:  2rem;        /* 32px · view heading                     */
+  --t-2xl: 2.75rem;     /* 44px · the one figure that matters      */
+  --t-3xl: 3.5rem;      /* 56px · deck headline                    */
 
   /* iOS zooms the viewport on focus for any control under 16px. Every input,
      select and textarea in this file is pinned to this token. It is 1rem,
@@ -233,10 +237,18 @@
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-2xl:26px; --r-pill:999px;
   --radius: 12px;       /* default control radius                          */
 
-  /* --- metrics --- */
-  --rail-w: 244px;
-  --gut: 28px;
-  --card-pad: 20px;
+  /* --- metrics ---
+     These four numbers are most of what makes the page feel dense or calm,
+     and they were set for density: 20px of card padding and a 28px gutter is
+     an admin-tool scale. Space is the material here, so it is budgeted like
+     one — roughly doubled, and the section gap is now a named token instead
+     of whatever each block happened to use. */
+  --rail-w: 260px;
+  --gut: 48px;          /* page gutter                                     */
+  --card-pad: 36px;     /* inside every surface                            */
+  --section-gap: 72px;  /* between major blocks — the main source of air   */
+  --stack-gap: 20px;    /* between siblings inside a block                 */
+  --measure: 68ch;      /* prose never runs wider than this                */
   --tap: 44px;          /* minimum touch target, everywhere                */
 }
 
@@ -551,9 +563,13 @@ hr{ border:0; }
      if (e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
    Chips are hidden below 900px, where there is no keyboard to press.    */
 .keycap{
+  /* Off. A number chip beside every nav item is chrome explaining a shortcut
+     nobody asked for, and nine of them compete with the section names for
+     attention. The 1-9 keys still work. */
+  display:none;
   flex:0 0 auto;
   min-width:18px; height:18px; padding:0 4px;
-  display:inline-grid; place-items:center;
+  place-items:center;
   font-family:var(--mono); font-size:10px; font-weight:600; line-height:1;
   color:var(--ink-3);                              /* 5.28:1 on card PASS */
   background:var(--card);
@@ -614,26 +630,37 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
 }
 .dateline .dot{ color:var(--rule-3); }             /* decorative only      */
 
-/* The ticker is one card strip now, not a ruled band. */
+/* Three across, not six.
+   Six standing figures in a 1440px row gave each cell about 190px, so every
+   label had to be 11px, truncated with an ellipsis, and stacked hard against
+   its number. That is the single densest thing on the page and no amount of
+   padding elsewhere compensates for it. Three columns over two rows is the
+   same six figures with twice the width and room to breathe. */
 .ticker{
-  display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
   background:var(--card);
   border:1px solid var(--rule-2);
   border-radius:var(--r-lg);
   box-shadow:var(--e1);
   overflow:hidden;
-  margin-top:2px;
+  margin-top:var(--s4);
 }
-.tick{ padding:var(--s3) var(--s4); border-left:1px solid var(--rule); min-width:0; }
-.tick:first-child{ border-left:0; }
+.tick{
+  padding:var(--s5) var(--card-pad);
+  border-left:1px solid var(--rule);
+  border-top:1px solid var(--rule);
+  min-width:0;
+}
+.tick:nth-child(3n+1){ border-left:0; }
+.tick:nth-child(-n+3){ border-top:0; }
 .tick dt{
-  font-size:var(--t-xs); letter-spacing:.1em; text-transform:uppercase;
+  font-size:var(--t-xs); letter-spacing:.08em; text-transform:uppercase;
   font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .tick dd{
-  margin-top:4px;
-  font-family:var(--mono); font-weight:600; font-size:1.0625rem; line-height:1.2;
+  margin-top:var(--s2);
+  font-family:var(--mono); font-weight:600; font-size:1.5rem; line-height:1.15;
   letter-spacing:-.03em;
   font-variant-numeric:tabular-nums lining-nums;
 }
@@ -647,7 +674,7 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
    7. VIEW / SLUG / DECK  — the nine sections share these
    ============================================================================= */
 
-.view{ padding-top:var(--s6); animation:rise .34s cubic-bezier(.22,.61,.36,1) both; }
+.view{ padding-top:var(--section-gap); animation:rise .34s cubic-bezier(.22,.61,.36,1) both; }
 .view[hidden]{ display:none; }
 @keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
 
@@ -842,12 +869,12 @@ details > summary:focus-visible{ outline-offset:-2px; }
   border-radius:var(--r-lg);
   box-shadow:var(--e1);
   padding:var(--card-pad);
-  margin-top:var(--s5);
+  margin-top:var(--section-gap);
 }
 .panel-head{
   display:flex; align-items:baseline; justify-content:space-between;
-  gap:var(--s3); flex-wrap:wrap;
-  padding-bottom:10px; margin-bottom:var(--s4);
+  gap:var(--s4); flex-wrap:wrap;
+  padding-bottom:var(--s4); margin-bottom:var(--s5);
 }
 .panel-head h3{
   font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
@@ -908,7 +935,7 @@ details > summary:focus-visible{ outline-offset:-2px; }
    12. STATS / METERS / RANGES
    ============================================================================= */
 
-.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--s3); }
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--s6); }
 .stat{
   padding:var(--s4); min-width:0;
   background:var(--card);
@@ -1470,11 +1497,11 @@ html[data-theme="dark"] .field select{
   border-radius:var(--r-lg);
   box-shadow:var(--e1);
   padding:var(--card-pad);
-  margin-top:var(--s5);
+  margin-top:var(--section-gap);
 }
 .block > h3{
   font-size:var(--t-xs); letter-spacing:.14em; text-transform:uppercase;
-  font-weight:700; color:var(--ink-2); margin-bottom:var(--s3);  /* 8.02:1 PASS */
+  font-weight:700; color:var(--ink-2); margin-bottom:var(--s5);  /* 8.02:1 PASS */
 }
 
 /* a marginal note */
