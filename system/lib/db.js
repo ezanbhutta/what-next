@@ -158,7 +158,7 @@ function buildPool() {
     maxIdle: Number(process.env.DB_POOL_SIZE || 8),
     idleTimeout: 60_000,
     queueLimit: 0,
-    connectTimeout: 10_000,
+    connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS || 4_000),
     enableKeepAlive: true,
     keepAliveInitialDelay: 10_000,
 
@@ -237,12 +237,41 @@ function noteFail(err) {
   status.ok = false;
   status.lastFailAt = new Date();
   status.lastError = { code: err.code, message: err.message, unavailable: err.unavailable };
+  if (err.unavailable) status.openUntil = Date.now() + BREAKER_MS;
   const t = dbTarget();
   // Host, port, database and error code only. No user, no password, no params.
   console.error(
     `[db] ${err.unavailable ? 'UNAVAILABLE' : 'ERROR'} ${err.code || '-'} ` +
       `target=${t.host}:${t.port}/${t.database ?? '-'} :: ${err.message}`
   );
+}
+
+/**
+ * Circuit breaker.
+ *
+ * Without this, an unreachable database costs every single request the full
+ * connect timeout. The process is alive and the port is bound, but each page
+ * sits there waiting, and a proxy in front gives up first — which reads to
+ * everyone as "the site is down" when in fact only the typed-records half is.
+ *
+ * So the first failure opens the breaker and subsequent calls fail instantly
+ * for a short window. Pages still render, still say the store is unreachable,
+ * and do it in milliseconds rather than seconds. The window is deliberately
+ * short: a restarting MySQL should be picked up on the next page load, not
+ * minutes later.
+ */
+const BREAKER_MS = Number(process.env.DB_BREAKER_MS || 15_000);
+
+function breakerOpen() {
+  return status.openUntil != null && Date.now() < status.openUntil;
+}
+
+function breakerError() {
+  const e = status.lastError || {};
+  return new DbError(e.message || 'database unreachable', {
+    code: e.code || 'DB_UNAVAILABLE',
+    unavailable: true,
+  });
 }
 
 /** Current health, for the masthead banner. `ok:null` means never queried. */
@@ -273,6 +302,10 @@ export function unavailableNotice(err) {
 // --------------------------------------------------------------- querying
 
 async function exec(sql, params, { retry = true } = {}) {
+  // Fail fast while the breaker is open, so a page renders its "unreachable"
+  // state in milliseconds instead of waiting out a connect timeout it already
+  // knows will expire.
+  if (breakerOpen()) throw breakerError();
   const p = getPool(); // throws DbConfigError when env is incomplete
   try {
     const [result, fields] = await p.execute(sql, params);

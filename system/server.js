@@ -1476,10 +1476,26 @@ if (process.env.NODE_ENV !== 'test') {
     `[boot] engine data: ${st.ok ? `run ${st.run_date}, ${st.label}` : 'MISSING — latest-run.json not readable'}`
   );
 
-  await prepareDatabase();
-
+  // Listen FIRST, migrate after.
+  //
+  // These were the other way round and it took the site down with a 503. The
+  // schema work opens a MySQL connection, and an unreachable or slow database
+  // makes that await hang for its full connect timeout — during which the
+  // process is alive but nothing is bound to the port, so the proxy in front
+  // has nobody to talk to and returns 503.
+  //
+  // That inverted the whole design. Today, Orders and Inquiries read from
+  // disk and owe the database nothing; letting a database they never touch
+  // decide whether they are reachable is precisely the coupling this app was
+  // built to avoid. Bind the port, then prepare the schema in the background,
+  // and let the DB-backed pages report their own unavailability the way they
+  // already know how.
   app.listen(PORT, () => {
     console.log(`[boot] xstudioz hub listening on :${PORT} (${PRODUCTION ? 'production' : 'development'})`);
+  });
+
+  prepareDatabase().catch((err) => {
+    console.error(`[boot] database preparation errored — ${err.message}`);
   });
 }
 
