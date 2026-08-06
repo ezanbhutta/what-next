@@ -48,9 +48,37 @@ export const STORES = {
 /** The profile this hub is about. One profile, so it is never a form field. */
 export const PROFILE = 'X Studioz';
 
-/** Spellings of this profile across the stores. The impressions board writes
- *  "XStudioz", the shift logger writes "X Studioz", and the order sheet has
- *  carried both. Anything comparing them has to know that. */
+/**
+ * THE TWO STORES DO NOT MEAN THE SAME THING BY "PROFILE", AND THAT IS A TRAP.
+ *
+ * This started as one alias list covering both, on the assumption that the two
+ * systems were spelling the same thing differently. They are not.
+ *
+ * The shift logger's `profile` is an ACCOUNT. Ten of them, and this one is
+ * spelled "X Studioz" in all 589 stored reports, with no second spelling.
+ *
+ * The impressions board's `profile` is a GIG. Its own `profiles` table carries
+ * an `account` column precisely because several gigs share one: "XStudioz" and
+ * "X_Studioz new gig" are two gigs of this account, exactly as "Dygram",
+ * "Dygram PPT" and "Dygram Wordpress" are three of another.
+ *
+ * So a list that matched both names on the board was not resolving an alias,
+ * it was returning two different gigs' rows for the same day and calling them
+ * duplicates of each other. Reading that as one profile's history gives two
+ * rows per date, and folding it naively gives a profile rating halfway between
+ * 4.8 and a brand new gig's 0.
+ *
+ * They are separated below, and the board's gig list is read from the board
+ * rather than guessed here, so a gig added to this account next month arrives
+ * on its own.
+ */
+export const REPORTS_PROFILES = ['X Studioz'];
+
+/** The board's `account` value for this hub's profile. */
+export const BOARD_ACCOUNT = 'XStudioz';
+
+/** Kept for the callers that predate the split, and equal to the union. Do not
+ *  use it for the board: `boardGigs()` is the honest answer there. */
 export const PROFILE_ALIASES = ['X Studioz', 'XStudioz', 'X_Studioz', 'X Studioz new gig', 'X_Studioz new gig'];
 
 export class ExternalError extends Error {
@@ -125,7 +153,7 @@ export function shiftReports({ limit = 60 } = {}) {
   return tryselect(
     'reports',
     `reports?select=id,csr_name,shift,profile,date,start_at,finish_at,status,note_for_next,` +
-      `closed_by_ceo,created_at&${orFilter('profile', PROFILE_ALIASES)}` +
+      `closed_by_ceo,created_at&${orFilter('profile', REPORTS_PROFILES)}` +
       `&order=date.desc,start_at.desc&limit=${limit}`
   );
 }
@@ -144,7 +172,7 @@ export function mistakes({ limit = 60 } = {}) {
   return tryselect(
     'reports',
     `mistakes?select=id,person,category,severity,description,happened_on,shift,profile,` +
-      `logged_by,status,ceo_note,client,project&${orFilter('profile', PROFILE_ALIASES)}` +
+      `logged_by,status,ceo_note,client,project&${orFilter('profile', REPORTS_PROFILES)}` +
       `&order=happened_on.desc&limit=${limit}`
   );
 }
@@ -353,12 +381,12 @@ export async function ceoWindow({ from, to, alertKeys = EMPTY_SET } = {}) {
     tryselect(
       'reports',
       `reports?select=id,csr_name,shift,profile,date,start_at,finish_at,status,` +
-        `note_for_next,checklist&${orFilter('profile', PROFILE_ALIASES)}` +
+        `note_for_next,checklist&${orFilter('profile', REPORTS_PROFILES)}` +
         `&date=gte.${from}&date=lte.${to}&order=start_at.asc&limit=400`
     ),
     tryselect(
       'reports',
-      `reminders?select=*&${orFilter('profile', PROFILE_ALIASES)}` +
+      `reminders?select=*&${orFilter('profile', REPORTS_PROFILES)}` +
         `&created_at=gte.${from}T00:00:00%2B05:00&created_at=lt.${nextDay(to)}T00:00:00%2B05:00` +
         `&order=created_at.asc&limit=1000`
     ),
@@ -366,7 +394,7 @@ export async function ceoWindow({ from, to, alertKeys = EMPTY_SET } = {}) {
     // date filter is on screen.
     tryselect(
       'reports',
-      `reminders?select=*&${orFilter('profile', PROFILE_ALIASES)}` +
+      `reminders?select=*&${orFilter('profile', REPORTS_PROFILES)}` +
         `&status=neq.resolved&due_at=lte.${new Date().toISOString()}` +
         `&order=due_at.asc&limit=200`
     ),
@@ -418,37 +446,244 @@ function nextDay(iso) {
   return d.toISOString().slice(0, 10);
 }
 
-// -------------------------------------------------------------- impressions
+// ------------------------------------------------------- the impressions board
+//
+// The board's `entries` table and this hub's `daily_entry` hold the same
+// seventeen numbers under different names, so the whole column translation is
+// a PostgREST select list: the store renames them on the way out and a row
+// arrives already spelled the way the hub reads it.
+//
+// Doing it in the query rather than in a map function is deliberate. Two of
+// these names are ones nobody is allowed to print and one is a name this hub
+// already worked out was wrong. Renamed once, at the boundary, no later code
+// has a chance to reach for the raw spelling, including code not written yet.
 
-//: The impressions store still uses the retired programme's name for two of
-//: its columns. PostgREST renames a column on the way out, so this one line
-//: owns the raw spelling and every row that leaves this module already says
-//: `directed`. Nothing downstream can leak it, including code not written yet.
-const DIRECTED_COLS = 'directed_orders:vvro_orders,directed_price:vvro_price'; // scrubs-output
+const REACH_COLS = [
+  'entry_date:date',
+  'gig:profile',
+  'impressions',
+  'clicks',
+  'organic_orders',
+  'organic_value:organic_price',
+  //: The two retired-programme columns, renamed on the way out. This line owns
+  //: the raw spelling and nothing downstream ever sees it.
+  'directed_orders:vvro_orders', // scrubs-output
+  'directed_value:vvro_price', // scrubs-output
+  'total_orders',
+  'orders_completed',
+  'completed_value:completed_price',
+  'orders_in_queue:order_queue',
+  'total_reviews',
+  // THE BOARD STILL CALLS THIS `msg_ratio`, AND IT IS NOT A RATIO.
+  //
+  // This hub renamed the same field months ago after finding out what it
+  // holds: a COUNT of inquiries that arrived, not a percentage. See the
+  // comment on `daily_entry.inquiries_received` in db/schema.sql. Stored as a
+  // percent, 4 inquiries reads as 4%, and nothing about the number looks
+  // wrong. The board itself has not been touched, because it is not this hub's
+  // to touch, so the correction happens here on the way in.
+  'inquiries_received:msg_ratio',
+  'success_score',
+  'profile_rating',
+  'cancellations',
+  'cancelled_value:cancel_price',
+  'entered_by',
+  'status',
+  'updated_at',
+].join(',');
 
-/** Daily reach for this profile, newest first. */
-export function impressions({ limit = 120 } = {}) {
+/**
+ * WHICH COLUMNS MAY BE ADDED UP, AND WHICH MAY NEVER BE.
+ *
+ * A FLOW happened during the day: impressions served, orders placed, money
+ * taken. Two gigs' flows add up, and so do two days'.
+ *
+ * A LEVEL is a standing figure the day happened to end on: how many orders are
+ * in the queue, how many reviews the gig has collected in its life, what
+ * Fiverr currently rates it. `total_reviews` reads 1,546 one day and 1,553 the
+ * next because it is a running total, so a week of it summed comes to about
+ * eleven thousand reviews, which is a number this business has never had.
+ *
+ * That is the whole reason for this table. Both kinds are plain integers in
+ * the same row and nothing about either says which it is, so the sum looks
+ * exactly as reasonable as the level does.
+ */
+export const REACH_FLOWS = Object.freeze([
+  'impressions',
+  'clicks',
+  'organic_orders',
+  'organic_value',
+  'directed_orders',
+  'directed_value',
+  'total_orders',
+  'orders_completed',
+  'completed_value',
+  'inquiries_received',
+  'cancellations',
+  'cancelled_value',
+]);
+
+export const REACH_LEVELS = Object.freeze([
+  'orders_in_queue',
+  'total_reviews',
+  'success_score',
+  'profile_rating',
+]);
+
+/**
+ * The gigs of this account, from the board's own `profiles` table.
+ *
+ * Read rather than hardcoded so a gig launched next month arrives by itself
+ * instead of silently going missing from every total. `main` is the gig whose
+ * name is the account name, which is the board's own convention: `xstudioz`
+ * against `gig-x-studioz-new-gig`, `dygram` against `gig-dygram-ppt`.
+ */
+export async function boardGigs() {
+  const got = await tryselect(
+    'impressions',
+    `profiles?select=id,name,account,active&account=eq.${encodeURIComponent(BOARD_ACCOUNT)}&order=sort.asc`
+  );
+  if (!got.ok) return got;
+  return {
+    ok: true,
+    rows: got.rows.map((r) => ({ ...r, main: r.name === r.account })),
+    notice: null,
+  };
+}
+
+/**
+ * Every gig-day the board holds for this account, in `daily_entry` vocabulary.
+ *
+ * One row per gig per day, newest first, `gig` naming which. Checked against
+ * the store: 305 XStudioz rows on 305 distinct days, so the board really does
+ * keep one row per gig per day and a day nobody filled in is simply absent.
+ * That absence is the point. It is not a zero and the view has to say so.
+ */
+export async function reachRows({ from, to } = {}) {
+  const gigs = await boardGigs();
+  if (!gigs.ok) return gigs;
+  const names = gigs.rows.map((g) => g.name);
+  if (!names.length) return { ok: true, rows: [], notice: null };
+
+  const range = [];
+  if (from) range.push(`&date=gte.${from}`);
+  if (to) range.push(`&date=lte.${to}`);
   return tryselect(
     'impressions',
-    `entries?select=date,profile,impressions,clicks,organic_orders,${DIRECTED_COLS},total_orders,` +
-      `orders_completed,completed_price,order_queue,total_reviews,success_score,profile_rating,` +
-      `cancellations,status,updated_at&${orFilter('profile', PROFILE_ALIASES)}` +
-      `&order=date.desc&limit=${limit}`
+    `entries?select=${REACH_COLS}&${orFilter('profile', names)}` +
+      `${range.join('')}&order=date.desc&limit=1000`
   );
 }
 
-/** Per-gig reach, for the profiles that split it. */
-export function gigImpressions({ limit = 200 } = {}) {
-  return tryselect(
+/** Strict addition. A blank part means an unknown whole, never a smaller sum:
+ *  the same rule the daily form has always used on its per-gig split. */
+function strictAdd(values) {
+  let total = null;
+  for (const v of values) {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    if (!Number.isFinite(n)) return null;
+    total = (total ?? 0) + n;
+  }
+  return total;
+}
+
+/**
+ * The gig-days folded into account-days.
+ *
+ * Flows are added across the account's gigs. Levels are taken from the MAIN
+ * gig and never combined, because the second gig here is nine days old and
+ * carries a profile rating of 0, which is the sheet import's way of writing
+ * "none yet". Averaged in, it turns a 4.8 into a 2.4; added up, it turns a
+ * review count into fiction. Neither reads as wrong on the page.
+ *
+ * Each day keeps its `gigs` array so the split stays visible rather than being
+ * a claim the reader has to take on trust.
+ */
+export async function reachDays({ from, to } = {}) {
+  const got = await reachRows({ from, to });
+  if (!got.ok) return got;
+  const gigs = await boardGigs();
+  const mainName = gigs.ok ? (gigs.rows.find((g) => g.main)?.name ?? null) : null;
+
+  const byDay = new Map();
+  for (const row of got.rows) {
+    const day = String(row.entry_date);
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(row);
+  }
+
+  const rows = [...byDay.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([day, parts]) => {
+      const out = { entry_date: day, gigs: parts };
+      for (const col of REACH_FLOWS) out[col] = strictAdd(parts.map((p) => p[col]));
+      // The main gig's row if it filed one that day; otherwise no level is
+      // known for the day, which is MISSING rather than the other gig's zero.
+      const main = parts.find((p) => p.gig === mainName) || null;
+      for (const col of REACH_LEVELS) out[col] = main ? main[col] : null;
+      out.entered_by = main?.entered_by ?? parts[0]?.entered_by ?? null;
+      out.updated_at = main?.updated_at ?? parts[0]?.updated_at ?? null;
+      return out;
+    });
+
+  return { ok: true, rows, notice: null };
+}
+
+/**
+ * The most recent day the board has for this account, and how old it is.
+ *
+ * EVERY REACH FIGURE ON A SCREEN HAS TO CARRY THIS.
+ *
+ * The board is filled in by hand by whoever is on shift, and it falls behind.
+ * At the time of writing it stops on 2026-07-28 while the order sheet is
+ * current to yesterday, so a page printing both without saying which is which
+ * invites somebody to read a July impression count as today's. A stale number
+ * under a fresh date is worse than a missing one, because the missing one gets
+ * chased.
+ *
+ * `ok:false` when the board cannot be read at all, which is a different fact
+ * again and renders differently.
+ */
+export async function reachAsOf({ today = null } = {}) {
+  const gigs = await boardGigs();
+  if (!gigs.ok) return { ok: false, date: null, daysOld: null, notice: gigs.notice };
+  const names = gigs.rows.map((g) => g.name);
+  if (!names.length) {
+    return { ok: true, date: null, daysOld: null, enteredBy: null, updatedAt: null, notice: null };
+  }
+
+  const got = await tryselect(
     'impressions',
-    `gig_entries?select=*&order=date.desc&limit=${limit}`
+    `entries?select=date,updated_at,entered_by&${orFilter('profile', names)}&order=date.desc&limit=1`
   );
+  if (!got.ok) return { ok: false, date: null, daysOld: null, notice: got.notice };
+  const row = got.rows[0] || null;
+  if (!row) {
+    return { ok: true, date: null, daysOld: null, enteredBy: null, updatedAt: null, notice: null };
+  }
+
+  const asOf = String(row.date);
+  const ref = today || new Date().toISOString().slice(0, 10);
+  const daysOld = Math.round(
+    (Date.parse(`${ref}T00:00:00Z`) - Date.parse(`${asOf}T00:00:00Z`)) / 86400000
+  );
+  return {
+    ok: true,
+    date: asOf,
+    daysOld: Number.isFinite(daysOld) ? daysOld : null,
+    enteredBy: row.entered_by || null,
+    updatedAt: row.updated_at || null,
+    notice: null,
+  };
 }
 
 export default {
   STORES, PROFILE, PROFILE_ALIASES, ExternalError,
-  select, tryselect, shiftReports, shiftActions, mistakes, impressions, gigImpressions,
+  select, tryselect, shiftReports, shiftActions, mistakes,
   ACTION_TYPE_TO_RULE_KEY, CHECKLIST_LABEL_TO_ID,
   checklistInHubVocabulary, shiftInHubVocabulary, actionInHubVocabulary,
   reminderInHubVocabulary, ceoWindow,
+  REPORTS_PROFILES, BOARD_ACCOUNT, REACH_FLOWS, REACH_LEVELS,
+  boardGigs, reachRows, reachDays, reachAsOf,
 };

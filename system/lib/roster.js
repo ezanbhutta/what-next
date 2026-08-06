@@ -230,7 +230,12 @@ export function shiftBand(hour) {
 }
 
 /**
- * Which day the Daily entry form should open on, and whether it is complete.
+ * Which day a figure typed by hand can be about, and whether it is available.
+ *
+ * Written for the daily entry form, which is gone. It is still the definition
+ * of what "behind" means for the impressions board: Fiverr publishes a day's
+ * figures around midday the NEXT day, so a board one day behind is normal and
+ * one nine days behind is a gap nobody has filled in.
  *
  * Fiverr's figures for a day land the NEXT day, around midday. Ezan: "at 12 PM
  * morning Aug 5, I have all data for Aug 4 to be inserted into system."

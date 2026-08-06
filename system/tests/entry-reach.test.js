@@ -1,28 +1,28 @@
-// tests/entry-reach.test.js, the daily entry page has to describe the save it
-// actually performs.
+// tests/entry-reach.test.js, the reach page has to describe the source it
+// actually reads.
 //
-// WHAT WENT WRONG
+// WHAT THIS FILE USED TO PIN
 //
-// server.js was changed so the profile's reach is the SUM of the per-gig rows,
-// and the typed impressions and clicks boxes are thrown away whenever one gig
-// is named. That change is right: asking for the parts and the total is two
-// copies of one number, and two copies drift.
+// A form. server.js summed the per-gig rows into the profile's reach and threw
+// the typed total away, and the view still told the CSR the opposite: that the
+// split was stored as typed and never added into the totals. Nothing about
+// that failed. The page loaded, the number looked plausible, and a CSR who
+// followed the instruction replaced the whole profile's reach with one gig's.
 //
-// The view was not changed with it. The gig panel still read "these figures
-// are stored as typed and are never added into the totals above, the
-// profile-level impressions box is the number the derived rate uses", which is
-// the exact opposite of what the handler does, and the stat strip captioned
-// the stored impressions "as typed" on days when nothing about it was typed.
+// The form is gone. The team types these figures into the impressions board
+// and this page reads them. So the drift this file exists to catch moved with
+// it, and it is the same shape as before: two sides edited in different files,
+// agreeing on the day they are written and nowhere after.
 //
-// Nothing about that fails. The page loads, the number looks plausible, and a
-// CSR who follows the instruction fills in the one gig they happened to be
-// looking at and silently replaces the whole profile's reach with a subset.
-// Every click-through rate for that day then describes a fraction of the
-// profile, and the rate is the figure this page leads with.
+// THE THREE WAYS THIS PAGE CAN BE WRONG WHILE LOOKING RIGHT
 //
-// So the copy is pinned here. This is a seam test in the same sense as
-// tests/wiring.test.js: the two sides are edited in different files, they
-// drift, and the drift renders as a calm correct-looking page.
+//   1. It stops saying how old the board is. Every figure is still rendered,
+//      still correct for its own date, and read as today's.
+//   2. It adds up a standing figure. A week of lifetime review counts summed
+//      comes to about eleven thousand reviews, printed in the same typeface as
+//      every true number on the page.
+//   3. It starts writing again. Two places to type one number is two answers
+//      and no way to know which is being read.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,109 +30,224 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { render } from '../views/entry.js';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const { render, WINDOWS } = await import('../views/entry.js');
+const { REACH_FLOWS, REACH_LEVELS } = await import('../lib/external.js');
 
-/** ctx.data as the entry loader supplies it, with whatever rows a test needs. */
-function ctxWith({ entryRow = null, gigRows = [] } = {}) {
-  const ok = (rows) => ({ ok: true, rows });
-  return {
-    query: {},
-    csrfToken: 't',
-    user: { name: 'Ezan', role: 'owner' },
-    engine: { runDate: '2026-08-05' },
-    data: {
-      date: '2026-08-04',
-      profiles: ['X Studioz'],
-      entries: ok(entryRow ? [entryRow] : []),
-      gigs: ok(gigRows),
-      recent: ok([]),
-      previous: ok([]),
-      previousGigs: ok([]),
+/** A board day, in the vocabulary `reachDays` hands over. */
+const day = (entry_date, over = {}) => ({
+  entry_date,
+  gigs: [{ gig: 'XStudioz', impressions: over.impressions ?? 1000 }],
+  impressions: 1000,
+  clicks: 20,
+  organic_orders: 1,
+  organic_value: 300,
+  directed_orders: 2,
+  directed_value: 600,
+  total_orders: 3,
+  orders_completed: 2,
+  completed_value: 500,
+  inquiries_received: 4,
+  cancellations: 0,
+  cancelled_value: 0,
+  orders_in_queue: 30,
+  total_reviews: 1546,
+  success_score: 8,
+  profile_rating: 4.8,
+  entered_by: 'Sheet import',
+  updated_at: '2026-07-29T10:19:16Z',
+  ...over,
+});
+
+const ctx = (over = {}) => ({
+  data: {
+    window: '7',
+    asOf: { ok: true, date: '2026-07-28', daysOld: 9, enteredBy: 'Sheet import', notice: null },
+    days: { ok: true, rows: [day('2026-07-28'), day('2026-07-27')], notice: null },
+    gigs: {
+      ok: true,
+      rows: [
+        { id: 'xstudioz', name: 'XStudioz', account: 'XStudioz', active: true, main: true },
+        { id: 'gig-x-studioz-new-gig', name: 'X_Studioz new gig', account: 'XStudioz', active: true, main: false },
+      ],
+      notice: null,
     },
-  };
-}
+    notice: null,
+    ...over,
+  },
+  user: { name: 'Ezan', role: 'owner' },
+  query: {},
+});
 
-const ROW = {
-  profile: 'X Studioz',
-  entry_date: '2026-08-04',
-  impressions: 350,
-  clicks: 40,
-  entered_by: 'Ezan',
-};
+const body = (over) => String(render(ctx(over)).html);
 
-const GIGS = [
-  { profile: 'X Studioz', gig: 'Logo design', impressions: 100, clicks: 12 },
-  { profile: 'X Studioz', gig: 'Brand guidelines', impressions: 250, clicks: 28 },
-];
+/** The page as a reader sees it. Every figure on this page goes through `num()`
+ *  or `money()`, which wrap it in a span, so a scan of the raw markup for
+ *  "9 days ago" misses text that is plainly on the screen. */
+const text = (over) => body(over).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
-/**
- * The caption under one stat-strip figure.
- *
- * render() returns the strip as `ticker`, a structured list, and only the
- * layout turns it into markup. Searching the `html` half for these captions
- * finds nothing and passes, which is how a test can watch a figure it is not
- * actually looking at.
- */
-function captionFor(out, label) {
-  const cell = (out.ticker || []).find((t) => t.label === label);
-  assert.ok(cell, `the strip has no "${label}" figure`);
-  return String(cell.sub ?? '');
-}
+test('a board this far behind says so before it says anything else', () => {
+  const out = render(ctx());
+  const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
-// -------------------------------------------------------------- the caption
+  assert.match(
+    page,
+    /9 days ago/,
+    'the staleness banner must print how many days behind the board is. Without it every figure on ' +
+      'this page reads as current, and each one is individually correct for a date nobody can see.'
+  );
+  assert.match(
+    out.title,
+    /9 days ago/,
+    'the page title is the one line a reader always sees. With the board behind, that is the headline.'
+  );
+  const asOfCard = out.ticker.find((t) => /board as of/i.test(t.label));
+  assert.ok(asOfCard, 'the ticker must carry the board date');
+  assert.equal(String(asOfCard.sub), '9 days ago');
+});
 
-test('reach saved from a gig split is not captioned "as typed"', () => {
-  const out = render(ctxWith({ entryRow: ROW, gigRows: GIGS }));
-  for (const label of ['Impressions', 'Clicks']) {
-    assert.equal(
-      captionFor(out, label),
-      'summed from 2 gigs',
-      `${label} was stored as the sum of the split. The strip has to say so.`
+test('a current board does not shout about it', () => {
+  const page = text({
+    asOf: { ok: true, date: '2026-08-05', daysOld: 1, enteredBy: 'Amrah', notice: null },
+    days: { ok: true, rows: [day('2026-08-05'), day('2026-08-04')], notice: null },
+  });
+  assert.ok(
+    !/days ago,/.test(page),
+    'one day behind is what Fiverr publishing at midday looks like, not a gap. A warning that fires ' +
+      'every single day is a warning nobody reads on the day it matters.'
+  );
+});
+
+test('a board that cannot be read is an outage, never a quiet month', () => {
+  const out = render(ctx({ days: { ok: false, rows: null, notice: 'Impressions board answered 503' } }));
+  const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
+  assert.match(out.title, /cannot be read/i);
+  assert.match(page, /503/, 'the reason the store gave belongs on screen');
+  assert.ok(
+    !/\b0 impressions\b/.test(page),
+    'an unreachable board must never render as zero reach'
+  );
+});
+
+test('no standing figure is ever added up', () => {
+  // The window total strip is built from RAW_FIELDS. A level in that list
+  // would be summed across days, and the wrong total looks exactly as
+  // reasonable as the right one.
+  const src = read('views/entry.js');
+  const rawBlock = src.slice(src.indexOf('const RAW_FIELDS'), src.indexOf('const LEVEL_FIELDS'));
+  for (const level of REACH_LEVELS) {
+    assert.ok(
+      !rawBlock.includes(`'${level}'`),
+      `${level} is a standing figure and it is in RAW_FIELDS, which is the list this page adds up. ` +
+        'A week of lifetime review counts summed comes to about eleven thousand reviews.'
+    );
+  }
+  // And the flows must all be there, or the page silently stops reporting one.
+  const levelBlock = src.slice(src.indexOf('const LEVEL_FIELDS'), src.indexOf('const cell ='));
+  for (const flow of REACH_FLOWS) {
+    if (flow === 'total_orders') continue; // shown as organic + directed, which is the same number
+    assert.ok(
+      rawBlock.includes(`'${flow}'`) && !levelBlock.includes(`'${flow}'`),
+      `${flow} is a flow the board records and this page does not print it`
     );
   }
 });
 
-test('reach with no gig split is still captioned "as typed"', () => {
-  // The other half. A caption that always says "summed" is as wrong as one
-  // that always says "typed", and checking only the interesting case would
-  // pass a constant.
-  const out = render(ctxWith({ entryRow: ROW, gigRows: [] }));
-  assert.equal(captionFor(out, 'Impressions'), 'as typed');
-  assert.equal(captionFor(out, 'Clicks'), 'as typed');
+test('a gap in the window is stated, not summed around', () => {
+  // Two days on the board, a seven day window. Five days are simply absent and
+  // a total that ignores that is a smaller number wearing a bigger label.
+  const page = text();
+  assert.match(page, /2 of 7 days filled in/, 'the control must say how much of its window exists');
+  assert.match(page, /5 of these 7 days/, 'the missing days must be named in the window panel');
 });
 
-test('one gig reads "gig", not "gigs"', () => {
-  const out = render(ctxWith({ entryRow: ROW, gigRows: [GIGS[0]] }));
-  assert.equal(captionFor(out, 'Impressions'), 'summed from 1 gig');
-});
+test('a partial window total carries the days it actually covers', () => {
+  // Two days on the board, one of them blank on impressions. The first cut of
+  // this returned MISSING for the whole window, which is defensible and was
+  // wrong in practice: one blank cell in one column on one day turned every
+  // headline on the page to MISSING and threw away tens of thousands of real
+  // impressions to avoid printing them under a label saying 30 days.
+  //
+  // The denominator comes with the number instead of replacing it. A reader
+  // cannot mistake it for a complete month, which was the whole point.
+  const page = text({
+    days: {
+      ok: true,
+      rows: [day('2026-07-28'), day('2026-07-27', { impressions: null })],
+      notice: null,
+    },
+  });
+  const panel = page.slice(page.indexOf('Last 7 days,'), page.indexOf('Day by day'));
+  assert.ok(panel.length > 40, 'expected to find the window panel to read the totals out of');
 
-// ----------------------------------------------------------- the instruction
-
-test('the gig panel does not tell the CSR the split is ignored', () => {
-  // Pinned against the source rather than one render, because this claim can
-  // reappear anywhere in the file and the page it damages is the page that
-  // does not show it.
-  const source = fs.readFileSync(path.join(ROOT, 'views', 'entry.js'), 'utf8');
-  const prose = source.replace(/^\s*(\/\/.*)$/gm, '');
-  assert.doesNotMatch(
-    prose,
-    /never added into the totals/,
-    'server.js adds them into the totals. Saying otherwise gets a real day of reach overwritten.'
+  const impressions = panel.match(/Impressions\s+(MISSING|[\d,]+)\s*(All \d+ days|Across (\d+) of (\d+) days)?/);
+  assert.ok(impressions, `no Impressions total found in the window panel: ${panel.slice(0, 300)}`);
+  assert.equal(impressions[1], '1,000', 'the one day that carried the column is still worth printing');
+  assert.equal(
+    impressions[3],
+    '1',
+    'the total must say it covers ONE day. A bare 1,000 under a heading saying seven days is a ' +
+      'smaller number wearing a bigger label, which is the one arithmetic error nothing on a page shows.'
   );
+  assert.equal(impressions[4], '7');
+});
+
+test('a rate is never taken across two columns covering different days', () => {
+  // 2 days of impressions over 1 day of clicks is not a click-through rate. It
+  // is a ratio of two different weeks, and it lands among the plausible values
+  // so nothing about it reads as wrong.
+  const page = text({
+    days: {
+      ok: true,
+      rows: [day('2026-07-28'), day('2026-07-27', { clicks: null })],
+      notice: null,
+    },
+  });
+  const panel = page.slice(page.indexOf('Last 7 days,'), page.indexOf('Day by day'));
+  const ctr = panel.match(/Click-through\s+(MISSING|[\d.]+%|[^ ]+)/);
+  assert.ok(ctr, `no click-through figure found: ${panel.slice(0, 300)}`);
+  assert.equal(
+    ctr[1],
+    'MISSING',
+    'the window click-through was computed from impressions over 2 days and clicks over 1'
+  );
+});
+
+test('the page states that it does not write, and server.js does not', () => {
+  const view = read('views/entry.js');
   assert.match(
-    prose,
-    /becomes the profile's reach/,
-    'The panel has to state that naming a gig replaces the typed reach.'
+    view,
+    /NOTHING HERE WRITES/,
+    'the file has to say it is read-only, because the next person to want a form here will read this first'
+  );
+  assert.ok(
+    !/<form[^>]*method="post"/i.test(view),
+    'a POST form on this page means a second place to type numbers the board already holds'
+  );
+
+  const server = read('server.js');
+  assert.ok(
+    !/app\.post\(\s*\n?\s*'\/entry'/.test(server),
+    "POST /entry is back. The form's whole problem was that it was a second answer to a question the " +
+      'impressions board already answers, and nobody could tell which one a figure came from.'
+  );
+  assert.ok(
+    !/INSERT INTO daily_entry/.test(server),
+    'nothing may write to daily_entry any more'
   );
 });
 
-test('server.js still derives reach from the gigs, which is what the copy promises', () => {
-  // The copy above is only correct while this is. If someone reverses the
-  // handler, this test names the file that now lies rather than leaving the
-  // page to be wrong quietly.
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
-  assert.match(server, /if \(c === 'impressions' && gigImpTotal !== undefined\) vals\.push\(gigImpTotal\)/);
-  assert.match(server, /if \(c === 'clicks' && gigClickTotal !== undefined\) vals\.push\(gigClickTotal\)/);
+test('the windows the view offers are the windows the loader accepts', () => {
+  const server = read('server.js');
+  const declared = server.match(/const REACH_WINDOWS = new Set\(\[([^\]]*)\]\)/);
+  assert.ok(declared, 'server.js must declare the reach windows it will honour');
+  const accepted = [...declared[1].matchAll(/'([^']+)'/g)].map((m) => m[1]).sort();
+  assert.deepEqual(
+    accepted,
+    WINDOWS.map((w) => w.key).sort(),
+    'a window the view links to and the loader rejects falls back to the default with nothing on ' +
+      'screen to say it did, so the reader gets 30 days under a label saying 90'
+  );
 });

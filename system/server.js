@@ -85,7 +85,7 @@ import {
 } from './lib/data.js';
 
 import { reconcile, normaliseBuyer } from './lib/reconcile.js';
-import { deskNow, shiftBand, entryDay } from './lib/roster.js';
+import { deskNow, shiftBand } from './lib/roster.js';
 import { loadDueDates, setDueDate, clearDueDate } from './lib/duedates.js';
 
 // The six owner-written documents. Read from data/handbook/, parsed out of
@@ -137,7 +137,13 @@ import {
 
 // The stores the team actually works in. Nothing here writes; see the header
 // of lib/external.js for which system owns which number.
-import { ceoWindow, PROFILE as EXTERNAL_PROFILE } from './lib/external.js';
+import {
+  ceoWindow,
+  reachDays,
+  reachAsOf,
+  boardGigs,
+  PROFILE as EXTERNAL_PROFILE,
+} from './lib/external.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PRODUCTION = process.env.NODE_ENV === 'production';
@@ -726,43 +732,29 @@ export const loaders = {
     };
   },
 
-  async entry(ctx, q) {
-    // Fiverr publishes a day's figures around midday the NEXT day, so before
-    // noon PKT yesterday's numbers do not exist to be typed. `window` carries
-    // that to the view, which says it rather than silently offering a form for
-    // a day nobody can fill in.
-    const window = entryDay();
-    const date = isoDateParam(ctx.query.date) || window.date;
+  // ---- Reach: what Fiverr showed, from the impressions board ---------------
+  //
+  // This was the daily form's loader, five SELECTs against `daily_entry` and
+  // `daily_entry_gig`. Both tables are still there and neither is ever getting
+  // another row: the team types these fourteen numbers into the impressions
+  // board every day and has done for longer than this hub has existed.
+  //
+  // The window is deep enough for the longest control on the page and no
+  // deeper, and it is measured back from the board's OWN last day rather than
+  // from today, because the board runs behind and a window measured from today
+  // can miss every day it holds. `reachAsOf` is fetched separately and first:
+  // it is the one figure the view refuses to render without.
+  async entry(ctx, q, req) {
+    const asOf = await reachAsOf();
+    const end = asOf.date || pktToday(new Date());
+    const from = shiftIsoDay(end, -120);
+    const [days, gigs] = await Promise.all([reachDays({ from, to: end }), boardGigs()]);
     return {
-      date,
-      window,
-      entries: await q('SELECT * FROM daily_entry WHERE entry_date = ? ORDER BY profile', [date]),
-      gigs: await q('SELECT * FROM daily_entry_gig WHERE entry_date = ? ORDER BY profile, gig', [date]),
-      recent: await q(
-        'SELECT entry_date, COUNT(*) AS profiles, MAX(updated_at) AS updated ' +
-          'FROM daily_entry GROUP BY entry_date ORDER BY entry_date DESC LIMIT 21'
-      ),
-      // The last entry BEFORE this date, per profile, the figure printed under
-      // each box so a typo of 41,200 for 4,120 is visible while it is being
-      // typed. It is the latest earlier row for each profile rather than the
-      // whole of the previous calendar day, because a profile that was not
-      // logged yesterday still has a last known figure and "no earlier entry"
-      // would be a different, false claim about it.
-      previous: await q(
-        'SELECT e.* FROM daily_entry e JOIN (' +
-          'SELECT profile, MAX(entry_date) AS d FROM daily_entry WHERE entry_date < ? GROUP BY profile' +
-          ') m ON m.profile = e.profile AND m.d = e.entry_date',
-        [date]
-      ),
-      // The gig rows of those same entries, the view reads only their names,
-      // to offer the gigs that were logged last time as the rows to fill in.
-      previousGigs: await q(
-        'SELECT g.* FROM daily_entry_gig g JOIN (' +
-          'SELECT profile, MAX(entry_date) AS d FROM daily_entry_gig WHERE entry_date < ? GROUP BY profile' +
-          ') m ON m.profile = g.profile AND m.d = g.entry_date',
-        [date]
-      ),
-      profiles: profilesFromEngine(),
+      window: REACH_WINDOWS.has(String(req?.query?.window)) ? String(req.query.window) : '30',
+      asOf,
+      days,
+      gigs,
+      notice: days.ok ? null : days.notice,
     };
   },
 
@@ -1264,6 +1256,9 @@ export const RULE_KEY_TO_VIEW = Object.freeze({
 
 const REPORT_WINDOWS = new Set(['1', '7', '30']);
 
+/** Must match WINDOWS in views/entry.js. */
+const REACH_WINDOWS = new Set(['7', '30', '90']);
+
 /** Map a q() result's rows without losing the ok/rows:null distinction. A
  *  `.map()` straight onto `rows` would throw on an outage, and a `|| []`
  *  guard would turn the outage into an empty list, the one substitution this
@@ -1529,29 +1524,14 @@ const todayIso = () => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-/**
- * The day the daily entry is ABOUT, which is not the day it is typed.
- *
- * Fiverr publishes a day's impressions and clicks the following day, so
- * whoever opens this form in the morning is reading yesterday's figures off
- * the analytics page. Defaulting the form to today filed those numbers under
- * the wrong date, and everything downstream inherited the shift: the 14-day
- * window in decompose_funnel, the structural organic decline, and the
- * previous-entry hint that exists to catch a typo by comparing days.
- *
- * A one-day offset is the kind of error that never looks wrong. Every figure
- * stays plausible, every rate stays in range, and the whole series just sits
- * one column to the right of the truth.
- *
- * The date is still editable on the form. This only changes what it opens on,
- * so the common case is right without anyone having to remember.
- */
-// Which day the entry form opens on. See roster.entryDay: Fiverr publishes a
-// day's figures around midday the NEXT day, so before noon PKT there is
-// nothing to type for yesterday. This also fixes a second bug the old version
-// had: it used the SERVER clock, which is UTC in the container, so between
-// 19:00 and 24:00 UTC it was already a day ahead of the team.
-const entryDefaultIso = () => entryDay().date;
+// `entryDefaultIso` and its comment lived here, working out which day the
+// daily form should open on from `roster.entryDay`. The form is gone and the
+// reach page opens on the board's own last day instead, so nothing needs it.
+//
+// `roster.entryDay` itself stays. The fact it encodes, that Fiverr publishes a
+// day's figures around midday the next day, is what makes a board one day
+// behind normal and a board nine days behind a gap, which is the tolerance the
+// reach page warns against.
 
 /** Post/Redirect/Get. `back` is validated so a form cannot bounce off-site,
  *  and the message is a CODE, not free text, nothing a client sends is ever
@@ -1595,116 +1575,17 @@ app.post(
   })
 );
 
-// ---- Daily entry -----------------------------------------------------------
-
-const ENTRY_INT = [
-  'impressions',
-  'clicks',
-  'organic_orders',
-  'directed_orders',
-  'orders_completed',
-  'orders_in_queue',
-  'total_reviews',
-  'success_score',
-  'cancellations',
-];
-const ENTRY_DEC = [
-  'organic_value',
-  'directed_value',
-  'completed_value',
-  'inquiries_received',
-  'profile_rating',
-  'cancelled_value',
-];
-
-app.post(
-  '/entry',
-  ...write('entry', '/entry', async (req) => {
-    const date = isoDateParam(req.body.entry_date);
-    const profile = str(req.body.profile, 80);
-    if (!date || !profile) return { error: 'invalid' };
-
-    // Per-gig reach arrives as parallel arrays from repeated inputs. Read it
-    // BEFORE building the row, because the profile's impressions and clicks
-    // are derived from it when it is present.
-    const gigNames = [].concat(req.body.gig_name || []);
-    const gigImps = [].concat(req.body.gig_impressions || []);
-    const gigClicks = [].concat(req.body.gig_clicks || []);
-
-    /**
-     * The profile total is the sum of the gigs, not a number typed twice.
-     *
-     * Ezan enters reach per gig rather than combined. Asking for the parts AND
-     * the total is two copies of one figure, and two copies drift: a gig added
-     * next month gets typed into the split and forgotten in the total, and the
-     * click-through rate quietly starts describing a subset of the profile.
-     * This file's own header says one copy of every number, so when a split is
-     * given it wins and the typed total is ignored.
-     *
-     * Strict on blanks, in line with the rest of the form. If any gig row has
-     * a blank where a number belongs, the total is NULL rather than a sum of
-     * whatever happened to be filled in: a partial sum looks like a real
-     * measurement and is not one.
-     */
-    const sumGigs = (values) => {
-      const seen = gigNames.map((n, i) => (str(n, 160) ? values[i] : null)).filter((_, i) => str(gigNames[i], 160));
-      if (!seen.length) return undefined; // no split given, keep what was typed
-      let total = 0;
-      for (const v of seen) {
-        const n = intOrNull(v);
-        if (n === null) return null; // a blank part means an unknown whole
-        total += n;
-      }
-      return total;
-    };
-
-    const gigImpTotal = sumGigs(gigImps);
-    const gigClickTotal = sumGigs(gigClicks);
-
-    const cols = ['entry_date', 'profile'];
-    const vals = [date, profile];
-    for (const c of ENTRY_INT) {
-      cols.push(c);
-      if (c === 'impressions' && gigImpTotal !== undefined) vals.push(gigImpTotal);
-      else if (c === 'clicks' && gigClickTotal !== undefined) vals.push(gigClickTotal);
-      else vals.push(intOrNull(req.body[c]));
-    }
-    for (const c of ENTRY_DEC) {
-      cols.push(c);
-      vals.push(numOrNull(req.body[c]));
-    }
-    cols.push('entered_by');
-    vals.push(req.user.name);
-
-    const updates = cols
-      .filter((c) => c !== 'entry_date' && c !== 'profile')
-      .map((c) => `${c} = VALUES(${c})`)
-      .join(', ');
-
-    await auditedWrite(
-      req,
-      'daily_entry',
-      { entry_date: date, profile, gigs: gigNames.filter(Boolean).length },
-      async (t) => {
-        await t.run(
-          `INSERT INTO daily_entry (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')}) ` +
-            `ON DUPLICATE KEY UPDATE ${updates}`,
-          vals
-        );
-        for (let i = 0; i < gigNames.length; i++) {
-          const gig = str(gigNames[i], 160);
-          if (!gig) continue;
-          await t.run(
-            'INSERT INTO daily_entry_gig (entry_date, profile, gig, impressions, clicks) VALUES (?, ?, ?, ?, ?) ' +
-              'ON DUPLICATE KEY UPDATE impressions = VALUES(impressions), clicks = VALUES(clicks)',
-            [date, profile, gig, intOrNull(gigImps[i]), intOrNull(gigClicks[i])]
-          );
-        }
-      }
-    );
-    return { ok: 'entry' };
-  })
-);
+// ---- Reach: nothing to write --------------------------------------------
+//
+// There was a POST /entry here, and a ninety-line body that turned fourteen
+// form fields plus a per-gig split into a row of `daily_entry`. It is gone
+// with the form. The team types those numbers into the impressions board and
+// this hub reads them; a second place to type them would not be a backup, it
+// would be a second answer, and nobody would know which one was being read.
+//
+// `daily_entry` and `daily_entry_gig` are left in db/schema.sql. They hold
+// what was typed here while the form existed, and dropping a table to tidy up
+// after a decision is how the evidence for the decision disappears.
 
 // ---- Inquiries: resolve a disagreement -------------------------------------
 //

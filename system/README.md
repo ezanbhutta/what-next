@@ -102,7 +102,7 @@ registered. Run it before believing a section works because it loaded.
 | Route | Question it answers |
 |---|---|
 | `/` Today | What do I do now, and who owns it |
-| `/entry` Daily entry | Type what Fiverr showed today |
+| `/entry` Reach | What Fiverr showed, read from the impressions board |
 | `/inquiries` | Who asked, who converted, which CSR, which shift |
 | `/orders` | What is live, what stage, what is late |
 | `/clients` | One record per buyer — history, value, notes |

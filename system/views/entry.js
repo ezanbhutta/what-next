@@ -1,39 +1,34 @@
-// views/entry.js, the daily metrics form. The only page in the hub whose job
-// is to put a number INTO the system rather than take one out of it.
+// views/entry.js, the profile's reach. What Fiverr showed, read from the board.
 //
-// WHAT IS TYPED, AND WHAT IS NEVER TYPED
+// WHAT THIS PAGE USED TO BE, AND WHY IT IS NOT THAT
 //
-//   Typed: the raw cells Fiverr shows, impressions, clicks, orders and their
-//   value, queue depth, reviews, ratings, cancellations. Fourteen numbers and
-//   an optional per-gig split.
+//   A form. Fourteen boxes, filled in every morning by whoever was on shift,
+//   writing to `daily_entry`. It was the only page in the hub whose job was to
+//   put a number in rather than take one out.
 //
-//   Never typed: every total and every rate. Click-through, order totals, AOV,
-//   directed share, completion ratio and cancellation rate are DERIVED from
-//   the raw cells and displayed live. They are not columns in `daily_entry`
-//   and they must never become columns: a rate typed by hand cannot be audited
-//   later, and a rate that disagrees with its own inputs is how a brief starts
-//   lying quietly. One copy of every number, and this form is the copy.
+//   Nobody is going to fill it in again. The hub stopped being a CSR tool, and
+//   the same fourteen numbers are already typed every day into the impressions
+//   board, which the team has been using since long before this form existed.
+//   Two forms for one set of figures is not redundancy, it is a guarantee that
+//   they will disagree, and the one nobody is watching is the one that goes
+//   wrong quietly. So the form is gone and this page reads the board.
 //
-// A BLANK IS NULL, NOT ZERO
+// THE NUMBER THIS PAGE CANNOT BE TRUSTED WITHOUT
 //
-//   Every metric in `daily_entry` is nullable on purpose. "Not recorded" and
-//   "recorded as zero" are different facts and the difference decides whether
-//   a rate has a denominator at all. So a blank input posts an empty string,
-//   `numOrNull` turns it into NULL, and every derived figure that depends on a
-//   blank renders MISSING rather than quietly treating it as 0. A total with
-//   one blank half is MISSING, not the other half.
+//   The board is filled in by hand and it falls behind. It is not a feed. So
+//   the as-of date is not a footnote here: it is in the masthead, in the
+//   banner when the gap is real, and beside every total. A seven-day reach
+//   figure whose seven days ended last month is a different claim from the one
+//   the label makes, and nothing about the number itself says which it is.
 //
-// R3 LIVES ON THE CLIENT TOO
+// TWO GIGS, ONE ACCOUNT
 //
-//   The derived rates are recomputed in the browser as you type, so the house
-//   rule about small denominators has to hold there as well. `LIVE_JS` carries
-//   the same Wilson interval `lib/reconcile.js` computes, and the same test, 
-//   n < 30 or an interval wider than 15 points means the figure prints as a
-//   RANGE. Four orders out of five is not "80%". The server renders the same
-//   values for anyone without JavaScript, and the script recomputes once on
-//   load so the two can never drift apart on screen.
-
-import { pick, isMissing } from '../lib/data.js';
+//   The board keeps a row per GIG, and this account has two of them. Flows are
+//   added across both; levels are taken from the main gig alone. `lib/
+//   external.js` owns that fold and explains why averaging a nine-day-old
+//   gig's rating of 0 into a 4.8 is the kind of wrong that reads as fine.
+//
+// NOTHING HERE WRITES. Not to the board, not to `daily_entry`, not to a sheet.
 
 import {
   html,
@@ -43,142 +38,76 @@ import {
   money,
   num,
   dateShort,
-  dateTimeShort,
   glyph,
   pill,
   panelHead,
+  banner,
   why,
   info,
   empty,
   rate,
+  statCard,
+  statGrid,
   MIN_SAMPLE,
 } from './layout.js';
 
 // ============================================================================
-// 1. THE FIELDS
+// 1. WINDOWS
 // ============================================================================
 //
-// `name` is the daily_entry column and the POST field name, they are the same
-// string on purpose, so a column added to the schema is one line here and
-// cannot be mistyped into a silently ignored form field.
+// The windows end at the BOARD'S last day, not at today. With the board nine
+// days behind, "the last 7 days" measured from today covers seven days it has
+// nothing for, and the honest rendering of that is an empty page with a
+// banner. That is true and useless. Measured from its own last day the same
+// control answers the question the reader is actually asking, and the span is
+// printed next to it so nobody has to assume which one it did.
 
-const SECTIONS = [
-  {
-    legend: 'Reach',
-    note:
-      'Straight off the gig analytics page for the day. Fill these in only when you are not filling ' +
-      'in the per-gig split below, because the split wins when it is there.',
-    fields: [
-      {
-        name: 'impressions',
-        label: 'Impressions',
-        mode: 'numeric',
-        help: 'Ignored if any per-gig row below is filled in. The gigs are added up instead.',
-      },
-      {
-        name: 'clicks',
-        label: 'Clicks',
-        mode: 'numeric',
-        help: 'Ignored if any per-gig row below is filled in. The gigs are added up instead.',
-      },
-    ],
-  },
-  {
-    legend: 'Orders taken',
-    note: 'Split by how the order arrived. Type 0 where none arrived, 0 is a measurement, a blank is not.',
-    fields: [
-      { name: 'organic_orders', label: 'Organic orders', mode: 'numeric' },
-      { name: 'organic_value', label: 'Organic value', mode: 'decimal', kind: 'money' },
-      { name: 'directed_orders', label: 'Directed orders', mode: 'numeric' },
-      { name: 'directed_value', label: 'Directed value', mode: 'decimal', kind: 'money' },
-    ],
-  },
-  {
-    legend: 'Delivery',
-    note: 'What closed today, and what did not survive.',
-    fields: [
-      { name: 'orders_completed', label: 'Orders completed', mode: 'numeric' },
-      { name: 'completed_value', label: 'Completed value', mode: 'decimal', kind: 'money' },
-      { name: 'orders_in_queue', label: 'Orders in queue', mode: 'numeric' },
-      { name: 'cancellations', label: 'Cancellations', mode: 'numeric' },
-      { name: 'cancelled_value', label: 'Cancelled value', mode: 'decimal', kind: 'money' },
-    ],
-  },
-  {
-    legend: 'Standing',
-    note: 'The four figures Fiverr shows on the level page.',
-    fields: [
-      { name: 'total_reviews', label: 'Total reviews', mode: 'numeric' },
-      {
-        name: 'profile_rating',
-        label: 'Profile rating',
-        mode: 'decimal',
-        help: 'A number only, never "5 star". The unit suffix has silently voided hundreds of real ratings before.',
-      },
-      { name: 'success_score', label: 'Success score', mode: 'numeric', help: 'Whole number, 1–10.' },
-      { name: 'inquiries_received', label: 'Inquiries received', mode: 'numeric', help: 'How many people messaged that day. A count, not a percentage.' },
-    ],
-  },
+export const WINDOWS = [
+  { key: '7', days: 7, label: 'Last 7 days' },
+  { key: '30', days: 30, label: 'Last 30 days' },
+  { key: '90', days: 90, label: 'Last 90 days' },
 ];
 
-const ALL_FIELDS = SECTIONS.flatMap((s) => s.fields);
+const DEFAULT_WINDOW = '30';
 
 // ============================================================================
-// 2. VALUE PLUMBING
+// 2. READING WHAT THE LOADER HANDED OVER
 // ============================================================================
 
-/** A q() result → rows array, `null` on outage, `undefined` when not loaded. */
+/** rows, or null when the read failed. R2: those are different facts. */
 function rowsOf(result) {
-  if (!result) return undefined;
-  return result.ok ? result.rows || [] : null;
+  if (!result) return null;
+  if (Array.isArray(result)) return result;
+  if (result.ok === false) return null;
+  return Array.isArray(result.rows) ? result.rows : null;
 }
 
-/**
- * A DATE column back to 'YYYY-MM-DD'.
- *
- * mysql2 hands back a Date at LOCAL midnight; `toISOString()` on that prints
- * the day before anywhere west of UTC, which is exactly the class of quiet
- * off-by-one this hub exists to catch. Local components, always.
- */
-function isoOf(value) {
-  if (!value) return null;
-  if (value instanceof Date) {
-    const p = (n) => String(n).padStart(2, '0');
-    return `${value.getFullYear()}-${p(value.getMonth() + 1)}-${p(value.getDate())}`;
-  }
-  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value));
-  return m ? m[1] : null;
-}
-
-/** Shift an ISO date by whole days without touching a timezone. */
-function shiftIso(iso, deltaDays) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
-  if (!m) return null;
-  const t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) + deltaDays * 86_400_000;
-  return new Date(t).toISOString().slice(0, 10);
-}
-
-/** A stored cell → a number, or null. DECIMAL arrives as a string from mysql2. */
 function numberOrNull(value) {
   if (value === null || value === undefined || value === '') return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
 
-/** What goes in the input's `value`. Null stays EMPTY, never "0". */
-function inputValue(value) {
-  const n = numberOrNull(value);
-  if (n === null) return '';
-  return String(n);
+// `at`, not `d`. Every view in this hub names ctx.data `d`, and tests/
+// wiring.test.js finds the keys a view reads by scanning for `d.<something>`.
+// A local Date called `d` makes that scan report `getTime` and `toISOString`
+// as data the loader forgot to supply, which is a real failure pointing at
+// nothing.
+function shiftIso(iso, deltaDays) {
+  if (!iso) return null;
+  const at = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(at.getTime())) return null;
+  at.setUTCDate(at.getUTCDate() + deltaDays);
+  return at.toISOString().slice(0, 10);
 }
 
 // ============================================================================
 // 3. DERIVED FIGURES, displayed, never stored
 // ============================================================================
 //
-// `sum` is deliberately strict: a total with one blank half is MISSING, not
-// the half that happens to be filled in. Treating a blank as 0 here would
-// manufacture a day of zero directed orders out of a CSR's coffee break.
+// `strictSum` is deliberately strict: a total with one blank half is MISSING,
+// not the half that happens to be filled in. Treating a blank as 0 here would
+// manufacture a day of zero directed orders out of a gap in the board.
 
 function strictSum(a, b) {
   return a === null || b === null ? null : a + b;
@@ -190,11 +119,78 @@ function strictRatio(numerator, denominator) {
 }
 
 /**
- * The server-rendered fallback for the derived strip.
+ * Add one column across days, and say how many days it covers.
  *
- * Anyone without JavaScript sees these and they are correct. With JavaScript,
- * `LIVE_JS` recomputes the identical set on load and on every keystroke, so
- * what is on screen always describes what is in the boxes.
+ * THIS RETURNED MISSING AT FIRST, AND THAT WAS THE WRONG ANSWER.
+ *
+ * The rule everywhere else in this hub is that a total with one unknown part
+ * is unknown, because a smaller number wearing a bigger label is the one
+ * arithmetic error nothing on the page shows. That is right for a day, where
+ * the parts are two gigs of one figure.
+ *
+ * Over a month it is not. One blank cell in one column on one day turned every
+ * headline on the page to MISSING: 105,324 real impressions across 26 days
+ * thrown away to avoid printing them under a label that says 30. The reader
+ * learns nothing, and the figure they cannot see is the one they came for.
+ *
+ * So the denominator comes with the number instead of replacing it. "105,324
+ * across 26 of 30 days" is true, and it is the same protection: whatever else
+ * a reader does with that, they cannot mistake it for a complete month.
+ *
+ * `n` is days that carried the column, NOT days on the board. A day the board
+ * holds with this cell blank counts towards neither.
+ */
+function columnTotal(rows, key) {
+  let total = null;
+  let n = 0;
+  for (const r of rows) {
+    const v = numberOrNull(r[key]);
+    if (v === null) continue;
+    total = (total ?? 0) + v;
+    n += 1;
+  }
+  return { total, n };
+}
+
+/** The days a window figure covers, for the line under it. Empty when it
+ *  covers all of them, so the common case stays quiet. */
+function coverageNote(got, windowDays) {
+  if (!got || got.total === null) return '';
+  return got.n === windowDays ? '' : `${got.n} of ${windowDays} days`;
+}
+
+function tickerCard(label, got, fmt, windowDays) {
+  return {
+    label,
+    value: got.total === null ? missing() : fmt(got.total),
+    sub: coverageNote(got, windowDays),
+  };
+}
+
+/** How a window total prints: the figure, and the days it actually covers. */
+function totalCard(field, got, windowDays) {
+  const complete = got.n === windowDays;
+  return statCard(
+    field.label,
+    got.total === null ? missing() : field.kind === 'money' ? money(got.total) : num(got.total),
+    {
+      sub:
+        got.total === null
+          ? 'No day in this window carried it'
+          : complete
+            ? `All ${windowDays} days`
+            : `Across ${got.n} of ${windowDays} days`,
+      tone: complete || got.total === null ? '' : 'warn',
+    }
+  );
+}
+
+/**
+ * Every rate this page states, from a set of raw figures.
+ *
+ * R3 lives in `rate()`: under MIN_SAMPLE, or wider than 15 points, it comes
+ * back as an interval on a hatched track rather than a number with a bar. Four
+ * orders out of five is not "80%".
  */
 function derived(v) {
   const ordersTaken = strictSum(v.organic_orders, v.directed_orders);
@@ -223,35 +219,32 @@ function derived(v) {
       : rateCell(ctr, 'impressions');
 
   return {
-    ctr: ctrCell,
-    stats: [
+    ordersTaken,
+    valueTaken,
+    cards: [
+      { label: 'Click-through', ...ctrCell },
       {
-        id: 'd-orders',
         label: 'Orders taken',
         value: ordersTaken === null ? missing() : num(ordersTaken),
-        note: 'Organic + directed',
+        note: 'Organic and directed added',
       },
       {
-        id: 'd-value',
         label: 'Value taken',
         value: valueTaken === null ? missing() : money(valueTaken),
-        note: 'Organic + directed',
+        note: 'Organic and directed added',
       },
       {
-        id: 'd-share',
         label: 'Directed share',
         ...(v.directed_orders === null || ordersTaken === null || !share.ok
           ? { value: missing(), note: 'Both order counts needed' }
           : rateCell(share, 'orders')),
       },
       {
-        id: 'd-aov',
         label: 'AOV taken',
         value: aovTaken === null ? missing() : money(aovTaken),
         note: ordersTaken === null ? 'Value and orders needed' : `Mean across ${ordersTaken} orders`,
       },
       {
-        id: 'd-aov-done',
         label: 'AOV completed',
         value: aovDone === null ? missing() : money(aovDone),
         note:
@@ -260,13 +253,11 @@ function derived(v) {
             : `Mean across ${v.orders_completed} completed`,
       },
       {
-        id: 'd-completion',
         label: 'Completion ratio',
         value: completion === null ? missing() : html`${num(completion, { dp: 2 })}×`,
-        note: 'Completed ÷ taken. Can exceed 1, not a proportion, so no interval applies.',
+        note: 'Completed divided by taken. It can exceed 1, so it is not a proportion and no interval applies.',
       },
       {
-        id: 'd-cancel',
         label: 'Cancellation rate',
         ...(v.cancellations === null || cancelDenominator === null || !cancel.ok
           ? { value: missing(), note: 'Completed and cancelled both needed' }
@@ -276,532 +267,347 @@ function derived(v) {
   };
 }
 
-// The client half. Same arithmetic, same R3 test, same wording.
-const LIVE_JS = `
-(function(){
-  'use strict';
-  var form = document.getElementById('entry-form');
-  if (!form) return;
+/** The raw columns a reach row carries, in the order they belong on screen. */
+const RAW_FIELDS = [
+  { key: 'impressions', label: 'Impressions', kind: 'count' },
+  { key: 'clicks', label: 'Clicks', kind: 'count' },
+  { key: 'organic_orders', label: 'Organic orders', kind: 'count' },
+  { key: 'organic_value', label: 'Organic value', kind: 'money' },
+  { key: 'directed_orders', label: 'Directed orders', kind: 'count' },
+  { key: 'directed_value', label: 'Directed value', kind: 'money' },
+  { key: 'orders_completed', label: 'Orders completed', kind: 'count' },
+  { key: 'completed_value', label: 'Completed value', kind: 'money' },
+  { key: 'inquiries_received', label: 'Inquiries', kind: 'count' },
+  { key: 'cancellations', label: 'Cancellations', kind: 'count' },
+  { key: 'cancelled_value', label: 'Cancelled value', kind: 'money' },
+];
 
-  var MISS = '<span class="missing">MISSING</span>';
-  var nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-  var nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Standing figures. Never added up, here or anywhere: see REACH_LEVELS. */
+const LEVEL_FIELDS = [
+  { key: 'orders_in_queue', label: 'In the queue' },
+  { key: 'total_reviews', label: 'Reviews, lifetime' },
+  { key: 'success_score', label: 'Success score' },
+  { key: 'profile_rating', label: 'Profile rating', dp: 2 },
+];
 
-  function val(name){
-    var el = form.elements[name];
-    if (!el || el.length) return null;
-    var s = String(el.value == null ? '' : el.value).replace(/[$,\\s]/g, '').trim();
-    if (s === '') return null;
-    var n = Number(s);
-    return isFinite(n) ? n : null;
-  }
-  function usd(n){ return n == null ? null : '$' + (Number.isInteger(n) ? nf0.format(n) : nf2.format(n)); }
-  function cnt(n){ return n == null ? null : nf0.format(n); }
-  function sum(a, b){ return (a == null || b == null) ? null : a + b; }
-  function ratio(a, b){ return (a == null || b == null || b === 0) ? null : a / b; }
-
-  // Wilson 95%, the same interval lib/reconcile.js computes on the server.
-  function wilson(k, n){
-    var p = k / n, z2 = 3.8416;
-    var denom = 1 + z2 / n;
-    var centre = p + z2 / (2 * n);
-    var spread = 1.96 * Math.sqrt((p * (1 - p) + z2 / (4 * n)) / n);
-    return [Math.max(0, (centre - spread) / denom), Math.min(1, (centre + spread) / denom)];
-  }
-  // R3. A rate on a small denominator is a RANGE, never a point.
-  function rateOf(k, n){
-    if (k == null || n == null || n <= 0) return null;
-    var ci = wilson(k, n), lo = ci[0], hi = ci[1];
-    var small = n < ${MIN_SAMPLE} || (hi - lo) > 0.15;
-    return {
-      text: small ? (lo * 100).toFixed(1) + '\\u2013' + (hi * 100).toFixed(1) + '%' : ((k / n) * 100).toFixed(1) + '%',
-      note: small ? 'Wilson 95% \\u00b7 n=' + n + ' \\u00b7 too few to state as one number' : 'n=' + n
-    };
-  }
-  function put(id, text, note){
-    var el = document.getElementById(id);
-    if (el) { if (text == null) el.innerHTML = MISS; else el.textContent = text; }
-    var n = document.getElementById(id + '-n');
-    if (n) n.textContent = note == null ? '' : note;
-  }
-  function putRate(id, r, blank, unit){
-    if (r == null) { put(id, null, blank); return; }
-    put(id, r.text, r.note + (unit ? ' ' + unit : ''));
-  }
-
-  function recompute(){
-    var imp = val('impressions'), clk = val('clicks');
-    var oo = val('organic_orders'), do_ = val('directed_orders');
-    var ov = val('organic_value'), dv = val('directed_value');
-    var oc = val('orders_completed'), cv = val('completed_value');
-    var cx = val('cancellations');
-
-    var taken = sum(oo, do_);
-    var takenValue = sum(ov, dv);
-    var closed = sum(oc, cx);
-
-    putRate('d-ctr', rateOf(clk, imp), 'Impressions and clicks both needed', 'impressions');
-    put('d-orders', cnt(taken), 'Organic + directed');
-    put('d-value', usd(takenValue), 'Organic + directed');
-    putRate('d-share', rateOf(do_, taken), 'Both order counts needed', 'orders');
-    put('d-aov', usd(ratio(takenValue, taken)), taken == null ? 'Value and orders needed' : 'Mean across ' + taken + ' orders');
-    put('d-aov-done', usd(ratio(cv, oc)), oc == null ? 'Completed value and count needed' : 'Mean across ' + oc + ' completed');
-    var comp = ratio(oc, taken);
-    put('d-completion', comp == null ? null : comp.toFixed(2) + '\\u00d7',
-        'Completed \\u00f7 taken. Can exceed 1, not a proportion, so no interval applies.');
-    putRate('d-cancel', rateOf(cx, closed), 'Completed and cancelled both needed', 'closed orders');
-  }
-
-  form.addEventListener('input', recompute);
-  form.addEventListener('change', recompute);
-  recompute();
-})();
-`;
+const cell = (row, field) => {
+  const v = numberOrNull(row[field.key]);
+  if (v === null) return missing();
+  return field.kind === 'money' ? money(v) : num(v);
+};
 
 // ============================================================================
-// 4. PIECES
-// ============================================================================
-
-/** One field, with the previous entry's figure printed underneath it. */
-function fieldBlock(field, { saved, previous, previousIso, previousState }) {
-  const id = `f-${field.name}`;
-  const value = inputValue(saved ? saved[field.name] : null);
-  const prevRaw = previous ? previous[field.name] : null;
-  const prevNumber = numberOrNull(prevRaw);
-
-  let hint;
-  if (previousState === 'unknown') {
-    hint = html`Previous entry ${missing()}`;
-  } else if (previousState === 'none') {
-    hint = html`No earlier entry for this profile`;
-  } else if (prevNumber === null) {
-    hint = html`${dateShort(previousIso)} · ${missing('not recorded')}`;
-  } else {
-    hint = html`${dateShort(previousIso)} · ${field.kind === 'money' ? money(prevNumber) : num(prevNumber, { dp: Number.isInteger(prevNumber) ? 0 : 2 })}`;
-  }
-
-  return html`<div class="field">
-      <label for="${id}">${field.label}</label>
-      <input id="${id}" name="${field.name}" type="text" inputmode="${field.mode}"
-             value="${value}" autocomplete="off" spellcheck="false">
-      <p class="field-hint">${hint}</p>
-      ${field.help ? html`<p class="field-hint">${field.help}</p>` : ''}
-    </div>`;
-}
-
-/** The per-gig split. Rows are (entry_date, profile, gig), see the caption. */
-function gigRows(saved, suggested) {
-  const rows = [];
-  const seen = new Set();
-
-  for (const row of saved) {
-    const name = String(row.gig ?? '');
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    rows.push({ gig: name, impressions: inputValue(row.impressions), clicks: inputValue(row.clicks) });
-  }
-  for (const name of suggested) {
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    rows.push({ gig: name, impressions: '', clicks: '' });
-  }
-  // One spare row when there is already something to edit, two when the split
-  // has never been filled in. Each row is three stacked fields at 375px, so
-  // spare rows are not free.
-  const spares = rows.length ? 1 : 2;
-  for (let i = 0; i < spares; i++) rows.push({ gig: '', impressions: '', clicks: '' });
-
-  return join(
-    rows.map(
-      (row, i) => html`<div class="form-grid">
-        <div class="field">
-          <label for="g${safe(String(i))}-name">Gig</label>
-          <input id="g${safe(String(i))}-name" name="gig_name" type="text" value="${row.gig}" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="g${safe(String(i))}-imp">Impressions</label>
-          <input id="g${safe(String(i))}-imp" name="gig_impressions" type="text" inputmode="numeric" value="${row.impressions}" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="g${safe(String(i))}-clk">Clicks</label>
-          <input id="g${safe(String(i))}-clk" name="gig_clicks" type="text" inputmode="numeric" value="${row.clicks}" autocomplete="off">
-        </div>
-      </div>`
-    )
-  );
-}
-
-/** What the engine last saw. Not a hint under a field, a separate provenance. */
-function engineSide(run) {
-  const capturedOn = pick(run, 'metrics.gig.captured_on');
-  const rows = [
-    ['Impressions, 7-day mean', num(pick(run, 'metrics.gig.impressions_7d_ma'))],
-    ['Reviews total', num(pick(run, 'metrics.gig.reviews_total'))],
-    ['Rating from the star histogram', num(pick(run, 'metrics.gig.rating'), { dp: 2 })],
-    ['Success score', num(pick(run, 'metrics.gig.success_score'))],
-    ['Orders in queue', num(pick(run, 'metrics.gig.orders_in_queue'))],
-  ];
-  return html`<section class="panel">
-      ${panelHead(
-        'What the engine last saw',
-        'live',
-        html`Live · gig capture ${isMissing(capturedOn) ? missing() : dateShort(capturedOn)}`
-      )}
-      <dl class="stats">
-        ${join(rows.map(([label, value]) => html`<div class="stat"><dt>${label}</dt><dd>${value}</dd></div>`))}
-      </dl>
-      ${info(`These are the engine's figures from its own capture, not defaults for the boxes above. If what Fiverr shows you today disagrees with one of them by a lot, type what Fiverr shows and say so, the gap is the finding, and overwriting it hides the finding.`)}
-    </section>`;
-}
-
-// ============================================================================
-// 5. RENDER
+// 4. THE PAGE
 // ============================================================================
 
 export function render(ctx) {
   const d = ctx.data || {};
-  const date = d.date || null;
-  const win = d.window || null;
-  const entries = rowsOf(d.entries);
+  const days = rowsOf(d.days);
+  const asOf = d.asOf || { ok: false, date: null, daysOld: null, notice: null };
   const gigs = rowsOf(d.gigs);
-  const recent = rowsOf(d.recent);
-  const previousAll = rowsOf(d.previous);
-  const previousGigsAll = rowsOf(d.previousGigs);
+  const windowKey = WINDOWS.some((w) => w.key === String(d.window)) ? String(d.window) : DEFAULT_WINDOW;
+  const windowDef = WINDOWS.find((w) => w.key === windowKey);
 
-  const dbUp = Array.isArray(entries);
-
-  // Profiles: the engine's list, widened by anything already typed. Never a
-  // hand-kept second list, and never narrower than what exists in the table.
-  const profileSet = new Set((d.profiles || []).map(String));
-  for (const row of entries || []) if (row.profile) profileSet.add(String(row.profile));
-  for (const row of previousAll || []) if (row.profile) profileSet.add(String(row.profile));
-  const profiles = [...profileSet].sort();
-
-  const wanted = String(ctx.query?.profile || '');
-  const profile = profiles.includes(wanted) ? wanted : profiles[0] || '';
-
-  const saved = dbUp ? entries.find((r) => String(r.profile) === profile) || null : null;
-
-  // "Yesterday" is whatever the most recent earlier entry actually is, and the
-  // hint prints its real date rather than claiming it was yesterday.
-  let previous = null;
-  let previousIso = null;
-  let previousState = 'unknown';
-  if (previousAll === null) {
-    previousState = 'unknown';
-  } else if (Array.isArray(previousAll)) {
-    const mine = previousAll
-      .filter((r) => String(r.profile) === profile)
-      .sort((a, b) => String(isoOf(b.entry_date)).localeCompare(String(isoOf(a.entry_date))));
-    previous = mine[0] || null;
-    previousIso = previous ? isoOf(previous.entry_date) : null;
-    previousState = previous ? 'have' : 'none';
+  // ---- the board is unreachable --------------------------------------------
+  //
+  // Every figure on this page comes from one store. With that store down there
+  // is nothing to show and nothing to derive, and a page of empty panels would
+  // read as a quiet month rather than as an outage.
+  if (days === null) {
+    return {
+      title: 'The impressions board cannot be read',
+      kicker: 'Reach',
+      ticker: [],
+      html: html`${banner(
+        'crit',
+        'The impressions board did not answer.',
+        // The reason comes from the read that failed, not from a `notice` the
+        // loader has to remember to mirror alongside it. A second copy of the
+        // reason is a second thing to forget, and forgetting it renders as an
+        // outage with no cause printed.
+        html`${d.days?.notice || asOf.notice || 'No reason was given.'} Nothing on this page can be shown until it
+          does. Whatever the team has entered is still safely in the board; this hub only reads it.`
+      )}
+      ${empty('No reach figures could be loaded.')}`,
+    };
   }
 
-  const values = Object.fromEntries(
-    ALL_FIELDS.map((f) => [f.name, numberOrNull(saved ? saved[f.name] : null)])
-  );
-  const view = derived(values);
+  const latest = days[0] || null;
+  const latestIso = latest ? String(latest.entry_date) : null;
 
-  const savedGigs = Array.isArray(gigs) ? gigs.filter((r) => String(r.profile) === profile) : [];
-  // Where the reach on this row came from. server.js sums the gig split and
-  // throws the typed total away whenever one gig is named, so a saved split is
-  // proof the stored impressions are a sum and not something anyone typed.
-  const reachSource = savedGigs.length ? `summed from ${savedGigs.length} gig${savedGigs.length === 1 ? '' : 's'}` : 'as typed';
-  const suggestedGigs = Array.isArray(previousGigsAll)
-    ? previousGigsAll.filter((r) => String(r.profile) === profile).map((r) => String(r.gig))
-    : [];
-
-  const backTo = `/entry?date=${encodeURIComponent(date || '')}&profile=${encodeURIComponent(profile)}`;
-
-  // ---- chrome above the form -----------------------------------------------
-
-  const dateNav = html`<form method="get" action="/entry" class="toolbar">
-      <div class="search">
-        <label class="sr-only" for="pick-date">Entry date</label>
-        <input id="pick-date" type="date" name="date" value="${date}">
-      </div>
-      <input type="hidden" name="profile" value="${profile}">
-      <button class="btn btn--ghost btn--sm" type="submit">Go to date</button>
-      <div class="segment">
-        <a href="/entry?date=${safe(encodeURIComponent(shiftIso(date, -1) || ''))}&amp;profile=${safe(encodeURIComponent(profile))}">← Previous day</a>
-        <a href="/entry?date=${safe(encodeURIComponent(shiftIso(date, 1) || ''))}&amp;profile=${safe(encodeURIComponent(profile))}">Next day →</a>
-      </div>
-      <span class="count">${dateShort(date, { year: true })}</span>
-    </form>
-    <p class="caption">
-      Everything on this page is for ${dateShort(date, { year: true })}, not today.
-      ${win ? win.why : "Fiverr publishes a day's impressions the following day."}
-    </p>
-    ${win && !win.ready && date === win.date
-      ? html`<p class="note note--warn">
-          ${glyph('warn')} <b>${dateShort(win.yesterday, { year: true })} is not ready yet.</b>
-          Fiverr publishes a day's figures around midday the next day, and it is
-          ${String(win.hour).padStart(2, '0')}:00 PKT. Typing zeros for it now is worse than leaving it
-          blank: a real zero and a not-published-yet look identical afterwards, and every average built
-          on it is wrong. Come back after noon, or
-          <a href="/entry?date=${safe(encodeURIComponent(win.yesterday))}">open it anyway</a> if you have
-          the numbers from somewhere else.
-        </p>`
-      : ''}`;
-
-  const profileNav =
-    profiles.length > 1
-      ? html`<div class="segment" role="group" aria-label="Profile">
-          ${join(
-            profiles.map(
-              (p) => html`<a href="/entry?date=${safe(encodeURIComponent(date || ''))}&amp;profile=${safe(encodeURIComponent(p))}"
-                  ${safe(p === profile ? 'aria-current="true"' : '')}>${p}</a>`
-            )
-          )}
-        </div>`
+  // ---- how far behind the board is -----------------------------------------
+  //
+  // Two days is the working tolerance, not a guess: Fiverr publishes a day's
+  // figures around midday the next day, so the board is legitimately one day
+  // behind at all times and briefly two. Past that it is not lag, it is a gap
+  // nobody has filled in, and it is the first thing on the page.
+  const stale = asOf.ok && asOf.daysOld !== null && asOf.daysOld > 2;
+  const staleBanner = !asOf.ok
+    ? banner(
+        'warn',
+        'The board would not say how current it is.',
+        html`${asOf.notice || 'The freshness check failed.'} The figures below may be right. Nothing here
+          can confirm how recent they are, so read them as undated.`
+      )
+    : stale
+      ? banner(
+          'warn',
+          html`These figures stop on ${dateShort(asOf.date, { year: true })}, ${num(asOf.daysOld)} days ago.`,
+          html`Nothing below describes the last ${num(asOf.daysOld)} days, whatever a window is labelled.
+            The board is filled in by hand and it has not been filled in since. Orders and money on the
+            other pages come from the order sheet and are current to yesterday, so the two will not agree
+            and should not be read against each other until this catches up.`
+        )
       : '';
 
-  // ---- the lede: the one derived figure that leads -------------------------
+  // ---- windows --------------------------------------------------------------
 
-  const savedAt = saved ? saved.updated_at : null;
-  const lede = html`<div class="lede">
-      <div class="lede-main">
-        <div class="figure">
-          <span class="cap">Click-through rate</span>
-          <strong class="big" id="d-ctr">${view.ctr.value}</strong>
-          <p class="caption" id="d-ctr-n">${view.ctr.note}</p>
-          ${info(`Type the two raw numbers. The rate is derived on screen and is not a column in the database, there is exactly one copy of it and it is computed from the cells above it.`)}
-        </div>
-        ${why(
-          'Why the raw cells and never the summary',
-          html`<p>
-              Every derived number in this hub is computed from the two or three raw cells it depends on. A
-              rate typed by hand cannot be audited later, and a rate that disagrees with its own inputs is
-              how a brief starts lying quietly. It is the same reason this database holds nothing the engine
-              already computes.
-            </p>
-            <p>
-              <strong>A blank is not a zero.</strong> Leave a box empty and it is stored as NULL, meaning
-              "not recorded", a different fact from "recorded as none". Any total or rate that depends on a
-              blank renders MISSING rather than treating the gap as zero, so a skipped box can never inflate
-              a denominator or invent a day of no reach.
-            </p>
-            <p>
-              Rates on small denominators print as a <strong>range</strong>, not a point. Four orders out of
-              five is not "80%", with n that small the honest interval spans most of the axis, and the
-              range says so. The threshold is n &lt; ${String(MIN_SAMPLE)} or an interval wider than 15
-              points, the same test the engine applies.
-            </p>`
-        )}
-      </div>
-      <div class="lede-side">
-        <div class="figure">
-          <span class="cap">This day, this profile</span>
-          <strong class="mid">${saved ? dateTimeShort(savedAt) : dbUp ? 'Not logged' : missing()}</strong>
-          <p class="sub">
-            ${!dbUp
-              ? html`${pill('crit', 'Store unreachable')} The typed-records database did not answer, so the hub
-                  cannot show what is already saved for this day and will not let you overwrite it blind.`
-              : saved
-                ? html`${pill('ok', 'Saved')} Entered by <b>${saved.entered_by || missing()}</b>. Saving again
-                    updates the same row, one row per profile per day, keyed on both.`
-                : html`${pill('warn', 'Nothing recorded yet')} No row exists for
-                    ${dateShort(date)} on <b>${profile || missing()}</b>.`}
-          </p>
-        </div>
-      </div>
-    </div>`;
+  const spanFrom = latestIso ? shiftIso(latestIso, -(windowDef.days - 1)) : null;
+  const inWindow = spanFrom ? days.filter((r) => String(r.entry_date) >= spanFrom) : [];
+  const spanLabel =
+    spanFrom && latestIso ? `${dateShort(spanFrom)} to ${dateShort(latestIso, { year: true })}` : 'no days';
 
-  // ---- the form ------------------------------------------------------------
-
-  const fieldSections = join(
-    SECTIONS.map(
-      (section) => html`<fieldset class="form-section">
-        <legend>${section.legend}</legend>
-        <div class="form-grid">
-          ${join(
-            section.fields.map((f) =>
-              fieldBlock(f, { saved, previous, previousIso, previousState })
-            )
-          )}
-        </div>
-        <p class="caption">${section.note}</p>
-      </fieldset>`
-    )
-  );
-
-  const form = dbUp
-    ? html`<form id="entry-form" method="post" action="/entry">
-        <input type="hidden" name="_csrf" value="${ctx.csrfToken}">
-        <input type="hidden" name="entry_date" value="${date}">
-        <input type="hidden" name="back" value="${backTo}">
-        ${profiles.length
-          ? html`<input type="hidden" name="profile" value="${profile}">`
-          : html`<div class="field">
-              <label for="f-profile">Profile <span class="req">*</span></label>
-              <input id="f-profile" name="profile" type="text" value="" autocomplete="off">
-              <p class="field-hint">
-                No profile name reached the hub from the engine, so type the one this row belongs to.
-              </p>
-            </div>`}
-
-        ${fieldSections}
-
-        <fieldset class="form-section">
-          <legend>Per gig, optional</legend>
-          ${gigRows(savedGigs, suggestedGigs)}
-          ${info(`Optional, and only worth filling when the gig-level split is actually visible. Rows are keyed on the gig NAME, so retyping a name creates a second row rather than renaming the first. Leave a row blank to ignore it.`)}
-          ${info(`Name one gig here and this becomes the profile's reach. Impressions and clicks above are then ignored and the rows below are added up instead, because asking for the parts and the total is two copies of one number and two copies drift. So fill in every gig you have, not just the one you were looking at: a partial split silently turns into the whole profile's reach, and the click-through rate starts describing a subset. A row with a name and a blank number makes the total MISSING rather than a partial sum.`)}
-        </fieldset>
-
-        <div class="form-actions">
-          <button class="btn" type="submit">Save ${dateShort(date)}</button>
-          <span class="form-status">Nothing is written until you press save. Saving overwrites this day's row for this profile.</span>
-        </div>
-      </form>`
-    : html`<p class="note note--neg">
-        ${glyph('crit')} <strong>The form is closed while the typed-records database is unreachable.</strong>
-        It cannot be shown filled in, and an empty form that saves would overwrite a real day with blanks.
-        Everything on the pages that read from <code class="mono">data/</code> is unaffected.
-      </p>`;
-
-  // ---- derived strip -------------------------------------------------------
-
-  const derivedStrip = html`<section class="panel">
-      ${panelHead('Derived, displayed, never stored', 'typed', 'From the boxes above')}
-      <dl class="stats">
+  const windowBar = html`<div class="toolbar">
+      <div class="segment">
         ${join(
-          view.stats.map(
-            // A <div> grouping dt/dd is the one wrapper a <dl> permits, so the
-            // per-figure note is a <span> rather than a <p>, same rendering,
-            // valid content model.
-            (s) => html`<div class="stat">
-              <dt>${s.label}</dt>
-              <dd id="${s.id}">${s.value}</dd>
-              <span class="caption" id="${s.id}-n">${s.note}</span>
-            </div>`
+          WINDOWS.map(
+            (w) => html`<a href="/entry?window=${safe(w.key)}"
+                ${safe(w.key === windowKey ? 'aria-current="true"' : '')}>${w.label}</a>`
           )
         )}
-      </dl>
-      ${info(`None of these is a column in daily_entry. Each is computed from the raw cells in the form and recomputed as you type. A figure that depends on an empty box reads MISSING.`)}
+      </div>
+      <span class="count">${spanLabel} · ${num(inWindow.length)} of ${num(windowDef.days)} days filled in</span>
+    </div>`;
+
+  // ---- the latest day -------------------------------------------------------
+
+  const latestValues = latest
+    ? Object.fromEntries([...RAW_FIELDS, ...LEVEL_FIELDS].map((f) => [f.key, numberOrNull(latest[f.key])]))
+    : {};
+  const latestDerived = derived(latestValues);
+
+  const latestPanel = html`<section class="panel">
+      ${panelHead(
+        latestIso
+          ? html`The last day the board has, ${dateShort(latestIso, { year: true })}`
+          : 'The last day the board has',
+        latestIso ? 'typed' : 'missing',
+        latestIso ? `Impressions board · ${latest.gigs?.length === 1 ? '1 gig' : `${latest.gigs?.length ?? 0} gigs`}` : 'No day on the board',
+        'One day, exactly as the team entered it, with the rates this hub works out from it. Nothing on this card is stored.'
+      )}
+      ${!latest
+        ? empty('The board holds no day at all for this account.')
+        : html`${statGrid(
+              RAW_FIELDS.map((f) => statCard(f.label, cell(latest, f)))
+            )}
+            ${statGrid(latestDerived.cards.map((c) => statCard(c.label, c.value, { sub: c.note })))}
+            <div class="statgrid" style="margin-top:18px">
+              ${join(
+                LEVEL_FIELDS.map((f) => {
+                  const v = numberOrNull(latest[f.key]);
+                  return statCard(f.label, v === null ? missing() : num(v, { dp: f.dp || 0 }), {
+                    sub: 'Standing figure, never added up',
+                  });
+                })
+              )}
+            </div>`}
+      ${why(
+        'Why the standing figures sit apart',
+        html`<p>
+            Impressions, clicks and orders are things that <em>happened</em> during the day, so two days of
+            them add up and so do two gigs. The four below are what the account stood at when the day
+            ended. <em>Reviews, lifetime</em> reads 1,546 one day and 1,553 the next because it is a running
+            total, and a week of it added together comes to about eleven thousand reviews, which this
+            business has never had.
+          </p>
+          <p>
+            Nothing in a row says which kind a column is, and the wrong sum looks every bit as reasonable
+            as the right one. So the two kinds are separated in
+            <code class="mono">lib/external.js</code> and the separation is carried through to here.
+          </p>`
+      )}
     </section>`;
 
-  // ---- the rest of the day, and the days before it -------------------------
+  // ---- the window -----------------------------------------------------------
 
-  const otherProfiles =
-    dbUp && entries.length
-      ? html`<section class="panel">
-          ${panelHead(html`Saved for ${dateShort(date)}`, 'typed', 'Typed here · MySQL')}
-          <div class="tablewrap">
-            <table class="table table--narrow">
-              <thead>
-                <tr><th>Profile</th><th class="r">Impressions</th><th class="r">Orders taken</th><th class="r">Completed value</th><th>Entered by</th></tr>
-              </thead>
-              <tbody>
-                ${join(
-                  entries.map((row) => {
-                    const taken = strictSum(
-                      numberOrNull(row.organic_orders),
-                      numberOrNull(row.directed_orders)
-                    );
-                    return html`<tr>
-                      <td><span class="cell-name">${row.profile}</span></td>
-                      <td class="r cell-figure">${numberOrNull(row.impressions) === null ? missing() : num(row.impressions)}</td>
-                      <td class="r cell-figure">${taken === null ? missing() : num(taken)}</td>
-                      <td class="r cell-figure">${numberOrNull(row.completed_value) === null ? missing() : money(row.completed_value)}</td>
-                      <td>${row.entered_by || missing()}</td>
-                    </tr>`;
-                  })
-                )}
-              </tbody>
-            </table>
-            <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
-          </div>
-        </section>`
-      : dbUp
-        ? html`<section class="panel">
-            ${panelHead(html`Saved for ${dateShort(date)}`, 'typed', 'Typed here · MySQL')}
-            ${empty('No profile has been logged for this date yet.')}
-          </section>`
-        : '';
+  const totals = Object.fromEntries(RAW_FIELDS.map((f) => [f.key, columnTotal(inWindow, f.key)]));
+  const gapDays = windowDef.days - inWindow.length;
 
-  const history =
-    Array.isArray(recent) && recent.length
-      ? html`<section class="panel">
-          ${panelHead('Recently logged days', 'typed', 'Typed here · MySQL')}
-          <div class="tablewrap">
-            <table class="table table--narrow">
-              <thead><tr><th>Date</th><th class="r">Profiles</th><th>Last touched</th><th></th></tr></thead>
-              <tbody>
-                ${join(
-                  recent.map((row) => {
-                    const iso = isoOf(row.entry_date);
-                    return html`<tr${safe(iso === date ? ' class="row-attn"' : '')}>
-                      <td><span class="cell-name">${dateShort(iso, { year: true })}</span></td>
-                      <td class="r cell-figure">${num(row.profiles)}</td>
-                      <td>${dateTimeShort(row.updated)}</td>
-                      <td class="r"><a href="/entry?date=${safe(encodeURIComponent(iso || ''))}&amp;profile=${safe(encodeURIComponent(profile))}">Open</a></td>
-                    </tr>`;
-                  })
-                )}
-              </tbody>
-            </table>
-            <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
-          </div>
-          ${info(`A gap in this list is a day nobody logged. It is not a day of zero reach.`)}
-        </section>`
-      : '';
+  // A RATE ACROSS A WINDOW IS ONLY HONEST WHEN BOTH SIDES COVER THE SAME DAYS.
+  //
+  // Click-through from 26 days of impressions over 24 days of clicks is not a
+  // click-through rate, it is a ratio of two different months, and it lands
+  // between the plausible ones so nothing about it looks wrong. So each
+  // derived figure is computed from the totals only where its inputs agree on
+  // their day count, and reads MISSING where they do not.
+  const agreed = (...keys) => {
+    const ns = keys.map((k) => totals[k]?.n ?? 0);
+    return ns.every((n) => n === ns[0] && n > 0);
+  };
+  const forRates = Object.fromEntries(
+    RAW_FIELDS.map((f) => [f.key, totals[f.key].total])
+  );
+  if (!agreed('clicks', 'impressions')) { forRates.clicks = null; forRates.impressions = null; }
+  if (!agreed('organic_orders', 'directed_orders')) {
+    forRates.organic_orders = null;
+    forRates.directed_orders = null;
+  }
+  if (!agreed('organic_value', 'directed_value')) {
+    forRates.organic_value = null;
+    forRates.directed_value = null;
+  }
+  if (!agreed('orders_completed', 'cancellations')) forRates.cancellations = null;
+  const windowDerived = derived(forRates);
 
-  const body = html`${dateNav}${profileNav}
-    ${lede}
-    <section class="panel">
+  const windowPanel = html`<section class="panel">
       ${panelHead(
-        html`Today's figures, ${profile || missing()}`,
-        'typed',
-        html`Typed here · MySQL · one row per profile per day`
+        html`${windowDef.label}, ${num(inWindow.length)} ${inWindow.length === 1 ? 'day' : 'days'} on the board`,
+        inWindow.length ? 'typed' : 'missing',
+        inWindow.length ? `Impressions board · ${spanLabel}` : 'Nothing in this window',
+        'Totals add strictly: one day missing a column makes that column MISSING for the window rather than a smaller number wearing a bigger label.'
       )}
-      ${form}
-    </section>
-    ${derivedStrip}
-    ${engineSide(ctx.run)}
-    ${otherProfiles}
-    ${history}
-    <script nonce="${ctx.nonce}">${safe(LIVE_JS)}</script>`;
+      ${!inWindow.length
+        ? empty(`The board holds no day between ${spanLabel}.`)
+        : html`${gapDays > 0
+              ? html`<p class="note note--warn">
+                  ${glyph('warn')} ${num(gapDays)} of these ${num(windowDef.days)} days ${gapDays === 1 ? 'is' : 'are'}
+                  not on the board. Any column blank on one of the filled-in days reads MISSING for the whole
+                  window rather than being added up around the gap.
+                </p>`
+              : ''}
+            ${statGrid(RAW_FIELDS.map((f) => totalCard(f, totals[f.key], windowDef.days)))}
+            ${statGrid(windowDerived.cards.map((c) => statCard(c.label, c.value, { sub: c.note })))}`}
+    </section>`;
+
+  // ---- day by day -----------------------------------------------------------
+
+  const tablePanel = html`<section class="panel">
+      ${panelHead(
+        html`Day by day, ${num(inWindow.length)}`,
+        inWindow.length ? 'typed' : 'missing',
+        inWindow.length ? 'Impressions board' : 'Nothing in this window',
+        'Newest first. A day the board does not hold is not a row here, because it is not a day of zero reach.'
+      )}
+      ${!inWindow.length
+        ? empty('No day to list.')
+        : html`<div class="tablewrap tablewrap--capped">
+              <table class="table table--wide">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    ${join(RAW_FIELDS.map((f) => html`<th class="r">${f.label}</th>`))}
+                    <th class="r">Rating</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${join(
+                    inWindow.map((r) => {
+                      const rating = numberOrNull(r.profile_rating);
+                      return html`<tr>
+                        <td><span class="cell-name">${dateShort(r.entry_date)}</span></td>
+                        ${join(RAW_FIELDS.map((f) => html`<td class="r cell-figure">${cell(r, f)}</td>`))}
+                        <td class="r cell-figure">${rating === null ? missing() : num(rating, { dp: 2 })}</td>
+                      </tr>`;
+                    })
+                  )}
+                </tbody>
+              </table>
+              <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
+            </div>`}
+    </section>`;
+
+  // ---- the gig split --------------------------------------------------------
+
+  const gigPanel = html`<section class="panel">
+      ${panelHead(
+        html`Gigs on this account, ${gigs === null ? missing() : num(gigs.length)}`,
+        gigs === null ? 'missing' : 'typed',
+        gigs === null ? 'Gig list unreadable' : 'Impressions board',
+        'Read from the board rather than kept here, so a gig launched next month arrives on its own instead of going missing from every total.'
+      )}
+      ${gigs === null
+        ? html`<p class="note note--neg">
+            ${glyph('crit')} The board's gig list could not be read, so the totals above may be one gig short
+            and there is no way to tell from here which.
+          </p>`
+        : !gigs.length
+          ? empty('The board lists no gig under this account.')
+          : html`<ul class="plainlist">
+              ${join(
+                gigs.map((g) => {
+                  const contributed = inWindow.reduce((acc, day) => {
+                    const part = (day.gigs || []).find((p) => p.gig === g.name);
+                    const v = part ? numberOrNull(part.impressions) : null;
+                    return v === null ? acc : acc + v;
+                  }, 0);
+                  return html`<li>
+                    <strong>${g.name}</strong>
+                    ${g.main ? pill('ok', 'main gig') : pill('info', 'second gig')}
+                    ${g.active ? '' : pill('warn', 'inactive')}
+                    <span class="caption"> ${num(contributed)} impressions in this window</span>
+                  </li>`;
+                })
+              )}
+            </ul>`}
+      ${why(
+        'Why the rating is not an average of the two',
+        html`<p>
+            Reach adds across gigs. A rating does not. The second gig here is days old and the board
+            records its rating and review count as <code class="mono">0</code>, which is the import's way of
+            writing <em>none yet</em>. Averaged into the main gig's 4.8 that gives 2.4, and added to its
+            review count it gives a number of reviews nobody has. So flows are added and levels are taken
+            from the main gig alone, never combined.
+          </p>`
+      )}
+    </section>`;
+
+  // ---- what the page leads with --------------------------------------------
+
+  const title = !latest
+    ? 'The board holds nothing for this account'
+    : stale
+      ? `Reach stops ${asOf.daysOld} days ago, on ${dateShort(asOf.date, { year: true })}`
+      : `${latestDerived.ordersTaken === null ? 'Reach' : `${latestDerived.ordersTaken} orders`} on ${dateShort(latestIso, { year: true })}`;
 
   return {
-    // Three states, not two. Every other cell on this page already separates
-    // "not logged" from "we cannot tell", the saved stamp, the form, the
-    // ticker, and the headline was the one place that collapsed them, which
-    // is where it does the most damage: during an outage it told whoever
-    // opened the page that today had not been entered, when the honest answer
-    // was that the table could not be read.
-    title: saved
-      ? `${dateShortText(date)} is logged for ${profile}`
-      : dbUp
-        ? `${dateShortText(date)} is not logged yet`
-        : `Whether ${dateShortText(date)} is logged cannot be read`,
-    kicker: profile ? `Daily entry · ${profile}` : 'Daily entry',
+    title,
+    kicker: `Reach · impressions board · ${spanLabel}`,
     ticker: [
-      { label: 'Entry date', value: dateShort(date, { year: true }), sub: profile || null },
+      tickerCard('Impressions', totals.impressions, num, windowDef.days),
+      tickerCard('Clicks', totals.clicks, num, windowDef.days),
       {
-        label: 'This row',
-        value: saved ? 'Saved' : dbUp ? 'Not logged' : missing(),
-        sub: saved && saved.entered_by ? String(saved.entered_by) : null,
+        label: 'Orders taken',
+        value: windowDerived.ordersTaken === null ? missing() : num(windowDerived.ordersTaken),
+        sub: coverageNote(totals.organic_orders, windowDef.days),
       },
-      // `reachSource` and not a flat 'as typed': the server ignores the typed
-      // reach boxes whenever a per-gig split was saved, so on those days this
-      // figure is the SUM of the rows below and captioning it "as typed" tells
-      // the reader the one thing about it that is not true.
-      { label: 'Impressions', value: values.impressions === null ? missing() : num(values.impressions), sub: reachSource },
-      { label: 'Clicks', value: values.clicks === null ? missing() : num(values.clicks), sub: reachSource },
-      { label: 'Orders taken', value: view.stats[0].value, sub: 'derived' },
-      { label: 'Value taken', value: view.stats[1].value, sub: 'derived' },
+      {
+        label: 'Value taken',
+        value: windowDerived.valueTaken === null ? missing() : money(windowDerived.valueTaken),
+        sub: coverageNote(totals.organic_value, windowDef.days),
+      },
+      tickerCard('Inquiries', totals.inquiries_received, num, windowDef.days),
+      {
+        label: 'Board as of',
+        value: asOf.date ? dateShort(asOf.date) : missing(),
+        sub: asOf.daysOld === null ? '' : asOf.daysOld === 0 ? 'today' : `${asOf.daysOld} days ago`,
+      },
     ],
-    html: body,
+    html: html`${staleBanner}
+      ${windowBar}
+      ${latestPanel}
+      ${windowPanel}
+      ${tablePanel}
+      ${gigPanel}
+      <div class="provenance-bar">
+        <span>Every figure on this page is typed by the team into the impressions board, and read from it
+          here. This hub does not write to it, and the form that used to live on this page is gone: two
+          places to type one number is a guarantee they will disagree.</span>
+        <span>Windows end on the board's own last day rather than on today, so a label means the days it
+          says. The span is printed beside the control.</span>
+        <span>Rates follow the house rule: below ${String(MIN_SAMPLE)}, or wider than 15 points, they are an
+          interval on a hatched track and never a bar.</span>
+      </div>`,
   };
-}
-
-/** Plain text form of a date, for `title`, which is prose, not markup. */
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function dateShortText(iso) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
-  return m ? `${m[3]} ${MONTHS[Number(m[2]) - 1]}` : 'This day';
 }
 
 export default render;

@@ -125,7 +125,6 @@ test('every form action a view emits resolves to a POST route', () => {
   const broken = [];
   for (const key of VIEW_KEYS) {
     for (const target of literalTargets(viewSource(key), 'action')) {
-      if (target === '/entry' && !viewSource(key).includes('method="post" action="/entry"')) continue;
       if (!resolves('POST', target) && !resolves('GET', target)) {
         broken.push(`views/${key}.js -> POST ${target}`);
       }
