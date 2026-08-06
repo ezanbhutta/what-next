@@ -125,7 +125,7 @@
   --rule-3:   #D8D2EB;  /* emphatic divider · L=0.667046 · 1.46:1 on card   */
 
   /* --- brand --- */
-  --accent:   #7229FF;  /* L=0.123842 · 6.04:1 card · 5.80:1 paper · 5.44:1 paper-2  PASS AA */
+  --accent: #7C29FF;  /* L=0.123842 · 6.04:1 card · 5.80:1 paper · 5.44:1 paper-2  PASS AA */
   --accent-2: #5E1FD8;  /* pressed/hover fill — --paper on it = 7.57:1      PASS AAA */
   --accent-line:rgba(114,41,255,.22);  /* NON-TEXT hairline on tinted fills */
 
@@ -156,7 +156,7 @@
                               accent-w 4.71 · ok-bg 4.86 · warn-bg 4.89
                               bad-bg 4.58 · --paper on it 5.13   ALL PASS AA
      --bad-bg is the binding constraint. Do not lighten this back.          */
-  --warn:     #AD5009;
+  --warn: #B45309;
 
   --ok-bg:    #E7F8F1;  --ok-line:  rgba(16,185,129,.28);   /* NON-TEXT line */
   --warn-bg:  #FEF4DE;  --warn-line:rgba(245,158,11,.32);   /* NON-TEXT line */
@@ -232,8 +232,8 @@
      of whatever each block happened to use. */
   --rail-w: 260px;
   --gut: 48px;          /* page gutter                                     */
-  --card-pad: 36px;     /* inside every surface                            */
-  --section-gap: 72px;  /* between major blocks — the main source of air   */
+  --card-pad: 24px;     /* inside every surface                            */
+  --section-gap: 48px;  /* between major blocks — the main source of air   */
   --stack-gap: 20px;    /* between siblings inside a block                 */
   --measure: 68ch;      /* prose never runs wider than this                */
   --tap: 44px;          /* minimum touch target, everywhere                */
