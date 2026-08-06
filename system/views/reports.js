@@ -1652,6 +1652,51 @@ export function render(ctx) {
  * error, because covering somebody else's shift is a normal Tuesday and the
  * log should record it rather than argue about it.
  */
+/**
+ * What this person has logged, and how many.
+ *
+ * A log with no visible record of what went into it asks somebody to type into
+ * a void. The count is the reassurance and the list is the proof, and both
+ * answer the question a CSR actually has mid-shift: did that save, and what
+ * have I already done.
+ *
+ * Scoped to the AUTHOR and the last sixteen hours, which is a shift plus a
+ * handover, so it is this person's own work and not a stranger's from
+ * yesterday.
+ */
+function timelineBlock(d, me) {
+  const rows = rowsOf(d?.activities);
+  const unreadable = rows === null;
+  const list = Array.isArray(rows) ? rows : [];
+
+  return html`<section class="panel">
+      ${panelHead(
+        html`Logged this shift, ${unreadable ? missing() : num(list.length)}`,
+        unreadable ? 'missing' : 'typed',
+        me ? html`${me}, last 16 hours` : 'this shift'
+      )}
+      ${unreadable
+        ? html`<p class="note note--neg">
+            ${glyph('crit')} The log could not be read, so this is ${missing()} rather than none.
+          </p>`
+        : list.length
+          ? html`<ul class="tl">
+              ${join(
+                list.slice(0, 25).map((r) => {
+                  const a = ACTIVITY_BY_KEY[String(r.type)];
+                  return html`<li class="tl-row">
+                      <span class="tl-time">${clockPKT(r.created_at)}</span>
+                      ${safe(activityDot(String(r.type)))}
+                      <span class="tl-what">${a ? a.label : String(r.type ?? '')}</span>
+                      <span class="tl-who">${r.client || ''}</span>
+                    </li>`;
+                })
+              )}
+            </ul>`
+          : empty('Nothing logged yet. The first thing you do, tap it above.')}
+    </section>`;
+}
+
 function logOnlyView(ctx, { csrfToken, date, d }) {
   const desk = deskNow();
   const me = ctx.user?.name || null;
@@ -1734,6 +1779,7 @@ function logOnlyView(ctx, { csrfToken, date, d }) {
     ${queueBlock}
     <h2 class="sec">Log what you just did</h2>
     ${activityChooser(openLog?.key || null)}
+    ${timelineBlock(d, me)}
     ${openLog
       ? activityForm(openLog, { csrfToken, reportId: null, backTo: '/reports' })
       : html`<p class="caption">Pick what happened. Each one asks only for what it needs.</p>`}`;

@@ -2383,3 +2383,23 @@ mark{
 .info--start .info-pop{ left:0; translate:0 0; }
 .info--end .info-pop{ left:auto; right:0; translate:0 0; }
 @media (prefers-reduced-motion:reduce){ .info-pop{ transition:none; } }
+
+/* Today's log: time, dot, what, who. One line each, aligned in a grid so the
+   times and the labels form columns instead of ragged text. */
+.tl{ list-style:none; margin:0; padding:0; }
+.tl-row{
+  display:grid; grid-template-columns:56px 10px 1fr auto; align-items:center;
+  gap:10px; padding:9px 0; border-bottom:1px solid var(--rule-soft);
+  font-size:13.5px;
+}
+.tl-row:last-child{ border-bottom:0; }
+.tl-time{ font:500 12px/1 var(--mono); color:var(--ink-3); }
+.tl-what{ color:var(--ink); font-weight:520; }
+.tl-who{ color:var(--ink-3); font-size:12.5px; }
+.act-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; flex:0 0 auto; }
+.act-dot--info{ background:var(--info, #38BDF8); }
+.act-dot--pos{ background:var(--pos, #10B981); }
+.act-dot--warn{ background:var(--warn, #F59E0B); }
+.act-dot--neg{ background:var(--neg, #EF4444); }
+.act-dot--accent{ background:var(--accent, #6366F1); }
+.segment a .act-dot{ margin-right:7px; }
