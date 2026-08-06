@@ -216,6 +216,18 @@ export const ACTION_TYPE_TO_RULE_KEY = Object.freeze({
   custom_reminder: 'custom',
 });
 
+/**
+ * The same map, the other way round.
+ *
+ * This used to be hand-written in server.js as RULE_KEY_TO_VIEW, next to the
+ * SQL that needed it, and the two were kept in step by a test. The SQL is gone
+ * and keeping two hand-written inverses of each other in step by assertion was
+ * always the worse of the two options available. Derived, they cannot disagree.
+ */
+export const RULE_KEY_TO_ACTION_TYPE = Object.freeze(
+  Object.fromEntries(Object.entries(ACTION_TYPE_TO_RULE_KEY).map(([type, key]) => [key, type]))
+);
+
 /** The logger writes a wrap-up keyed by the item's LABEL; the hub reads it
  *  keyed by id. Six items, spelled here once.
  *
@@ -681,7 +693,7 @@ export async function reachAsOf({ today = null } = {}) {
 export default {
   STORES, PROFILE, PROFILE_ALIASES, ExternalError,
   select, tryselect, shiftReports, shiftActions, mistakes,
-  ACTION_TYPE_TO_RULE_KEY, CHECKLIST_LABEL_TO_ID,
+  ACTION_TYPE_TO_RULE_KEY, RULE_KEY_TO_ACTION_TYPE, CHECKLIST_LABEL_TO_ID,
   checklistInHubVocabulary, shiftInHubVocabulary, actionInHubVocabulary,
   reminderInHubVocabulary, ceoWindow,
   REPORTS_PROFILES, BOARD_ACCOUNT, REACH_FLOWS, REACH_LEVELS,

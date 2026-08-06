@@ -36,7 +36,19 @@ const { app, loaders } = await import('../server.js');
 const { SECTIONS } = await import('../views/layout.js');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const viewSource = (key) => fs.readFileSync(path.join(ROOT, 'views', `${key}.js`), 'utf8');
+/**
+ * Section key to the file that renders it.
+ *
+ * These were the same string until Reports lost its input half. `/reports` was
+ * the CSR's shift form and `/reports/ceo` was what the shifts produced; the
+ * form is gone, the reading half moved up, and the section is now served by a
+ * file that is not named after it. Anything walking SECTIONS has to come
+ * through here or it reads a file that is not there.
+ */
+const VIEW_FILE = { reports: 'reports-ceo' };
+
+const viewSource = (key) =>
+  fs.readFileSync(path.join(ROOT, 'views', `${VIEW_FILE[key] || key}.js`), 'utf8');
 
 /** Every path Express will answer, as {method, path} — '/clients/:buyer' and all. */
 function registeredRoutes() {
@@ -184,6 +196,7 @@ async function keysSuppliedBy(loaderName) {
 const LOADERS_FOR = {
   clients: ['clients', 'client'],
   messages: ['messages', 'message'],
+  reports: ['reportsCeo'],
 };
 
 for (const key of VIEW_KEYS) {
@@ -209,293 +222,9 @@ for (const key of VIEW_KEYS) {
   });
 }
 
-// ---------------------------------------------------------------- check 4
 
-/**
- * Views that are NOT the whole of a section.
- *
- * Reports is one rail entry and two pages: `/reports` is the CSR's shift and
- * `/reports/ceo` is what the shifts produced. The loop above walks SECTIONS,
- * so the second file is invisible to it — and a view nothing checks is a view
- * that drifts. Same three questions, asked by hand.
- */
-const EXTRA_VIEWS = [
-  { view: 'reports-ceo', loader: 'reportsCeo', at: '/reports/ceo' },
-];
 
-for (const extra of EXTRA_VIEWS) {
-  test(`views/${extra.view}.js is wired at ${extra.at} and handed every key it reads`, async () => {
-    assert.ok(resolves('GET', extra.at), `${extra.at} has no GET route — views/${extra.view}.js is unreachable`);
 
-    const wanted = keysReadBy(extra.view);
-    const supplied = new Set(await keysSuppliedBy(extra.loader));
-    const absent = wanted.filter((k) => !supplied.has(k));
-    assert.deepEqual(
-      absent,
-      [],
-      `views/${extra.view}.js reads ctx.data.${absent.join(', ctx.data.')} — loaders.${extra.loader} ` +
-        `never sets ${absent.length === 1 ? 'it' : 'them'}. Supplied: ${[...supplied].sort().join(', ')}`
-    );
-
-    const source = viewSource(extra.view);
-    for (const target of literalTargets(source, 'href')) {
-      assert.ok(resolves('GET', target), `views/${extra.view}.js -> GET ${target} is a dead link`);
-    }
-    for (const target of literalTargets(source, 'action')) {
-      assert.ok(
-        resolves('POST', target) || resolves('GET', target),
-        `views/${extra.view}.js -> ${target} has no handler`
-      );
-    }
-  });
-}
-
-// ---------------------------------------------------------------- check 5
-
-/**
- * The two spellings of the thirteen reminder logics.
- *
- * `lib/reminders.js` names the stage that books a follow-up `order_assign`;
- * `views/reports.js`, ported from the shift logger on a different day, calls
- * the same stage `new_order`. The stored value is the engine's, so every read
- * for the CSR page translates through `RULE_KEY_TO_VIEW` in server.js.
- *
- * Nothing about that drift is visible at runtime. An unmapped key does not
- * throw — the view falls through to its ORPHAN rule and renders a card with
- * the wrong title and no working buttons, on a page that otherwise looks
- * completely normal, and the CSR taps a button that resolves nothing. So the
- * map is checked here, in both directions, and a rename on either side fails
- * the suite instead of shipping.
- */
-test('every reminder rule maps between the engine and the CSR view, both ways', async () => {
-  const { RULE_KEY_TO_VIEW } = await import('../server.js');
-  const { RULE_KEYS } = await import('../lib/reminders.js');
-  const { RULES: VIEW_RULES } = await import('../views/reports.js');
-
-  const unmapped = RULE_KEYS.filter((k) => !RULE_KEY_TO_VIEW[k]);
-  assert.deepEqual(
-    unmapped,
-    [],
-    `lib/reminders.js rule${unmapped.length === 1 ? '' : 's'} ${unmapped.join(', ')} ` +
-      'have no entry in RULE_KEY_TO_VIEW — a reminder booked by them renders on the CSR page as an ' +
-      'uninterpretable card with buttons that do nothing'
-  );
-
-  const viewKeys = Object.keys(VIEW_RULES);
-  const dangling = Object.entries(RULE_KEY_TO_VIEW)
-    .filter(([, v]) => !viewKeys.includes(v))
-    .map(([k, v]) => `${k} -> ${v}`);
-  assert.deepEqual(
-    dangling,
-    [],
-    `RULE_KEY_TO_VIEW points at rule keys views/reports.js does not define: ${dangling.join(', ')}`
-  );
-
-  const unreachable = viewKeys.filter((v) => !Object.values(RULE_KEY_TO_VIEW).includes(v));
-  assert.deepEqual(
-    unreachable,
-    [],
-    `views/reports.js defines rule${unreachable.length === 1 ? '' : 's'} ${unreachable.join(', ')} ` +
-      'that nothing can ever book — no engine rule maps to them'
-  );
-});
-
-/**
- * The two tables of thirteen delays, held to the same numbers.
- *
- * views/reports.js keeps a rule table because the LOG FORM has to say what
- * saving an entry will book before any reminder exists ("this books a reminder
- * — 25 minutes"). lib/reminders.js keeps one because it does the booking. Two
- * tables of the same thirteen offsets is the exact shape of the bug this repo
- * exists to referee: they agree on the day they are written and nowhere else,
- * and when they part the form promises 25 minutes while the engine books 30 —
- * with nothing on either side looking wrong.
- *
- * So the numbers are compared, not trusted. REMINDER-LOGICS.md is the
- * authority for both; if this fails, fix the table that moved rather than the
- * expectation.
- */
-test('both rule tables state the same delay, buttons and cancel for all thirteen', async () => {
-  const { RULE_KEY_TO_VIEW } = await import('../server.js');
-  const { RULES: ENGINE_RULES, RULE_KEYS } = await import('../lib/reminders.js');
-  const { RULES: VIEW_RULES } = await import('../views/reports.js');
-
-  // One entry per stage, carrying whatever detail its delay/condition reads.
-  const sample = {
-    inquiry_followup: {},
-    lead_followup_next: { attempt: '1st' },
-    order_assign: {},
-    order_upsell: { order_via: 'Direct Order' },
-    completed_public_review: {},
-    review_private_ask: { rating: 5 },
-    files_upsell: {},
-    revision_check: {},
-    offer_fu1: {},
-    offer_fu2: {},
-    offer_fu3: {},
-    delivery_followup: { stage: 'Final files' },
-    shared_followup: { elements: ['Final files'] },
-    frustrated_alert: {},
-    disputed_alert: {},
-    custom: {},
-  };
-
-  for (const key of RULE_KEYS) {
-    const engine = ENGINE_RULES[key];
-    const view = VIEW_RULES[RULE_KEY_TO_VIEW[key]];
-    const detail = sample[key];
-    assert.ok(detail, `add a sample entry for the new rule ${key}`);
-    const where = `rule ${engine.rule} (${key} / ${RULE_KEY_TO_VIEW[key]})`;
-
-    // Rule 13's delay is an absolute moment rather than an offset, so there is
-    // no shared number to compare — the two tables agree that it is whatever
-    // the CSR picked, which both express by reading `remind_at`.
-    if (key !== 'custom') {
-      const engineDelay = engine.delay({ kind: engine.on, detail }, {});
-      const viewDelay =
-        typeof view.delay === 'function' ? view.delay({ details: detail }) : view.delay;
-      assert.equal(engineDelay, viewDelay, `${where}: the two tables disagree about the delay`);
-    }
-
-    const shape = (b) => `${b.key}/${b.label}/${b.kind}/${b.minutes ?? ''}/${b.next ?? ''}`;
-    assert.deepEqual(
-      engine.buttons.map(shape),
-      view.buttons.map(shape),
-      `${where}: the two tables disagree about the buttons`
-    );
-
-    assert.equal(Boolean(engine.alert), Boolean(view.alert), `${where}: they disagree about the red alert`);
-    assert.equal(
-      engine.cancelOn ?? null,
-      view.cancelOn ?? null,
-      `${where}: they disagree about what auto-clears it`
-    );
-    assert.equal(
-      Boolean(engine.chained),
-      Boolean(view.chained),
-      `${where}: they disagree about whether logging can book it`
-    );
-  }
-});
-
-/**
- * 4. A VIEW MUST NOT READ A COLUMN NAME THE LOADER ALIASED AWAY.
- *
- * server.js selects the reports tables through REPORT_COLS / ACTIVITY_COLS /
- * REMINDER_COLS, and several columns are renamed on the way out:
- * `opened_at AS started_at`, `person AS csr_name`, `kind AS type`,
- * `order_ref AS project`, `body AS note`, `booked_by AS created_by`. The row a
- * view receives has the ALIAS. Reading the original name yields `undefined`,
- * and `undefined` is exactly the kind of nothing this file exists to catch: it
- * does not throw, it does not blank the page, it takes the empty branch.
- *
- * That is not hypothetical. views/reports-ceo.js grouped shifts into days with
- * `pktDay(s.opened_at)`. Every key came back null, no shift matched any day,
- * and the page rendered "Day by day: 0 shifts, covered by nobody" and "Who
- * covered what: no shift was opened in this window" directly beneath a masthead
- * reading "Shifts 1 · People 1 · Entries 19". HTTP 200, nothing in the log, and
- * an owner being told the shift in front of him did not happen.
- *
- * Checks 1-3 could not see it: the route exists, the loader supplies `shifts`,
- * and the view does read `ctx.data.shifts`. The drift is one level down, inside
- * the row, which is why this check reads for the aliased-away name directly.
- */
-test('no reports view reads a column its loader renamed', async () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
-
-  // `<expr> AS <alias>` out of the three column lists — the aliases actually
-  // in force, read from server.js rather than restated here, so adding one to
-  // a SELECT brings it under this check with no edit to the test.
-  const renamed = new Map();
-  for (const list of ['REPORT_COLS', 'ACTIVITY_COLS', 'REMINDER_COLS']) {
-    const block = new RegExp(`const ${list} = \\[([\\s\\S]*?)\\]\\.join`).exec(server);
-    if (!block) continue;
-    for (const m of block[1].matchAll(/["'`]?([`\w]+)\s+AS\s+(\w+)["'`]?/gi)) {
-      renamed.set(m[1].replace(/`/g, ''), m[2]);
-    }
-  }
-  assert.ok(renamed.size > 0, 'found no AS aliases in the reports column lists — has the seam moved?');
-
-  // `rule` is put BACK by server.js. inViewVocabulary() rewrites every reminder
-  // row as `{...row, rule: <the view's spelling of rule_key>}` precisely so the
-  // CSR page can look its rule up by name, and views/reports-ceo.js also reads
-  // `def.rule` off a rule DEFINITION from lib/reminders.js, which is not a row
-  // at all. It is the one alias whose original name is legitimately present, so
-  // it is exempt here rather than silently unchecked.
-  const restored = new Set(['rule']);
-
-  const problems = [];
-  for (const view of ['reports', 'reports-ceo']) {
-    const src = fs.readFileSync(path.join(ROOT, 'views', `${view}.js`), 'utf8');
-    // Strip comments: these names are discussed in prose all over both files,
-    // and the prose is how the rule is explained rather than a use of it.
-    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    for (const [original, alias] of renamed) {
-      if (restored.has(original)) continue;
-      // A property read of the pre-alias name: `.opened_at`, never `x_opened_at`.
-      if (new RegExp(`\\.${original}\\b`).test(code)) {
-        problems.push(`views/${view}.js reads .${original} — the loader supplies .${alias}`);
-      }
-    }
-  }
-
-  assert.deepEqual(
-    problems,
-    [],
-    `A reports view reads a column name its loader aliased away, so the value is always undefined:\n  ${problems.join('\n  ')}`
-  );
-});
-
-/**
- * 5. THE CSR PAGE SHOWS THE HEADING THAT WAS BOOKED.
- *
- * lib/reminders.js writes `heading` at booking time from the entry's own
- * detail; that string is what REMINDER-LOGICS.md specifies and what the audit
- * row and the owner's ledger carry. views/reports.js keeps a second rule table
- * with its own `title()` functions, and rendering those instead produced a
- * different sentence on four of the thirteen rules — most damagingly rule 2,
- * where the engine books "Send the 2nd follow-up" and the re-derived title said
- * "Send the 1st follow-up logged": the wrong follow-up, on the one rule whose
- * entire content is which follow-up comes next.
- *
- * So the card renders the stored heading and `title()` is only the fallback.
- */
-test('the CSR page renders the stored reminder heading, not a re-derived one', async () => {
-  const src = fs.readFileSync(path.join(ROOT, 'views', 'reports.js'), 'utf8');
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-
-  assert.match(
-    code,
-    /function titleOf\s*\(/,
-    'views/reports.js has no titleOf() — the card is re-deriving its title instead of showing the booked one'
-  );
-  assert.doesNotMatch(
-    code,
-    /\$\{rule\.title\(rem\)\}/,
-    'a reminder is still rendered with rule.title(rem); it must go through titleOf(rem) so the stored heading wins'
-  );
-
-  const { RULES: engineRules } = await import('../lib/reminders.js');
-  const { RULES: viewRules } = await import('../views/reports.js');
-  const { RULE_KEY_TO_VIEW } = await import('../server.js');
-
-  // Rule 2 is the specific regression: the engine names the NEXT attempt.
-  const booked = engineRules.lead_followup_next.heading({
-    client: 'bravo_buyer',
-    detail: { attempt: '1st' },
-  });
-  assert.equal(booked, 'Send the 2nd follow-up to bravo_buyer');
-
-  // And the view's own fallback title for that same row says something else —
-  // which is precisely why the stored heading has to win.
-  const viewKey = RULE_KEY_TO_VIEW.lead_followup_next;
-  const fallback = viewRules[viewKey].title({ client: 'bravo_buyer', note: '1st follow-up logged' });
-  assert.notEqual(
-    fallback,
-    booked,
-    'the fallback now matches the booked heading; if the two tables were merged, this test can go'
-  );
-});
 
 /**
  * 6. EVERY VIEW MODULE ACTUALLY LOADS.
@@ -562,35 +291,76 @@ test('every view module imports and exports render()', async () => {
 // None of those throw. So they are pinned here instead.
 
 test('the logger vocabulary maps onto the engine rule keys, both ways', async () => {
-  const { RULE_KEY_TO_VIEW } = await import('../server.js');
-  const { ACTION_TYPE_TO_RULE_KEY } = await import('../lib/external.js');
+  const { ACTION_TYPE_TO_RULE_KEY, RULE_KEY_TO_ACTION_TYPE } = await import('../lib/external.js');
+  const { RULE_KEYS } = await import('../lib/reminders.js');
 
-  // Every stage the hub knows must be reachable from what the logger stores.
-  const missingFromAdapter = Object.entries(RULE_KEY_TO_VIEW)
-    .filter(([ruleKey, actionType]) => ACTION_TYPE_TO_RULE_KEY[actionType] !== ruleKey)
-    .map(([ruleKey, actionType]) => `${actionType} should map back to ${ruleKey}`);
+  // Every stage the engine defines must be reachable from what the logger
+  // stores. One it cannot name renders on /reports with its raw key for a
+  // title and no rule behind it: a real follow-up somebody is waiting on,
+  // shown as uninterpretable.
+  const unreachable = RULE_KEYS.filter((k) => !RULE_KEY_TO_ACTION_TYPE[k]);
   assert.deepEqual(
-    missingFromAdapter,
+    unreachable,
     [],
-    'ACTION_TYPE_TO_RULE_KEY is not the inverse of RULE_KEY_TO_VIEW: ' +
-      `${missingFromAdapter.join('; ')}. A logger reminder of that stage renders on ` +
-      '/reports/ceo with its raw key for a name and no rule behind it.'
+    `lib/reminders.js defines rule${unreachable.length === 1 ? '' : 's'} ${unreachable.join(', ')} ` +
+      'that no logger action type maps to'
   );
 
   // And nothing in the adapter may point at a stage the engine has dropped.
   const dangling = Object.entries(ACTION_TYPE_TO_RULE_KEY)
-    .filter(([, ruleKey]) => !Object.prototype.hasOwnProperty.call(RULE_KEY_TO_VIEW, ruleKey))
+    .filter(([, ruleKey]) => !RULE_KEYS.includes(ruleKey))
     .map(([actionType, ruleKey]) => `${actionType} -> ${ruleKey}`);
   assert.deepEqual(
     dangling,
     [],
     `the adapter maps onto rule keys the engine no longer defines: ${dangling.join(', ')}`
   );
+
+  // The two directions are derived from one literal, so this is cheap and it
+  // is the assertion that lets the rest of the file trust either of them.
+  for (const [type, key] of Object.entries(ACTION_TYPE_TO_RULE_KEY)) {
+    assert.equal(RULE_KEY_TO_ACTION_TYPE[key], type, `${type} and ${key} do not round-trip`);
+  }
+});
+
+/**
+ * The owner page must not read the logger's own column names.
+ *
+ * There was a test here doing this for MySQL: the loader aliased `opened_at`
+ * to `started_at` and the view had to read the alias. That seam is gone with
+ * the SQL, and the identical seam replaced it one layer out. `lib/external.js`
+ * renames the logger's columns on the way in, and a view reaching past it for
+ * the raw name gets `undefined`, which renders as an empty cell on a page that
+ * otherwise looks finished.
+ */
+test('the owner page reads the adapter names, not the logger raw ones', () => {
+  // The logger's spelling on the left, what the adapter hands over on the
+  // right. Restated here on purpose: the point of the check is that the two
+  // files disagree, so reading the map out of one of them proves nothing.
+  const renamed = {
+    start_at: 'started_at',
+    finish_at: 'closed_at',
+    note_for_next: 'handoff_note',
+    action_type: 'rule_key',
+  };
+
+  const src = viewSource('reports');
+  // Strip comments: these names are discussed in prose in both files, and the
+  // prose is how the rename is explained rather than a use of it.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  const problems = [];
+  for (const [raw, alias] of Object.entries(renamed)) {
+    if (new RegExp(`\\.${raw}\\b`).test(code)) {
+      problems.push(`views/reports-ceo.js reads .${raw} — the adapter supplies .${alias}`);
+    }
+  }
+  assert.deepEqual(problems, [], problems.join('; '));
 });
 
 test('every wrap-up box the owner page prints can be found in a logger checklist', async () => {
   const { CHECKLIST_LABEL_TO_ID, checklistInHubVocabulary } = await import('../lib/external.js');
-  const { CHECKLIST } = await import('../views/reports.js');
+  const { CHECKLIST } = await import('../views/reports-ceo.js');
 
   const mapped = new Set(Object.values(CHECKLIST_LABEL_TO_ID));
   const unreachable = CHECKLIST.map((i) => i.id).filter((id) => !mapped.has(id));

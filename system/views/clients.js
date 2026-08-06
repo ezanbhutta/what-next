@@ -1460,7 +1460,6 @@ function upsellPanel(upsell) {
 
 function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }) {
   const cold = known(sinceLast) && known(staleAfter) && Number(sinceLast) > Number(staleAfter);
-  const responses = ctx.data?.responses;
 
   const list =
     !notes || notes.ok !== true
@@ -1512,24 +1511,6 @@ function notesPanel(ctx, rec, label, notes, { staleRows, sinceLast, staleAfter }
             <p class="field-hint">
               A flag is the only thing in the hub that can call an order dead. It moves this buyer's open
               orders into the dead bucket on the Orders page, under your name.
-            </p>
-          </div>
-          <div class="field">
-            <label for="note-response">From the reply library</label>
-            <select id="note-response" name="response_id">
-              <option value="">Not from the library</option>
-              ${responses && responses.ok === true
-                ? join(
-                    responses.rows.map(
-                      (r) => html`<option value="${String(r.id)}">${r.name}${r.category ? ` · ${r.category}` : ''}</option>`
-                    )
-                  )
-                : ''}
-            </select>
-            <p class="field-hint">
-              ${responses && responses.ok === true
-                ? 'Only counts as a use when the send is logged, so "uses" means times actually sent.'
-                : 'The library could not be read, so nothing can be attached.'}
             </p>
           </div>
         </div>

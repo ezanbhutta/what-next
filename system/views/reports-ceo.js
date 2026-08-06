@@ -1,4 +1,9 @@
-// views/reports-ceo.js, the owner half of Reports: what the shifts produced.
+// views/reports-ceo.js, Reports: what the shifts produced.
+//
+// It was the owner half of two. The other half was a log form, and it is gone
+// with everything else in this hub that asked somebody to type: the team files
+// its shifts in the CSR Shift Logger and this page reads that store. The file
+// keeps its name because the page kept its job.
 //
 // WHAT THIS VIEW IS
 //
@@ -39,10 +44,9 @@
 //       stated in prose next to the table so nobody reads the blank as a gap.
 //   R4  The retired programme is never named. Order type is Organic or
 //       Directed; `esc()` scrubs anything that reaches a renderer regardless.
-//   R6  A review ask never rides on a late or disputed order. The CSR page
-//       holds those asks and records the close as `held_no_ask`; this page
-//       counts them, because a rule nobody can see working is a rule nobody
-//       trusts.
+//   R6  A review ask never rides on a late or disputed order. A held ask is
+//       recorded as `held_no_ask` where it is held; this page counts them,
+//       because a rule nobody can see working is a rule nobody trusts.
 //   R7  The figure leads. Every panel opens with its number; the reasoning is
 //       in the `<details>` underneath.
 //   R9  Tables scroll inside `.tablewrap`, never the body. Every control is a
@@ -55,10 +59,33 @@ import {
   AUTO_CLEARED,
 } from '../lib/reminders.js';
 
-// The wrap-up items, imported from the CSR page that writes them rather than
-// restated here. The owner edits that list; a second copy would eventually
-// print a shift as having skipped an item that was never on their screen.
-import { CHECKLIST } from './reports.js';
+/**
+ * The wrap-up items, in the order the table prints them.
+ *
+ * These used to be imported from the CSR page that wrote them, so that the
+ * list a person ticked and the list this table printed could not drift. That
+ * page is gone: nobody logs a shift in this hub any more, they log it in the
+ * CSR Shift Logger, and the list is now the LOGGER'S. So this is a copy of
+ * somebody else's list, which is exactly the thing the old import existed to
+ * avoid, and there is no way around it from here.
+ *
+ * What is available instead is a failure that is loud rather than quiet. The
+ * logger keys its wrap-up by label, `lib/external.js` maps those labels onto
+ * these ids, and `wiring.test.js` asserts every id below is reachable from
+ * that map. An item added to the logger and not to these two places renders
+ * nowhere, which is visible. An item renamed in the logger fails the test.
+ *
+ * `count: true` means the logger can record a number beside the tick. Those
+ * are the ones that print MISSING when it was ticked without one.
+ */
+export const CHECKLIST = [
+  { id: 'crm_updated', label: 'CRM updated', count: true },
+  { id: 'clickup_cleared', label: 'ClickUp cleared' },
+  { id: 'portfolio_updated', label: 'Portfolio updated', count: true },
+  { id: 'briefs_created', label: 'Briefs created', count: true },
+  { id: 'analytics_checked', label: 'Analytics checked' },
+  { id: 'orders_checked', label: 'Checked orders one by one' },
+];
 
 import {
   html,
@@ -94,9 +121,10 @@ import {
  */
 const SOURCE = 'CSR Shift Logger';
 
-/** The shifts, in the order a day runs. Must match views/reports.js SHIFTS and
- *  the ENUM in db/schema.sql, a name that is in one and not the others makes
- *  a shift's whole output vanish from this page without erroring. */
+/** The shifts, in the order a day runs. Must match what the logger stores: a
+ *  name that is here and not there, or there and not here, makes that shift's
+ *  whole output vanish from this page without erroring. Checked against the
+ *  store: Morning, Evening and Night, and nothing else, across 589 reports. */
 const SHIFT_ORDER = ['Morning', 'Evening', 'Night'];
 
 const SHIFT_TIME = {
@@ -112,8 +140,8 @@ export const WINDOWS = [
   { key: '30', days: 30, label: 'Last 30 days' },
 ];
 
-/** The activity catalogue, grouped the way the CSR page groups it, so the two
- *  halves of the section name and order the same things. */
+/** The activity catalogue, grouped the way the logger groups it, so a kind
+ *  lands under the heading the person who logged it saw. */
 const KIND_GROUPS = [
   { key: 'inquiries', label: 'Inquiries and leads' },
   { key: 'orders', label: 'Orders' },
@@ -297,7 +325,7 @@ function filterBar({ date, days, profile, profiles }) {
     if (merged.days && merged.days !== '1') q.set('days', merged.days);
     if (merged.profile) q.set('profile', merged.profile);
     const s = q.toString();
-    return `/reports/ceo${s ? `?${s}` : ''}`;
+    return `/reports${s ? `?${s}` : ''}`;
   };
 
   const windows = html`<div class="segment" role="group" aria-label="Window">
@@ -327,7 +355,7 @@ function filterBar({ date, days, profile, profiles }) {
         <a class="btn btn--ghost btn--sm" href="${safe(link({ date: addDays(date, 1) }))}">${dateShort(addDays(date, 1))} →</a>
       </div>
       <div class="toolbar" style="margin-top:12px">${windows}${profileChips}</div>
-      <form method="get" action="/reports/ceo" class="btnrow" style="margin-top:12px">
+      <form method="get" action="/reports" class="btnrow" style="margin-top:12px">
         <div class="field" style="margin:0">
           <label for="ceo-date">Day the window ends on</label>
           <input id="ceo-date" name="date" type="date" value="${date}">
@@ -384,13 +412,10 @@ export function render(ctx) {
           </p>
         </div>
         <p class="note note--neg">
-          ${glyph('crit')} <strong>Nothing is lost.</strong> Every shift already filed is filed. The CSR page
-          closes logging while the store is down rather than accepting entries it cannot attach to a shift, so
-          there is no gap to reconcile afterwards.
-        </p>
-        <div class="btnrow" style="margin-top:18px">
-          <a class="btn btn--ghost" href="/reports">Open the shift page</a>
-        </div>`,
+          ${glyph('crit')} <strong>Nothing is lost.</strong> Every shift already filed is filed, in the
+          ${SOURCE}, which is where the team files them. This hub only reads that store, so an outage here
+          costs a page and never a shift.
+        </p>`,
     };
   }
 
@@ -670,10 +695,9 @@ export function render(ctx) {
 
   // ---- the wrap-up each closed shift filed -----------------------------------
   //
-  // `checklist` and `handoff_note` were being written by the CSR page, stored on
-  // the shift, and read by nobody: the coverage table said "left a note" without
-  // ever showing it, and the ticks were invisible. Both this file's own header
-  // and db/schema.sql describe the behaviour below as if it already existed.
+  // The wrap-up and the handover note are both filed in the logger and were
+  // read by nobody: the coverage table said "left a note" without ever showing
+  // it, and the ticks were invisible.
   //
   // A BLANK COUNT IS NOT ZERO, and that is the whole reason this renders the way
   // it does. The store keeps `true` for "ticked but not counted" and a number
@@ -1142,9 +1166,6 @@ export function render(ctx) {
       ${kindPanel}
       ${peoplePanel}
       ${ledgerPanel}
-      <div class="btnrow" style="margin-top:26px">
-        <a class="btn btn--ghost" href="/reports">Open the shift page</a>
-      </div>
       <div class="provenance-bar">
         <span>Every figure on this page is typed by the team in the ${SOURCE}, and read from it here.
           Nothing is recomputed, nothing is written back, and a shift that has not been filed there

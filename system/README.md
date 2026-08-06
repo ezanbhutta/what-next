@@ -107,11 +107,9 @@ registered. Run it before believing a section works because it loaded.
 | `/orders` | What is live, what stage, what is late |
 | `/clients` | One record per buyer — history, value, notes |
 | `/messages` | What this buyer was already told, and what to say next |
-| `/responses` | The reply library, searchable |
 | `/team` | Weekly 1–5 scoring, self vs manager, promises kept |
 | `/money` | Revenue, money sitting still, upsell pipeline |
 | `/reports` | My shift: what is due on this profile, and logging what happens |
-| `/reports/ceo` | What the shifts produced, and what they left owed — manager and owner only |
 | `/handbook` | The six owner-written documents, searchable across all of them |
 
 ### Messages, and the order it is in

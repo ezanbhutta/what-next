@@ -803,9 +803,6 @@ export const loaders = {
       notes: await q('SELECT * FROM client_note WHERE buyer = ? ORDER BY at DESC LIMIT 200', [buyer]),
       upsell: await q('SELECT * FROM upsell WHERE buyer = ? ORDER BY updated_at DESC', [buyer]),
       recon: await q('SELECT * FROM reconciliation WHERE buyer = ?', [buyer]),
-      responses: await q(
-        'SELECT id, name, category FROM response WHERE active = 1 ORDER BY category, name'
-      ),
     };
   },
 
@@ -871,12 +868,6 @@ export const loaders = {
     };
   },
 
-  async responses(ctx, q) {
-    return {
-      rows: await q('SELECT * FROM response ORDER BY active DESC, category IS NULL, category, name'),
-    };
-  },
-
   async team(ctx, q) {
     return {
       weeks: await q('SELECT * FROM team_week ORDER BY week_ending DESC, person ASC LIMIT 300'),
@@ -900,179 +891,6 @@ export const loaders = {
     };
   },
 
-  // ---- Reports: the CSR half -----------------------------------------------
-  //
-  // One shift, from the inside. Everything is scoped to the profile the signed-
-  // in person has open, because a reminder belongs to the profile and popping
-  // another profile's queue at somebody is how two CSRs both answer the same
-  // buyer.
-  //
-  // Every SELECT here aliases into the names views/reports.js reads. That is
-  // deliberate and it is the seam: the view was written against the shift
-  // logger's vocabulary and the tables use the hub's, and one place has to own
-  // the translation. This is that place, see REPORT_COLS / REMINDER_COLS.
-  async reports(ctx, q, req) {
-    const now = new Date();
-    const date = pktToday(now);
-    const profiles = profilesFromEngine();
-    const designers = designersFromEngine();
-    const shiftNow = pktShiftNow(now);
-
-    const person = ctx.user?.name || null;
-
-    // EVERY KEY, ON EVERY PATH. The early returns below are the branches where
-    // there is nothing to load, no shift open, or the shift table unreadable, 
-    // and it would be natural to return only what they filled in. That is the
-    // bug tests/wiring.test.js was written for: a view handed nothing takes the
-    // branch written for "there is nothing here yet" and renders a calm,
-    // correct-looking page missing half of itself, at HTTP 200, with no error
-    // anywhere. So the shape is fixed and only the contents vary.
-    //
-    // The two fillers are NOT interchangeable. `EMPTY` says "there is no shift,
-    // so there is no queue belonging to one", a fact. A failed `q` result says
-    // "we could not ask", and the view prints those differently, on purpose.
-    const EMPTY = { ok: true, rows: [], notice: null };
-    const base = {
-      date,
-      now,
-      profiles,
-      designers,
-      shiftNow,
-      report: EMPTY,
-      due: EMPTY,
-      waiting: EMPTY,
-      handled: EMPTY,
-      activities: EMPTY,
-      handoff: EMPTY,
-      flagged: null,
-    };
-
-    if (!person) {
-      // Cannot happen behind requireAuth. A loader that assumed it could not
-      // would hand back whoever's shift happened to be open first.
-      return base;
-    }
-
-    const report = await q(
-      `SELECT ${REPORT_COLS} FROM shift_report WHERE person = ? AND status = 'open' ORDER BY opened_at DESC LIMIT 1`,
-      [person]
-    );
-    const open = report.ok && report.rows.length ? report.rows[0] : null;
-    if (!open) {
-      // Unreadable propagates to every derived list; genuinely-no-shift does
-      // not. Conflating them is how an outage becomes an all-clear.
-      if (!report.ok) {
-        return {
-          ...base, report,
-          due: report, waiting: report, handled: report, activities: report, handoff: report,
-          flagged: null,
-        };
-      }
-
-      // NO SHIFT OPEN IS THE NORMAL CASE NOW, AND THE QUEUE STILL HAS TO LOAD.
-      //
-      // This used to return EMPTY for all of these, which was correct while a
-      // shift was required to reach the page at all. It is not any more: the
-      // hub books reminders from ordinary logging, and returning an empty
-      // queue here meant they were written and then never shown to anybody.
-      //
-      // Reminders are PROFILE-scoped by design ("it pops for whoever is
-      // covering it"), and this hub is one profile, so the queue loads without
-      // a shift. `activities` switches from "this report's rows" to "what this
-      // person logged today", because there is no report to key on.
-      const since = new Date(now.getTime() - 16 * 60 * 60 * 1000);
-      const [queue, mine, handledRows] = await Promise.all([
-        q(
-          `SELECT ${REMINDER_COLS} FROM reminder
-            WHERE profile = ? AND state <> 'resolved'
-            ORDER BY alert DESC, due_at ASC`,
-          [HUB_PROFILE]
-        ),
-        q(
-          `SELECT ${ACTIVITY_COLS} FROM activity WHERE author = ? AND at >= ? ORDER BY at DESC LIMIT 60`,
-          [person, since]
-        ),
-        q(
-          `SELECT ${REMINDER_COLS} FROM reminder
-            WHERE profile = ? AND state = 'resolved' AND resolved_at >= ?
-            ORDER BY resolved_at DESC LIMIT 40`,
-          [HUB_PROFILE, since]
-        ),
-      ]);
-
-      return {
-        ...base,
-        report,
-        due: queue,
-        waiting: queue,
-        handled: handledRows,
-        activities: mine,
-        handoff: EMPTY,
-        flagged: await flaggedBuyers(q, HUB_PROFILE),
-      };
-    }
-
-    const [queue, activities, handled, handoff] = await Promise.all([
-      // The whole open queue for this profile, due or not. The view splits it, 
-      // it needs the scheduled ones to say "nothing else until 4:35pm", and a
-      // count of what is waiting is not the same claim as a list of what is due.
-      q(
-        `SELECT ${REMINDER_COLS} FROM reminder
-          WHERE profile = ? AND state <> 'resolved'
-          ORDER BY alert DESC, due_at ASC`,
-        [open.profile]
-      ),
-      q(
-        `SELECT ${ACTIVITY_COLS} FROM activity WHERE report_id = ? ORDER BY at DESC`,
-        [open.id]
-      ),
-      // Handled ON THIS SHIFT, so the undo list is this person's own taps and
-      // not a stranger's from four hours ago.
-      q(
-        `SELECT ${REMINDER_COLS} FROM reminder
-          WHERE profile = ? AND state = 'resolved' AND resolved_at >= ?
-          ORDER BY resolved_at DESC LIMIT 40`,
-        [open.profile, open.started_at]
-      ),
-      // The most recent unread note aimed at this shift, on this profile, from
-      // somebody else's shift. `shift_handoff_read` is keyed per shift, so a
-      // note aimed at two shifts stays unread for the one that has not read it.
-      q(
-        `SELECT r.id, r.person AS csr_name, r.closed_at AS finished_at, r.handoff_note
-           FROM shift_report r
-           LEFT JOIN shift_handoff_read hr ON hr.report_id = r.id AND hr.shift = ?
-          WHERE r.profile = ? AND r.id <> ? AND r.handoff_note IS NOT NULL AND r.handoff_note <> ''
-            AND hr.report_id IS NULL
-            AND (r.note_shifts IS NULL OR JSON_CONTAINS(r.note_shifts, JSON_QUOTE(?)))
-          ORDER BY r.closed_at DESC, r.id DESC LIMIT 1`,
-        [open.shift, open.profile, open.id, open.shift]
-      ),
-    ]);
-
-    const nowMs = now.getTime();
-    const rows = queue.ok ? queue.rows.map(inViewVocabulary) : [];
-    const due = queue.ok
-      ? { ok: true, rows: rows.filter((r) => isDueRow(r, nowMs)), notice: null }
-      : queue;
-    const waiting = queue.ok
-      ? { ok: true, rows: rows.filter((r) => !isDueRow(r, nowMs)), notice: null }
-      : queue;
-
-    return {
-      date,
-      now,
-      profiles,
-      designers,
-      shiftNow,
-      report,
-      due,
-      waiting,
-      handled: mapRows(handled, inViewVocabulary),
-      activities: mapRows(activities, summarised),
-      handoff,
-      flagged: await flaggedBuyers(q, open.profile),
-    };
-  },
 
   // ---- Reports: the owner half ---------------------------------------------
   //
@@ -1184,75 +1002,9 @@ export const loaders = {
 // "Unknown reminder", which is what a bare lookup would have produced: a card
 // with buttons that do nothing, on a page that looks fine.
 
-const REPORT_COLS = [
-  'id',
-  'person AS csr_name',
-  'profile',
-  'shift',
-  'opened_at AS started_at',
-  'closed_at',
-  'status',
-  'handoff_note',
-  'note_shifts',
-  'checklist',
-].join(', ');
 
-const ACTIVITY_COLS = [
-  'id',
-  'report_id',
-  'kind AS type',
-  'client',
-  'order_ref AS project',
-  'at AS created_at',
-  'author',
-  'detail',
-].join(', ');
 
-const REMINDER_COLS = [
-  'id',
-  'report_id',
-  'activity_id',
-  '`rule` AS rule_no',
-  'rule_key',
-  'profile',
-  'client',
-  'client_key',
-  'order_ref AS project',
-  'due_at',
-  'heading',
-  'body AS note',
-  'alert',
-  'state',
-  'resolution',
-  'snoozed_until',
-  'resolved_by',
-  'resolved_at',
-  'booked_by AS created_by',
-  'created_at',
-].join(', ');
 
-/** The stage keys, as `lib/reminders.js` spells them → as views/reports.js
- *  spells them. Same sixteen stages of the same thirteen logics; two
- *  vocabularies, because the two files were written from the same spec on
- *  different days. The engine's spelling is the one stored. */
-export const RULE_KEY_TO_VIEW = Object.freeze({
-  inquiry_followup: 'inquiry',
-  lead_followup_next: 'lead_followup',
-  order_assign: 'new_order',
-  order_upsell: 'new_order_upsell',
-  completed_public_review: 'order_completed',
-  review_private_ask: 'review_received',
-  files_upsell: 'files_assigned',
-  revision_check: 'revision_assigned',
-  offer_fu1: 'offer',
-  offer_fu2: 'offer_fu2',
-  offer_fu3: 'offer_fu3',
-  delivery_followup: 'project_delivered',
-  shared_followup: 'shared',
-  frustrated_alert: 'frustrated',
-  disputed_alert: 'disputed',
-  custom: 'custom_reminder',
-});
 
 const REPORT_WINDOWS = new Set(['1', '7', '30']);
 
@@ -1268,31 +1020,7 @@ function mapRows(result, fn) {
   return { ok: true, rows: (result.rows || []).map(fn), notice: null };
 }
 
-/** A stored reminder → the shape views/reports.js reads. The only thing that
- *  changes is the rule key's spelling; nothing about the reminder itself. */
-function inViewVocabulary(row) {
-  const viewKey = RULE_KEY_TO_VIEW[String(row.rule_key)];
-  // An unmapped key is a bug, not a data condition, and it is left visible
-  // rather than silently blanked: the view falls back to its ORPHAN rule,
-  // which says the reminder cannot be interpreted instead of pretending it
-  // has no buttons. The wiring test fails long before this can ship.
-  return { ...row, rule: viewKey || String(row.rule_key) };
-}
 
-/** One line of what the CSR typed, for the shift timeline. Reads the entry's
- *  own detail rather than re-deriving anything: this is a display of what was
- *  saved, and a summary that computes is a second number that can disagree. */
-function summarised(row) {
-  const detail = row.detail && typeof row.detail === 'object' ? row.detail : {};
-  const bits = [];
-  for (const [key, value] of Object.entries(detail)) {
-    if (key === 'client' || key === 'project' || value === null || value === '') continue;
-    const text = Array.isArray(value) ? value.filter(Boolean).join(', ') : String(value);
-    if (text.trim()) bits.push(text.trim());
-    if (bits.length === 3) break;
-  }
-  return { ...row, summary: bits.join(' · ') || null };
-}
 
 /** Pakistan is UTC+5 with no daylight saving, so a calendar day there is an
  *  exact offset from UTC and needs no time zone tables anywhere. */
@@ -1321,16 +1049,6 @@ function shiftIsoDay(iso, delta) {
   return new Date(Date.UTC(y, m - 1, d) + delta * 86_400_000).toISOString().slice(0, 10);
 }
 
-/** Due means: open, past its due time, and not snoozed into the future. Kept
- *  here rather than in SQL so "due" has one definition shared with
- *  reminders.isDue() and cannot drift between the page and the ledger. */
-function isDueRow(row, nowMs) {
-  if (!row || row.state === 'resolved') return false;
-  const due = parseAt(row.due_at);
-  if (due === null || due > nowMs) return false;
-  const snoozed = parseAt(row.snoozed_until);
-  return !(snoozed !== null && snoozed > nowMs);
-}
 
 /** Designer names the engine has actually seen on an order. A datalist, not a
  *  validated list, a new designer must be typeable on their first day. */
@@ -1347,55 +1065,6 @@ function designersFromEngine() {
   return [...names].sort();
 }
 
-/**
- * Buyers a review ask must never be sent to. HOUSE RULE 5.
- *
- * Two sources, because there are two ways to be unsafe to ask:
- *   · the engine's stale-order set, an order open past the stale threshold
- *   · a frustrated or disputed caution still standing on this profile
- *
- * Returns `null`, meaning UNKNOWN, hold everything, if either source cannot
- * be read. That is the deliberate asymmetry: an ask the hub cannot prove is
- * safe is exactly the ask the rule was written about, and "we could not check"
- * must never render the same as "we checked and it is fine".
- */
-async function flaggedBuyers(q, profile) {
-  const alerts = await q(
-    `SELECT client, rule_key, created_at FROM reminder
-      WHERE profile = ? AND alert = 1 AND state <> 'resolved'`,
-    [profile]
-  );
-  if (!alerts.ok) return null;
-
-  const stale = pick(engineRun(), 'recovery.open_orders.orders');
-  if (isMissing(stale) || !Array.isArray(stale)) return null;
-
-  const out = new Map();
-  for (const o of stale) {
-    if (!o?.stale) continue;
-    const key = normaliseBuyer(o.client);
-    if (!key) continue;
-    out.set(key, {
-      reason: 'stale',
-      since: o.order_date || null,
-      age_days: o.age_days ?? null,
-      amount: o.amount ?? null,
-    });
-  }
-  // A live caution outranks a stale order: it is the more specific fact and it
-  // is the one a CSR can act on today.
-  for (const a of alerts.rows) {
-    const key = normaliseBuyer(a.client);
-    if (!key) continue;
-    out.set(key, {
-      reason: a.rule_key === 'disputed_alert' ? 'disputed' : 'frustrated',
-      since: a.created_at || null,
-      age_days: null,
-      amount: null,
-    });
-  }
-  return out;
-}
 
 /** Profile names, taken from the engine's own flow rows, never a hand-kept
  *  second list of profiles that can drift from the data. */
@@ -1416,6 +1085,10 @@ function profilesFromEngine() {
 // ============================================================================
 
 for (const s of SECTIONS) {
+  // Reports is registered below instead: it carries a role floor in code that
+  // this generic line cannot express, and losing that floor would publish
+  // every CSR's per-person figures to every CSR with the page looking normal.
+  if (s.key === 'reports') continue;
   const loaderKey = s.key;
   app.get(s.href, requireAuth, gate(s.key), page(s.key, loaders[loaderKey]));
 }
@@ -1447,15 +1120,20 @@ app.get('/messages/:buyer', requireAuth, gate('messages'), page('messages', load
 // what was wrong with it.
 app.get('/handbook/:doc', requireAuth, gate('handbook'), page('handbook', loaders.handbook));
 
-// ---- Reports: two halves of one section ------------------------------------
+// ---- Reports: one half now, the reading half -------------------------------
 //
-// /reports      the CSR's own shift. Whoever can open the section can open it.
-// /reports/ceo  what the shifts produced. Manager and owner only.
+// There were two. `/reports` was the CSR's own shift, a log form and a queue of
+// follow-up buttons; `/reports/ceo` was what those shifts produced. The first
+// is gone. Nobody types a shift into this hub, they type it into the CSR Shift
+// Logger, and a form nobody posts is worse than no form: it is an invitation
+// to enter a second copy of something that already exists somewhere else.
 //
-// The owner half is gated TWICE and the order matters. `gate('reports')` reads
-// the section lock the owner sets from inside the hub, and `atLeast('manager')`
-// is the floor this page carries in code. The floor can only be raised: lock
-// Reports to owner and the CEO half follows it up, never down.
+// So the reading half moves up to `/reports` and keeps its floor.
+//
+// The floor is gated TWICE and the order matters. `gate('reports')` reads the
+// section lock the owner sets from inside the hub, and `atLeast('manager')` is
+// the floor this page carries in code. The floor can only be raised: lock
+// Reports to owner and this follows it up, never down.
 //
 // It is a code floor rather than a `section_access` row on purpose. A section
 // absent from that table is OPEN, which is the right default for a section
@@ -1463,12 +1141,20 @@ app.get('/handbook/:doc', requireAuth, gate('handbook'), page('handbook', loader
 // publish every CSR's per-person figures to every CSR, silently, with the page
 // looking completely normal.
 app.get(
-  '/reports/ceo',
+  '/reports',
   requireAuth,
   gate('reports'),
   atLeast('manager', 'reports'),
   page('reports', loaders.reportsCeo, { view: 'reports-ceo' })
 );
+
+// The old address, kept as a redirect rather than dropped. It is the one URL
+// from this section anybody has bookmarked, and a 404 on it reads as "the
+// figures are gone" rather than "the figures moved up one level".
+app.get('/reports/ceo', requireAuth, (req, res) => {
+  const query = req.originalUrl.includes('?') ? `?${req.originalUrl.split('?')[1]}` : '';
+  res.redirect(301, `/reports${query}`);
+});
 
 // ============================================================================
 // 7. WRITES
@@ -1656,55 +1342,7 @@ app.post(
   })
 );
 
-// ---- the quick replies, available on every page ----------------------------
-//
-// The library is one tap away wherever a CSR happens to be, because the moment
-// they need a line is the moment they are looking at an order or an inquiry,
-// not at the Responses page.
-//
-// Fetched lazily by the drawer rather than loaded into every render: most page
-// loads never open it, engine-only pages would pay a database round trip for
-// nothing, and an outage here should close the drawer rather than break the
-// page behind it.
-app.get(
-  '/api/replies',
-  requireAuth,
-  gate('responses'),
-  wrap(async (req, res) => {
-    try {
-      const rows = await query(
-        'SELECT id, name, body, when_to_use, category, source, kind, uses FROM response ' +
-          "WHERE active = 1 ORDER BY kind = 'quick' DESC, source = 'fiverr' DESC, name"
-      );
-      res.set('Cache-Control', 'no-store').json({ ok: true, replies: rows });
-    } catch (err) {
-      // The drawer says "could not be read" rather than showing an empty list.
-      // An empty library and an unreadable one look identical otherwise, and
-      // the first tells a CSR to go and write the line themselves.
-      res.status(503).json({ ok: false, error: 'unavailable' });
-    }
-  })
-);
 
-// Mark whether a reply also exists in Fiverr's saved quick-replies. It is the
-// one thing the hub cannot know for itself: Fiverr has no API for it, so a
-// person says so, and everything downstream reads the answer instead of
-// guessing.
-app.post(
-  '/responses/:id/where',
-  ...write('responses', '/responses', async (req) => {
-    const id = intOrNull(req.params.id);
-    const where = oneOf(req.body.where, ['fiverr', 'extra']);
-    if (id === null || !where) return { error: 'invalid' };
-    await auditedWrite(req, 'response_where', { id, where }, async (t) => {
-      // 'hub' means somebody typed it here; saying it is in Fiverr moves it to
-      // 'fiverr', and saying it is not returns it to 'extra' rather than to
-      // 'hub', because where it came from is not what this field records.
-      await t.run('UPDATE response SET source = ? WHERE id = ?', [where, id]);
-    });
-    return { ok: where === 'fiverr' ? 'in_fiverr' : 'hub_only' };
-  })
-);
 
 // ---- Orders: the promised delivery date -------------------------------------
 //
@@ -1880,82 +1518,8 @@ app.post(
 
 // ---- Responses: the reply library ------------------------------------------
 
-app.post(
-  '/responses',
-  ...write('responses', '/responses', async (req) => {
-    const id = intOrNull(req.body.id);
-    const name = str(req.body.name, 120);
-    const body = str(req.body.body, 60_000);
-    if (!name || !body) return { error: 'invalid' };
-    const whenToUse = str(req.body.when_to_use, 4000);
-    const category = str(req.body.category, 60);
-    // A whole message by default, because that is what somebody typing a new
-    // reply almost always means. A conversation line is the deliberate choice.
-    const kind = oneOf(req.body.kind, ['quick', 'case']) || 'quick';
 
-    await auditedWrite(req, id ? 'response_update' : 'response_create', { id, name }, (t) =>
-      id
-        ? t.run(
-            'UPDATE response SET name = ?, body = ?, when_to_use = ?, category = ? WHERE id = ?',
-            [name, body, whenToUse, category, id]
-          )
-        : t.run(
-            'INSERT INTO response (name, body, when_to_use, category, source, kind) ' +
-              "VALUES (?, ?, ?, ?, 'hub', ?) " +
-              'ON DUPLICATE KEY UPDATE body = VALUES(body), when_to_use = VALUES(when_to_use), ' +
-              'category = VALUES(category), kind = VALUES(kind)',
-            [name, body, whenToUse, category, kind]
-          )
-    );
-    return { ok: 'response' };
-  })
-);
 
-// A reply was taken out of the library. The button that posts here only fires
-// AFTER the clipboard write succeeded, views/responses.js refuses to post if
-// the browser declined, so this records something that actually happened.
-//
-// It moves the same counter a logged send moves, which is why the page labels
-// the figure "taken" and not "sent": one number, two producers, and the page
-// says so rather than letting a reader assume every count reached a buyer.
-app.post(
-  '/responses/copy',
-  ...write('responses', '/responses', async (req) => {
-    const id = intOrNull(req.body.id);
-    if (!id) return { error: 'invalid' };
-
-    // Confirm the reply is there BEFORE the audited write, so the log never
-    // carries a `response_copy` line for a copy of something that does not
-    // exist, an audit that records attempts has to be filtered before it can
-    // be counted, and then it is not an audit.
-    //
-    // Deliberately NOT done by throwing out of the transaction to roll the
-    // audit row back: lib/db.js treats anything escaping transaction() as a
-    // database fault, so a bad id would flip the pool's health to down and put
-    // an outage banner on every page until the breaker cleared.
-    const found = await tryQuery('SELECT id FROM response WHERE id = ?', [id]);
-    if (!found.ok) throw found.error;
-    if (!found.rows.length) return { error: 'notfound' };
-
-    await auditedWrite(req, 'response_copy', { id }, (t) =>
-      t.run('UPDATE response SET uses = uses + 1 WHERE id = ?', [id])
-    );
-    return { ok: 'response' };
-  })
-);
-
-app.post(
-  '/responses/toggle',
-  ...write('responses', '/responses', async (req) => {
-    const id = intOrNull(req.body.id);
-    if (!id) return { error: 'invalid' };
-    const active = checked(req.body.active);
-    await auditedWrite(req, 'response_toggle', { id, active }, (t) =>
-      t.run('UPDATE response SET active = ? WHERE id = ?', [active, id])
-    );
-    return { ok: 'response' };
-  })
-);
 
 // ---- Team: the weekly review ----------------------------------------------
 //
@@ -2117,10 +1681,7 @@ app.post(
 // field whose only possible wrong answer is somebody else's data.
 const HUB_PROFILE = 'X Studioz';
 
-const REPORT_BACK = '/reports';
 
-/** Must match the ENUM in db/schema.sql and SHIFTS in views/reports.js. */
-const SHIFT_NAMES = ['Morning', 'Evening', 'Night'];
 
 /**
  * Was this a rule refusing to book, rather than the database failing?
@@ -2209,267 +1770,15 @@ async function openShiftOf(t, person, reportId = null) {
 
 // ---- open a shift ----------------------------------------------------------
 
-app.post(
-  '/reports/open',
-  ...write('reports', REPORT_BACK, async (req) => {
-    // The name is NOT a form field. It is whoever is signed in, which is why
-    // this section needs no roster and why an entry can never be filed under a
-    // mistyped name.
-    const person = str(req.user?.name, 80);
-    const profile = str(req.body.profile, 80);
-    const shift = oneOf(req.body.shift, SHIFT_NAMES);
-    if (!person || !profile || !shift) return { error: 'invalid' };
-
-    try {
-      await auditedWrite(req, 'shift_open', { profile, shift }, async (t) => {
-        const already = await openShiftOf(t, person);
-        if (already) {
-          // Not an error worth losing their place over, they already have one
-          // open, which is what they were trying to achieve.
-          return;
-        }
-        await t.run('INSERT INTO shift_report (person, profile, shift) VALUES (?, ?, ?)', [
-          person,
-          profile,
-          shift,
-        ]);
-      });
-    } catch (err) {
-      // The unique index on `open_slot` is the real guard against a double
-      // submit racing itself. Catching it here turns a 500 into "you already
-      // have a shift open", which is true and is what they wanted.
-      if (err?.code === 'ER_DUP_ENTRY') return { ok: 'shift_open' };
-      throw err;
-    }
-    return { ok: 'shift_open' };
-  })
-);
 
 // ---- log an activity, and book what it owes --------------------------------
 
-app.post(
-  '/reports/activity',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const kind = oneOf(req.body.type, ACTIVITY_KIND_KEYS);
-    // report_id is now OPTIONAL. The shift report is the universal system
-    // shared by all ten profiles and it stays there; this hub logs the work
-    // itself. Requiring an open shift here meant a CSR had to submit a report
-    // in two places before they could record a single inquiry.
-    const reportId = intOrNull(req.body.report_id);
-    if (!person || !kind) return { error: 'invalid' };
-
-    const detail = detailFrom(req.body);
-    const client = str(detail.client, 120);
-    const orderRef = str(detail.project, 160);
-
-    // Rule 6 keys on the average of three star scores, and it is computed here
-    // rather than typed so it can never disagree with the scores it comes
-    // from. Rounded to one decimal BEFORE the 4.7 test, 5+5+4 is 4.666…, the
-    // page shows 4.7, and a rule reading the unrounded number would refuse a
-    // review the CSR can see qualifying on screen.
-    if (kind === 'review_received') {
-      const avg = ratingAverage(detail);
-      if (avg !== null) detail.rating = avg;
-    }
-
-    // R4. The retired programme is never named, in a column or anywhere else.
-    // The control offers Organic and Directed; anything else is rejected
-    // rather than stored, because a value stored is a value that will
-    // eventually be rendered.
-    if (detail.order_type && !ORDER_TYPES.includes(String(detail.order_type))) return { error: 'invalid' };
-    if (detail.order_via && !ORDER_ROUTES.includes(String(detail.order_via))) return { error: 'invalid' };
-    if (detail.attempt && !FOLLOWUP_ATTEMPTS.includes(String(detail.attempt))) return { error: 'invalid' };
-
-    try {
-      const outcome = await auditedWrite(req, 'shift_activity', { kind, client, order_ref: orderRef }, async (t) => {
-        // An open shift is used when there is one, because a row that belongs
-        // to a shift should say so. When there is not, the roster answers both
-        // questions the row needs: which shift this hour is, and that the hub
-        // is XStudioz. Neither is typed, so neither can be filed wrong.
-        const shift = reportId === null
-          ? await openShiftOf(t, person)
-          : await openShiftOf(t, person, reportId);
-        if (reportId !== null && !shift) return 'noshift';
-
-        const desk = deskNow();
-        const reportRef = shift ? shift.id : null;
-        const profile = shift ? shift.profile : HUB_PROFILE;
-        const shiftName = shift ? shift.shift : shiftBand(desk.hour);
-
-        // HOUSE RULE 5, at the point of booking. A completion for a buyer with
-        // a standing caution or a stale order books NO public-review ask at
-        // all, it is a suppression, not a delay. The CSR page holds the ask a
-        // second time for buyers who become flagged after it was booked; both
-        // layers are needed because the two failures happen at different
-        // moments and neither catches the other's.
-        const flags = await reviewFlagsFor(t, profile, client);
-
-        const res = await t.run(
-          'INSERT INTO activity (report_id, shift, kind, client, client_key, order_ref, detail, author) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          [
-            reportRef,
-            shiftName,
-            kind,
-            client,
-            client ? buyerKey(client) : null,
-            orderRef,
-            JSON.stringify(detail),
-            person,
-          ]
-        );
-        const activityId = res?.insertId ?? null;
-
-        const activity = {
-          id: activityId,
-          report_id: reportRef,
-          // Reminders are profile-scoped and this hub is one profile, so the
-          // reminder still keys correctly with no shift open.
-          profile,
-          kind,
-          client,
-          order_ref: orderRef,
-          detail,
-          at: new Date(),
-          author: person,
-        };
-
-        // 1. What this entry books.
-        for (const draft of rulesFor(activity, { flags })) {
-          await insertReminder(t, draft);
-        }
-
-        // 2. What this entry makes pointless. "They converted", "the upsell
-        //    happened", "the review already landed", "they came back with a
-        //    revision", those clear themselves rather than asking somebody to
-        //    close work they never needed to do.
-        const open = await t.query(
-          "SELECT * FROM reminder WHERE profile = ? AND state <> 'resolved'",
-          [profile]
-        );
-        for (const { reminder } of autoClears(activity, open, { by: person })) {
-          await saveReminderState(t, reminder);
-        }
-        return 'ok';
-      });
-      if (outcome === 'noshift') return { error: 'noshift' };
-    } catch (err) {
-      // A rule that refused to book says why, and the entry rolls back with
-      // it. A custom reminder with no time is the case this catches most: it
-      // is better to reject the form than to book a reminder for a moment the
-      // CSR did not choose and believes they did.
-      if (reminderFault(err)) return { error: 'reminder' };
-      throw err;
-    }
-    return { ok: 'logged_activity' };
-  })
-);
 
 // ---- remove an entry, and the reminders it booked --------------------------
 
-app.post(
-  '/reports/activity/remove',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const activityId = intOrNull(req.body.activity_id);
-    if (!person || activityId === null) return { error: 'invalid' };
-
-    const removed = await auditedWrite(req, 'shift_activity_remove', { activity_id: activityId }, async (t) => {
-      // Scoped to the AUTHOR, not to an open shift. Matching on report_id
-      // meant an entry logged without a shift could never be removed, which
-      // is every entry now. Author is the right scope anyway: you can undo
-      // what you logged, and only what you logged.
-      const row = await t.queryOne('SELECT id, kind FROM activity WHERE id = ? AND author = ?', [
-        activityId,
-        person,
-      ]);
-      if (!row) return false;
-
-      // Only the ones NOBODY has answered yet. A reminder somebody already
-      // closed stays closed: removing a mistyped entry must not erase the fact
-      // that a person did the work it asked for. The FK cascade would delete
-      // both, so the ones to keep are detached first.
-      await t.run(
-        "UPDATE reminder SET activity_id = NULL WHERE activity_id = ? AND state = 'resolved'",
-        [activityId]
-      );
-      await t.run('DELETE FROM activity WHERE id = ?', [activityId]);
-      return true;
-    });
-    return removed ? { ok: 'removed_activity' } : { error: 'notfound' };
-  })
-);
 
 // ---- resolve, snooze, or advance a chain -----------------------------------
 
-app.post(
-  '/reports/reminder',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const reminderId = intOrNull(req.body.reminder_id);
-    const button = str(req.body.button, 40);
-    if (!person || reminderId === null || !button) return { error: 'invalid' };
-
-    try {
-      const outcome = await auditedWrite(
-        req,
-        'reminder_resolve',
-        { reminder_id: reminderId, button },
-        async (t) => {
-          const row = await lockReminder(t, reminderId);
-          if (!row) return 'notfound';
-          if (row.state === 'resolved') return 'already';
-
-          // HOUSE RULE 5's own button. `held_no_ask` is not one of the rule's
-          // buttons and never can be, it means "closed WITHOUT asking",
-          // which the spec has no word for because the spec assumes the ask is
-          // always safe to send. It is recorded as its own resolution so the
-          // owner's page can count how often the rule actually fired.
-          //
-          // It is gated to the two review-ask rules, and the gate is the point.
-          // Not being in a button set is what keeps this button away from
-          // buttonsFor(), which is also the check that stops a red alert being
-          // closed by anything except Solved. Ungated, a POST of
-          // button=held_no_ask closed ANY reminder: an open dispute could be
-          // cleared off the profile and filed as a review somebody declined to
-          // ask for, which is rules 11 and 12 defeated by a button that has
-          // nothing to do with them.
-          if (button === 'held_no_ask' && !canHoldReviewAsk(row)) return 'nobutton';
-          if (button === 'held_no_ask') {
-            await saveReminderState(t, {
-              ...row,
-              state: 'resolved',
-              resolution: 'held_no_ask',
-              snoozed_until: null,
-              resolved_by: person,
-              resolved_at: new Date(),
-            });
-            return 'held';
-          }
-
-          const { reminder, booked } = resolveReminder(row, button, { by: person });
-          await saveReminderState(t, reminder);
-          // The next chain stage is written in the SAME transaction as the tap
-          // that earned it, and timed from the tap rather than from the
-          // original offer, rule 9 is explicit about that.
-          if (booked) await insertReminder(t, booked);
-          return 'ok';
-        }
-      );
-      if (outcome === 'notfound') return { error: 'notfound' };
-      if (outcome === 'already') return { ok: 'reminder_already' };
-      if (outcome === 'held') return { ok: 'reminder_held' };
-      // "Close without asking" aimed at a rule that never asks for a review.
-      // Nothing on the page can produce it, so it is a forged or stale POST.
-      if (outcome === 'nobutton') return { error: 'invalid' };
-    } catch (err) {
-      if (reminderFault(err)) return { error: 'reminder' };
-      throw err;
-    }
-    return { ok: 'reminder_done' };
-  })
-);
 
 // ---- take the last tap back ------------------------------------------------
 //
@@ -2478,121 +1787,12 @@ app.post(
 // reminders closed on this shift stay listed with a way back, through a page
 // load, a dropped connection and a locked screen.
 
-app.post(
-  '/reports/reminder/undo',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const reminderId = intOrNull(req.body.reminder_id);
-    if (!person || reminderId === null) return { error: 'invalid' };
-
-    const outcome = await auditedWrite(req, 'reminder_undo', { reminder_id: reminderId }, async (t) => {
-      const row = await lockReminder(t, reminderId);
-      if (!row) return 'notfound';
-      if (row.state !== 'resolved') return 'notresolved';
-
-      // If the tap advanced a chain, the stage it booked goes back with it, 
-      // otherwise undoing "1st F/U done" leaves the 2nd follow-up standing,
-      // which is a reminder for work the CSR just said they had not done.
-      const button = (REMINDER_RULES[row.rule_key]?.buttons || []).find((b) => b.key === row.resolution);
-      if (button?.kind === 'chain' && button.next) {
-        await t.run(
-          "DELETE FROM reminder WHERE rule_key = ? AND state <> 'resolved' AND activity_id <=> ? AND profile = ? AND created_at >= ?",
-          [button.next, row.activity_id, row.profile, row.resolved_at]
-        );
-      }
-      await saveReminderState(t, {
-        ...row,
-        state: 'pending',
-        resolution: null,
-        snoozed_until: null,
-        resolved_by: null,
-        resolved_at: null,
-      });
-      return 'ok';
-    });
-    if (outcome === 'notfound') return { error: 'notfound' };
-    if (outcome === 'notresolved') return { error: 'invalid' };
-    return { ok: 'reminder_undone' };
-  })
-);
 
 // ---- mark an incoming handoff note read ------------------------------------
 
-app.post(
-  '/reports/handoff',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const reportId = intOrNull(req.body.report_id);
-    const noteReportId = intOrNull(req.body.note_report_id);
-    if (!person || reportId === null || noteReportId === null) return { error: 'invalid' };
-
-    const marked = await auditedWrite(req, 'handoff_read', { note_report_id: noteReportId }, async (t) => {
-      const shift = await openShiftOf(t, person, reportId);
-      if (!shift) return false;
-      // Keyed by the READER'S shift, not by the reader. A note aimed at two
-      // shifts has to be read by both, and one row per reader would let the
-      // first person to tap it close the note for everybody.
-      await t.run(
-        'INSERT INTO shift_handoff_read (report_id, shift, read_by) VALUES (?, ?, ?) ' +
-          'ON DUPLICATE KEY UPDATE read_by = VALUES(read_by), read_at = CURRENT_TIMESTAMP',
-        [noteReportId, shift.shift, person]
-      );
-      return true;
-    });
-    return marked ? { ok: 'handoff_read' } : { error: 'notfound' };
-  })
-);
 
 // ---- wrap up, and hand over ------------------------------------------------
 
-app.post(
-  '/reports/close',
-  ...write('reports', REPORT_BACK, async (req) => {
-    const person = str(req.user?.name, 80);
-    const reportId = intOrNull(req.body.report_id);
-    const intent = oneOf(req.body.intent, ['save', 'close']) || 'save';
-    if (!person || reportId === null) return { error: 'invalid' };
-
-    const note = str(req.body.handoff_note, 8000);
-    const noteShifts = [].concat(req.body.note_shift || []).filter((s) => SHIFT_NAMES.includes(String(s)));
-    const ticked = new Set([].concat(req.body.check || []).map((v) => String(v)));
-
-    // A BLANK COUNT IS NOT ZERO. `true` means ticked but not counted; a number
-    // means counted. The owner's page prints the first as MISSING, because
-    // "did the portfolio, did not count how many" and "did none" are different
-    // facts and only one of them is a problem.
-    const checklist = {};
-    for (const id of ticked) {
-      const n = intOrNull(req.body[`count_${id}`]);
-      checklist[id] = n === null ? true : n;
-    }
-
-    const closed = await auditedWrite(
-      req,
-      'shift_close',
-      { report_id: reportId, intent, checked: ticked.size, note_chars: note ? note.length : 0 },
-      async (t) => {
-        const shift = await openShiftOf(t, person, reportId);
-        if (!shift) return false;
-        await t.run(
-          'UPDATE shift_report SET handoff_note = ?, note_shifts = ?, checklist = ?, ' +
-            'status = ?, closed_at = ? WHERE id = ?',
-          [
-            note,
-            JSON.stringify(noteShifts),
-            JSON.stringify(checklist),
-            intent === 'close' ? 'closed' : 'open',
-            intent === 'close' ? new Date() : shift.closed_at,
-            shift.id,
-          ]
-        );
-        return true;
-      }
-    );
-    if (!closed) return { error: 'notfound' };
-    return { ok: intent === 'close' ? 'shift_closed' : 'shift_saved' };
-  })
-);
 
 /**
  * Is this buyer safe to ask for a public review, right now, on this profile?

@@ -525,9 +525,6 @@ export const SECTIONS = Object.freeze([
   { key: 'messages', href: '/messages', label: 'Messages', group: 'Words',
     question: 'What this buyer was already told',
     icon: '<path d="M2.5 4.5h13v9h-13z"/><path d="m2.5 5 6.5 5 6.5-5"/>' },
-  { key: 'responses', href: '/responses', label: 'Responses', group: 'Words',
-    question: 'The reply library, searchable',
-    icon: '<path d="M4 3.5h10v11l-5-2.6-5 2.6z"/><path d="M6.5 7h5"/>' },
   { key: 'team', href: '/team', label: 'Team', group: 'People & money',
     question: 'Weekly 1–5 scoring, self against manager, promises kept',
     icon: '<circle cx="6.5" cy="6" r="2.4"/><circle cx="12.5" cy="7" r="2"/><path d="M2.5 15a4.2 4.2 0 0 1 8 0M11 15a3.6 3.6 0 0 1 4.5-3.3"/>' },
@@ -535,7 +532,7 @@ export const SECTIONS = Object.freeze([
     question: 'Revenue, money sitting still, upsell pipeline',
     icon: '<path d="M9 2.5v13"/><path d="M12.5 5.4C11.7 4.4 10.5 4 9 4 6.9 4 5.6 4.9 5.6 6.3c0 3.2 7 1.6 7 5 0 1.5-1.4 2.5-3.6 2.5-1.7 0-3-.5-3.8-1.6"/>' },
   { key: 'reports', href: '/reports', label: 'Reports', group: 'People & money',
-    question: 'Who is on shift, what they logged, and what is still owed a follow-up',
+    question: 'What the shifts produced, and what they left owed',
     icon: '<path d="M3.5 15.5V8.5M7.2 15.5V4.5M10.8 15.5v-5M14.5 15.5v-9"/><path d="M2.5 15.5h13"/>' },
   // Last on purpose. This is a weekly job for Ezan with the order sheet open
   // beside him, not something a CSR opens mid-shift, and putting it higher
@@ -626,94 +623,6 @@ const SHELL_JS = `
   });
 })();
 
-/* ---- quick replies drawer ------------------------------------------------
-   Loads once, on first open. A failure closes with a sentence rather than an
-   empty list: an empty library and an unreadable one are different facts, and
-   only one of them means "write it yourself". */
-(function(){
-  var openBtn=document.getElementById('replies-open'),
-      panel=document.getElementById('replies-panel'),
-      closeBtn=document.getElementById('replies-close'),
-      list=document.getElementById('replies-list'),
-      q=document.getElementById('replies-q');
-  if(!openBtn||!panel||!list) return;
-  var all=null, kind='', loaded=false;
-
-  function esc(t){ var d=document.createElement('div'); d.textContent=t==null?'':String(t); return d.innerHTML; }
-
-  function badge(src){
-    return src==='fiverr'
-      ? '<span class="rep-badge rep-badge--fiverr">In Fiverr</span>'
-      : '<span class="rep-badge">Hub only</span>';
-  }
-
-  function draw(){
-    var needle=(q&&q.value||'').trim().toLowerCase();
-    var rows=(all||[]).filter(function(r){
-      if(kind && r.kind!==kind) return false;
-      if(!needle) return true;
-      return ((r.name||'')+' '+(r.when_to_use||'')+' '+(r.body||'')+' '+(r.category||''))
-        .toLowerCase().indexOf(needle)>=0;
-    });
-    if(!rows.length){ list.innerHTML='<p class="caption">Nothing matches that.</p>'; return; }
-    list.innerHTML=rows.map(function(r){
-      return '<article class="rep">'
-        +'<div class="rep-top">'+badge(r.source)+'<span class="rep-cat">'+esc(r.category||'')+'</span></div>'
-        +'<h4>'+esc(r.name)+'</h4>'
-        +(r.when_to_use?'<p class="rep-when">'+esc(r.when_to_use)+'</p>':'')
-        +'<p class="rep-body">'+esc(r.body)+'</p>'
-        +'<button class="btn btn--sm rep-copy" type="button" data-body="'+esc(r.body)+'">Copy</button>'
-        +'</article>';
-    }).join('');
-  }
-
-  function load(){
-    if(loaded) return;
-    loaded=true;
-    fetch('/api/replies',{credentials:'same-origin',headers:{'x-requested-with':'XMLHttpRequest'}})
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(d){ all=d.replies||[]; draw(); })
-      .catch(function(){
-        loaded=false;
-        list.innerHTML='<p class="note note--neg">The reply library could not be read. '
-          +'That is unknown, not empty, so do not assume there is no saved line for this.</p>';
-      });
-  }
-
-  function show(on){
-    panel.hidden=!on;
-    openBtn.setAttribute('aria-expanded',on?'true':'false');
-    document.body.classList.toggle('replies-on',on);
-    if(on){ load(); if(q) q.focus(); }
-  }
-  openBtn.addEventListener('click',function(){ show(panel.hidden); });
-  if(closeBtn) closeBtn.addEventListener('click',function(){ show(false); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!panel.hidden) show(false); });
-  if(q) q.addEventListener('input',draw);
-
-  panel.addEventListener('click',function(e){
-    var seg=e.target.closest('[data-kind]');
-    if(seg){
-      kind=seg.getAttribute('data-kind')||'';
-      panel.querySelectorAll('[data-kind]').forEach(function(b){
-        b.setAttribute('aria-current', b===seg ? 'true' : 'false');
-      });
-      draw(); return;
-    }
-    var copy=e.target.closest('.rep-copy');
-    if(copy){
-      var text=copy.getAttribute('data-body')||'';
-      var done=function(){ var was=copy.textContent; copy.textContent='Copied';
-        setTimeout(function(){ copy.textContent=was; },1200); };
-      if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(done,function(){});
-      } else {
-        var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
-        ta.select(); try{ document.execCommand('copy'); done(); }catch(err){} ta.remove();
-      }
-    }
-  });
-})();
 `;
 
 const FAVICON =
@@ -855,58 +764,6 @@ function noticeStack(ctx) {
   return join(out);
 }
 
-/**
- * Wrap a view's result in the shell.
- *
- * @param {object} ctx    the request context (see server.js `buildCtx`)
- * @param {string|Safe|{html,title,kicker,deck,slug,ticker,head}} result
- * @returns {string} a complete HTML document
- */
-/**
- * The quick replies, on every page.
- *
- * The moment a CSR needs a line is the moment they are looking at an order or
- * an inquiry, not at the Responses page. So the library follows them, one tap
- * from anywhere, searchable, with the body ready to copy.
- *
- * EVERY REPLY SAYS WHERE IT LIVES, and that is the point of the badge. A line
- * saved in Fiverr can be reached from Fiverr's own reply box in two taps; a
- * line that exists only here has to be copied from here. Without the mark a
- * CSR either hunts for something in Fiverr that was never there, or retypes
- * something that was. Fiverr has no API for its saved replies, so the answer
- * is typed by a person and read by everything else.
- *
- * The list loads on first open, not on page render. Most loads never open it.
- */
-function repliesDrawer(ctx) {
-  return html`<button class="replies-open" id="replies-open" type="button"
-      aria-controls="replies-panel" aria-expanded="false"
-      title="Quick replies">
-      <span aria-hidden="true">&#9998;</span><span>Replies</span>
-    </button>
-    <aside class="replies" id="replies-panel" hidden aria-label="Quick replies">
-      <header class="replies-head">
-        <strong>Quick replies</strong>
-        <button class="replies-close" id="replies-close" type="button" aria-label="Close">&times;</button>
-      </header>
-      <div class="replies-tools">
-        <label class="sr-only" for="replies-q">Search replies</label>
-        <input id="replies-q" type="search" placeholder="Search what they asked" autocomplete="off">
-        <div class="segment segment--sm" role="group" aria-label="Kind of reply">
-          <button type="button" data-kind="" aria-current="true">All</button>
-          <button type="button" data-kind="quick">Templates</button>
-          <button type="button" data-kind="case">Cases</button>
-        </div>
-      </div>
-      <div class="replies-list" id="replies-list">
-        <p class="caption">Loading the library…</p>
-      </div>
-      <p class="caption replies-foot">
-        Sending from a buyer's page logs it against them. Copying from here does not, so log the decision
-        if it changes what happens next.
-      </p>
-    </aside>`;
-}
 
 export function layout(ctx, result) {
   const view = result instanceof Safe || typeof result === 'string' ? { html: result } : result || {};
@@ -986,7 +843,6 @@ ${navRail(ctx)}
 </main>
 </div>
 <div class="grain" aria-hidden="true"></div>
-${ctx.user ? repliesDrawer(ctx) : ''}
 <script nonce="${ctx.nonce}">${safe(SHELL_JS)}</script>
 </body>
 </html>`;
