@@ -59,6 +59,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   known,
 } from './layout.js';
@@ -715,10 +716,7 @@ export function render(ctx) {
       html: html`<div class="figure">
           <span class="cap">Replies on record</span>
           <strong class="big">${num(0)}</strong>
-          <p class="sub">
-            The table answered, and it is empty. Every reply the team already uses lives in Fiverr's saved
-            quick-replies and in the extra-responses sheet beside it; neither has been loaded into the hub.
-          </p>
+          ${info(`The table answered, and it is empty. Every reply the team already uses lives in Fiverr's saved quick-replies and in the extra-responses sheet beside it; neither has been loaded into the hub.`)}
         </div>
         <section class="panel">
           ${panelHead('How the library gets here', 'typed', 'Typed store · response · 0 rows')}
@@ -737,10 +735,7 @@ export function render(ctx) {
             </li>
             <li>Rows with no name or an empty body are skipped rather than imported as placeholders.</li>
           </ol>
-          <p class="caption">
-            <code class="mono">db/seed.js</code> is the importer. Nothing writes back to the sheet or to
-            Fiverr; the hub reads and this table is its own copy.
-          </p>
+          ${info(`db/seed.js is the importer. Nothing writes back to the sheet or to Fiverr; the hub reads and this table is its own copy.`)}
         </section>
         ${addPanel(ctx, back)}
         <p class="note">
@@ -787,10 +782,7 @@ export function render(ctx) {
                 repl${list.length === 1 ? 'y' : 'ies'}
               </h3>
               ${unfiled
-                ? html`<p class="caption">
-                    These carry no category. The search still finds them by their words; the group heading is
-                    the only thing they are missing.
-                  </p>`
+                ? html`${info(`These carry no category. The search still finds them by their words; the group heading is the only thing they are missing.`)}`
                 : ''}
               ${join(list.map((row) => snippet(row, { ctx, back })))}
             </section>`;
@@ -831,11 +823,7 @@ export function render(ctx) {
         <span>Copying, editing and retiring all carry the name you signed in with.</span>
       </div>
 
-      <p class="caption">
-        The copy button needs JavaScript, and without it there is no button rather than one that counts a
-        copy that did not happen, the text is selectable in place either way. Counts on this page are a
-        census of a complete list, so none of them is a rate and none of them draws a bar.
-      </p>
+      ${info(`The copy button needs JavaScript, and without it there is no button rather than one that counts a copy that did not happen, the text is selectable in place either way. Counts on this page are a census of a complete list, so none of them is a rate and none of them draws a bar.`)}
     </section>
 
     ${addPanel(ctx, back)}

@@ -71,6 +71,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   dateShort,
   dateTimeShort,
@@ -570,10 +571,7 @@ export function render(ctx) {
             nearest day.
           </p>`
         : ''}
-      <p class="caption">
-        Counts, not rates, a day is one day and there is no denominator here worth taking a percentage of.
-        A day with nobody on it is greyed, which is a fact about cover, not about effort.
-      </p>
+      ${info(`Counts, not rates, a day is one day and there is no denominator here worth taking a percentage of. A day with nobody on it is greyed, which is a fact about cover, not about effort.`)}
     </section>`;
 
   // ---- who covered what ----------------------------------------------------

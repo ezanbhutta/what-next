@@ -50,6 +50,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
 } from './layout.js';
 import { MISSING, isMissing, pick, leads as engineLeads, orders as engineOrders } from '../lib/data.js';
@@ -361,10 +362,7 @@ function lede(summary, conversion) {
             note: 'buyers who ever ordered',
           })}
 
-          <p class="caption">
-            Drawn as bands, not points, on one shared axis. Two rates compared on two axes is a drawing
-            trick, and a point estimate hides the width that decides whether the gap is real.
-          </p>
+          ${info(`Drawn as bands, not points, on one shared axis. Two rates compared on two axes is a drawing trick, and a point estimate hides the width that decides whether the gap is real.`)}
         </div>
       </div>
     </div>`;
@@ -820,10 +818,7 @@ function logPanel(leadRows, filtered, filters, lostKeys, orderedBuyers) {
         <div class="figure">
           <span class="cap">The inquiry log</span>
           <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            <span class="mono">data/leads.jsonl</span> is not readable. That is not an empty log, no row
-            count, no conversion and no shift split can be stated from here.
-          </p>
+          ${info(`data/leads.jsonl is not readable. That is not an empty log, no row count, no conversion and no shift split can be stated from here.`)}
         </div>
       </div>`;
   }
@@ -910,11 +905,7 @@ function logPanel(leadRows, filtered, filters, lostKeys, orderedBuyers) {
               <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
             </div>`}
 
-      <p class="caption">
-        Rows marked <b>ordered anyway</b> are the referee's finding shown where the mistake was made.
-        Filters are in the URL, so a filtered view is a link you can send. The buyer's own note, where
-        one was typed, sits under their name.
-      </p>
+      ${info(`Rows marked ordered anyway are the referee's finding shown where the mistake was made. Filters are in the URL, so a filtered view is a link you can send. The buyer's own note, where one was typed, sits under their name.`)}
     </div>`;
 }
 

@@ -48,6 +48,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   rate,
   MIN_SAMPLE,
@@ -449,11 +450,7 @@ function engineSide(run) {
       <dl class="stats">
         ${join(rows.map(([label, value]) => html`<div class="stat"><dt>${label}</dt><dd>${value}</dd></div>`))}
       </dl>
-      <p class="caption">
-        These are the engine's figures from its own capture, not defaults for the boxes above. If what Fiverr
-        shows you today disagrees with one of them by a lot, type what Fiverr shows and say so, the gap is
-        the finding, and overwriting it hides the finding.
-      </p>
+      ${info(`These are the engine's figures from its own capture, not defaults for the boxes above. If what Fiverr shows you today disagrees with one of them by a lot, type what Fiverr shows and say so, the gap is the finding, and overwriting it hides the finding.`)}
     </section>`;
 }
 
@@ -569,10 +566,7 @@ export function render(ctx) {
           <span class="cap">Click-through rate</span>
           <strong class="big" id="d-ctr">${view.ctr.value}</strong>
           <p class="caption" id="d-ctr-n">${view.ctr.note}</p>
-          <p class="sub">
-            Type the two raw numbers. The rate is derived on screen and is not a column in the database, 
-            there is exactly one copy of it and it is computed from the cells above it.
-          </p>
+          ${info(`Type the two raw numbers. The rate is derived on screen and is not a column in the database, there is exactly one copy of it and it is computed from the cells above it.`)}
         </div>
         ${why(
           'Why the raw cells and never the summary',
@@ -652,19 +646,8 @@ export function render(ctx) {
         <fieldset class="form-section">
           <legend>Per gig, optional</legend>
           ${gigRows(savedGigs, suggestedGigs)}
-          <p class="caption">
-            Optional, and only worth filling when the gig-level split is actually visible. Rows are keyed on
-            the gig NAME, so retyping a name creates a second row rather than renaming the first. Leave a row
-            blank to ignore it.
-          </p>
-          <p class="caption">
-            <strong>Name one gig here and this becomes the profile's reach.</strong> Impressions and clicks
-            above are then ignored and the rows below are added up instead, because asking for the parts and
-            the total is two copies of one number and two copies drift. So fill in every gig you have, not
-            just the one you were looking at: a partial split silently turns into the whole profile's reach,
-            and the click-through rate starts describing a subset. A row with a name and a blank number makes
-            the total MISSING rather than a partial sum.
-          </p>
+          ${info(`Optional, and only worth filling when the gig-level split is actually visible. Rows are keyed on the gig NAME, so retyping a name creates a second row rather than renaming the first. Leave a row blank to ignore it.`)}
+          ${info(`Name one gig here and this becomes the profile's reach. Impressions and clicks above are then ignored and the rows below are added up instead, because asking for the parts and the total is two copies of one number and two copies drift. So fill in every gig you have, not just the one you were looking at: a partial split silently turns into the whole profile's reach, and the click-through rate starts describing a subset. A row with a name and a blank number makes the total MISSING rather than a partial sum.`)}
         </fieldset>
 
         <div class="form-actions">
@@ -696,10 +679,7 @@ export function render(ctx) {
           )
         )}
       </dl>
-      <p class="caption">
-        None of these is a column in <code class="mono">daily_entry</code>. Each is computed from the raw
-        cells in the form and recomputed as you type. A figure that depends on an empty box reads MISSING.
-      </p>
+      ${info(`None of these is a column in daily_entry. Each is computed from the raw cells in the form and recomputed as you type. A figure that depends on an empty box reads MISSING.`)}
     </section>`;
 
   // ---- the rest of the day, and the days before it -------------------------
@@ -764,7 +744,7 @@ export function render(ctx) {
             </table>
             <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
           </div>
-          <p class="caption">A gap in this list is a day nobody logged. It is not a day of zero reach.</p>
+          ${info(`A gap in this list is a day nobody logged. It is not a day of zero reach.`)}
         </section>`
       : '';
 

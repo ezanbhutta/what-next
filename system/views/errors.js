@@ -94,10 +94,7 @@ export function render(ctx) {
     return {
       title: 'The order book could not be read',
       html: html`<section class="block">
-        <p class="caption">
-          The engine's order file is absent or unreadable, so this page cannot tell a healthy
-          sheet from an empty one. It is deliberately not reporting "no problems found".
-        </p>
+        ${info(`The engine's order file is absent or unreadable, so this page cannot tell a healthy sheet from an empty one. It is deliberately not reporting "no problems found".`)}
       </section>`,
     };
   }

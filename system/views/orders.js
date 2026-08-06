@@ -54,6 +54,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
 } from './layout.js';
 import { MISSING, isMissing, pick, orders as engineOrders } from '../lib/data.js';
@@ -772,10 +773,7 @@ function bookPanel(bookRows, open) {
         <div class="figure">
           <span class="cap">Order book</span>
           <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            <span class="mono">data/orders.jsonl</span> is not readable, so nothing can be said about the
-            orders that are not in the live queue. The queue above still stands: it comes from the run.
-          </p>
+          ${info(`data/orders.jsonl is not readable, so nothing can be said about the orders that are not in the live queue. The queue above still stands: it comes from the run.`)}
         </div>
       </div>`;
   }

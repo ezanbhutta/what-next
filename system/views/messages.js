@@ -76,6 +76,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   rate,
 } from './layout.js';
@@ -776,10 +777,7 @@ function turnBlock({ ctx, buyer, card, turn, index, gate, canWrite, backTo }) {
                 prefill: fillPlain(turn.s, buyer),
               })
             )
-          : html`<p class="caption">
-              Logging is closed, the typed-records database is unreachable, so this line can be copied but
-              not recorded.
-            </p>`}
+          : html`${info(`Logging is closed, the typed-records database is unreachable, so this line can be copied but not recorded.`)}`}
     </div>`;
 }
 
@@ -1130,10 +1128,7 @@ function talkPanel({ ctx, buyer, cards, gate, canWrite, isOwner, filters, dbNoti
       ${isOwner
         ? why(
             'Add a card to the playbook',
-            html`<p class="caption">
-                Owner only. It goes live on every buyer the moment you save it, and it is stored as written
-                here rather than in the file, so re-importing the Client Talk Hub cannot overwrite it.
-              </p>
+            html`${info(`Owner only. It goes live on every buyer the moment you save it, and it is stored as written here rather than in the file, so re-importing the Client Talk Hub cannot overwrite it.`)}
               ${talkForm({ ctx, card: null, back: talkHref(buyer, filters, {}, { hash: false }), groups })}`
           )
         : ''}
@@ -1329,11 +1324,7 @@ function pickerView(ctx, { directory, notesKnown, open, quotes, staleAfter, need
         <div class="figure">
           <span class="cap">Before any message</span>
           <strong class="mid">Triage first</strong>
-          <p class="sub">
-            Open a buyer and the page leads with their triage. The talk playbook sits underneath it, and a
-            line that asks for a review is refused, with the order and its age printed, whenever that buyer
-            is late or cold.
-          </p>
+          ${info(`Open a buyer and the page leads with their triage. The talk playbook sits underneath it, and a line that asks for a review is refused, with the order and its age printed, whenever that buyer is late or cold.`)}
         </div>
         <p class="note note--neg">
           ${glyph('crit')} <b>No review ask rides on a late or cold order.</b> It is the most reliable way
@@ -1568,10 +1559,7 @@ function historyPanel({ notes, buyer, dbNotice }) {
             </div>`;
         })
       )}
-      <p class="caption">
-        Newest first. Every row carries the name of whoever wrote it, an unattributed note is a note nobody
-        can be asked about six months later, which is the question this whole hub was built around.
-      </p>
+      ${info(`Newest first. Every row carries the name of whoever wrote it, an unattributed note is a note nobody can be asked about six months later, which is the question this whole hub was built around.`)}
     </section>`;
 }
 
@@ -1582,10 +1570,7 @@ function ordersPanel({ orders, buyer }) {
         <div class="figure">
           <span class="cap">Orders on record</span>
           <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            <code class="mono">data/orders.jsonl</code> is not readable, so this buyer's history cannot be
-            listed. It is not an empty history.
-          </p>
+          ${info(`data/orders.jsonl is not readable, so this buyer's history cannot be listed. It is not an empty history.`)}
         </div>
       </section>`;
   }
@@ -1654,11 +1639,7 @@ function ordersPanel({ orders, buyer }) {
         </table>
         <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
       </div>
-      <p class="caption">
-        A blank rating is "no review recorded", not a bad one. An order with no amount contributes nothing
-        to the value above and is counted separately, so the total is never quietly short by an unknown
-        amount.
-      </p>
+      ${info(`A blank rating is "no review recorded", not a bad one. An order with no amount contributes nothing to the value above and is counted separately, so the total is never quietly short by an unknown amount.`)}
     </section>`;
 }
 
@@ -1936,18 +1917,8 @@ export function render(ctx) {
       )}
       ${canWrite
         ? html`${composeForm({ ctx, buyer, prefill: '', open: true })}
-            <p class="caption">
-              <b>This is not a transcript, and nobody should type one.</b> Fiverr already holds every
-              message. What is worth a line here is the handful of things Fiverr will not tell the next
-              person: what was agreed, what was promised, what to avoid saying, and why a buyer is being
-              handled the way they are. If a note would not change what somebody does next, it does not
-              need writing.
-            </p>
-            <p class="caption">
-              Sending a line from the playbook above logs itself, so the common case costs nothing. This
-              box is for the rest. Every write carries your name through the audit log in the same
-              transaction; if the attribution cannot be written, neither is the note.
-            </p>`
+            ${info(`This is not a transcript, and nobody should type one. Fiverr already holds every message. What is worth a line here is the handful of things Fiverr will not tell the next person: what was agreed, what was promised, what to avoid saying, and why a buyer is being handled the way they are. If a note would not change what somebody does next, it does not need writing.`)}
+            ${info(`Sending a line from the playbook above logs itself, so the common case costs nothing. This box is for the rest. Every write carries your name through the audit log in the same transaction; if the attribution cannot be written, neither is the note.`)}`
         : composeClosed(ctx.dbNotice)}
     </section>`;
 

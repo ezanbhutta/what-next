@@ -411,10 +411,21 @@ export function stamp(kind, text) {
 }
 
 /** The header row of a panel, carrying its own provenance. */
-export function panelHead(title, stampKind, stampText) {
+/**
+ * A panel's title bar, with an optional explanation folded behind an icon.
+ *
+ * The fourth argument is where a panel's reasoning goes now. It used to sit in
+ * a <p class="caption"> underneath, and there were seventy-one of those across
+ * the views: every one written to stop a number being misread, and every one
+ * adding a paragraph to a page that is meant to be read at a glance.
+ *
+ * Beside the title it costs nothing until somebody hovers it, and it lands in
+ * the one place a reader is already looking when they wonder what a panel is.
+ */
+export function panelHead(title, stampKind, stampText, note = null) {
   const variant = stampKind === 'sample' ? 'sample' : stampKind === 'missing' ? 'missing' : 'live';
   return html`<div class="panel-head panel-head--${safe(variant)}">
-      <h3>${title}</h3>${stampKind ? stamp(stampKind, stampText) : ''}
+      <h3>${title}${note ? info(note) : ''}</h3>${stampKind ? stamp(stampKind, stampText) : ''}
     </div>`;
 }
 

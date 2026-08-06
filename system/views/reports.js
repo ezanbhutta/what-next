@@ -65,6 +65,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   known,
 } from './layout.js';
@@ -1066,11 +1067,7 @@ function activityForm(activity, { csrfToken, reportId, backTo }) {
         ${bookNote}
         <div class="form-grid">${join(activity.fields.map((f) => fieldBlock(activity, f)))}</div>
         ${activity.key === 'review_received'
-          ? html`<p class="caption">
-              The overall rating is the average of the three scores and is computed on save. It is never
-              typed, so it cannot disagree with the scores it comes from. An average of 4.7 to 5.0 books the
-              private-review ask 24 hours later; anything lower books nothing.
-            </p>`
+          ? html`${info(`The overall rating is the average of the three scores and is computed on save. It is never typed, so it cannot disagree with the scores it comes from. An average of 4.7 to 5.0 books the private-review ask 24 hours later; anything lower books nothing.`)}`
           : ''}
       </fieldset>
       <div class="form-actions">
@@ -1121,10 +1118,7 @@ function alertBlock(alerts, { csrfToken, backTo }) {
           </div>`;
         })
       )}
-      <p class="caption" style="margin-top:12px">
-        These stay on the profile across every shift until someone marks them solved. They cannot be snoozed.
-        While one is standing, no review ask goes to that buyer, the hub holds it and says so.
-      </p>
+      ${info(`These stay on the profile across every shift until someone marks them solved. They cannot be snoozed. While one is standing, no review ask goes to that buyer, the hub holds it and says so.`)}
     </section>`;
 }
 
@@ -1324,10 +1318,7 @@ export function render(ctx) {
               : '.'}
           </p>
         </div>
-        <p class="caption">
-          Counts of one shift, not rates. There is no denominator here to take a percentage of, so nothing on
-          this page draws a bar or an arrow.
-        </p>
+        ${info(`Counts of one shift, not rates. There is no denominator here to take a percentage of, so nothing on this page draws a bar or an arrow.`)}
         ${ctx.user && (ctx.user.role === 'manager' || ctx.user.role === 'owner')
           ? html`<div class="btnrow" style="margin-top:14px">
               <a class="btn btn--ghost btn--sm" href="/reports/ceo">What the shifts produced →</a>
@@ -1353,10 +1344,7 @@ export function render(ctx) {
           <input type="hidden" name="back" value="${backTo}">
           <button class="btn" type="submit">Noted</button>
         </form>
-        <p class="caption" style="margin-top:8px">
-          Marking it read tells the last shift their note landed. A note aimed at two shifts has to be read by
-          both, the other one still sees it as unread.
-        </p>
+        ${info(`Marking it read tells the last shift their note landed. A note aimed at two shifts has to be read by both, the other one still sees it as unread.`)}
       </section>`
     : '';
 
@@ -1444,10 +1432,7 @@ export function render(ctx) {
               })
             )}
           </ul>
-          <p class="caption">
-            A mis-tap is never final. Undo puts the reminder back where it was; if the tap advanced a chain,
-            the stage it booked goes with it.
-          </p>
+          ${info(`A mis-tap is never final. Undo puts the reminder back where it was; if the tap advanced a chain, the stage it booked goes with it.`)}
         </section>`
       : '';
 
@@ -1458,10 +1443,7 @@ export function render(ctx) {
       ${activityChooser(openLog?.key || null)}
       ${openLog
         ? activityForm(openLog, { csrfToken, reportId: report.id, backTo })
-        : html`<p class="caption" style="margin-top:14px">
-            Pick what happened and its form opens here. Two taps and a save, the reminders it books appear
-            above, on this profile, for whoever is covering it when they come due.
-          </p>`}
+        : html``}
       <datalist id="reports-designers">
         ${join((Array.isArray(d.designers) ? d.designers : []).map((n) => html`<option value="${n}"></option>`))}
       </datalist>
@@ -1505,10 +1487,7 @@ export function render(ctx) {
               )}
             </ul>`
           : empty('Nothing logged yet this shift.')}
-      <p class="caption">
-        Removing an entry also clears the reminders it booked, that is the point of removing it. A reminder
-        someone has already closed stays closed.
-      </p>
+      ${info(`Removing an entry also clears the reminders it booked, that is the point of removing it. A reminder someone has already closed stays closed.`)}
     </section>`;
 
   // ---- wrap up ------------------------------------------------------------
@@ -1782,7 +1761,7 @@ function logOnlyView(ctx, { csrfToken, date, d }) {
     ${timelineBlock(d, me)}
     ${openLog
       ? activityForm(openLog, { csrfToken, reportId: null, backTo: '/reports' })
-      : html`<p class="caption">Pick what happened. Each one asks only for what it needs.</p>`}`;
+      : html``}`;
 
   return {
     title: 'Log',
@@ -1822,10 +1801,7 @@ function openShiftView(ctx, { csrfToken, profiles, shiftNow, date }) {
   const body = html`<div class="figure">
       <span class="cap">Your shift</span>
       <strong class="mid">Not open yet</strong>
-      <p class="sub">
-        Nothing can be logged and no reminder can be worked until a shift is open, because both belong to a
-        profile and a shift is what says which one. Two choices and you are in.
-      </p>
+      ${info(`Nothing can be logged and no reminder can be worked until a shift is open, because both belong to a profile and a shift is what says which one. Two choices and you are in.`)}
     </div>
 
     <section class="panel">

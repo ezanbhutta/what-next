@@ -67,6 +67,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
 } from './layout.js';
 import {
@@ -1276,10 +1277,7 @@ function orderHistory(rec) {
         </table>
         <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
       </div>
-      <p class="caption">
-        Every row as the engine published it. A blank tip is a tip of nothing; a MISSING rating is no
-        rating recorded, which is not a rating of zero and not a complaint.
-      </p>
+      ${info(`Every row as the engine published it. A blank tip is a tip of nothing; a MISSING rating is no rating recorded, which is not a rating of zero and not a complaint.`)}
     </div>`;
 }
 
@@ -1302,10 +1300,7 @@ function inquiryHistory(rec) {
     return html`<div class="panel">
         ${panelHead('In the inquiry log', 'live', 'Live · leads.jsonl')}
         ${empty('No inquiry was ever logged for this username, the order arrived without one.')}
-        <p class="caption">
-          That is one of the referee's three findings, and it is common: most of the book never passed
-          through the inquiry sheet at all. It is not evidence that a CSR missed anything.
-        </p>
+        ${info(`That is one of the referee's three findings, and it is common: most of the book never passed through the inquiry sheet at all. It is not evidence that a CSR missed anything.`)}
       </div>`;
   }
 
@@ -1411,10 +1406,7 @@ function reconPanel(recon) {
           </tbody>
         </table>
       </div>
-      <p class="caption">
-        Resolve these from the Inquiries page. Nothing here edits the inquiry sheet or the order book, 
-        it records what somebody decided, and who decided it.
-      </p>
+      ${info(`Resolve these from the Inquiries page. Nothing here edits the inquiry sheet or the order book, it records what somebody decided, and who decided it.`)}
     </div>`;
 }
 
@@ -1430,7 +1422,7 @@ function upsellPanel(upsell) {
     return html`<div class="panel">
         ${panelHead('Upsell', 'typed', 'Typed · upsell')}
         ${empty('Nobody has put this buyer on the upsell board.')}
-        <p class="caption">The board lives on the Money page; rows are keyed on this same username.</p>
+        ${info(`The board lives on the Money page; rows are keyed on this same username.`)}
       </div>`;
   }
 
@@ -1462,11 +1454,7 @@ function upsellPanel(upsell) {
           </tbody>
         </table>
       </div>
-      <p class="caption">
-        Stage and next step are typed on the Money page. No money on this client page comes from this
-        table, <code class="mono">extra_earned</code> is somebody's estimate of a future sale, and it is
-        never added to a lifetime value the order book computed.
-      </p>
+      ${info(`Stage and next step are typed on the Money page. No money on this client page comes from this table, extra_earned is somebody's estimate of a future sale, and it is never added to a lifetime value the order book computed.`)}
     </div>`;
 }
 

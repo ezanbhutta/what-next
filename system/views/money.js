@@ -428,10 +428,7 @@ function atRestPanel(run) {
         <div class="figure">
           <span class="cap">recovery.open_orders + recovery.quotes</span>
           <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            The run carries no recovery block, so the standing money cannot be decomposed and is not shown
-            split. This is an incomplete run, not an empty pile.
-          </p>
+          ${info(`The run carries no recovery block, so the standing money cannot be decomposed and is not shown split. This is an incomplete run, not an empty pile.`)}
         </div>
       </div>`;
   }
@@ -1209,10 +1206,7 @@ function repeatBaseNote(run) {
     'Why the board is worth filling, the engine’s own note',
     html`<p><strong>${repeat.title}</strong></p>
       <p>${repeat.detail}</p>
-      <p class="caption">
-        Quoted from <code class="mono">latest-run.json</code> without restatement. The figures in it are
-        all-time and are not the window figures above; the two are not comparable and are not compared.
-      </p>`
+      ${info(`Quoted from latest-run.json without restatement. The figures in it are all-time and are not the window figures above; the two are not comparable and are not compared.`)}`
   );
 }
 
@@ -1224,10 +1218,7 @@ function rowsList(ctx, board, back) {
     return html`<div class="block">
         <h3>Every row on the board</h3>
         ${empty('Nobody has been put on the upsell board yet.')}
-        <p class="caption">
-          That is a fact about the board, not about the clients, the order book has repeat buyers on it
-          either way. Add the first row below.
-        </p>
+        ${info(`That is a fact about the board, not about the clients, the order book has repeat buyers on it either way. Add the first row below.`)}
       </div>`;
   }
 

@@ -82,6 +82,7 @@ import {
   pill,
   panelHead,
   why,
+  info,
   empty,
   rate,
   known,
@@ -427,11 +428,7 @@ function scaleFigure() {
   return html`<div class="figure">
       <span class="cap">The scale</span>
       <strong class="mid">3 = normal</strong>
-      <p class="sub">
-        Not a disappointment. <b>Normal</b> is what a good week looks like, and it is where most marks should
-        sit. Do not give a 4 just to make someone happy, a 4 that was not earned costs you the only signal
-        this review produces.
-      </p>
+      ${info(`Not a disappointment. Normal is what a good week looks like, and it is where most marks should sit. Do not give a 4 just to make someone happy, a 4 that was not earned costs you the only signal this review produces.`)}
     </div>
     <dl class="stats">
       ${join(
@@ -681,11 +678,7 @@ function weekTable(week, roster) {
       </table>
       <p class="tablehint" aria-hidden="true">Scroll sideways for more columns →</p>
     </div>
-    <p class="caption">
-      Grey marks are the self score, accent marks are the manager's. A gap of two points or more is flagged on
-      the row, not because it is wrong, but because two people looking at the same week and landing two points
-      apart is the conversation this review exists to produce.
-    </p>`;
+    ${info(`Grey marks are the self score, accent marks are the manager's. A gap of two points or more is flagged on the row, not because it is wrong, but because two people looking at the same week and landing two points apart is the conversation this review exists to produce.`)}`;
 }
 
 // ============================================================================
@@ -793,11 +786,7 @@ function rosterPanel(people, workload) {
         <div class="figure">
           <span class="cap">The review roster</span>
           <strong class="mid">${missing()}</strong>
-          <p class="sub">
-            The roster lives in <code class="mono">app_user</code> and the database did not answer, so the two
-            lists cannot be put side by side. The engine's side of the comparison is still readable, see the
-            names below, but which of them are reviewed is unknown, and unknown is not "none".
-          </p>
+          ${info(`The roster lives in app_user and the database did not answer, so the two lists cannot be put side by side. The engine's side of the comparison is still readable, see the names below, but which of them are reviewed is unknown, and unknown is not "none".`)}
         </div>
         ${available ? workloadTable([...workload.map.values()].sort(byWork), null) : ''}
       </section>`;
@@ -923,12 +912,7 @@ function rosterPanel(people, workload) {
         ? html`<div class="block">
             <h3>Doing the work, not in the programme</h3>
             ${outside.length ? workloadTable(outside, retiredByKey) : empty('Everyone in the data is reviewed.')}
-            <p class="caption">
-              "Retired here" means the name exists in <code class="mono">app_user</code> and was deactivated, 
-              deliberately kept rather than deleted, because deleting a name orphans every order attributed to
-              it and makes the past unexplainable. "Not known here" means the name appears in the engine's data
-              and has never been added to the hub at all.
-            </p>
+            ${info(`"Retired here" means the name exists in app_user and was deactivated, deliberately kept rather than deleted, because deleting a name orphans every order attributed to it and makes the past unexplainable. "Not known here" means the name appears in the engine's data and has never been added to the hub at all.`)}
           </div>`
         : ''}
     </section>`;
@@ -1258,10 +1242,7 @@ function accessPanel(ctx) {
       <div class="figure">
         <span class="cap">Sections restricted to a manager or the owner</span>
         <strong class="mid">${num(sections.filter((s) => s.locked).length)}<span class="caption"> of ${String(sections.length)}</span></strong>
-        <p class="sub">
-          This page carries every score, every note and every promise the team has made about each other. It is
-          the most likely section to want closed, and closing it takes a row in a table rather than a deploy.
-        </p>
+        ${info(`This page carries every score, every note and every promise the team has made about each other. It is the most likely section to want closed, and closing it takes a row in a table rather than a deploy.`)}
       </div>
 
       <div class="tablewrap">
