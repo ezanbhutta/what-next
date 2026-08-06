@@ -95,7 +95,7 @@ retired:
     gated: true
     name: Impressions / Daily Data Sheet
     file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
-    replaced_by: "the hub's Daily entry (daily_entry, daily_entry_gig)"
+    replaced_by: "the impressions board (impressions-hmi), which the hub reads"
     retired_on: 2026-08-05
     # It was 228 days stale on 2026-07-29 and nobody noticed, which is most of
     # the argument for typing the numbers into a form instead.
@@ -111,7 +111,7 @@ retired:
   - id: resources_upsell
     gated: true
     name: Resources + upsell sheet
-    replaced_by: "the hub's Responses (response, talk) and Money (upsell)"
+    replaced_by: "the reply sheet the team keeps, and the hub's Money (upsell)"
     retired_on: 2026-08-05
   - id: csr_pulse
     gated: false

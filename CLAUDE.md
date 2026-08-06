@@ -25,8 +25,10 @@ runner fetches it automatically and you do nothing. It also reads any snapshot
 the Apps Script timer left in `data/raw/snapshots/` and uses whichever is newer.
 Check the `[snapshot]` lines on stderr to see which path won and how old it is.
 
-**Fallback — manual fetch.** Only if the runner reports no snapshot at all.
-Never write to any source sheet. Pull each into a dated file:
+**Fallback — manual fetch. It is NOT an equal substitute, and on these two
+workbooks it is close to useless.** Only if the runner reports no snapshot at
+all, and read the two failures below before trusting a number that comes out of
+it. Never write to any source sheet. Pull each into a dated file:
 
 | Source | How | Path |
 |---|---|---|
@@ -40,6 +42,35 @@ write the `fileContent` value straight to the path with a short script rather
 than reading it into context. **You do not need to read the sheet contents
 yourself.** The engine parses them; pulling 200k characters into context wastes
 the budget you need for judgement.
+
+**Both of these workbooks come back wrong through that tool, in two separate
+ways, and neither shows on the page.** Measured 2026-08-06 against the snapshot
+of the day before:
+
+- *It truncates.* The order workbook returned 222,506 characters against a
+  snapshot holding 27 tables and 31,042 rows, and the pipeline read 601 orders
+  where the snapshot read 1,073. `ingest.assert_complete` now refuses this and
+  `daily_run.py` exits 2 rather than building a brief on it. Note the cut does
+  not land mid-token: it stopped right after a cell separator, so the last line
+  still ended in a pipe and read as a well-formed row. The tell is the shape,
+  a final row with fewer cells than its own header.
+- *It drops the tab names, and both workbooks are one tab per profile.* Eleven
+  identically-headed blocks arrive with nothing to tell them apart, so this
+  hub's profile cannot be separated from the other ten. That read 992 leads
+  where the snapshot read 329 — every conversion rate on the brief at a third
+  of its real value, on a page otherwise identical to a correct one. There is
+  no guard for this one because there is nothing in the data to guard on. The
+  runner prints a `[snapshot warn]` and the numbers stay untrustworthy.
+
+So: **a stale but whole snapshot beats a fresh but partial export.** If the
+snapshot is old, fix the intake rather than reaching for the fallback.
+
+The gig capture is the exception and it does work. It is read from
+`data/raw/gig/<date>.json` independently of the snapshot, so a fresh gig scrape
+lands even on a run using yesterday's snapshot. Fiverr returns 403 to a plain
+fetch; a browser-rendering fetch tool gets through. Check the star histogram
+sums to the stated review total before writing the file — that is a free
+consistency check on the whole capture.
 
 From the gig page capture: `level`, `reviews_total`, the `stars` histogram,
 `orders_in_queue`, `avg_response_time_hours`. The star histogram is what makes
@@ -234,6 +265,8 @@ confident, wrong numbers for months, and the next one will look just as normal.
 | `"5 star"` ratings | CSRs type the unit. 374 real ratings carried a `star` suffix; a bare `float()` turned every one into "no review", understating review capture sevenfold and putting a fabricated task at the top of every brief. | `contracts.to_rating` |
 | OS-driven dark mode | The page defined a light palette and then handed it to a `@media (prefers-color-scheme: dark)` block that rewrote all twenty tokens. Nothing in the source looks wrong — the light values are right at the top — so it passed review twice while everyone whose laptop was set to dark opened a dark page they had explicitly not asked for. | `test_no_output_lets_the_os_pick_the_colour_scheme` |
 | Unserialised evidence | `breach_reasons` never reached the run JSON, so the dashboard printed "No breach" directly beneath a red BREACH badge. | `MetricBundle.as_dict` |
+| Truncated Drive export | The order workbook came back cut off mid-row, 601 orders instead of 1,073. It ended right after a cell separator, so the last line still closed with a pipe and looked well-formed; the tell is a final row with fewer cells than its header. | `ingest.assert_complete` |
+| Profiles merged by the markdown path | Both workbooks hold one identically-headed tab per profile and the flat export drops the names, so eleven profiles arrive indistinguishable: 992 leads instead of 329. Nothing in the data can distinguish them, so there is no guard, only a refusal to trust the path. | `[snapshot warn]` in `daily_run.py` |
 
 The shared lesson: a number that looks plausible is not evidence that the
 parse was right. When a metric drives a task, check the raw column

@@ -2117,3 +2117,63 @@ def test_the_page_states_which_period_its_numbers_cover():
         # ...and the one view that ignores the window must say that too.
         assert "looks further back" in html, \
             "money-at-rest is exempt from the window without telling the reader"
+
+
+# ---------------------------------------------------------------------------
+# A truncated markdown export must never be ingested as a whole workbook
+# ---------------------------------------------------------------------------
+#
+# On 2026-08-06 the Drive read tool returned the order workbook cut off mid
+# table: 222,506 characters and 2,075 lines standing in for a workbook the
+# snapshot renders as 27 tables and 31,042 rows. The pipeline parsed it without
+# complaint into 601 orders where the snapshot found 1,073.
+#
+# The first guard written for this checked whether the file ended mid-token,
+# and it did not fire: the cut landed immediately after a cell separator, so
+# the final line still ended in a pipe and read as a well-formed row. What
+# gives it away is the row's SHAPE.
+
+def test_a_truncated_export_is_refused_rather_than_parsed():
+    from xstudioz.ingest import assert_complete, TruncatedExport
+
+    whole = (
+        "| Date | Client | Amount |\n"
+        "| --- | --- | --- |\n"
+        "| 01 Aug 2026 | alpha | 100 |\n"
+        "| 02 Aug 2026 | bravo | 200 |\n"
+    )
+    assert_complete(whole, label="whole")  # must not raise
+
+    # Cut after a separator, so the last line still ends in a pipe. This is the
+    # exact shape the real truncation took, and the naive check passes it.
+    truncated = (
+        "| Date | Client | Amount |\n"
+        "| --- | --- | --- |\n"
+        "| 01 Aug 2026 | alpha | 100 |\n"
+        "| 02 Aug 2026 | bravo |"
+    )
+    assert truncated.strip().endswith("|"), (
+        "this fixture is meant to end in a pipe; without that it does not "
+        "reproduce the bug and the test proves nothing"
+    )
+    with pytest.raises(TruncatedExport) as caught:
+        assert_complete(truncated, label="orders")
+    assert "2 cells" in str(caught.value) and "3" in str(caught.value)
+
+
+def test_a_ragged_row_in_the_middle_is_not_mistaken_for_truncation():
+    """Only the END of a file can be truncated.
+
+    Sheets are full of short rows. Refusing on any of them would turn a working
+    intake into a daily false alarm, and an alarm that fires every morning is
+    one nobody reads on the morning it means something.
+    """
+    from xstudioz.ingest import assert_complete
+
+    ragged_middle = (
+        "| Date | Client | Amount |\n"
+        "| --- | --- | --- |\n"
+        "| 01 Aug 2026 | alpha |\n"
+        "| 02 Aug 2026 | bravo | 200 |\n"
+    )
+    assert_complete(ragged_middle, label="ragged")  # must not raise

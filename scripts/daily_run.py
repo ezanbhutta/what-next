@@ -35,7 +35,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from xstudioz import pipeline, snapshot  # noqa: E402
+from xstudioz import ingest, pipeline, snapshot  # noqa: E402
 
 
 def latest_snapshot(directory: Path, on_or_before: _dt.date,
@@ -146,6 +146,40 @@ def main() -> int:
             return 2
         print("[snapshot] none available; falling back to markdown exports",
               file=sys.stderr)
+
+        # THE FALLBACK IS NOT AN EQUAL SUBSTITUTE, AND IT MUST SAY SO.
+        #
+        # Two things are true of a Drive markdown export of these workbooks
+        # that are not true of a snapshot, and neither shows up in the output:
+        #
+        #   It gets truncated. `assert_complete` refuses that outright, below.
+        #
+        #   It carries no tab names. Both workbooks hold one tab per profile
+        #   with identical headers, so eleven blocks arrive indistinguishable
+        #   and this hub's profile cannot be separated from the other ten. On
+        #   2026-08-06 that read 992 leads where the snapshot read 329, which
+        #   would have put every conversion rate on the brief at a third of its
+        #   real value with nothing on the page looking wrong.
+        #
+        # It is left usable because backfill depends on it and older exports
+        # predate the multi-profile tabs, but it is never silent again.
+        print("[snapshot warn] the markdown path cannot separate profiles: "
+              "both workbooks keep one identically-headed tab per profile and "
+              "the export drops the names. Treat every count below as covering "
+              "more than this profile until a snapshot is available.",
+              file=sys.stderr)
+
+        for label, path in (("orders", orders_p), ("inquiries", inq_p)):
+            if not path:
+                continue
+            try:
+                ingest.assert_complete(path.read_text(encoding="utf-8"), label=str(path))
+            except ingest.TruncatedExport as exc:
+                print(f"[error] {exc}", file=sys.stderr)
+                print(f"[error] refusing to build a brief on a partial {label} "
+                      f"workbook. Re-export it, or restore a snapshot under "
+                      f"{snap_dir}.", file=sys.stderr)
+                return 2
 
     gig_p = latest_snapshot(raw / "gig", today, suffixes=(".json",))
     gig = json.loads(gig_p.read_text()) if gig_p else None

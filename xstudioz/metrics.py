@@ -592,7 +592,7 @@ class FunnelDecomposition:
 
     Without impressions data all three are indistinguishable. The engine has
     no impression series at all since the impressions sheet was retired: those
-    numbers are typed into the hub's Daily entry now, and nothing reads that
+    numbers are typed into the impressions board now, and nothing reads that
     table back into the engine yet. So this says "no data" rather than
     guessing, and will keep saying it until a hub reader exists.
     """
@@ -640,7 +640,7 @@ def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
             explanation=("No impression data. A fall in organic orders cannot be "
                          "attributed to reach, click-through or closing rate, "
                          "and those three need opposite responses. The daily "
-                         "numbers are typed into the hub's Daily entry since the "
+                         "numbers are typed into the impressions board since the "
                          "impressions sheet was retired; the engine cannot read "
                          "that table yet, so this stays unanswerable until it "
                          "can. It is the most valuable missing input."))
@@ -675,7 +675,7 @@ def decompose_funnel(impressions: Sequence[C.Impression], as_of: _dt.date,
                     f"before today. The last {window * 2} days carry no rows, so "
                     f"the current decline cannot be attributed to reach, "
                     f"click-through or closing rate. Fill the gap in the hub's "
-                    f"Daily entry and this becomes answerable immediately. The "
+                    f"impressions board and this becomes answerable immediately. The "
                     f"maths is already here, it is the rows that are missing."))
         return FunnelDecomposition(
             have_data=True, days=window,

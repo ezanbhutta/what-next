@@ -48,6 +48,52 @@ def _unescape(cell: str) -> str:
     return cell.strip()
 
 
+class TruncatedExport(ValueError):
+    """A markdown export that stops in the middle of a row."""
+
+
+def assert_complete(text: str, *, label: str = "export") -> None:
+    """Refuse a markdown export that was cut off mid-table.
+
+    WHY THIS EXISTS, AND WHY IT RAISES INSTEAD OF WARNING.
+
+    The Drive read tool caps its output. On 2026-08-06 it returned the order
+    workbook as 222,506 characters against a snapshot of 27 tables and 31,042
+    rows, and the pipeline turned that into 601 orders instead of 1,073.
+
+    Nothing about the result looked wrong, which is the whole problem. A
+    warning would not have been enough: the brief is generated, committed and
+    read on the same morning, and a stderr line nobody is watching is how a
+    number like that reaches somebody's decision. A stale-but-whole snapshot is
+    strictly better than a fresh-but-truncated export, so this refuses.
+
+    THE OBVIOUS CHECK DOES NOT WORK, which is worth stating because it was the
+    first thing tried. A truncated file does not reliably end mid-token: this
+    one was cut immediately after a cell separator, so its last line still
+    ended in a pipe and read as a perfectly well-formed row.
+
+    What gives it away is the SHAPE. The final row of that block carried four
+    cells where the other 148 carried eight. A table row with fewer cells than
+    its own header is a row the exporter stopped writing, and it can only ever
+    happen at the end of the file.
+    """
+    blocks = split_blocks(text)
+    if not blocks:
+        return
+    last = blocks[-1]
+    if len(last) < 2:
+        return
+    width = len(last[0])
+    final = last[-1]
+    if len(final) < width:
+        raise TruncatedExport(
+            f"{label} stops in the middle of a table row: its last row carries "
+            f"{len(final)} cells where the block's header carries {width}. "
+            f"The export was cut off, not finished, and ingesting it would "
+            f"report a partial workbook as a whole one."
+        )
+
+
 def split_blocks(text: str) -> list[list[list[str]]]:
     """Split a markdown-table export into per-tab blocks of rows."""
     blocks: list[list[list[str]]] = []
@@ -191,9 +237,9 @@ IGNORED_HEADERS: frozenset[str] = frozenset({
 #: Retired role -> where that data lives now. The keys double as retired
 #: source ids, because the sheet and its single role share a name.
 RETIRED_ROLES: dict[str, str] = {
-    "impressions": "the hub's Daily entry",
+    "impressions": "the impressions board (impressions-hmi)",
     "team_review": "the hub's Team",
-    "resources_upsell": "the hub's Responses and Money",
+    "resources_upsell": "the reply sheet and the hub's Money",
 }
 
 #: Source ids that must not be read, whatever their tables look like.
@@ -413,7 +459,7 @@ class IngestResult:
     flow: list[C.DailyFlow] = field(default_factory=list)
     active: list[C.ActiveOrder] = field(default_factory=list)
     #: Always empty since the impressions sheet was retired. No ingester fills
-    #: it: impressions are typed into the hub's Daily entry now, and until a
+    #: it: impressions are typed into the impressions board now, and until a
     #: reader for that exists the engine has no impression series. Kept because
     #: the shape downstream expects has not changed, and an empty list is what
     #: makes ``decompose_funnel`` say so rather than guess.

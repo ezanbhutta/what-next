@@ -36,14 +36,14 @@
       "name": "Daily Data Sheet Profiles",
       "source_id": "impressions",
       "rows": 3221,
-      "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+      "why": "source 'impressions' is retired; that data is typed into the impressions board (impressions-hmi) now"
     },
     {
       "retired": "impressions",
       "name": "Impressions Daily Data Sheet Profiles",
       "source_id": "impressions",
       "rows": 162,
-      "why": "source 'impressions' is retired; that data is typed into the hub's Daily entry now"
+      "why": "source 'impressions' is retired; that data is typed into the impressions board (impressions-hmi) now"
     }
   ],
   "duplicate_tables_skipped": {

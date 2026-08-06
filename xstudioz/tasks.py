@@ -600,9 +600,11 @@ def _decomposition_rules(bundle: MetricBundle) -> list[Task]:
                 "the engine can see that organic fell but not whether reach or "
                 "conversion caused it, and those need opposite responses."),
             steps=[
-                "Open the hub's Daily entry and type one row per profile per day "
-                "from Fiverr Analytics: impressions, clicks, organic orders. The "
-                "old impressions sheet is retired; do not reopen it.",
+                "Fill in the impressions board (impressions-hmi) for every day since "
+                "its last entry: impressions, clicks, organic orders, per gig. That "
+                "board is the source the hub reads; the old impressions sheet is "
+                "retired and the hub's own entry form is gone, so this is the one "
+                "place the numbers go.",
                 "Work backwards from today to the last day that has a row, "
                 "rather than forwards. The recent days are the ones any "
                 "diagnosis needs first.",
