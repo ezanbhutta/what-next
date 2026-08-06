@@ -639,21 +639,33 @@ html[data-theme="dark"] .theme-toggle .t-light{ display:none; }
    same six figures with twice the width and room to breathe. */
 .ticker{
   display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--s3);
+  margin-top:var(--s4);
+  background:none; border:0; box-shadow:none; overflow:visible;
+}
+/* SEPARATE CARDS, NOT ONE BOX WITH DIVIDERS.
+   This was a single bordered container with internal rules, which reads as a
+   table. Every reference system Ezan works from (CSR Pulse, the CSR Logger,
+   the impressions board) uses discrete cards with a gap and a lift on hover,
+   and that is most of why theirs look composed and this looked like a form.
+   The hover values are taken from impressions-hmi's own stylesheet rather
+   than guessed, so a card here moves exactly as far as a card there. */
+.tick{
+  padding:var(--card-pad);
   background:var(--card);
   border:1px solid var(--rule-2);
   border-radius:var(--r-lg);
   box-shadow:var(--e1);
-  overflow:hidden;
-  margin-top:var(--s4);
-}
-.tick{
-  padding:var(--s5) var(--card-pad);
-  border-left:1px solid var(--rule);
-  border-top:1px solid var(--rule);
   min-width:0;
+  transition:transform .16s ease, box-shadow .16s ease;
 }
-.tick:nth-child(3n+1){ border-left:0; }
-.tick:nth-child(-n+3){ border-top:0; }
+.tick:hover{
+  transform:translateY(-3px);
+  box-shadow:0 2px 6px -2px rgba(22,10,51,.05), 0 20px 44px -22px rgba(22,10,51,.16);
+}
+@media (prefers-reduced-motion:reduce){
+  .tick{ transition:none; } .tick:hover{ transform:none; }
+}
 .tick dt{
   font-size:var(--t-xs); letter-spacing:.08em; text-transform:uppercase;
   font-weight:600; color:var(--ink-3);             /* 5.28:1 PASS         */
@@ -2403,3 +2415,63 @@ mark{
 .act-dot--neg{ background:var(--neg, #EF4444); }
 .act-dot--accent{ background:var(--accent, #6366F1); }
 .segment a .act-dot{ margin-right:7px; }
+
+/* ---------------------------------------------------------------------------
+   STAT CARDS, matched to the impressions board and CSR Pulse.
+
+   Their shape, which is what makes those pages readable at a glance:
+     tiny uppercase label, huge tabular figure, one short line under it,
+     equal cards on a grid, and a lift on hover.
+
+   The hover is lifted verbatim from impressions-hmi's own stylesheet rather
+   than guessed: translateY(-3px) with a second, wider shadow. A card that
+   moves the same distance as theirs feels the same to use.
+   -------------------------------------------------------------------------*/
+.statgrid{
+  display:grid; gap:var(--s3, 12px);
+  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  margin:0 0 var(--s5, 24px);
+}
+.statcard{
+  background:var(--card); border:1px solid var(--border, var(--rule));
+  border-radius:var(--r-lg, 16px); padding:var(--card-pad, 24px);
+  box-shadow:var(--e1, 0 1px 2px rgba(22,10,51,.03), 0 6px 16px -6px rgba(22,10,51,.06));
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+.statcard:hover{
+  transform:translateY(-3px);
+  box-shadow:0 2px 6px -2px rgba(22,10,51,.05), 0 20px 44px -22px rgba(22,10,51,.16);
+}
+.statcard .k{
+  font:700 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-3, var(--dim)); margin:0 0 12px; display:flex;
+  align-items:center; justify-content:space-between; gap:8px;
+}
+.statcard .v{
+  font-family:var(--mono); font-weight:600; font-size:34px; line-height:1.02;
+  letter-spacing:-.03em; font-variant-numeric:tabular-nums; color:var(--ink);
+  display:block;
+}
+.statcard .n{
+  margin:8px 0 0; font-size:13px; line-height:1.5; color:var(--ink-3, var(--dim));
+}
+.statcard .v.pos{ color:var(--pos); } .statcard .v.warn{ color:var(--warn); }
+.statcard .v.neg{ color:var(--neg); }
+/* The small tinted square their cards carry top-right. */
+.statcard .badge{
+  width:26px; height:26px; border-radius:8px; display:inline-flex;
+  align-items:center; justify-content:center; font-size:12px; flex:0 0 auto;
+  background:var(--ok-bg); color:var(--ok, var(--pos));
+}
+.statcard .badge--warn{ background:var(--warn-bg); color:var(--warn); }
+.statcard .badge--neg{ background:var(--bad-bg); color:var(--neg); }
+.statcard .badge--info{ background:var(--info-bg); color:var(--info, #0369A1); }
+
+/* Section eyebrow, the small uppercase line above a heading on their pages. */
+.eyebrow{
+  font:700 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 6px;
+}
+@media (prefers-reduced-motion:reduce){
+  .statcard{ transition:none; } .statcard:hover{ transform:none; }
+}

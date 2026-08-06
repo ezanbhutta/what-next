@@ -422,6 +422,29 @@ export function stamp(kind, text) {
  * Beside the title it costs nothing until somebody hovers it, and it lands in
  * the one place a reader is already looking when they wonder what a panel is.
  */
+/**
+ * A stat card in the shape the impressions board and CSR Pulse use: a small
+ * uppercase label, one large tabular figure, and at most one line under it.
+ *
+ * `note` puts the explanation behind a hover icon on the label rather than in
+ * a paragraph below, so a row of these stays a row of figures.
+ */
+export function statCard(label, value, { sub = null, tone = '', badge = null, note = null } = {}) {
+  return html`<div class="statcard">
+      <p class="k">
+        <span>${label}${note ? info(note) : ''}</span>
+        ${badge ? html`<span class="badge badge--${safe(tone || 'info')}" aria-hidden="true">${badge}</span>` : ''}
+      </p>
+      <strong class="v ${safe(tone)}">${value}</strong>
+      ${sub ? html`<p class="n">${sub}</p>` : ''}
+    </div>`;
+}
+
+/** A row of stat cards. */
+export function statGrid(cards) {
+  return html`<div class="statgrid">${join(cards)}</div>`;
+}
+
 export function panelHead(title, stampKind, stampText, note = null) {
   const variant = stampKind === 'sample' ? 'sample' : stampKind === 'missing' ? 'missing' : 'live';
   return html`<div class="panel-head panel-head--${safe(variant)}">
