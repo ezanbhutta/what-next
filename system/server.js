@@ -135,6 +135,10 @@ import {
   SECTION_BY_KEY,
 } from './views/layout.js';
 
+// The stores the team actually works in. Nothing here writes; see the header
+// of lib/external.js for which system owns which number.
+import { ceoWindow, PROFILE as EXTERNAL_PROFILE } from './lib/external.js';
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -1084,63 +1088,55 @@ export const loaders = {
   // Pakistan calendar days itself, see its header for why that cannot be done
   // in SQL, so this loader's only job is to hand it the right rows and the
   // window they belong to.
+  //
+  // IT READS THE SHIFT LOGGER NOW, NOT THIS HUB'S OWN TABLES.
+  //
+  // This used to be four SELECTs against `shift_report` / `activity` /
+  // `reminder`. Those tables are still there and still correct, and they are
+  // also never going to have another row written to them: the hub stopped
+  // being a thing CSRs log into, and the team files its shifts in the CSR
+  // Shift Logger. Left pointing at MySQL this page would have kept rendering
+  // perfectly — panels, headings, filters, an empty state per section — while
+  // reporting that eighty-nine shifts of work did not happen.
+  //
+  // That is the failure this codebase keeps having to design against: not an
+  // error, a calm and plausible zero. So the source moved and the provenance
+  // stamp in the view moved with it, because a figure whose origin is wrong on
+  // screen is worse than one that is missing.
+  //
+  // The profile filter is gone with it. The logger holds ten profiles and this
+  // hub is about one, so the scope is not the owner's to choose here; it is
+  // fixed at X Studioz in `lib/external.js` and `profiles: []` collapses the
+  // chip row rather than offering nine filters that would all come back empty.
   async reportsCeo(ctx, q, req) {
     const now = new Date();
     const today = pktToday(now);
     const date = isoDateParam(req?.query?.date) || today;
     const days = REPORT_WINDOWS.has(String(req?.query?.days)) ? Number(req.query.days) : 1;
     const from = shiftIsoDay(date, -(days - 1));
-    const profile = str(req?.query?.profile, 80);
 
-    // PKT is UTC+5 all year, no daylight saving, so a day's bounds are an
-    // exact offset and never need a time zone table on the database server.
-    const startUtc = new Date(`${from}T00:00:00+05:00`);
-    const endUtc = new Date(`${shiftIsoDay(date, 1)}T00:00:00+05:00`);
+    // Which stages carry a standing caution is a property of the rule, and the
+    // logger has no such column. Derived here from the one rule table rather
+    // than restated in the adapter, so a rule that gains or loses its caution
+    // changes in one place.
+    const alertKeys = new Set(
+      Object.entries(REMINDER_RULES)
+        .filter(([, def]) => def && def.alert)
+        .map(([key]) => key)
+    );
 
-    const scope = profile ? ' AND profile = ?' : '';
-    const scoped = (params) => (profile ? [...params, profile] : params);
-
-    const [shifts, activities, reminders, standing] = await Promise.all([
-      q(
-        `SELECT ${REPORT_COLS} FROM shift_report
-          WHERE opened_at >= ? AND opened_at < ?${scope}
-          ORDER BY opened_at ASC`,
-        scoped([startUtc, endUtc])
-      ),
-      q(
-        `SELECT a.id, a.report_id, a.kind AS type, a.client, a.order_ref AS project,
-                a.at AS created_at, a.author
-           FROM activity a
-           JOIN shift_report r ON r.id = a.report_id
-          WHERE a.at >= ? AND a.at < ?${profile ? ' AND r.profile = ?' : ''}
-          ORDER BY a.at ASC`,
-        scoped([startUtc, endUtc])
-      ),
-      // Counted against the window they were BOOKED in, so a shift's row
-      // answers "what did this shift set in motion" rather than "what happened
-      // to fall due while they were on".
-      q(
-        `SELECT ${REMINDER_COLS} FROM reminder
-          WHERE created_at >= ? AND created_at < ?${scope}
-          ORDER BY created_at ASC`,
-        scoped([startUtc, endUtc])
-      ),
-      // Deliberately NOT scoped to the window. What is owed right now is owed
-      // regardless of which date filter is on screen.
-      q(
-        `SELECT ${REMINDER_COLS} FROM reminder
-          WHERE state <> 'resolved' AND due_at <= UTC_TIMESTAMP()${scope}
-          ORDER BY due_at ASC LIMIT 200`,
-        scoped([])
-      ),
-    ]);
+    const { shifts, activities, reminders, standing } = await ceoWindow({
+      from,
+      to: date,
+      alertKeys,
+    });
 
     return {
       date,
       from,
       days,
-      profile,
-      profiles: profilesFromEngine(),
+      profile: EXTERNAL_PROFILE,
+      profiles: [],
       now,
       shifts,
       activities,

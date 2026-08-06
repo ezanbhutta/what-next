@@ -82,6 +82,18 @@ import {
 // 1. CONSTANTS
 // ============================================================================
 
+/**
+ * Where every figure on this page comes from, printed in every panel head.
+ *
+ * It used to say "Typed here", and that was true while the hub was the thing
+ * CSRs logged into. It is not any more: the team files its shifts in the CSR
+ * Shift Logger and this page reads that store over its API. Leaving the old
+ * stamp up would have been this page quietly claiming authorship of somebody
+ * else's data, and the first argument about a disputed number would have been
+ * spent working out which system it came from.
+ */
+const SOURCE = 'CSR Shift Logger';
+
 /** The shifts, in the order a day runs. Must match views/reports.js SHIFTS and
  *  the ENUM in db/schema.sql, a name that is in one and not the others makes
  *  a shift's whole output vanish from this page without erroring. */
@@ -529,7 +541,7 @@ export function render(ctx) {
       ${panelHead(
         html`Day by day, ${num(dayKeys.length)} ${dayKeys.length === 1 ? 'day' : 'days'}`,
         'typed',
-        'Typed here'
+        SOURCE
       )}
       <div class="tablewrap">
         <table class="table table--wide">
@@ -588,7 +600,7 @@ export function render(ctx) {
     });
 
   const coveragePanel = html`<section class="panel">
-      ${panelHead(html`Who covered what, ${num(coverageRows.length)}`, 'typed', 'Typed here')}
+      ${panelHead(html`Who covered what, ${num(coverageRows.length)}`, 'typed', SOURCE)}
       ${coverageRows.length
         ? html`<div class="tablewrap tablewrap--capped">
               <table class="table table--wide">
@@ -674,7 +686,7 @@ export function render(ctx) {
   const wrapRows = coverageRows.filter(({ s }) => s.status !== 'open');
 
   const wrapPanel = html`<section class="panel">
-      ${panelHead(html`Wrap-up filed, ${num(wrapRows.length)}`, 'typed', 'Typed here')}
+      ${panelHead(html`Wrap-up filed, ${num(wrapRows.length)}`, 'typed', SOURCE)}
       ${!wrapRows.length
         ? empty(`No shift has filed a wrap-up on ${scope} in this window.`)
         : html`<div class="tablewrap tablewrap--capped">
@@ -757,7 +769,7 @@ export function render(ctx) {
       ${panelHead(
         html`What was logged, ${actOk ? num(totalActs) : missing()}`,
         actOk ? 'typed' : 'missing',
-        actOk ? 'Typed here' : 'Entries unreadable'
+        actOk ? SOURCE : 'Entries unreadable'
       )}
       ${!actOk
         ? html`<p class="note note--neg">
@@ -872,7 +884,7 @@ export function render(ctx) {
   const ratable = personRows.filter((p) => p.booked >= MIN_SAMPLE).length;
 
   const peoplePanel = html`<section class="panel">
-      ${panelHead(html`Per person, ${num(personRows.length)}`, 'typed', 'Typed here')}
+      ${panelHead(html`Per person, ${num(personRows.length)}`, 'typed', SOURCE)}
       ${personRows.length
         ? html`<div class="tablewrap">
               <table class="table table--wide">
@@ -970,7 +982,7 @@ export function render(ctx) {
       ${panelHead(
         html`Follow-ups booked, ${remOk ? num(booked) : missing()}`,
         remOk ? 'typed' : 'missing',
-        remOk ? 'Typed here' : 'Ledger unreadable'
+        remOk ? SOURCE : 'Ledger unreadable'
       )}
       ${!remOk
         ? html`<p class="note note--neg">
@@ -1040,7 +1052,7 @@ export function render(ctx) {
       ${panelHead(
         html`Owed right now, across all time, ${standingOk ? num(standing.length) : missing()}`,
         standingOk ? 'typed' : 'missing',
-        standingOk ? `Typed here · ${scope}` : 'Queue unreadable'
+        standingOk ? `${SOURCE} · ${scope}` : 'Queue unreadable'
       )}
       ${!standingOk
         ? html`<p class="note note--neg">
@@ -1134,11 +1146,11 @@ export function render(ctx) {
         <a class="btn btn--ghost" href="/reports">Open the shift page</a>
       </div>
       <div class="provenance-bar">
-        <span>Every figure on this page is typed by the team, in <code class="mono">shift_report</code>,
-          <code class="mono">activity</code> and <code class="mono">reminder</code>. Nothing here is
-          recomputed from the engine and nothing here is written back to any sheet.</span>
-        <span>Days are Pakistan calendar days, computed in this view rather than in SQL so the Night shift
-          is never filed under the previous date.</span>
+        <span>Every figure on this page is typed by the team in the ${SOURCE}, and read from it here.
+          Nothing is recomputed, nothing is written back, and a shift that has not been filed there
+          does not appear.</span>
+        <span>Days are Pakistan calendar days, computed in this view rather than by the store so the
+          Night shift is never filed under the previous date.</span>
         <span>Rates follow the house rule: below ${String(MIN_SAMPLE)}, or wider than 15 points, they are an
           interval on a hatched track and never a bar.</span>
       </div>`,

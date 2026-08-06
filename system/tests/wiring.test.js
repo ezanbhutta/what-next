@@ -546,3 +546,155 @@ test('every view module imports and exports render()', async () => {
     );
   }
 });
+
+// ============================================================================
+// THE SHIFT LOGGER SEAM
+// ============================================================================
+//
+// `/reports/ceo` stopped reading this hub's MySQL and started reading the CSR
+// Shift Logger's Supabase, because that is where the team actually files. The
+// adapter that makes one look like the other is `lib/external.js`, and every
+// way it can be wrong renders as a normal-looking page:
+//
+//   a stage it cannot name          a reminder with no title and no buttons
+//   a checklist label it cannot map every shift that ticked it reads "not done"
+//   a failed read returned as []    eighty-nine shifts reported as none
+//
+// None of those throw. So they are pinned here instead.
+
+test('the logger vocabulary maps onto the engine rule keys, both ways', async () => {
+  const { RULE_KEY_TO_VIEW } = await import('../server.js');
+  const { ACTION_TYPE_TO_RULE_KEY } = await import('../lib/external.js');
+
+  // Every stage the hub knows must be reachable from what the logger stores.
+  const missingFromAdapter = Object.entries(RULE_KEY_TO_VIEW)
+    .filter(([ruleKey, actionType]) => ACTION_TYPE_TO_RULE_KEY[actionType] !== ruleKey)
+    .map(([ruleKey, actionType]) => `${actionType} should map back to ${ruleKey}`);
+  assert.deepEqual(
+    missingFromAdapter,
+    [],
+    'ACTION_TYPE_TO_RULE_KEY is not the inverse of RULE_KEY_TO_VIEW: ' +
+      `${missingFromAdapter.join('; ')}. A logger reminder of that stage renders on ` +
+      '/reports/ceo with its raw key for a name and no rule behind it.'
+  );
+
+  // And nothing in the adapter may point at a stage the engine has dropped.
+  const dangling = Object.entries(ACTION_TYPE_TO_RULE_KEY)
+    .filter(([, ruleKey]) => !Object.prototype.hasOwnProperty.call(RULE_KEY_TO_VIEW, ruleKey))
+    .map(([actionType, ruleKey]) => `${actionType} -> ${ruleKey}`);
+  assert.deepEqual(
+    dangling,
+    [],
+    `the adapter maps onto rule keys the engine no longer defines: ${dangling.join(', ')}`
+  );
+});
+
+test('every wrap-up box the owner page prints can be found in a logger checklist', async () => {
+  const { CHECKLIST_LABEL_TO_ID, checklistInHubVocabulary } = await import('../lib/external.js');
+  const { CHECKLIST } = await import('../views/reports.js');
+
+  const mapped = new Set(Object.values(CHECKLIST_LABEL_TO_ID));
+  const unreachable = CHECKLIST.map((i) => i.id).filter((id) => !mapped.has(id));
+  assert.deepEqual(
+    unreachable,
+    [],
+    `the wrap-up table prints ${unreachable.join(', ')} but no logger label maps to it, so every ` +
+      'shift that ticked that box renders as "not done" — a wrong figure, not a missing one'
+  );
+
+  // The logger keys by label and spells its own capitals; matching is on the
+  // letters alone or "Briefs Created" silently stops being "Briefs created".
+  const got = checklistInHubVocabulary({
+    __shifts: ['Morning'],
+    'Briefs Created': true,
+    'Briefs Created — count': '5',
+    'CRM updated': true,
+    'ClickUp cleared': false,
+  });
+  assert.equal(got.briefs_created, 5, 'a typed count must beat the bare tick');
+  assert.equal(got.crm_updated, true, 'a tick with no count stays true, which prints MISSING');
+  assert.equal(got.clickup_cleared, false, 'an unticked box is the one honest zero on that panel');
+  assert.ok(!('__shifts' in got), '__shifts is the handover audience, not a checklist item');
+});
+
+test('a shift report keeps its handover note and its audience through the adapter', async () => {
+  const { shiftInHubVocabulary } = await import('../lib/external.js');
+
+  const row = shiftInHubVocabulary({
+    id: 'abc',
+    csr_name: 'Amrah',
+    shift: 'Morning',
+    profile: 'X Studioz',
+    start_at: '2026-08-05T04:10:00+00:00',
+    finish_at: '2026-08-05T12:00:00+00:00',
+    status: 'submitted',
+    note_for_next: 'Buyer waiting on revised mark.',
+    checklist: { __shifts: ['Evening', 'Night'], 'CRM updated': true },
+  });
+
+  assert.equal(row.started_at, '2026-08-05T04:10:00+00:00');
+  assert.equal(row.closed_at, '2026-08-05T12:00:00+00:00');
+  assert.equal(row.handoff_note, 'Buyer waiting on revised mark.');
+  assert.deepEqual(row.note_shifts, ['Evening', 'Night']);
+  assert.equal(row.checklist.crm_updated, true);
+});
+
+test('an unmapped logger stage keeps its name instead of vanishing', async () => {
+  const { reminderInHubVocabulary } = await import('../lib/external.js');
+
+  // The live store holds four of these: followup_designer, followup_client,
+  // order_assigned, extension. They are real follow-ups somebody is waiting
+  // on, so the honest rendering is a card that says it cannot be interpreted,
+  // never a card that is not there.
+  const row = reminderInHubVocabulary({
+    id: 'r1',
+    action_type: 'followup_designer',
+    profile: 'X Studioz',
+    client: 'someBuyer',
+    status: 'pending',
+    resolution: '',
+    due_at: '2026-08-06T09:00:00+00:00',
+  });
+  assert.equal(row.rule_key, 'followup_designer');
+  assert.equal(row.state, 'pending');
+  assert.equal(row.alert, false);
+});
+
+test('a standing caution survives the trip from the logger', async () => {
+  const { reminderInHubVocabulary } = await import('../lib/external.js');
+  const { RULES } = await import('../lib/reminders.js');
+
+  // `alert` is not a column in the logger. It is a property of the rule, so it
+  // is derived on the way through; a reminder that lost it would drop out of
+  // the standing-caution count and off the top of the page.
+  const alertKeys = new Set(
+    Object.entries(RULES).filter(([, def]) => def && def.alert).map(([k]) => k)
+  );
+  assert.ok(alertKeys.size >= 2, 'expected the frustrated and disputed stages to carry a caution');
+
+  const row = reminderInHubVocabulary(
+    { id: 'r2', action_type: 'disputed', profile: 'X Studioz', status: 'pending' },
+    alertKeys
+  );
+  assert.equal(row.rule_key, 'disputed_alert');
+  assert.equal(row.alert, true);
+});
+
+test('the owner page never says its numbers were typed here any more', () => {
+  const src = viewSource('reports-ceo');
+  // The stamp, not the prose. The constant's own comment explains what the
+  // page used to claim, and a scan that could not tell those apart would make
+  // the explanation unwritable.
+  const stamps = src.match(/'Typed here'|`Typed here[^`]*`/g) || [];
+  assert.deepEqual(
+    stamps,
+    [],
+    'views/reports-ceo.js still stamps its panels "Typed here". Nothing on that page is typed ' +
+      'here now. It is read from the CSR Shift Logger, and a panel claiming authorship of ' +
+      "somebody else's data is how an argument about a number starts in the wrong place."
+  );
+  assert.ok(
+    src.includes("const SOURCE = 'CSR Shift Logger'"),
+    'the provenance stamp must name the store the figures come from'
+  );
+});
