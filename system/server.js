@@ -767,6 +767,20 @@ export const loaders = {
     };
   },
 
+  // ---- Pulse: the delivered work, and what buyers said about it -----------
+  //
+  // No database at all. This is a cut of the order book the engine already
+  // ingests, so the section keeps working through an outage that takes out
+  // everything typed, and it cannot disagree with /orders or /money about a
+  // figure because all three read the same file.
+  async pulse(ctx, q, req) {
+    return {
+      window: PULSE_WINDOWS.has(String(req?.query?.window)) ? String(req.query.window) : '30',
+      today: pktToday(new Date()),
+      book: engineOrders(),
+    };
+  },
+
   async orders(ctx, q) {
     return {
       flags: await q(
@@ -1010,6 +1024,9 @@ const REPORT_WINDOWS = new Set(['1', '7', '30']);
 
 /** Must match WINDOWS in views/entry.js. */
 const REACH_WINDOWS = new Set(['7', '30', '90']);
+
+/** Must match WINDOWS in views/pulse.js. */
+const PULSE_WINDOWS = new Set(['7', '30', '90', 'june']);
 
 /** Map a q() result's rows without losing the ok/rows:null distinction. A
  *  `.map()` straight onto `rows` would throw on an outage, and a `|| []`

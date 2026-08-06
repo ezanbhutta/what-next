@@ -105,11 +105,12 @@ registered. Run it before believing a section works because it loaded.
 | `/entry` Reach | What Fiverr showed, read from the impressions board |
 | `/inquiries` | Who asked, who converted, which CSR, which shift |
 | `/orders` | What is live, what stage, what is late |
+| `/pulse` | What was delivered, by whom, and what the buyer said |
 | `/clients` | One record per buyer — history, value, notes |
 | `/messages` | What this buyer was already told, and what to say next |
 | `/team` | Weekly 1–5 scoring, self vs manager, promises kept |
 | `/money` | Revenue, money sitting still, upsell pipeline |
-| `/reports` | My shift: what is due on this profile, and logging what happens |
+| `/reports` | What the shifts produced and what they left owed, from the CSR Shift Logger. Manager and owner only |
 | `/handbook` | The six owner-written documents, searchable across all of them |
 
 ### Messages, and the order it is in
