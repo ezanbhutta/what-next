@@ -467,3 +467,67 @@ test('the owner page never says its numbers were typed here any more', () => {
     'the provenance stamp must name the store the figures come from'
   );
 });
+
+/**
+ * A Safe value in a plain string prints its own tags to the reader.
+ *
+ * `dateShort`, `num`, `money` and friends return Safe markup. That is right
+ * inside an `html` template and wrong in an ordinary backtick string: the
+ * string stringifies to `<span class="nowrap">28 Jul</span>`, and when it later
+ * reaches an `html` template the chokepoint escapes it, so the TAGS appear on
+ * screen as text. It shipped in three page titles, a browser tab title and four
+ * headings. Nothing failed; every piece behaved exactly as designed.
+ *
+ * THIS IS CHECKED ON RENDERED OUTPUT, NOT ON THE SOURCE. The first version of
+ * this test scanned for `${dateShort(` inside a backtick not preceded by
+ * `html`, and a regex cannot do that: it cannot tell an opening backtick from a
+ * closing one, so it read the gap between two nested templates as a plain
+ * string and reported eight false positives in views/clients.js on its first
+ * run. What the reader sees is the only thing worth asserting on.
+ *
+ * `title` and `kicker` are the two fields that are contractually PLAIN TEXT:
+ * the shell puts title in <title> and in an <h2>, and neither may contain
+ * markup, escaped or otherwise.
+ */
+test('no view puts markup in its plain-text title or kicker', async () => {
+  const cases = [
+    ['entry', (await import('../views/entry.js')).render, {
+      window: '30',
+      asOf: { ok: true, date: '2026-07-28', daysOld: 9, enteredBy: 'x', notice: null },
+      days: { ok: true, rows: [{
+        entry_date: '2026-07-28', gigs: [{ gig: 'XStudioz', impressions: 10 }],
+        impressions: 10, clicks: 1, organic_orders: 1, organic_value: 10,
+        directed_orders: 0, directed_value: 0, total_orders: 1, orders_completed: 1,
+        completed_value: 10, inquiries_received: 1, cancellations: 0, cancelled_value: 0,
+        orders_in_queue: 1, total_reviews: 5, success_score: 8, profile_rating: 4.8,
+      }], notice: null },
+      gigs: { ok: true, rows: [{ id: 'x', name: 'XStudioz', account: 'XStudioz', active: true, main: true }], notice: null },
+    }],
+    ['pulse', (await import('../views/pulse.js')).render, {
+      window: '30', today: '2026-08-06',
+      book: [{ client: 'b', order_date: '2026-07-10', delivered_date: '2026-07-15',
+               status: 'completed', amount: 100, rating: 5, csr: 'Iqra', rating_tracked: true,
+               order_type: 'organic', project: 'p', logo_designer: 'A', branding_designer: null }],
+    }],
+    ['reports-ceo', (await import('../views/reports-ceo.js')).render, {
+      date: '2026-08-06', from: '2026-07-08', days: 30, profile: 'X Studioz', profiles: [],
+      now: new Date('2026-08-06T12:00:00Z'),
+      shifts: { ok: true, rows: [], notice: null },
+      activities: { ok: true, rows: [], notice: null },
+      reminders: { ok: true, rows: [], notice: null },
+      standing: { ok: true, rows: [], notice: null },
+    }],
+  ];
+
+  const problems = [];
+  for (const [name, render, data] of cases) {
+    const out = render({ data, user: { name: 'Ezan', role: 'owner' }, query: {} });
+    for (const field of ['title', 'kicker']) {
+      const v = String(out[field] ?? '');
+      if (/<[a-z/][^>]*>/i.test(v) || /&lt;|&gt;|&quot;/.test(v)) {
+        problems.push(`views/${name}.js ${field} carries markup: ${JSON.stringify(v.slice(0, 120))}`);
+      }
+    }
+  }
+  assert.deepEqual(problems, [], problems.join('\n'));
+});

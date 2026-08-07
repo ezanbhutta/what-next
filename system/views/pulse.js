@@ -30,14 +30,24 @@
 //      enough and her interval is still about twenty-five points wide, which
 //      is a different sentence and the same conclusion: show the range.
 //
-//   2. A MISSING RATING IS A REAL ANSWER, NOT A GAP IN THE RECORDS.
-//      Every completed row in this book carries `rating_tracked`, which is the
-//      ingest saying the source had a rating column to read. So a blank rating
-//      on a tracked row means the buyer left no public review, which is a fact
-//      about the order. That is what makes a capture rate computable at all,
-//      and it is why an UNtracked row is excluded from the denominator rather
-//      than counted as a miss: those two look identical on screen and only one
-//      of them is somebody's fault.
+//   2. WHAT A BLANK RATING ACTUALLY MEANS, WHICH IS LESS THAN IT LOOKS.
+//      `rating_tracked` is the ingest saying the source TAB HAD a rating column
+//      to read. An untracked row is excluded from the denominator rather than
+//      counted as a miss, which is the right mechanism and is the same one
+//      `metrics.reviewable` uses.
+//
+//      But be honest about what it buys on THIS data: every one of the 1,073
+//      rows is tracked, so the exclusion currently removes nothing and the
+//      denominator is simply "every delivered order". The card that counts
+//      untracked rows reads 0 and will keep reading 0 until a tab without the
+//      column appears.
+//
+//      Which leaves the caveat that actually matters and is easy to miss: a
+//      blank rating means NOBODY RECORDED ONE. That is usually the buyer
+//      leaving no review, and it is sometimes a CSR not logging one that
+//      exists. The sheet cannot tell those apart, so this is a capture rate for
+//      what reached the book, not a measurement of buyer behaviour, and the
+//      panel says so rather than letting the headline imply otherwise.
 //
 // HOUSE RULE 6 IS LOAD-BEARING ON THIS PAGE, AND IT IS THE REASON THERE ARE NO
 // ACTIONS ON IT.
@@ -69,6 +79,7 @@ import {
   info,
   empty,
   dateShort,
+  dateTextOnly,
   statCard,
   statGrid,
   MIN_SAMPLE,
@@ -165,7 +176,7 @@ export function render(ctx) {
       : null);
 
   const spanLabel = from
-    ? `${dateShort(from)} to ${today ? dateShort(today, { year: true }) : 'today'}`
+    ? `${dateTextOnly(from)} to ${today ? dateTextOnly(today, { year: true }) : 'today'}`
     : 'all time';
 
   // COMPLETIONS ARE DATED BY DELIVERY, ORDERS TAKEN BY ORDER DATE.
@@ -279,9 +290,16 @@ export function render(ctx) {
         ? empty('No delivered order in this window has a rating column behind it.')
         : html`${statGrid([
               statCard('Review capture', capture.ok ? capture.html : missing(), {
+                // TWO REASONS A RANGE APPEARS AND THEY ARE NOT THE SAME SENTENCE.
+                // Under the sample threshold there is not enough to state a rate
+                // at all. Above it a rate can still be too uncertain to pin to
+                // one number. Printing "too few" at n=102 blames the wrong thing
+                // and invites somebody to dismiss a figure that is real.
                 sub: capture.ok
                   ? capture.small
-                    ? `Wilson 95% · n=${capture.n} delivered · too few to state as one number`
+                    ? capture.n < MIN_SAMPLE
+                      ? `Wilson 95% · only ${capture.n} delivered, too few to state as one number`
+                      : `Wilson 95% · n=${capture.n} delivered`
                     : `n=${capture.n} delivered`
                   : 'Needs delivered orders with a rating column',
               }),
@@ -340,6 +358,21 @@ export function render(ctx) {
                   </table>
                 </div>`
               : ''}`}
+      ${why(
+        'What "review capture" does and does not measure',
+        html`<p>
+            The denominator is every delivered order whose source tab carried a rating column. On current
+            data that is all of them, so it is simply every delivered order, and the
+            <em>No rating column</em> card above reads 0 for that reason rather than because nothing was
+            checked.
+          </p>
+          <p>
+            A blank rating means nobody recorded one. That is usually a buyer who left no review and
+            sometimes a review that was never logged, and the order sheet cannot tell those two apart. So
+            this is a measure of what reached the book. Treat a fall in it as a question to ask, not as
+            proof that buyers went quiet.
+          </p>`
+      )}
       ${why(
         'What this page will not offer to do about a low rating',
         html`<p>

@@ -38,6 +38,7 @@ import {
   money,
   num,
   dateShort,
+  dateTextOnly,
   glyph,
   pill,
   panelHead,
@@ -365,7 +366,9 @@ export function render(ctx) {
   const spanFrom = latestIso ? shiftIso(latestIso, -(windowDef.days - 1)) : null;
   const inWindow = spanFrom ? days.filter((r) => String(r.entry_date) >= spanFrom) : [];
   const spanLabel =
-    spanFrom && latestIso ? `${dateShort(spanFrom)} to ${dateShort(latestIso, { year: true })}` : 'no days';
+    spanFrom && latestIso
+      ? `${dateTextOnly(spanFrom)} to ${dateTextOnly(latestIso, { year: true })}`
+      : 'no days';
 
   const windowBar = html`<div class="toolbar">
       <div class="segment">
@@ -566,8 +569,8 @@ export function render(ctx) {
   const title = !latest
     ? 'The board holds nothing for this account'
     : stale
-      ? `Reach stops ${asOf.daysOld} days ago, on ${dateShort(asOf.date, { year: true })}`
-      : `${latestDerived.ordersTaken === null ? 'Reach' : `${latestDerived.ordersTaken} orders`} on ${dateShort(latestIso, { year: true })}`;
+      ? `Reach stops ${asOf.daysOld} days ago, on ${dateTextOnly(asOf.date, { year: true })}`
+      : `${latestDerived.ordersTaken === null ? 'Reach' : `${latestDerived.ordersTaken} orders`} on ${dateTextOnly(latestIso, { year: true })}`;
 
   return {
     title,

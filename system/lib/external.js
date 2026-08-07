@@ -335,8 +335,21 @@ export function actionInHubVocabulary(row) {
  *  `alert` is derived, not stored: the logger has no such column, and the two
  *  stages that carry a standing caution are a property of the rule rather than
  *  of the row. `alertKeys` is passed in by the caller so this module does not
- *  import the rule table and the rule table stays the one definition of it. */
-export function reminderInHubVocabulary(row, alertKeys = EMPTY_SET) {
+ *  import the rule table and the rule table stays the one definition of it.
+ *
+ *  `reportOf` maps the reminder's action back to the shift that logged it. THIS
+ *  IS NOT OPTIONAL DECORATION. The owner page buckets bookings by shift with
+ *  `remByReport.get(r.report_id)`, so a reminder carrying null lands in a
+ *  bucket no shift ever asks for: every per-day, per-shift and per-person
+ *  Booked / Cleared / Open-past-due cell renders 0, on a page whose totals
+ *  panel is meanwhile correct. It shipped that way and nothing failed.
+ *
+ *  The logger has no report_id on a reminder; it has `action_id`, and the
+ *  action has the report. All 150 stored reminders for this profile carry one,
+ *  so the hop always resolves in practice. A reminder whose action is outside
+ *  the fetched window resolves to null, which is the honest answer: that
+ *  booking belongs to a shift this page is not showing. */
+export function reminderInHubVocabulary(row, alertKeys = EMPTY_SET, reportOf = null) {
   const type = String(row?.action_type ?? '');
   // An unmapped type is left as-is on purpose. The view's rule lookup misses,
   // prints the raw name and offers no buttons, which is the honest rendering
@@ -345,7 +358,7 @@ export function reminderInHubVocabulary(row, alertKeys = EMPTY_SET) {
   const ruleKey = ACTION_TYPE_TO_RULE_KEY[type] || type;
   return {
     id: row.id,
-    report_id: null,
+    report_id: reportOf ? reportOf.get(row.action_id) ?? null : null,
     activity_id: row.action_id,
     rule_key: ruleKey,
     rule: type,
@@ -419,6 +432,10 @@ export async function ceoWindow({ from, to, alertKeys = EMPTY_SET } = {}) {
   // reports read failed there is nothing to ask with — which is an unreadable
   // activity list, not an empty one.
   let activities;
+  // action id -> the report that logged it. Built from the same fetch that
+  // supplies the activity list, and then handed to the reminder adapter so a
+  // booking can be attributed to the shift that made it.
+  const reportOf = new Map();
   if (!reports.ok) {
     activities = fail(reports.notice);
   } else if (!reports.rows.length) {
@@ -431,6 +448,7 @@ export async function ceoWindow({ from, to, alertKeys = EMPTY_SET } = {}) {
         `&report_id=in.${idList(reports.rows.map((r) => r.id))}` +
         `&order=created_at.asc&limit=4000`
     );
+    if (got.ok) for (const a of got.rows) reportOf.set(a.id, a.report_id);
     activities = got.ok
       ? okRows(
           got.rows.map((a) => ({
@@ -441,8 +459,22 @@ export async function ceoWindow({ from, to, alertKeys = EMPTY_SET } = {}) {
       : got;
   }
 
+  // A reminder booked in the window can hang off an action whose report is in
+  // the window but whose action row was not returned above, so the ids the
+  // bookings actually reference are resolved directly rather than assumed.
+  if (booked.ok && booked.rows.length) {
+    const wanted = [...new Set(booked.rows.map((r) => r.action_id).filter((id) => id && !reportOf.has(id)))];
+    if (wanted.length) {
+      const more = await tryselect(
+        'reports',
+        `actions?select=id,report_id&id=in.${idList(wanted)}&limit=2000`
+      );
+      if (more.ok) for (const a of more.rows) reportOf.set(a.id, a.report_id);
+    }
+  }
+
   const inVocab = (res) =>
-    res.ok ? okRows(res.rows.map((r) => reminderInHubVocabulary(r, alertKeys))) : res;
+    res.ok ? okRows(res.rows.map((r) => reminderInHubVocabulary(r, alertKeys, reportOf))) : res;
 
   return {
     shifts,

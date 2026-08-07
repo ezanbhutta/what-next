@@ -214,6 +214,28 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 /** 'YYYY-MM-DD' (or a Date) → '04 Aug'. Parsed by hand: a DATE turned into a
  *  Date object is midnight in the server's zone and prints a day early west
  *  of it. */
+/**
+ * The same date, as PLAIN TEXT, for a plain string.
+ *
+ * `dateShort` returns Safe markup, which is right inside an `html` template and
+ * wrong everywhere else. Interpolated into an ordinary backtick string it
+ * stringifies to `<span class="nowrap">28 Jul</span>`, and when that string is
+ * later dropped into an `html` template the chokepoint escapes it, so the
+ * READER sees the tags. It shipped in three page titles, a browser tab title
+ * and four headings before anybody noticed, because every individual piece was
+ * behaving exactly as designed.
+ *
+ * Rule of thumb: `html` template -> dateShort. Anything that is a string ->
+ * dateText.
+ */
+export function dateTextOnly(value, { year = false } = {}) {
+  if (!value || isMissing(value)) return 'MISSING';
+  const iso = value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return 'MISSING';
+  return `${m[3]} ${MONTHS[Number(m[2]) - 1]}${year ? ` ${m[1]}` : ''}`;
+}
+
 export function dateShort(value, { year = false } = {}) {
   if (!value || isMissing(value)) return missing();
   const iso = value instanceof Date ? value.toISOString().slice(0, 10) : String(value);

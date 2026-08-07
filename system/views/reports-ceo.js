@@ -101,6 +101,7 @@ import {
   info,
   empty,
   dateShort,
+  dateTextOnly,
   dateTimeShort,
   MIN_SAMPLE,
 } from './layout.js';
@@ -387,10 +388,14 @@ export function render(ctx) {
   const nowMs = parseAt(d.now) ?? Date.now();
 
   const scope = profile ? `${profile}` : 'every profile';
+  // PLAIN TEXT, because this ends up in `kicker`, which is a string. See
+  // dateTextOnly in layout.js: dateShort returns Safe markup and a Safe in a
+  // backtick string stringifies to its tags, which the chokepoint then escapes
+  // so the reader sees them.
   const spanLabel =
     window === 1
-      ? dateShort(date, { year: true })
-      : `${dateShort(from)} – ${dateShort(date, { year: true })}`;
+      ? dateTextOnly(date, { year: true })
+      : `${dateTextOnly(from)} to ${dateTextOnly(date, { year: true })}`;
 
   // ---- the shift table is the spine: without it nothing else means anything -
   //
