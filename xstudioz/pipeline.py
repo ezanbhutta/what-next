@@ -17,6 +17,7 @@ from typing import Any, Sequence
 import yaml
 
 from . import contracts as C
+from . import feeds as _feeds
 from . import (dosing, forecast, ingest, ledger as L, metrics, recovery,
                report, phase as _phase, roles as _roles, selfcheck, snapshot,
                tasks)
@@ -57,6 +58,9 @@ class RunArtifacts:
     #: self-check, so the question "is this actually today's data" has an
     #: answer on the page rather than in a log nobody kept.
     intake: dict[str, Any] = field(default_factory=dict)
+    #: Every input this system runs on, and whether it is current. See
+    #: xstudioz/feeds.py for why stale and unreachable stay distinct.
+    feeds: list[dict[str, Any]] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +82,7 @@ class RunArtifacts:
             "recovery": self.recovery.as_dict() if self.recovery else None,
             "window": self.window,
             "intake": self.intake,
+            "feeds": self.feeds,
         }
 
 
@@ -334,7 +339,8 @@ def run_daily(
         today=today, bundle=bundle, plan=plan, tasks=task_list,
         predictions=preds, resolved=resolved, ledger=led, check=check,
         config=config, revenue_projection=proj, gap=gap, missing_sources=missing,
-        recovery=recov, intake=intake_note)
+        recovery=recov, intake=intake_note,
+        feeds=_feeds.collect(root, intake_note))
 
     art = RunArtifacts(
         phase=state,
@@ -346,6 +352,7 @@ def run_daily(
         boards=_roles.route(config, task_list), edge=_roles.edge(config),
         recovery=recov,
         intake=intake_note,
+        feeds=_feeds.collect(root, intake_note),
         window={"start": win_start.isoformat() if win_start else None,
                 "label": win.get("label") or "",
                 "orders_in_window": len(w_orders),

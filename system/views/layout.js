@@ -562,6 +562,9 @@ export const SECTIONS = Object.freeze([
   // Last on purpose. This is a weekly job for Ezan with the order sheet open
   // beside him, not something a CSR opens mid-shift, and putting it higher
   // would push the daily work down for everyone who does not own it.
+  { key: 'feeds', href: '/feeds', label: 'Feeds', group: 'People & money',
+    question: 'Is every input still arriving, and which one stopped',
+    icon: '<circle cx="3.5" cy="14.5" r="1.4"/><path d="M2.5 9.5a6 6 0 0 1 6 6"/><path d="M2.5 4.5a11 11 0 0 1 11 11"/>' },
   { key: 'errors', href: '/errors', label: 'Errors', group: 'People & money',
     question: 'Rows in the order sheet that cannot be true',
     icon: '<path d="M9 2.8 16.2 15H1.8z"/><path d="M9 7v3.4M9 12.6v.1"/>' },

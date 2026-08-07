@@ -142,6 +142,7 @@ import {
   reachDays,
   reachAsOf,
   boardGigs,
+  storeHealth,
   PROFILE as EXTERNAL_PROFILE,
 } from './lib/external.js';
 
@@ -773,6 +774,23 @@ export const loaders = {
   // ingests, so the section keeps working through an outage that takes out
   // everything typed, and it cannot disagree with /orders or /money about a
   // figure because all three read the same file.
+  // ---- Feeds: is anything actually still arriving ------------------------
+  //
+  // Two halves joined. The engine writes what it can check into the run JSON;
+  // this probes the two Supabase stores live, because the hub is where their
+  // keys are. `null` on either half means "unknown", which the view renders
+  // differently from "broken" on purpose.
+  async feeds(ctx, q, req) {
+    const run = engineRun();
+    const engineFeeds = isMissing(run) ? null : (pick(run, 'feeds') ?? null);
+    const probed = await storeHealth({ today: pktToday(new Date()) }).catch(() => null);
+    return {
+      runDate: isMissing(run) ? null : (pick(run, 'today') ?? null),
+      engineFeeds: Array.isArray(engineFeeds) ? engineFeeds : null,
+      storeFeeds: probed,
+    };
+  },
+
   async pulse(ctx, q, req) {
     return {
       window: PULSE_WINDOWS.has(String(req?.query?.window)) ? String(req.query.window) : '30',

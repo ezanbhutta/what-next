@@ -2241,17 +2241,59 @@
     ]
   },
   "intake": {
-    "path": "live",
-    "endpoint_configured": true,
+    "path": "disk",
+    "endpoint_configured": false,
     "orders_export": null,
     "inquiries_export": null,
     "gig_capture": "2026-08-06.json",
     "generated_at": "2026-08-07T08:06:07.876000+00:00",
     "generated_by": "apps_script",
-    "age_hours": 0.0,
+    "age_hours": 0.1,
     "tables": 27,
     "warnings": [
       "source \"disputes\" has no fileId configured"
     ]
-  }
+  },
+  "feeds": [
+    {
+      "key": "snapshot_endpoint",
+      "label": "Snapshot credentials",
+      "source": "XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment",
+      "status": "unreachable",
+      "as_of": null,
+      "age_hours": null,
+      "detail": "not set in this shell, so the run cannot fetch live",
+      "fix": "They live in the daily Routine's prompt. Any run started by hand must export them first or it will quietly use whatever snapshot is already on disk."
+    },
+    {
+      "key": "sheets",
+      "label": "Order and inquiry workbooks",
+      "source": "Apps Script snapshot endpoint",
+      "status": "live",
+      "as_of": "2026-08-07T08:06:07.876000+00:00",
+      "age_hours": 0.1,
+      "detail": "read from a snapshot on disk; the live endpoint was not configured",
+      "fix": "Export XSTUDIOZ_SNAPSHOT_URL and XSTUDIOZ_SNAPSHOT_TOKEN before the run. Without them every run silently uses whatever snapshot happens to be on disk."
+    },
+    {
+      "key": "gig",
+      "label": "Fiverr gig page",
+      "source": "browser capture into data/raw/gig/",
+      "status": "live",
+      "as_of": "2026-08-06",
+      "age_hours": 20.249434681388887,
+      "detail": "captured 2026-08-06",
+      "fix": ""
+    },
+    {
+      "key": "tracker",
+      "label": "CSR handoff tracker",
+      "source": "uploaded into data/raw/order_tracker/",
+      "status": "live",
+      "as_of": "2026-07-29",
+      "age_hours": 217.3380292711111,
+      "detail": "2026-07-29-XOrder_Tracker.xlsx",
+      "fix": ""
+    }
+  ]
 }

@@ -42,6 +42,7 @@ def render_markdown(
     missing_sources: Sequence[dict],
     recovery: Any = None,
     intake: dict[str, Any] | None = None,
+    feeds: list[dict[str, Any]] | None = None,
 ) -> str:
     h = bundle.health
     e = bundle.econ
@@ -298,6 +299,29 @@ def render_markdown(
     out.append("Ranked on the Wilson lower bound, not raw rate, so small samples "
                "cannot outrank large ones.")
     out.append("")
+
+    # ---------------- the feeds ----------------
+    #
+    # One table, because the honest answer to "is the system live" used to
+    # require opening six things. `stale` and `unreachable` stay distinct: the
+    # first means somebody stopped filling something in, the second means a
+    # credential or a service, and they send you to different places.
+    if feeds:
+        out.append(_SEP)
+        out.append("## Data feeds")
+        out.append("")
+        icon = {"live": "🟢", "stale": "🟠", "unreachable": "🔴"}
+        out.append("| Feed | State | As of | Age | Where it comes from |")
+        out.append("|---|---|---|---|---|")
+        for f in feeds:
+            age = f"{f['age_hours']:.0f}h" if f.get("age_hours") is not None else "—"
+            out.append(
+                f"| {f['label']} | {icon.get(f['status'], '?')} {f['status']} | "
+                f"{f.get('as_of') or '—'} | {age} | {f['source']} |")
+        out.append("")
+        for f in [x for x in feeds if x["status"] != "live" and x.get("fix")]:
+            out.append(f"- **{f['label']}** — {f['detail']}. {f['fix']}")
+        out.append("")
 
     # ---------------- integrity ----------------
     out.append(_SEP)

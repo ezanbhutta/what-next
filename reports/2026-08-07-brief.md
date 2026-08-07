@@ -317,6 +317,20 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 
 ---
 
+## Data feeds
+
+| Feed | State | As of | Age | Where it comes from |
+|---|---|---|---|---|
+| Snapshot credentials | 🔴 unreachable | — | — | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
+| Order and inquiry workbooks | 🟢 live | 2026-08-07T08:06:07.876000+00:00 | 0h | Apps Script snapshot endpoint |
+| Fiverr gig page | 🟢 live | 2026-08-06 | 20h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟢 live | 2026-07-29 | 217h | uploaded into data/raw/order_tracker/ |
+
+- **Snapshot credentials** — not set in this shell, so the run cannot fetch live. They live in the daily Routine's prompt. Any run started by hand must export them first or it will quietly use whatever snapshot is already on disk.
+
+
+---
+
 ## System integrity
 
 **Self-check score: 96/100** · 0 blocking failure(s)

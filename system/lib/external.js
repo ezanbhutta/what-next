@@ -722,8 +722,67 @@ export async function reachAsOf({ today = null } = {}) {
   };
 }
 
+/**
+ * Is each store answering, and how current is what it holds?
+ *
+ * The engine checks the feeds it owns and records them in the run; these two
+ * belong to the hub because the hub holds their keys. Copying a credential
+ * into a second place so a status page could be tidy is how credentials end up
+ * committed, so each side probes what it already has the right to read and the
+ * page joins them.
+ *
+ * `stale` and `unreachable` stay distinct all the way to the screen. The first
+ * means somebody stopped filling something in; the second means a key or a
+ * service. They send you to different places.
+ */
+export async function storeHealth({ today = null, staleAfterHours = 48 } = {}) {
+  const now = today ? Date.parse(`${today}T00:00:00Z`) : Date.now();
+
+  const probe = async (key, label, table, dateCol, filter, source) => {
+    const got = await tryselect(key, `${table}?select=${dateCol}${filter}&order=${dateCol}.desc&limit=1`);
+    if (!got.ok) {
+      return { key, label, source, status: 'unreachable', as_of: null, age_hours: null,
+               detail: got.notice, fix: `Check the ${label} API key and that the project is awake.` };
+    }
+    const row = got.rows[0];
+    if (!row) {
+      return { key, label, source, status: 'unreachable', as_of: null, age_hours: null,
+               detail: 'answered, but holds no row for this profile',
+               fix: 'Nothing has ever been filed here for this profile.' };
+    }
+    const asOf = String(row[dateCol]).slice(0, 10);
+    const ageH = Math.round(((now - Date.parse(`${asOf}T00:00:00Z`)) / 3600000) * 10) / 10;
+    const stale = ageH > staleAfterHours;
+    return {
+      key, label, source,
+      status: stale ? 'stale' : 'live',
+      as_of: asOf,
+      age_hours: ageH,
+      detail: stale ? `newest entry is ${asOf}` : `current to ${asOf}`,
+      fix: stale ? `Nobody has filed in ${label} since ${asOf}.` : '',
+    };
+  };
+
+  const gigs = await boardGigs();
+  const boardNames = gigs.ok ? gigs.rows.map((g) => g.name) : [];
+
+  const [reports, board] = await Promise.all([
+    probe('reports', 'CSR Shift Logger', 'reports', 'date',
+          `&${orFilter('profile', REPORTS_PROFILES)}`, 'reports-six-coral.vercel.app'),
+    boardNames.length
+      ? probe('impressions', 'Impressions board', 'entries', 'date',
+              `&${orFilter('profile', boardNames)}`, 'impressions-hmi.vercel.app')
+      : Promise.resolve({ key: 'impressions', label: 'Impressions board',
+                          source: 'impressions-hmi.vercel.app', status: 'unreachable',
+                          as_of: null, age_hours: null,
+                          detail: gigs.ok ? 'no gig is listed under this account' : gigs.notice,
+                          fix: 'Check the impressions board API key.' }),
+  ]);
+  return [reports, board];
+}
+
 export default {
-  STORES, PROFILE, PROFILE_ALIASES, ExternalError,
+  STORES, PROFILE, PROFILE_ALIASES, ExternalError, storeHealth,
   select, tryselect, shiftReports, shiftActions, mistakes,
   ACTION_TYPE_TO_RULE_KEY, RULE_KEY_TO_ACTION_TYPE, CHECKLIST_LABEL_TO_ID,
   checklistInHubVocabulary, shiftInHubVocabulary, actionInHubVocabulary,
