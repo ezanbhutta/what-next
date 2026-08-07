@@ -2177,3 +2177,53 @@ def test_a_ragged_row_in_the_middle_is_not_mistaken_for_truncation():
         "| 02 Aug 2026 | bravo | 200 |\n"
     )
     assert_complete(ragged_middle, label="ragged")  # must not raise
+
+
+# ---------------------------------------------------------------------------
+# Publishing to the hub must never blank a file it cannot replace
+# ---------------------------------------------------------------------------
+#
+# The daily Routine copied `data/normalized/{orders,leads,flow,impressions}.jsonl`
+# into the hub with a shell glob. `impressions` was retired from the engine on
+# 2026-08-05 and still normalises to an EMPTY file, so that copy put 0 bytes
+# over the hub's 25,682-byte impressions.jsonl on every successful run. `cp`
+# does not ask whether replacing a file with nothing was the intention.
+
+def test_publishing_refuses_to_replace_a_file_with_an_empty_one(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "publish_hub", Path(__file__).resolve().parent.parent / "scripts" / "publish_hub.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    root = tmp_path
+    (root / "data" / "normalized").mkdir(parents=True)
+    (root / "system" / "data").mkdir(parents=True)
+    (root / "reports").mkdir(parents=True)
+    (root / "reports" / "2026-08-07-run.json").write_text('{"today": "2026-08-07"}')
+
+    (root / "data" / "normalized" / "orders.jsonl").write_text('{"a":1}\n')
+    (root / "data" / "normalized" / "impressions.jsonl").write_text("")   # retired, empty
+    kept = root / "system" / "data" / "impressions.jsonl"
+    kept.write_text("x" * 25_682)                                          # the real file
+
+    code = mod.publish(root, dt.date(2026, 8, 7))
+
+    assert kept.read_text() == "x" * 25_682, (
+        "an empty normalized file replaced a populated one in the hub. That is "
+        "data loss wearing the shape of a successful copy.")
+    assert (root / "system" / "data" / "orders.jsonl").read_text() == '{"a":1}\n', (
+        "a real file was not copied")
+    assert code == 1, "a refusal must be visible in the exit code, not only in a log line"
+
+
+def test_publishing_without_a_run_is_an_error_not_a_no_op(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "publish_hub", Path(__file__).resolve().parent.parent / "scripts" / "publish_hub.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    (tmp_path / "reports").mkdir(parents=True)
+    # No run json. Publishing yesterday's data under today's name is worse than
+    # publishing nothing, because the page then dates stale figures as current.
+    assert mod.publish(tmp_path, dt.date(2026, 8, 7)) == 2

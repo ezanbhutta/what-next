@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -124,6 +125,7 @@ def main() -> int:
         print(f"[warn] on-disk snapshot unreadable: {exc}", file=sys.stderr)
 
     snap = snapshot.pick_freshest(live, disk)
+    src = None
     if snap:
         src = "live endpoint" if snap is live else "disk"
         print(f"[snapshot] using {src}, {snap.age_hours():.1f}h old, "
@@ -184,9 +186,19 @@ def main() -> int:
     gig_p = latest_snapshot(raw / "gig", today, suffixes=(".json",))
     gig = json.loads(gig_p.read_text()) if gig_p else None
 
+    # Which path won, recorded rather than merely printed. `src` is set above
+    # from whichever of the live endpoint and the on-disk file was fresher.
+    intake = {
+        "path": "live" if src == "live endpoint" else "disk" if src == "disk" else "markdown",
+        "endpoint_configured": bool(os.environ.get("XSTUDIOZ_SNAPSHOT_URL")),
+        "orders_export": orders_p.name if orders_p else None,
+        "inquiries_export": inq_p.name if inq_p else None,
+        "gig_capture": gig_p.name if gig_p else None,
+    }
+
     art = pipeline.run_daily(
         root=root, today=today,
-        snap=snap,
+        snap=snap, intake=intake,
         orders_text=orders_p.read_text(encoding="utf-8") if orders_p else "",
         inquiries_text=inq_p.read_text(encoding="utf-8") if inq_p else "",
         tracker_rows=read_tracker(raw / "order_tracker"),

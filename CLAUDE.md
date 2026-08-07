@@ -90,6 +90,21 @@ Exit code `0` means the self-check passed and the brief is trustworthy.
 Exit code `1` means the brief was produced but **failed its own gate** — see below.
 Exit code `2` means no snapshots were found; go back to step 1.
 
+**Then check what it was actually built on.** The run JSON now carries an
+`intake` block — path (`live` / `disk` / `markdown`), the snapshot's
+`generated_at`, and `age_hours` — and the brief prints a warning above the
+headline when that is 26 hours or more, or when the markdown path was used.
+A live intake prints nothing, because a banner that fires every morning is one
+nobody reads on the morning it matters.
+
+This exists because the age was previously only a `[snapshot]` line on stderr.
+A run on a three-day-old snapshot produced a brief that was, on the page,
+indistinguishable from a live one, so a scheduled run could fail every morning
+for a week with nothing to show for it. On 2026-08-07 that gap was worth a
+whole verdict: the 44-hour-old snapshot said organic was in BREACH at index 26,
+and the same engine on the live snapshot said HEALTHY at 79, because twelve
+orders had landed in between.
+
 ### 3. Handle a failed gate
 
 If the self-check blocked, do **not** hand the brief to the user as if it were fine.
@@ -103,6 +118,22 @@ Read the `[BLOCK]` lines on stderr and act:
 - `data_freshness` — the sheets have not been updated. Say so plainly at the top of
   your message; do not present stale numbers as current.
 - `predictions_falsifiable`, `all_tasks_owned` — a generation bug. Fix, do not paper over.
+
+### 3b. Publish the run to the hub
+
+```bash
+python3 scripts/publish_hub.py --date <YYYY-MM-DD>
+```
+
+Never copy `data/normalized/*.jsonl` into `system/data/` by hand. The Routine
+used to, with a shell glob, and `impressions` has been retired since
+2026-08-05: it still normalises, to an empty file, so that glob put 0 bytes
+over the hub's 25,682-byte copy every successful morning. Nothing read it, so
+nothing was wrong. That is luck.
+
+Exit 1 means something was refused and you should look. Exit 2 means the run
+for that date does not exist, so there is nothing to publish and the run is
+what needs fixing.
 
 ### 4. Rebuild the dashboard
 

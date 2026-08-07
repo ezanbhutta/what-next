@@ -1,8 +1,8 @@
 {
-  "orders": 1073,
-  "leads": 329,
-  "flow_rows": 378,
-  "flow_aggregate_rows": 54,
+  "orders": 1085,
+  "leads": 337,
+  "flow_rows": 392,
+  "flow_aggregate_rows": 56,
   "active_orders": 8,
   "impressions": 0,
   "disputes": 0,
@@ -26,16 +26,16 @@
     "impressions": 2
   },
   "retired_rows_skipped": {
-    "impressions": 3383
+    "impressions": 3466
   },
   "retired_tables_total": 2,
-  "retired_rows_total": 3383,
+  "retired_rows_total": 3466,
   "retired_tables": [
     {
       "retired": "impressions",
       "name": "Daily Data Sheet Profiles",
       "source_id": "impressions",
-      "rows": 3221,
+      "rows": 3304,
       "why": "source 'impressions' is retired; that data is typed into the impressions board (impressions-hmi) now"
     },
     {

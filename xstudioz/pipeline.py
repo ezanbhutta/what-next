@@ -44,6 +44,19 @@ class RunArtifacts:
     #: The analysis window in force, so a renderer can state the period every
     #: rate covers instead of leaving it implied.
     window: dict[str, Any] = field(default_factory=dict)
+    #: WHERE THE DATA CAME IN AND HOW OLD IT WAS.
+    #:
+    #: This existed only as a `[snapshot]` line on stderr, which is read by
+    #: whoever is watching the terminal and by nobody afterwards. A run on a
+    #: three-day-old snapshot therefore produced a brief that was, on the page,
+    #: indistinguishable from one built on live data: same layout, same
+    #: confidence, same date in the masthead. That is how a scheduled run can
+    #: fail every morning for a week without anybody noticing.
+    #:
+    #: Recorded here it reaches the run JSON, the brief, the dashboard and the
+    #: self-check, so the question "is this actually today's data" has an
+    #: answer on the page rather than in a log nobody kept.
+    intake: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -64,6 +77,7 @@ class RunArtifacts:
             "gap": self.gap,
             "recovery": self.recovery.as_dict() if self.recovery else None,
             "window": self.window,
+            "intake": self.intake,
         }
 
 
@@ -82,6 +96,7 @@ def run_daily(
     tracker_rows: Sequence[dict[str, Any]] | None = None,
     gig: dict[str, Any] | None = None,
     snap: "snapshot.Snapshot | None" = None,
+    intake: dict[str, Any] | None = None,
     write: bool = True,
 ) -> RunArtifacts:
     config, sources = load_config(root)
@@ -91,12 +106,39 @@ def run_daily(
     # A snapshot is the clean path: real tab names, real headers, no markdown
     # parsing, no connector dependency. The markdown-export path is kept as a
     # fallback so a morning where the endpoint is down still produces a brief.
+    # The caller knows which path it chose; the snapshot knows when it was
+    # generated. Neither alone is the whole answer, so they are merged and the
+    # derived half always wins, because it cannot be stale by accident.
+    intake_note: dict[str, Any] = dict(intake or {})
     parts = []
     if snap is not None:
+        age_h = None
+        try:
+            age_h = round(snap.age_hours(), 1)
+        except Exception:
+            age_h = None
+        intake_note.update({
+            "path": intake_note.get("path") or "snapshot",
+            "generated_at": snap.generated_at.isoformat(),
+            "generated_by": snap.generated_by,
+            "age_hours": age_h,
+            "tables": len(snap.tables),
+            "warnings": list(snap.warnings or []),
+        })
         parts.append(ingest.ingest_snapshot(snap))
         if snap.gig and not gig:
             gig = dict(snap.gig)
     else:
+        # The markdown path cannot tell one profile's tab from another's and the
+        # exporter truncates, so a brief built on it is flagged at the source
+        # rather than left to look like any other morning.
+        intake_note.setdefault("path", "markdown")
+        intake_note.setdefault("age_hours", None)
+        intake_note.setdefault(
+            "caveat",
+            "markdown export: tab names are absent so profiles cannot be "
+            "separated, and the export truncates. Treat every count as "
+            "covering more than this profile.")
         if orders_text:
             parts.append(ingest.ingest_orders_workbook(orders_text))
         if inquiries_text:
@@ -292,7 +334,7 @@ def run_daily(
         today=today, bundle=bundle, plan=plan, tasks=task_list,
         predictions=preds, resolved=resolved, ledger=led, check=check,
         config=config, revenue_projection=proj, gap=gap, missing_sources=missing,
-        recovery=recov)
+        recovery=recov, intake=intake_note)
 
     art = RunArtifacts(
         phase=state,
@@ -303,6 +345,7 @@ def run_daily(
         revenue_projection=proj, gap=gap,
         boards=_roles.route(config, task_list), edge=_roles.edge(config),
         recovery=recov,
+        intake=intake_note,
         window={"start": win_start.isoformat() if win_start else None,
                 "label": win.get("label") or "",
                 "orders_in_window": len(w_orders),

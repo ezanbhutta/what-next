@@ -41,6 +41,7 @@ def render_markdown(
     gap: dict[str, Any],
     missing_sources: Sequence[dict],
     recovery: Any = None,
+    intake: dict[str, Any] | None = None,
 ) -> str:
     h = bundle.health
     e = bundle.econ
@@ -49,6 +50,35 @@ def render_markdown(
 
     out.append(f"# XStudioz — What Next · {today:%A %d %B %Y}")
     out.append("")
+
+    # ---------------- what this brief is actually built on ----------------
+    #
+    # ABOVE THE HEADLINE, ON PURPOSE, AND ONLY WHEN IT IS NOT FINE.
+    #
+    # The date in the title is the date of the RUN. It says nothing about the
+    # age of the data, and for months the two were assumed to match because a
+    # stale run looked exactly like a fresh one: same layout, same figures,
+    # same confidence. The scheduled run could fail for a week and the only
+    # evidence was a line on stderr in a container nobody kept.
+    #
+    # A live intake prints nothing. A warning that fires every morning is one
+    # nobody reads on the morning it means something.
+    _intake = intake or {}
+    _age = _intake.get("age_hours")
+    _path = _intake.get("path")
+    if _path == "markdown":
+        out.append(
+            "> ⚠️ **Built from a markdown export, not a snapshot.** "
+            f"{_intake.get('caveat', '')} Every count below is suspect.")
+        out.append("")
+    elif _age is not None and _age >= 26:
+        _gen = str(_intake.get("generated_at", ""))[:16].replace("T", " ")
+        out.append(
+            f"> ⚠️ **These figures are {_age:.0f} hours old.** The snapshot was taken "
+            f"{_gen} UTC and the live endpoint was "
+            f"{'not reachable' if _intake.get('endpoint_configured') else 'not configured'}. "
+            "Everything below describes that moment, not today.")
+        out.append("")
 
     # ---------------- headline ----------------
     verdict = h.verdict()
