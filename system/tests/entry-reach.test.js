@@ -9,14 +9,14 @@
 // that failed. The page loaded, the number looked plausible, and a CSR who
 // followed the instruction replaced the whole profile's reach with one gig's.
 //
-// The form is gone. The team types these figures into the impressions board
+// The form is gone. The team types these figures into the Daily Data Sheet
 // and this page reads them. So the drift this file exists to catch moved with
 // it, and it is the same shape as before: two sides edited in different files,
 // agreeing on the day they are written and nowhere after.
 //
 // THE THREE WAYS THIS PAGE CAN BE WRONG WHILE LOOKING RIGHT
 //
-//   1. It stops saying how old the board is. Every figure is still rendered,
+//   1. It stops saying how old the sheet is. Every figure is still rendered,
 //      still correct for its own date, and read as today's.
 //   2. It adds up a standing figure. A week of lifetime review counts summed
 //      comes to about eleven thousand reviews, printed in the same typeface as
@@ -88,27 +88,27 @@ const body = (over) => String(render(ctx(over)).html);
  *  "9 days ago" misses text that is plainly on the screen. */
 const text = (over) => body(over).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
-test('a board this far behind says so before it says anything else', () => {
+test('a sheet this far behind says so before it says anything else', () => {
   const out = render(ctx());
   const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
   assert.match(
     page,
     /9 days ago/,
-    'the staleness banner must print how many days behind the board is. Without it every figure on ' +
+    'the staleness banner must print how many days behind the sheet is. Without it every figure on ' +
       'this page reads as current, and each one is individually correct for a date nobody can see.'
   );
   assert.match(
     out.title,
     /9 days ago/,
-    'the page title is the one line a reader always sees. With the board behind, that is the headline.'
+    'the page title is the one line a reader always sees. With the sheet behind, that is the headline.'
   );
-  const asOfCard = out.ticker.find((t) => /board as of/i.test(t.label));
-  assert.ok(asOfCard, 'the ticker must carry the board date');
+  const asOfCard = out.ticker.find((t) => /sheet as of/i.test(t.label));
+  assert.ok(asOfCard, 'the ticker must carry the sheet date');
   assert.equal(String(asOfCard.sub), '9 days ago');
 });
 
-test('a current board does not shout about it', () => {
+test('a current sheet does not shout about it', () => {
   const page = text({
     asOf: { ok: true, date: '2026-08-05', daysOld: 1, enteredBy: 'Amrah', notice: null },
     days: { ok: true, rows: [day('2026-08-05'), day('2026-08-04')], notice: null },
@@ -120,11 +120,12 @@ test('a current board does not shout about it', () => {
   );
 });
 
-test('a board that cannot be read is an outage, never a quiet month', () => {
-  const out = render(ctx({ days: { ok: false, rows: null, notice: 'Impressions board answered 503' } }));
+test('a sheet that cannot be read is an outage, never a quiet month', () => {
+  const out = render(ctx({ days: { ok: false, rows: null, notice: 'impressions.jsonl could not be read' } }));
   const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
   assert.match(out.title, /cannot be read/i);
-  assert.match(page, /503/, 'the reason the store gave belongs on screen');
+  assert.match(page, /impressions\.jsonl/,
+    'the reason the read failed belongs on screen, not a generic apology');
   assert.ok(
     !/\b0 impressions\b/.test(page),
     'an unreachable board must never render as zero reach'
@@ -150,13 +151,13 @@ test('no standing figure is ever added up', () => {
     if (flow === 'total_orders') continue; // shown as organic + directed, which is the same number
     assert.ok(
       rawBlock.includes(`'${flow}'`) && !levelBlock.includes(`'${flow}'`),
-      `${flow} is a flow the board records and this page does not print it`
+      `${flow} is a flow the sheet records and this page does not print it`
     );
   }
 });
 
 test('a gap in the window is stated, not summed around', () => {
-  // Two days on the board, a seven day window. Five days are simply absent and
+  // Two days on the sheet, a seven day window. Five days are simply absent and
   // a total that ignores that is a smaller number wearing a bigger label.
   const page = text();
   assert.match(page, /2 of 7 days filled in/, 'the control must say how much of its window exists');
@@ -164,7 +165,7 @@ test('a gap in the window is stated, not summed around', () => {
 });
 
 test('a partial window total carries the days it actually covers', () => {
-  // Two days on the board, one of them blank on impressions. The first cut of
+  // Two days on the sheet, one of them blank on impressions. The first cut of
   // this returned MISSING for the whole window, which is defensible and was
   // wrong in practice: one blank cell in one column on one day turned every
   // headline on the page to MISSING and threw away tens of thousands of real
@@ -224,14 +225,14 @@ test('the page states that it does not write, and server.js does not', () => {
   );
   assert.ok(
     !/<form[^>]*method="post"/i.test(view),
-    'a POST form on this page means a second place to type numbers the board already holds'
+    'a POST form on this page means a second place to type numbers the sheet already holds'
   );
 
   const server = read('server.js');
   assert.ok(
     !/app\.post\(\s*\n?\s*'\/entry'/.test(server),
     "POST /entry is back. The form's whole problem was that it was a second answer to a question the " +
-      'impressions board already answers, and nobody could tell which one a figure came from.'
+      'Daily Data Sheet already answers, and nobody could tell which one a figure came from.'
   );
   assert.ok(
     !/INSERT INTO daily_entry/.test(server),

@@ -120,6 +120,51 @@ def sheets_feed(intake: dict[str, Any] | None, now: _dt.datetime) -> Feed:
     return f
 
 
+def impressions_feed(root: Path, now: _dt.datetime, profile: str = "X Studioz") -> Feed:
+    """The Daily Data Sheet, via the same snapshot as the workbooks.
+
+    Its own row rather than folded into `sheets`, because it is a different tab
+    filled in by a different person on a different rhythm. It was 10 days
+    behind while the order workbook was current, and one combined row would
+    have reported the fresher of the two and hidden that entirely.
+    """
+    f = Feed(key="impressions", label="Impressions (Daily Data Sheet)",
+             source="Daily Data Sheet, via the snapshot")
+    path = root / "data" / "normalized" / "impressions.jsonl"
+    if not path.exists():
+        f.detail = "the last run produced no impressions file"
+        f.fix = "Run the engine. If it runs and this stays empty, the sheet tab was refused."
+        return f
+    newest = None
+    try:
+        import json as _json
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            rec = _json.loads(line)
+            if str(rec.get("profile") or "") != profile:
+                continue
+            day = str(rec.get("date") or "")[:10]
+            if day and (newest is None or day > newest):
+                newest = day
+    except (OSError, ValueError) as exc:
+        f.detail = f"impressions.jsonl could not be read: {exc}"
+        return f
+
+    if not newest:
+        f.detail = f"no row for {profile}"
+        f.fix = "The sheet holds no day for this profile, or the tab was refused."
+        return f
+    f.as_of = newest
+    when = _dt.datetime.fromisoformat(f"{newest}T12:00:00+00:00")
+    f.age_hours = _age_hours(when, now)
+    _classify(f, THRESHOLDS_H["sheets"] + 24)  # filled in a day behind, like the rest
+    f.detail = f"newest row {newest}"
+    if f.status != "live":
+        f.fix = f"Nobody has filled in the Daily Data Sheet since {newest}."
+    return f
+
+
 def gig_feed(root: Path, now: _dt.datetime) -> Feed:
     """The live Fiverr gig page capture."""
     f = Feed(
@@ -211,6 +256,7 @@ def collect(root: Path, intake: dict[str, Any] | None = None,
     feeds = [
         snapshot_endpoint_feed(now),
         sheets_feed(intake, now),
+        impressions_feed(root, now),
         gig_feed(root, now),
         tracker_feed(root, now),
     ]

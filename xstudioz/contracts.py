@@ -467,6 +467,22 @@ class Impression:
     orders: float = 0.0
     notes: str | None = None
 
+    # The rest of what the sheet actually records. These were dropped on the
+    # way in for a year, so the daily reach picture had to be rebuilt by hand
+    # from the workbook whenever anybody wanted the money side of it.
+    #
+    # `None` and `0.0` are different and stay different: a blank cell is a day
+    # nobody filled in, and a zero is a day with no orders. Collapsing them
+    # turns every gap in the sheet into a reported zero, which is the one thing
+    # a reach series must never do, because a run of zeroes reads as a collapse.
+    organic_orders: float | None = None
+    directed_orders: float | None = None
+    organic_price: float | None = None
+    directed_price: float | None = None
+    orders_completed: float | None = None
+    completed_price: float | None = None
+    order_queue: float | None = None
+
     def ctr(self) -> float | None:
         return (self.clicks / self.impressions) if self.impressions else None
 

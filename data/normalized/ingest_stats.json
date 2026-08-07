@@ -1,14 +1,14 @@
 {
-  "orders": 1085,
+  "orders": 1086,
   "leads": 337,
   "flow_rows": 392,
   "flow_aggregate_rows": 56,
   "active_orders": 8,
-  "impressions": 0,
+  "impressions": 2653,
   "disputes": 0,
   "automation_errors": 334,
   "blocks_seen": 28,
-  "blocks_used": 24,
+  "blocks_used": 25,
   "header_cells_seen": 396,
   "unmapped_columns": {
     "Upsell": 5,
@@ -23,27 +23,20 @@
     "order_date": 8
   },
   "retired_tables_skipped": {
-    "impressions": 2
+    "impressions": 1
   },
   "retired_rows_skipped": {
-    "impressions": 3466
+    "impressions": 162
   },
-  "retired_tables_total": 2,
-  "retired_rows_total": 3466,
+  "retired_tables_total": 1,
+  "retired_rows_total": 162,
   "retired_tables": [
-    {
-      "retired": "impressions",
-      "name": "Daily Data Sheet Profiles",
-      "source_id": "impressions",
-      "rows": 3304,
-      "why": "source 'impressions' is retired; that data is typed into the impressions board (impressions-hmi) now"
-    },
     {
       "retired": "impressions",
       "name": "Impressions Daily Data Sheet Profiles",
       "source_id": "impressions",
       "rows": 162,
-      "why": "source 'impressions' is retired; that data is typed into the impressions board (impressions-hmi) now"
+      "why": "this tab stops on 13 Dec 2025; the live tab in the same workbook is the one that is read"
     }
   ],
   "duplicate_tables_skipped": {

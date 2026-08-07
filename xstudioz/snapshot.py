@@ -63,7 +63,7 @@ ROLES = {
 #: Roles the engine will not ingest. The authority is
 #: ``xstudioz.ingest.RETIRED_ROLES``; this mirror exists so a reader of the
 #: snapshot contract sees which tags are dead on arrival.
-RETIRED_ROLES = frozenset({"impressions", "team_review", "resources_upsell"})
+RETIRED_ROLES = frozenset({"team_review", "resources_upsell"})
 
 
 class SnapshotError(RuntimeError):

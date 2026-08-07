@@ -311,10 +311,34 @@ takes a minute and has caught every one of these.
 3. Add a schema-drift test in `tests/test_engine.py`.
 4. Run `python3 -m pytest tests/ -q`. All tests must pass before the source goes live.
 
+## Impressions comes from the sheet
+
+Restored 2026-08-07 after being wrongly retired for two days. The workbook has
+**two tabs** and only one is dead: `Impressions Daily Data Sheet Profiles`
+stops on 13 Dec 2025, while `Daily Data Sheet Profiles` is current, 3,304 rows,
+Sep 2025 to today. Only the first was looked at, so the whole source was
+retired and the live tab was refused every morning.
+
+Its shape is unlike any other source, and `ingest._ingest_impressions_block`
+exists for it:
+
+- a **merged Date cell** carried down a block of one row per gig,
+- the **header re-printed between blocks**, which parses as data if not dropped,
+- **pre-created empty blocks at the end that re-use a stale date**. On
+  2026-08-07 three empty blocks labelled 5-Aug sat after the real one, so a
+  last-row-wins dedup would have blanked a day holding 10,096 impressions. A
+  row with figures beats an empty one whatever the order.
+
+The header fingerprints that used to refuse this sheet now **route** it. That
+distinction is load-bearing: the sheet carries its own Organic and directed
+order columns, so a tab of it mis-tagged `daily_flow` is read as the daily
+ledger and doubles every order. Deleting the fingerprints along with the
+retirement re-opened exactly that hole for about a minute, and
+`test_impressions_table_does_not_double_count_as_flow` caught it.
+
 ## Retiring a data source
 
-The hub replaced three sheets on 2026-08-05: impressions, team review, and
-resources + upsell. Deleting a source from `config/sources.yml` does **not**
+The hub replaced two sheets on 2026-08-05: team review and resources + upsell. Deleting a source from `config/sources.yml` does **not**
 stop it being read. Tables are detected by header fingerprint, so a retired
 sheet still present in a snapshot keeps being classified, and a sheet whose own
 rule is gone does not go unclassified: it falls through to the next fingerprint

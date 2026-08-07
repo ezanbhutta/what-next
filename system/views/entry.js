@@ -1,4 +1,4 @@
-// views/entry.js, the profile's reach. What Fiverr showed, read from the board.
+// views/entry.js, the profile's reach. What Fiverr showed, read from the sheet.
 //
 // WHAT THIS PAGE USED TO BE, AND WHY IT IS NOT THAT
 //
@@ -8,14 +8,15 @@
 //
 //   Nobody is going to fill it in again. The hub stopped being a CSR tool, and
 //   the same fourteen numbers are already typed every day into the impressions
-//   board, which the team has been using since long before this form existed.
+//   Daily Data Sheet, which the team has filled in since long before this
+//   form existed.
 //   Two forms for one set of figures is not redundancy, it is a guarantee that
 //   they will disagree, and the one nobody is watching is the one that goes
-//   wrong quietly. So the form is gone and this page reads the board.
+//   wrong quietly. So the form is gone and this page reads the sheet.
 //
 // THE NUMBER THIS PAGE CANNOT BE TRUSTED WITHOUT
 //
-//   The board is filled in by hand and it falls behind. It is not a feed. So
+//   The sheet is filled in by hand and it falls behind. It is not a feed. So
 //   the as-of date is not a footnote here: it is in the masthead, in the
 //   banner when the gap is real, and beside every total. A seven-day reach
 //   figure whose seven days ended last month is a different claim from the one
@@ -23,12 +24,12 @@
 //
 // TWO GIGS, ONE ACCOUNT
 //
-//   The board keeps a row per GIG, and this account has two of them. Flows are
+//   The sheet keeps a row per GIG, and this account has two of them. Flows are
 //   added across both; levels are taken from the main gig alone. `lib/
 //   external.js` owns that fold and explains why averaging a nine-day-old
 //   gig's rating of 0 into a 4.8 is the kind of wrong that reads as fine.
 //
-// NOTHING HERE WRITES. Not to the board, not to `daily_entry`, not to a sheet.
+// NOTHING HERE WRITES. Not to the sheet, not to `daily_entry`, not to a sheet.
 
 import {
   html,
@@ -56,7 +57,7 @@ import {
 // 1. WINDOWS
 // ============================================================================
 //
-// The windows end at the BOARD'S last day, not at today. With the board nine
+// The windows end at the SHEET'S last day, not at today. With the sheet nine
 // days behind, "the last 7 days" measured from today covers seven days it has
 // nothing for, and the honest rendering of that is an empty page with a
 // banner. That is true and useless. Measured from its own last day the same
@@ -108,7 +109,7 @@ function shiftIso(iso, deltaDays) {
 //
 // `strictSum` is deliberately strict: a total with one blank half is MISSING,
 // not the half that happens to be filled in. Treating a blank as 0 here would
-// manufacture a day of zero directed orders out of a gap in the board.
+// manufacture a day of zero directed orders out of a gap in the sheet.
 
 function strictSum(a, b) {
   return a === null || b === null ? null : a + b;
@@ -138,7 +139,7 @@ function strictRatio(numerator, denominator) {
  * across 26 of 30 days" is true, and it is the same protection: whatever else
  * a reader does with that, they cannot mistake it for a complete month.
  *
- * `n` is days that carried the column, NOT days on the board. A day the board
+ * `n` is days that carried the column, NOT days on the sheet. A day the sheet
  * holds with this cell blank counts towards neither.
  */
 function columnTotal(rows, key) {
@@ -309,25 +310,25 @@ export function render(ctx) {
   const windowKey = WINDOWS.some((w) => w.key === String(d.window)) ? String(d.window) : DEFAULT_WINDOW;
   const windowDef = WINDOWS.find((w) => w.key === windowKey);
 
-  // ---- the board is unreachable --------------------------------------------
+  // ---- the sheet is unreachable --------------------------------------------
   //
   // Every figure on this page comes from one store. With that store down there
   // is nothing to show and nothing to derive, and a page of empty panels would
   // read as a quiet month rather than as an outage.
   if (days === null) {
     return {
-      title: 'The impressions board cannot be read',
+      title: 'The reach figures cannot be read',
       kicker: 'Reach',
       ticker: [],
       html: html`${banner(
         'crit',
-        'The impressions board did not answer.',
+        'data/normalized/impressions.jsonl could not be read.',
         // The reason comes from the read that failed, not from a `notice` the
         // loader has to remember to mirror alongside it. A second copy of the
         // reason is a second thing to forget, and forgetting it renders as an
         // outage with no cause printed.
         html`${d.days?.notice || asOf.notice || 'No reason was given.'} Nothing on this page can be shown until it
-          does. Whatever the team has entered is still safely in the board; this hub only reads it.`
+          does. Whatever the team has entered is still safely in the sheet; this hub only reads it.`
       )}
       ${empty('No reach figures could be loaded.')}`,
     };
@@ -336,17 +337,17 @@ export function render(ctx) {
   const latest = days[0] || null;
   const latestIso = latest ? String(latest.entry_date) : null;
 
-  // ---- how far behind the board is -----------------------------------------
+  // ---- how far behind the sheet is -----------------------------------------
   //
   // Two days is the working tolerance, not a guess: Fiverr publishes a day's
-  // figures around midday the next day, so the board is legitimately one day
+  // figures around midday the next day, so the sheet is legitimately one day
   // behind at all times and briefly two. Past that it is not lag, it is a gap
   // nobody has filled in, and it is the first thing on the page.
   const stale = asOf.ok && asOf.daysOld !== null && asOf.daysOld > 2;
   const staleBanner = !asOf.ok
     ? banner(
         'warn',
-        'The board would not say how current it is.',
+        'The sheet would not say how current it is.',
         html`${asOf.notice || 'The freshness check failed.'} The figures below may be right. Nothing here
           can confirm how recent they are, so read them as undated.`
       )
@@ -355,7 +356,7 @@ export function render(ctx) {
           'warn',
           html`These figures stop on ${dateShort(asOf.date, { year: true })}, ${num(asOf.daysOld)} days ago.`,
           html`Nothing below describes the last ${num(asOf.daysOld)} days, whatever a window is labelled.
-            The board is filled in by hand and it has not been filled in since. Orders and money on the
+            The sheet is filled in by hand and it has not been filled in since. Orders and money on the
             other pages come from the order sheet and are current to yesterday, so the two will not agree
             and should not be read against each other until this catches up.`
         )
@@ -392,14 +393,14 @@ export function render(ctx) {
   const latestPanel = html`<section class="panel">
       ${panelHead(
         latestIso
-          ? html`The last day the board has, ${dateShort(latestIso, { year: true })}`
-          : 'The last day the board has',
+          ? html`The last day the sheet has, ${dateShort(latestIso, { year: true })}`
+          : 'The last day the sheet has',
         latestIso ? 'typed' : 'missing',
-        latestIso ? `Impressions board · ${latest.gigs?.length === 1 ? '1 gig' : `${latest.gigs?.length ?? 0} gigs`}` : 'No day on the board',
+        latestIso ? `Daily Data Sheet · ${latest.gigs?.length === 1 ? '1 gig' : `${latest.gigs?.length ?? 0} gigs`}` : 'No day on the sheet',
         'One day, exactly as the team entered it, with the rates this hub works out from it. Nothing on this card is stored.'
       )}
       ${!latest
-        ? empty('The board holds no day at all for this account.')
+        ? empty('The sheet holds no day at all for this account.')
         : html`${statGrid(
               RAW_FIELDS.map((f) => statCard(f.label, cell(latest, f)))
             )}
@@ -464,17 +465,17 @@ export function render(ctx) {
 
   const windowPanel = html`<section class="panel">
       ${panelHead(
-        html`${windowDef.label}, ${num(inWindow.length)} ${inWindow.length === 1 ? 'day' : 'days'} on the board`,
+        html`${windowDef.label}, ${num(inWindow.length)} ${inWindow.length === 1 ? 'day' : 'days'} on the sheet`,
         inWindow.length ? 'typed' : 'missing',
-        inWindow.length ? `Impressions board · ${spanLabel}` : 'Nothing in this window',
+        inWindow.length ? `Daily Data Sheet · ${spanLabel}` : 'Nothing in this window',
         'Totals add strictly: one day missing a column makes that column MISSING for the window rather than a smaller number wearing a bigger label.'
       )}
       ${!inWindow.length
-        ? empty(`The board holds no day between ${spanLabel}.`)
+        ? empty(`The sheet holds no day between ${spanLabel}.`)
         : html`${gapDays > 0
               ? html`<p class="note note--warn">
                   ${glyph('warn')} ${num(gapDays)} of these ${num(windowDef.days)} days ${gapDays === 1 ? 'is' : 'are'}
-                  not on the board. Any column blank on one of the filled-in days reads MISSING for the whole
+                  not on the sheet. Any column blank on one of the filled-in days reads MISSING for the whole
                   window rather than being added up around the gap.
                 </p>`
               : ''}
@@ -488,8 +489,8 @@ export function render(ctx) {
       ${panelHead(
         html`Day by day, ${num(inWindow.length)}`,
         inWindow.length ? 'typed' : 'missing',
-        inWindow.length ? 'Impressions board' : 'Nothing in this window',
-        'Newest first. A day the board does not hold is not a row here, because it is not a day of zero reach.'
+        inWindow.length ? 'Daily Data Sheet' : 'Nothing in this window',
+        'Newest first. A day the sheet does not hold is not a row here, because it is not a day of zero reach.'
       )}
       ${!inWindow.length
         ? empty('No day to list.')
@@ -525,16 +526,16 @@ export function render(ctx) {
       ${panelHead(
         html`Gigs on this account, ${gigs === null ? missing() : num(gigs.length)}`,
         gigs === null ? 'missing' : 'typed',
-        gigs === null ? 'Gig list unreadable' : 'Impressions board',
-        'Read from the board rather than kept here, so a gig launched next month arrives on its own instead of going missing from every total.'
+        gigs === null ? 'Gig list unreadable' : 'Daily Data Sheet',
+        'Read from the sheet rather than kept here, so a gig launched next month arrives on its own instead of going missing from every total.'
       )}
       ${gigs === null
         ? html`<p class="note note--neg">
-            ${glyph('crit')} The board's gig list could not be read, so the totals above may be one gig short
+            ${glyph('crit')} The sheet's gig list could not be read, so the totals above may be one gig short
             and there is no way to tell from here which.
           </p>`
         : !gigs.length
-          ? empty('The board lists no gig under this account.')
+          ? empty('The sheet lists no gig under this account.')
           : html`<ul class="plainlist">
               ${join(
                 gigs.map((g) => {
@@ -555,7 +556,7 @@ export function render(ctx) {
       ${why(
         'Why the rating is not an average of the two',
         html`<p>
-            Reach adds across gigs. A rating does not. The second gig here is days old and the board
+            Reach adds across gigs. A rating does not. The second gig here is days old and the sheet
             records its rating and review count as <code class="mono">0</code>, which is the import's way of
             writing <em>none yet</em>. Averaged into the main gig's 4.8 that gives 2.4, and added to its
             review count it gives a number of reviews nobody has. So flows are added and levels are taken
@@ -567,14 +568,14 @@ export function render(ctx) {
   // ---- what the page leads with --------------------------------------------
 
   const title = !latest
-    ? 'The board holds nothing for this account'
+    ? 'The sheet holds nothing for this account'
     : stale
       ? `Reach stops ${asOf.daysOld} days ago, on ${dateTextOnly(asOf.date, { year: true })}`
       : `${latestDerived.ordersTaken === null ? 'Reach' : `${latestDerived.ordersTaken} orders`} on ${dateTextOnly(latestIso, { year: true })}`;
 
   return {
     title,
-    kicker: `Reach · impressions board · ${spanLabel}`,
+    kicker: `Reach · Daily Data Sheet · ${spanLabel}`,
     ticker: [
       tickerCard('Impressions', totals.impressions, num, windowDef.days),
       tickerCard('Clicks', totals.clicks, num, windowDef.days),
@@ -590,7 +591,7 @@ export function render(ctx) {
       },
       tickerCard('Inquiries', totals.inquiries_received, num, windowDef.days),
       {
-        label: 'Board as of',
+        label: 'Sheet as of',
         value: asOf.date ? dateShort(asOf.date) : missing(),
         sub: asOf.daysOld === null ? '' : asOf.daysOld === 0 ? 'today' : `${asOf.daysOld} days ago`,
       },
@@ -602,10 +603,10 @@ export function render(ctx) {
       ${tablePanel}
       ${gigPanel}
       <div class="provenance-bar">
-        <span>Every figure on this page is typed by the team into the impressions board, and read from it
+        <span>Every figure on this page is typed by the team into the Daily Data Sheet, and read from it
           here. This hub does not write to it, and the form that used to live on this page is gone: two
           places to type one number is a guarantee they will disagree.</span>
-        <span>Windows end on the board's own last day rather than on today, so a label means the days it
+        <span>Windows end on the sheet's own last day rather than on today, so a label means the days it
           says. The span is printed beside the control.</span>
         <span>Rates follow the house rule: below ${String(MIN_SAMPLE)}, or wider than 15 points, they are an
           interval on a hatched track and never a bar.</span>

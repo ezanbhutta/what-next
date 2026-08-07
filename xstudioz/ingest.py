@@ -237,13 +237,49 @@ IGNORED_HEADERS: frozenset[str] = frozenset({
 #: Retired role -> where that data lives now. The keys double as retired
 #: source ids, because the sheet and its single role share a name.
 RETIRED_ROLES: dict[str, str] = {
-    "impressions": "the impressions board (impressions-hmi)",
+    # impressions is NOT here. It was, from 2026-08-05 to 2026-08-07, on the
+    # belief that the sheet was dead and the data had moved to the impressions
+    # board. Half of that was true and the wrong half was acted on: the sheet
+    # has TWO tabs, and only the second one ("Impressions Daily Data Sheet
+    # Profiles", 162 rows) stops in December 2025. The first one is current --
+    # 3,304 rows, 9 Sep 2025 to today -- and was being refused every morning.
+    # See IMPRESSIONS_DEAD_TAB below for the one that stays refused.
     "team_review": "the hub's Team",
     "resources_upsell": "the reply sheet and the hub's Money",
 }
 
 #: Source ids that must not be read, whatever their tables look like.
 RETIRED_SOURCE_IDS: frozenset[str] = frozenset(RETIRED_ROLES)
+
+#: The one impressions TAB that really is dead: it stops on 13 Dec 2025 and its
+#: header is a different, older shape. Matched by exact tab name because the
+#: live tab in the same workbook shares almost every column with it, so a
+#: header fingerprint would refuse both or neither.
+IMPRESSIONS_DEAD_TAB = "Impressions Daily Data Sheet Profiles"
+
+#: Header shapes that mean "this is the impressions sheet", whatever the tab is
+#: TAGGED as. This used to be a refusal list. It is now a ROUTING list, and the
+#: distinction matters more than it looks:
+#:
+#: the impressions sheet carries its own Organic Orders and VVRO columns, so a
+#: tab of it mis-tagged `daily_flow` is read as the daily ledger and DOUBLES
+#: every order in it. Deleting the fingerprints along with the retirement would
+#: have re-opened exactly that hole, which is what the double-count test caught
+#: within a minute of the change.
+#:
+#: So the fingerprint still fires first and still overrides the role tag. It
+#: just sends the table to the impressions parser now instead of to the bin.
+IMPRESSIONS_FINGERPRINTS: tuple[frozenset[str], ...] = (
+    frozenset({"impressions"}),
+    frozenset({"impression"}),
+    frozenset({"clicks", "organic orders"}),
+    frozenset({"clicks", "profiles"}),
+)
+
+
+def looks_like_impressions(header: Iterable[str]) -> bool:
+    toks = {_tok(h) for h in header if str(h).strip()}
+    return any(fp <= toks for fp in IMPRESSIONS_FINGERPRINTS)
 
 #: Header fingerprints that identify a retired table on its own. Each entry is
 #: (retired key, tokens that must ALL be present). These have to be columns no
@@ -252,10 +288,6 @@ RETIRED_SOURCE_IDS: frozenset[str] = frozenset(RETIRED_ROLES)
 #: funnel. Where the retired sheet shares columns with a live one, the pair is
 #: what identifies it: the daily ledger has Organic Orders but no Clicks.
 RETIRED_FINGERPRINTS: tuple[tuple[str, frozenset[str]], ...] = (
-    ("impressions", frozenset({"impressions"})),
-    ("impressions", frozenset({"impression"})),
-    ("impressions", frozenset({"clicks", "organic orders"})),
-    ("impressions", frozenset({"clicks", "profiles"})),
     ("team_review", frozenset({"self score"})),
     ("team_review", frozenset({"manager score"})),
     ("team_review", frozenset({"week ending", "score"})),
@@ -829,6 +861,83 @@ def _clean_rows(header: list[str], rows: list[list[str]]) -> list[list[str]]:
     return out
 
 
+#: `6-Aug-2026` is already one of the spellings `contracts.to_date` handles, so
+#: there is no second date parser here. A cell it cannot read is usually one of
+#: the repeated header rows, which is expected rather than an error.
+
+#: Column index -> field, for the live impressions tab. Positional rather than
+#: aliased because the header is re-printed between blocks and the exporter
+#: picks one of those repeats as "the" header, which lands a data row there
+#: about as often as a real one. The positions are stable and the header text
+#: is not, so the positions win and a shape change shows up as a shifted
+#: column rather than as a silently dropped one.
+IMPRESSION_COLS: dict[int, str] = {
+    2: "impressions", 3: "clicks", 4: "organic_orders", 5: "directed_orders",
+    6: "organic_price", 7: "directed_price", 8: "total_orders",
+    9: "orders_completed", 10: "completed_price", 11: "order_queue",
+}
+
+
+def _ingest_impressions_block(res: "IngestResult", table, source_id: str, t_i: int) -> None:
+    """The impressions sheet: one merged-date block per day, one row per gig."""
+    current: _dt.date | None = None
+    #: (date, profile) -> the best row seen. "Best" is the one with figures:
+    #: the sheet's trailing template blocks re-use an old date and are empty,
+    #: so last-wins would blank a real day. See the dispatcher's comment.
+    best: dict[tuple[_dt.date, str], dict] = {}
+
+    for r_i, row in enumerate(table.rows):
+        if not row:
+            continue
+        first = str(row[0] or "").strip()
+        # A repeated header row. Not data, and not an error either.
+        if first.lower() == "date":
+            continue
+        day = C.to_date(first)
+        if day:
+            current = day
+        if current is None:
+            continue
+        profile = C.normalise_profile(str(row[1] or "").strip()) if len(row) > 1 else ""
+        if not profile:
+            continue
+
+        vals: dict[str, float | None] = {}
+        for idx, field_name in IMPRESSION_COLS.items():
+            vals[field_name] = C.to_money(row[idx]) if idx < len(row) else None
+        has_any = any(v is not None for v in vals.values())
+
+        key = (current, profile)
+        prior = best.get(key)
+        # A row with figures always beats an empty one, whatever the order.
+        if prior is not None and prior["has_any"] and not has_any:
+            continue
+        best[key] = {"has_any": has_any, "vals": vals, "r_i": r_i}
+
+    for (day, profile), rec in sorted(best.items()):
+        if not rec["has_any"]:
+            continue  # a day nobody has filled in is absent, not a day of zero
+        v = rec["vals"]
+        res.impressions.append(C.Impression(
+            date=day,
+            provenance=Provenance(source_id=table.source_id or source_id,
+                                  table_id=table.name, block_index=t_i,
+                                  row_index=rec["r_i"]),
+            profile=profile,
+            impressions=v.get("impressions") or 0.0,
+            clicks=v.get("clicks") or 0.0,
+            orders=v.get("total_orders") or 0.0,
+            # Passed through as-is, so a blank stays None. See the contract.
+            organic_orders=v.get("organic_orders"),
+            directed_orders=v.get("directed_orders"),
+            organic_price=v.get("organic_price"),
+            directed_price=v.get("directed_price"),
+            orders_completed=v.get("orders_completed"),
+            completed_price=v.get("completed_price"),
+            order_queue=v.get("order_queue"),
+        ))
+
+
 def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
     """Ingest a :class:`xstudioz.snapshot.Snapshot`.
 
@@ -864,6 +973,37 @@ def ingest_snapshot(snap, source_id: str = "snapshot") -> IngestResult:
                 "the same orders twice",
                 name=table.name, source_id=table.source_id or source_id,
                 rows=len(table.rows))
+            continue
+
+        # ---- the impressions sheet, which is its own shape ----------------
+        #
+        # One block per day: a merged Date cell that only the first of ~13 rows
+        # carries, one row per profile under it, and the header re-printed
+        # between every block. Three traps, and the third is the dangerous one:
+        #
+        #   1. The repeated header rows parse as data if they are not dropped.
+        #   2. The merged date has to be carried down or twelve of every
+        #      thirteen rows arrive dateless.
+        #   3. THE SHEET HAS PRE-CREATED EMPTY BLOCKS AT THE END, AND THEY
+        #      RE-USE A STALE DATE. On 2026-08-07 the tail held three empty
+        #      blocks all labelled 5-Aug-2026, sitting after the real 5, 6 and
+        #      7 August blocks. A dedup that takes the last row for a
+        #      (date, profile) would therefore blank 5 August, which really
+        #      holds 10,096 impressions. A row with figures always beats an
+        #      empty one, whatever the order.
+        if (table.role == "impressions"
+                or table.source_id == "impressions"
+                or looks_like_impressions(table.header)):
+            if table.name == IMPRESSIONS_DEAD_TAB:
+                res.note_retired("impressions",
+                                 "this tab stops on 13 Dec 2025; the live tab "
+                                 "in the same workbook is the one that is read",
+                                 name=table.name,
+                                 source_id=table.source_id or source_id,
+                                 rows=len(table.rows))
+                continue
+            res.blocks_used += 1
+            _ingest_impressions_block(res, table, source_id, t_i)
             continue
 
         aliases = {

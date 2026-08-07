@@ -1070,18 +1070,21 @@ def test_impressions_table_does_not_double_count_as_flow():
     """The impressions sheet also carries Organic/VVRO order columns. If it
     were classified as daily_flow it would double every order in the ledger.
 
-    It is retired now, so the stronger statement holds: it is not counted as
-    anything at all."""
+    It is a LIVE source again since 2026-08-07, so the stronger "not counted at
+    all" no longer applies and this is back to the original, sharper claim: it
+    is read as impressions and never as flow. The header fingerprint that
+    enforces it is a routing rule now rather than a refusal, and deleting it
+    with the retirement would have re-opened the double count."""
     snap = S.parse(_snap_payload(tables=[{
         "name": "Impressions", "role": "impressions", "source_id": "impressions",
         "header": ["Date", "Account Name", "Impressions", "Clicks",
                    "Organic Orders", "VVRO Orders", "Totol Order"],
         "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2", "5", "7"]]}]))
     res = ingest.ingest_snapshot(snap)
-    assert res.flow == []                      # not counted as flow
-    assert res.impressions == []               # not counted at all
-    assert res.retired_tables_skipped["impressions"] == 1
-    assert res.retired_rows_skipped["impressions"] == 1
+    assert res.flow == []                      # never as flow: that is the double count
+    assert len(res.impressions) == 1           # read as what it is
+    assert res.impressions[0].impressions == 5397.0
+    assert res.impressions[0].clicks == 88.0
 
 
 def test_diagnosis_task_only_fires_on_a_real_decline():
@@ -1435,11 +1438,11 @@ def test_forward_fill_never_invents_a_measurement():
 # classified and its rows would be counted next to the hub's typed ones. These
 # tests fail if any of them is ingested again.
 
+# Impressions is NOT here any more: it went back to being a live source on
+# 2026-08-07, when the sheet turned out to have a live tab and a dead one and
+# only the dead one had been looked at. `test_the_dead_impressions_tab_is_still
+# _refused_by_name` covers the half that stayed retired.
 _RETIRED_TABLES = [
-    ({"name": "Impressions", "role": "impressions", "source_id": "impressions",
-      "header": ["Date", "Account Name", "Impressions", "Clicks",
-                 "Organic Orders"],
-      "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2"]]}, "impressions"),
     ({"name": "Team Review", "role": "team_review", "source_id": "team_review",
       "header": ["Week Ending", "Person", "Self Score", "Manager Score", "Note"],
       "rows": [["2026-08-02", "Amrah", "4", "3", "good week"]]}, "team_review"),
@@ -1455,7 +1458,7 @@ _RETIRED_TABLES = [
 def test_a_retired_sheet_is_refused_and_counted(table, key):
     res = ingest.ingest_snapshot(S.parse(_snap_payload(tables=[table])))
     assert res.orders == [] and res.leads == [] and res.flow == []
-    assert res.impressions == [] and res.active == []
+    assert res.active == [] and res.impressions == []
     assert res.retired_tables_skipped[key] == 1
     assert res.retired_rows_skipped[key] == 1
     assert res.blocks_used == 0, "a refused table must not count as used"
@@ -1474,8 +1477,8 @@ def test_a_retired_sheet_is_refused_even_when_tagged_as_a_live_role():
                    "Organic Orders", "VVRO Orders"],
         "rows": [["1-Dec-2025", "XStudioz", "5397", "88", "2", "5"]]}]))
     res = ingest.ingest_snapshot(snap)
-    assert res.flow == [], "a retired sheet must never become the daily ledger"
-    assert res.retired_tables_skipped["impressions"] == 1
+    assert res.flow == [], "the impressions sheet must never become the daily ledger"
+    assert len(res.impressions) == 1, "and it must be read as what it actually is"
 
 
 def test_a_retired_sheet_is_refused_on_its_headers_alone():
@@ -1484,11 +1487,11 @@ def test_a_retired_sheet_is_refused_on_its_headers_alone():
     from sources.yml and the snapshot keeps serving the tab anyway."""
     snap = S.parse(_snap_payload(tables=[{
         "name": "Sheet1", "role": "daily_flow", "source_id": "orders",
-        "header": ["Date", "Profile", "Clicks", "Organic Orders"],
-        "rows": [["1-Dec-2025", "X Studioz", "88", "2"]]}]))
+        "header": ["Week Ending", "Team Member", "Self Score", "Manager Score"],
+        "rows": [["1-Dec-2025", "Amrah", "4", "3"]]}]))
     res = ingest.ingest_snapshot(snap)
     assert res.flow == []
-    assert res.retired_tables_skipped["impressions"] == 1
+    assert res.retired_tables_skipped["team_review"] == 1
 
 
 def test_the_markdown_fallback_refuses_retired_sheets_too():
@@ -1505,9 +1508,10 @@ def test_the_markdown_fallback_refuses_retired_sheets_too():
         "| 30-Nov-2025 | XStudioz | 3858 | 65 | 2 |\n")
     res = ingest.ingest_orders_workbook(text)
     assert [o.client for o in res.orders] == ["acme"]
-    assert res.impressions == []
-    assert res.retired_tables_skipped["impressions"] == 1
-    assert res.retired_rows_skipped["impressions"] == 1
+    # The impressions block rides in the same export and is now read rather
+    # than refused. What must NOT happen is it landing in `flow`, which is the
+    # double count; the order block is untouched either way.
+    assert res.flow == []
 
 
 def test_a_reappearing_retired_sheet_is_reported_not_swallowed():
@@ -1518,7 +1522,7 @@ def test_a_reappearing_retired_sheet_is_reported_not_swallowed():
     stats = res.stats()
     assert stats["retired_tables_total"] == 2
     assert stats["retired_rows_total"] == 2
-    assert set(stats["retired_tables_skipped"]) == {"impressions", "team_review"}
+    assert set(stats["retired_tables_skipped"]) == {"team_review", "resources_upsell"}
 
     rep = selfcheck.SelfCheckReport()
     selfcheck.check_ingest(rep, unmapped_rate=0.0, max_rate=0.15, unmapped={},
@@ -1526,7 +1530,7 @@ def test_a_reappearing_retired_sheet_is_reported_not_swallowed():
                            retired_rows=stats["retired_rows_skipped"])
     r = next(x for x in rep.results if x.name == "retired_sources_refused")
     assert not r.passed and r.severity == "warn"
-    assert "impressions" in r.detail and "team_review" in r.detail
+    assert "team_review" in r.detail and "resources_upsell" in r.detail
     assert not rep.blocking_failures, "a refused sheet is visible, not fatal"
 
 
@@ -1572,7 +1576,7 @@ def test_the_retired_list_agrees_across_the_engine():
     retirement that is only true in one of them is not a retirement."""
     import yaml
     keys = set(ingest.RETIRED_ROLES)
-    assert keys == {"impressions", "team_review", "resources_upsell"}
+    assert keys == {"team_review", "resources_upsell"}
     assert keys == set(S.RETIRED_ROLES)
     assert keys <= S.ROLES
 

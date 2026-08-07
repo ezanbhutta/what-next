@@ -97,7 +97,7 @@
 ### P2 · Start recording upsells — the column is empty
 **Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
-*Why:* Upsell is marked on 0.0% of the 115 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+*Why:* Upsell is marked on 0.0% of the 116 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
 
 - Fill the Upsell column on every order: TRUE/FALSE, no blanks.
 - Fill 'What did you upsell and how much' whenever TRUE.
@@ -289,10 +289,10 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic, recent vs earlier | 0.84/day | was 0.66/day (+28.0%) |
 | Organic orders, last 7d | 9 | 1.29/day |
 | AOV | $90 | median $80, n=79 priced orders |
-| Lifetime tracked revenue | $7,127 | across 115 order rows |
+| Lifetime tracked revenue | $7,127 | across 116 order rows |
 | Inquiry conversion | 19.1% | 13/68 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 49.6% | 57/115 orders that could be rated |
+| Review capture | 49.1% | 57/116 orders that could be rated |
 | Gig rating | 4.839 | 1,606 reviews, Level 2 |
 | Orders in queue | 25 | live from the gig page |
 
@@ -321,12 +321,12 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 
 | Feed | State | As of | Age | Where it comes from |
 |---|---|---|---|---|
-| Snapshot credentials | 🔴 unreachable | — | — | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
-| Order and inquiry workbooks | 🟢 live | 2026-08-07T08:06:07.876000+00:00 | 0h | Apps Script snapshot endpoint |
-| Fiverr gig page | 🟢 live | 2026-08-06 | 20h | browser capture into data/raw/gig/ |
-| CSR handoff tracker | 🟢 live | 2026-07-29 | 217h | uploaded into data/raw/order_tracker/ |
+| Snapshot credentials | 🟢 live | — | 0h | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
+| Order and inquiry workbooks | 🟢 live | 2026-08-07T09:09:04.171000+00:00 | 0h | Apps Script snapshot endpoint |
+| Impressions (Daily Data Sheet) | 🟢 live | 2026-08-06 | 21h | Daily Data Sheet, via the snapshot |
+| Fiverr gig page | 🟢 live | 2026-08-06 | 21h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟢 live | 2026-07-29 | 218h | uploaded into data/raw/order_tracker/ |
 
-- **Snapshot credentials** — not set in this shell, so the run cannot fetch live. They live in the daily Routine's prompt. Any run started by hand must export them first or it will quietly use whatever snapshot is already on disk.
 
 
 ---
@@ -343,7 +343,7 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - priority_spread: 10
 
 **Checks not passing**
-- `warn` **retired_sources_refused** — 2 table(s) from retired sheets were refused and not counted: impressions (2 tables, 3466 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.
+- `warn` **retired_sources_refused** — 1 table(s) from retired sheets were refused and not counted: impressions (1 tables, 162 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.
 - `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 
 **Data sources still missing**

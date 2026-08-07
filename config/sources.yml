@@ -59,6 +59,27 @@ sources:
     # See automation/README.md for deployment.
     freshness_sla_days: 1
 
+  - id: impressions
+    name: Impressions / Daily Data Sheet
+    file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
+    url: https://docs.google.com/spreadsheets/d/1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA/edit
+    # RETIRED 2026-08-05, RESTORED 2026-08-07. It was retired on the belief the
+    # sheet was dead. The workbook has TWO tabs and only the second one is:
+    # "Impressions Daily Data Sheet Profiles" stops on 13 Dec 2025, while
+    # "Daily Data Sheet Profiles" is current, 3,304 rows, 9 Sep 2025 to today.
+    # The dead tab is refused by name in ingest.IMPRESSIONS_DEAD_TAB.
+    #
+    # Its shape is unlike every other source and ingest._ingest_impressions_block
+    # is written for it: a merged Date cell carried down a block of one row per
+    # gig, the header re-printed between blocks, and pre-created empty blocks at
+    # the end that re-use a stale date. That last one is why the dedup prefers a
+    # row with figures over an empty one whatever the order: on 2026-08-07 three
+    # empty blocks labelled 5-Aug sat after the real one, and last-wins would
+    # have blanked a day holding 10,096 impressions.
+    #
+    # Its profile column reads "XStudioz" against "X Studioz" in the orders
+    # ledger; contracts.normalise_profile is what reconciles them.
+
   - id: fiverr_gig
     name: Live Fiverr gig page
     kind: public_web
@@ -91,18 +112,6 @@ sources:
 # test_the_retired_list_agrees_across_the_engine holds RETIRED_ROLES equal to
 # the gated set, in all three places.
 retired:
-  - id: impressions
-    gated: true
-    name: Impressions / Daily Data Sheet
-    file_id: 1FKLA1af8Q8rhXTl-QnGLoFQ43asymHIQk59g8Su0ekA
-    replaced_by: "the impressions board (impressions-hmi), which the hub reads"
-    retired_on: 2026-08-05
-    # It was 228 days stale on 2026-07-29 and nobody noticed, which is most of
-    # the argument for typing the numbers into a form instead.
-    # Two traps this sheet carried, kept here because they explain the guard:
-    # its profile column read "XStudioz" against "X Studioz" in the orders
-    # ledger, and it carried its own Organic and directed order columns, so
-    # anything classifying it as the daily ledger doubled every order in it.
   - id: team_review
     gated: true
     name: Team review sheet
