@@ -311,7 +311,27 @@ takes a minute and has caught every one of these.
 3. Add a schema-drift test in `tests/test_engine.py`.
 4. Run `python3 -m pytest tests/ -q`. All tests must pass before the source goes live.
 
-## Impressions comes from the sheet
+## Impressions: the board is what the hub shows
+
+**XStudioz impressions come from impressions-hmi**, on Ezan's instruction from
+2026-08-07. `/entry` reads the board through `lib/external.js`.
+
+The board is FED FROM the sheet (`entered_by: "Sheet import"`), so these are
+one source with two faces, and the board is the corrected one: on 2026-08-07
+the sheet still held a duplicated 5-Aug of 10,096/262 that the board had
+already been fixed to 10,455/256.
+
+The account has **three gigs** now: XStudioz, XStudioz Logo, X_Studioz new gig.
+Nothing had to change for the third to appear, because `boardGigs()` reads the
+gig list from the board's own `profiles` table rather than keeping a copy.
+Flows add across gigs; levels come from the main gig alone.
+
+The engine still ingests the sheet, for its reach-versus-conversion diagnosis.
+Both appear on `/feeds` as separate rows on purpose: a gap between "Impressions
+sheet (engine)" and "Impressions board" is a real signal that the import has
+stalled, and folding them into one row would hide exactly that.
+
+## The impressions sheet, and how it parses
 
 Restored 2026-08-07 after being wrongly retired for two days. The workbook has
 **two tabs** and only one is dead: `Impressions Daily Data Sheet Profiles`

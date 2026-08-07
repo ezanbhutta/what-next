@@ -127,8 +127,15 @@ def impressions_feed(root: Path, now: _dt.datetime, profile: str = "X Studioz") 
     filled in by a different person on a different rhythm. It was 10 days
     behind while the order workbook was current, and one combined row would
     have reported the fresher of the two and hidden that entirely.
+
+    NOTE THIS IS THE ENGINE'S COPY, NOT WHAT /entry SHOWS. From 2026-08-07 the
+    hub reads XStudioz impressions from the impressions board, on Ezan's
+    instruction; the board is fed from this same sheet and holds the corrected
+    figures. The engine still ingests the sheet for its reach-versus-conversion
+    diagnosis, so both rows appear on /feeds and a gap between them is a real
+    signal rather than a duplicate.
     """
-    f = Feed(key="impressions", label="Impressions (Daily Data Sheet)",
+    f = Feed(key="impressions_sheet", label="Impressions sheet (engine)",
              source="Daily Data Sheet, via the snapshot")
     path = root / "data" / "normalized" / "impressions.jsonl"
     if not path.exists():

@@ -317,12 +317,12 @@ export function render(ctx) {
   // read as a quiet month rather than as an outage.
   if (days === null) {
     return {
-      title: 'The reach figures cannot be read',
+      title: 'The impressions board cannot be read',
       kicker: 'Reach',
       ticker: [],
       html: html`${banner(
         'crit',
-        'data/normalized/impressions.jsonl could not be read.',
+        'The impressions board did not answer.',
         // The reason comes from the read that failed, not from a `notice` the
         // loader has to remember to mirror alongside it. A second copy of the
         // reason is a second thing to forget, and forgetting it renders as an
@@ -396,11 +396,11 @@ export function render(ctx) {
           ? html`The last day the sheet has, ${dateShort(latestIso, { year: true })}`
           : 'The last day the sheet has',
         latestIso ? 'typed' : 'missing',
-        latestIso ? `Daily Data Sheet · ${latest.gigs?.length === 1 ? '1 gig' : `${latest.gigs?.length ?? 0} gigs`}` : 'No day on the sheet',
+        latestIso ? `Impressions board · ${latest.gigs?.length === 1 ? '1 gig' : `${latest.gigs?.length ?? 0} gigs`}` : 'No day on the sheet',
         'One day, exactly as the team entered it, with the rates this hub works out from it. Nothing on this card is stored.'
       )}
       ${!latest
-        ? empty('The sheet holds no day at all for this account.')
+        ? empty('The board holds no day at all for this account.')
         : html`${statGrid(
               RAW_FIELDS.map((f) => statCard(f.label, cell(latest, f)))
             )}
@@ -467,11 +467,11 @@ export function render(ctx) {
       ${panelHead(
         html`${windowDef.label}, ${num(inWindow.length)} ${inWindow.length === 1 ? 'day' : 'days'} on the sheet`,
         inWindow.length ? 'typed' : 'missing',
-        inWindow.length ? `Daily Data Sheet · ${spanLabel}` : 'Nothing in this window',
+        inWindow.length ? `Impressions board · ${spanLabel}` : 'Nothing in this window',
         'Totals add strictly: one day missing a column makes that column MISSING for the window rather than a smaller number wearing a bigger label.'
       )}
       ${!inWindow.length
-        ? empty(`The sheet holds no day between ${spanLabel}.`)
+        ? empty(`The board holds no day between ${spanLabel}.`)
         : html`${gapDays > 0
               ? html`<p class="note note--warn">
                   ${glyph('warn')} ${num(gapDays)} of these ${num(windowDef.days)} days ${gapDays === 1 ? 'is' : 'are'}
@@ -489,7 +489,7 @@ export function render(ctx) {
       ${panelHead(
         html`Day by day, ${num(inWindow.length)}`,
         inWindow.length ? 'typed' : 'missing',
-        inWindow.length ? 'Daily Data Sheet' : 'Nothing in this window',
+        inWindow.length ? 'Impressions board' : 'Nothing in this window',
         'Newest first. A day the sheet does not hold is not a row here, because it is not a day of zero reach.'
       )}
       ${!inWindow.length
@@ -526,7 +526,7 @@ export function render(ctx) {
       ${panelHead(
         html`Gigs on this account, ${gigs === null ? missing() : num(gigs.length)}`,
         gigs === null ? 'missing' : 'typed',
-        gigs === null ? 'Gig list unreadable' : 'Daily Data Sheet',
+        gigs === null ? 'Gig list unreadable' : 'Impressions board',
         'Read from the sheet rather than kept here, so a gig launched next month arrives on its own instead of going missing from every total.'
       )}
       ${gigs === null
@@ -575,7 +575,7 @@ export function render(ctx) {
 
   return {
     title,
-    kicker: `Reach · Daily Data Sheet · ${spanLabel}`,
+    kicker: `Reach · impressions board · ${spanLabel}`,
     ticker: [
       tickerCard('Impressions', totals.impressions, num, windowDef.days),
       tickerCard('Clicks', totals.clicks, num, windowDef.days),
@@ -591,7 +591,7 @@ export function render(ctx) {
       },
       tickerCard('Inquiries', totals.inquiries_received, num, windowDef.days),
       {
-        label: 'Sheet as of',
+        label: 'Board as of',
         value: asOf.date ? dateShort(asOf.date) : missing(),
         sub: asOf.daysOld === null ? '' : asOf.daysOld === 0 ? 'today' : `${asOf.daysOld} days ago`,
       },
@@ -603,7 +603,7 @@ export function render(ctx) {
       ${tablePanel}
       ${gigPanel}
       <div class="provenance-bar">
-        <span>Every figure on this page is typed by the team into the Daily Data Sheet, and read from it
+        <span>Every figure on this page is typed by the team into the impressions board, and read from it
           here. This hub does not write to it, and the form that used to live on this page is gone: two
           places to type one number is a guarantee they will disagree.</span>
         <span>Windows end on the sheet's own last day rather than on today, so a label means the days it

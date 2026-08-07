@@ -763,18 +763,28 @@ export async function storeHealth({ today = null, staleAfterHours = 48 } = {}) {
     };
   };
 
-  // ONLY THE SHIFT LOGGER. The impressions board was here until 2026-08-07,
-  // when impressions went back to being read from the Daily Data Sheet, which
-  // is both what Ezan asked for and the fresher of the two: the sheet was
-  // current to yesterday while the board had stopped ten days earlier.
-  //
-  // Reporting a source nothing reads is worse than not reporting it. A green
-  // row for a feed no page consumes is noise, and a red one sends somebody to
-  // fix something that does not matter.
-  return [
-    await probe('reports', 'CSR Shift Logger', 'reports', 'date',
-                `&${orFilter('profile', REPORTS_PROFILES)}`, 'reports-six-coral.vercel.app'),
-  ];
+  // Both stores, because the hub reads both again. The impressions board came
+  // out of this list for a few hours on 2026-08-07, while impressions were
+  // being read from the sheet, on the rule that reporting a source nothing
+  // reads is worse than not reporting it: a green row for an unused feed is
+  // noise and a red one sends somebody to fix what does not matter. The board
+  // is back because /entry reads it again.
+  const gigs = await boardGigs();
+  const boardNames = gigs.ok ? gigs.rows.map((g) => g.name) : [];
+
+  const [reports, board] = await Promise.all([
+    probe('reports', 'CSR Shift Logger', 'reports', 'date',
+          `&${orFilter('profile', REPORTS_PROFILES)}`, 'reports-six-coral.vercel.app'),
+    boardNames.length
+      ? probe('impressions', 'Impressions board', 'entries', 'date',
+              `&${orFilter('profile', boardNames)}`, 'impressions-hmi.vercel.app')
+      : Promise.resolve({ key: 'impressions', label: 'Impressions board',
+                          source: 'impressions-hmi.vercel.app', status: 'unreachable',
+                          as_of: null, age_hours: null,
+                          detail: gigs.ok ? 'no gig is listed under this account' : gigs.notice,
+                          fix: 'Check the impressions board API key.' }),
+  ]);
+  return [reports, board];
 }
 
 export default {

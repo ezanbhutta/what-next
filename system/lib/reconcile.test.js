@@ -325,7 +325,15 @@ test('pick yields MISSING for an absent path and preserves a real null', () => {
 
   // A real null must survive as null. If pick turned it into MISSING the page
   // would print "MISSING" for a value the engine deliberately set to nothing.
-  assert.equal(pick(run(), 'metrics.decomposition.ctr_now'), null);
+  //
+  // Asserted against a LITERAL, not against the live run. This used to pick
+  // `metrics.decomposition.ctr_now`, which was null only because impressions
+  // had been retired and there was nothing to compute a click-through from.
+  // The day impressions came back the field acquired a value and this went
+  // red, having tested the engine's data rather than pick's behaviour. Same
+  // lesson as the verdict above, learned twice.
+  assert.equal(pick({ a: { b: null } }, 'a.b'), null);
+  assert.ok(isMissing(pick({ a: { b: null } }, 'a.b.c')));
 });
 
 test('the jsonl readers tolerate blank lines and return rows, not text', () => {

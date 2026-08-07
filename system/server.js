@@ -746,73 +746,35 @@ export const loaders = {
   // from today, because the board runs behind and a window measured from today
   // can miss every day it holds. `reachAsOf` is fetched separately and first:
   // it is the one figure the view refuses to render without.
+  // ---- Reach: what Fiverr showed, from the impressions board --------------
+  //
+  // THE SOURCE HAS MOVED TWICE IN THREE DAYS AND THE HISTORY IS THE POINT.
+  //
+  // A form here, until nobody was going to fill it in. Then the impressions
+  // board. Then the Daily Data Sheet, when the board had stopped on 28 July
+  // and the sheet turned out to be current. Now the board again, on Ezan's
+  // instruction and because he has fixed what stopped it: the board is current
+  // to yesterday and carries the CORRECTED 5 August figure, where the sheet
+  // snapshot still holds the duplicate it was fixed from.
+  //
+  // The board is fed from the sheet, so these are one source with two faces
+  // and the board is the corrected one. That is why it wins, and it is also
+  // why the engine reading the sheet is not a second opinion so much as an
+  // earlier draft of the same one.
+  //
+  // The account has THREE gigs now: XStudioz, XStudioz Logo, X_Studioz new
+  // gig. Nothing here had to change for the third to appear, because the gig
+  // list is read from the board's own profiles table rather than kept here.
   async entry(ctx, q, req) {
-    // READS THE SHEET, NOT THE IMPRESSIONS BOARD.
-    //
-    // It read the board from 2026-08-05 to 2026-08-07, on the belief that the
-    // sheet was dead. The sheet has two tabs and only one of them is: the live
-    // one runs to today and was being refused by the engine every morning
-    // while this page showed a board that had stopped on 28 July. Ezan's
-    // instruction is the sheet, and the sheet is also the fresher of the two.
-    //
-    // The engine ingests it into data/normalized/impressions.jsonl, so this
-    // reads the engine's output rather than calling anything: one parse of a
-    // sheet with merged cells, repeated headers and stale template blocks is
-    // enough, and it belongs where the tests for it are.
-    const rows = engineImpressions();
-    const readable = !isMissing(rows) && Array.isArray(rows);
-    const mine = readable
-      ? rows.filter((r) => String(r.profile || '') === EXTERNAL_PROFILE)
-      : [];
-    mine.sort((a, b) => String(b.date).localeCompare(String(a.date)));
-
-    const newest = mine[0]?.date ? String(mine[0].date).slice(0, 10) : null;
-    const today = pktToday(new Date());
-    const asOf = readable
-      ? {
-          ok: true,
-          date: newest,
-          daysOld: newest
-            ? Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${newest}T00:00:00Z`)) / 86400000)
-            : null,
-          enteredBy: 'the Daily Data Sheet',
-          notice: null,
-        }
-      : { ok: false, date: null, daysOld: null, notice: 'data/normalized/impressions.jsonl could not be read' };
-
-    // One row per gig per day in the sheet; this hub is one account, and the
-    // engine already resolves both spellings onto the same profile name, so a
-    // day here is a day rather than a fold across gigs.
-    const days = readable
-      ? { ok: true, rows: mine.map((r) => ({
-            entry_date: String(r.date).slice(0, 10),
-            gigs: [{ gig: r.profile, impressions: r.impressions }],
-            impressions: r.impressions ?? null,
-            clicks: r.clicks ?? null,
-            organic_orders: r.organic_orders,
-            organic_value: r.organic_price,
-            directed_orders: r.directed_orders,
-            directed_value: r.directed_price,
-            total_orders: r.orders ?? null,
-            orders_completed: r.orders_completed,
-            completed_value: r.completed_price,
-            inquiries_received: null,
-            cancellations: null,
-            cancelled_value: null,
-            orders_in_queue: r.order_queue,
-            total_reviews: null,
-            success_score: null,
-            profile_rating: null,
-            entered_by: 'Daily Data Sheet',
-            updated_at: null,
-          })), notice: null }
-      : { ok: false, rows: null, notice: 'data/normalized/impressions.jsonl could not be read' };
-
+    const asOf = await reachAsOf();
+    const end = asOf.date || pktToday(new Date());
+    const from = shiftIsoDay(end, -120);
+    const [days, gigs] = await Promise.all([reachDays({ from, to: end }), boardGigs()]);
     return {
       window: REACH_WINDOWS.has(String(req?.query?.window)) ? String(req.query.window) : '30',
       asOf,
       days,
-      gigs: { ok: true, rows: [{ id: 'xstudioz', name: EXTERNAL_PROFILE, account: EXTERNAL_PROFILE, active: true, main: true }], notice: null },
+      gigs,
       notice: days.ok ? null : days.notice,
     };
   },

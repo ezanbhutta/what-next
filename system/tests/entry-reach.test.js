@@ -88,7 +88,7 @@ const body = (over) => String(render(ctx(over)).html);
  *  "9 days ago" misses text that is plainly on the screen. */
 const text = (over) => body(over).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
-test('a sheet this far behind says so before it says anything else', () => {
+test('a board this far behind says so before it says anything else', () => {
   const out = render(ctx());
   const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 
@@ -103,12 +103,12 @@ test('a sheet this far behind says so before it says anything else', () => {
     /9 days ago/,
     'the page title is the one line a reader always sees. With the sheet behind, that is the headline.'
   );
-  const asOfCard = out.ticker.find((t) => /sheet as of/i.test(t.label));
-  assert.ok(asOfCard, 'the ticker must carry the sheet date');
+  const asOfCard = out.ticker.find((t) => /board as of/i.test(t.label));
+  assert.ok(asOfCard, 'the ticker must carry the board date');
   assert.equal(String(asOfCard.sub), '9 days ago');
 });
 
-test('a current sheet does not shout about it', () => {
+test('a current board does not shout about it', () => {
   const page = text({
     asOf: { ok: true, date: '2026-08-05', daysOld: 1, enteredBy: 'Amrah', notice: null },
     days: { ok: true, rows: [day('2026-08-05'), day('2026-08-04')], notice: null },
@@ -120,12 +120,12 @@ test('a current sheet does not shout about it', () => {
   );
 });
 
-test('a sheet that cannot be read is an outage, never a quiet month', () => {
-  const out = render(ctx({ days: { ok: false, rows: null, notice: 'impressions.jsonl could not be read' } }));
+test('a board that cannot be read is an outage, never a quiet month', () => {
+  const out = render(ctx({ days: { ok: false, rows: null, notice: 'Impressions board answered 503' } }));
   const page = String(out.html).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
   assert.match(out.title, /cannot be read/i);
-  assert.match(page, /impressions\.jsonl/,
-    'the reason the read failed belongs on screen, not a generic apology');
+  assert.match(page, /503/,
+    'the reason the store gave belongs on screen');
   assert.ok(
     !/\b0 impressions\b/.test(page),
     'an unreachable board must never render as zero reach'
