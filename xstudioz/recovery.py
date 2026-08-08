@@ -64,7 +64,14 @@ class StaleOrder:
     age_days: int
     band: str
     status: str
-    amount: float
+    #: None means the sheet's Order Amount cell is EMPTY, which is not zero.
+    #: It was `float` and built from `Order.revenue()`, which does
+    #: `(self.amount or 0.0)`. That is right for summing a month of revenue and
+    #: wrong here: two open orders had blank cells and were printed as "$0" on
+    #: the brief and the dashboard, next to real amounts, in the same typeface.
+    #: A reader has no way to tell "this order is worth nothing" from "nobody
+    #: recorded what this order is worth", and only one of those is a problem.
+    amount: float | None
     order_date: _dt.date
     project: str | None = None
     designer: str | None = None
@@ -77,7 +84,8 @@ class StaleOrder:
     def as_dict(self) -> dict[str, Any]:
         return {
             "client": self.client, "age_days": self.age_days, "band": self.band,
-            "status": self.status, "amount": round(self.amount, 2),
+            "status": self.status,
+            "amount": None if self.amount is None else round(self.amount, 2),
             "order_date": self.order_date.isoformat(), "project": self.project,
             "designer": self.designer, "csr": self.csr, "stale": self.is_stale,
         }
@@ -95,17 +103,34 @@ class OpenOrderBook:
 
     @property
     def total_value(self) -> float:
-        return sum(o.amount for o in self.orders)
+        """Only the orders whose amount is known. See `unpriced`."""
+        return sum(o.amount for o in self.orders if o.amount is not None)
 
     @property
     def stale_value(self) -> float:
-        return sum(o.amount for o in self.stale)
+        return sum(o.amount for o in self.stale if o.amount is not None)
+
+    @property
+    def unpriced(self) -> list[StaleOrder]:
+        """Open orders whose Order Amount cell is empty in the sheet.
+
+        Reported rather than absorbed. A total that silently skips them is a
+        floor presented as a total, and one that counts them as zero is worse.
+        """
+        return [o for o in self.orders if o.amount is None]
+
+    @property
+    def stale_unpriced(self) -> list[StaleOrder]:
+        return [o for o in self.stale if o.amount is None]
 
     def by_band(self) -> dict[str, dict[str, float]]:
-        out = {name: {"count": 0, "value": 0.0} for name, _, _ in BANDS}
+        out = {name: {"count": 0, "value": 0.0, "unpriced": 0} for name, _, _ in BANDS}
         for o in self.orders:
             out[o.band]["count"] += 1
-            out[o.band]["value"] += o.amount
+            if o.amount is None:
+                out[o.band]["unpriced"] += 1
+            else:
+                out[o.band]["value"] += o.amount
         for v in out.values():
             v["value"] = round(v["value"], 2)
         return out
@@ -118,8 +143,13 @@ class OpenOrderBook:
             "as_of": self.as_of.isoformat() if self.as_of else None,
             "open_count": len(self.orders),
             "open_value": round(self.total_value, 2),
+            # Every value above is a FLOOR when these are non-zero, and every
+            # renderer has to say so. Serialised beside the totals rather than
+            # left to be recomputed, so a page cannot show one without the other.
+            "open_unpriced": len(self.unpriced),
             "stale_count": len(self.stale),
             "stale_value": round(self.stale_value, 2),
+            "stale_unpriced": len(self.stale_unpriced),
             "stale_after_days": STALE_AFTER_DAYS,
             "bands": self.by_band(),
             "orders": [o.as_dict() for o in
@@ -149,7 +179,10 @@ def open_orders(orders: Iterable[C.Order], as_of: _dt.date,
             continue
         book.orders.append(StaleOrder(
             client=o.client, age_days=age, band=band_for(age),
-            status=o.status or "", amount=o.revenue(), order_date=o.order_date,
+            status=o.status or "",
+            # NOT `o.revenue()`: that folds a missing amount into 0.0.
+            amount=None if o.amount is None else (o.amount + (o.tip or 0.0)),
+            order_date=o.order_date,
             project=o.project, designer=o.logo_designer, csr=o.csr))
     return book
 

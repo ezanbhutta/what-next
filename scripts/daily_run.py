@@ -97,6 +97,13 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="emit the run JSON on stdout")
     ap.add_argument("--no-fetch", action="store_true",
                     help="skip the live snapshot endpoint; use on-disk only")
+    ap.add_argument("--allow-stale", action="store_true",
+                    help="build a brief even when the intake is not current. "
+                         "Only for backfills and debugging: the figures will "
+                         "describe the snapshot's date, not today's.")
+    ap.add_argument("--max-age-hours", type=float, default=26.0,
+                    help="refuse an intake older than this (default 26, which "
+                         "is one Fiverr publishing cycle plus a margin)")
     args = ap.parse_args()
 
     root = Path(args.root)
@@ -182,6 +189,42 @@ def main() -> int:
                       f"workbook. Re-export it, or restore a snapshot under "
                       f"{snap_dir}.", file=sys.stderr)
                 return 2
+
+    # ---- REFUSE TO BE WRONG, RATHER THAN TRY TO BE RIGHT --------------------
+    #
+    # The Routine fires every morning and this is the only thing standing
+    # between "it worked" and "it produced a confident brief about last
+    # Tuesday". Every other guard in this file catches a malformed input; this
+    # one catches a well-formed input that is simply old.
+    #
+    # It matters because the failure is invisible by construction. A run on a
+    # 44-hour-old snapshot produces a brief identical in every respect to a
+    # live one, and on 2026-08-07 the difference between those two was the
+    # whole verdict: BREACH at index 26 against HEALTHY at 79, because twelve
+    # orders had landed in between.
+    #
+    # So: current data, or no brief and a non-zero exit. A scheduled job that
+    # fails loudly gets fixed. One that succeeds quietly with old numbers does
+    # not, because nothing ever says it needs fixing.
+    if snap is not None and not args.allow_stale:
+        age = snap.age_hours()
+        if age > args.max_age_hours:
+            print(f"[error] the freshest snapshot is {age:.1f}h old, over the "
+                  f"{args.max_age_hours:.0f}h limit.", file=sys.stderr)
+            if not os.environ.get("XSTUDIOZ_SNAPSHOT_URL"):
+                print("[error] and XSTUDIOZ_SNAPSHOT_URL is not set in this "
+                      "shell, so nothing tried to fetch anything fresher. "
+                      "Export it and XSTUDIOZ_SNAPSHOT_TOKEN, then re-run.",
+                      file=sys.stderr)
+            else:
+                print("[error] the endpoint is configured but did not answer "
+                      "with anything newer. Check the Apps Script deployment.",
+                      file=sys.stderr)
+            print("[error] refusing to build a brief on stale data. Pass "
+                  "--allow-stale if you specifically want one, and read every "
+                  "figure in it as describing the snapshot's date.",
+                  file=sys.stderr)
+            return 2
 
     gig_p = latest_snapshot(raw / "gig", today, suffixes=(".json",))
     gig = json.loads(gig_p.read_text()) if gig_p else None

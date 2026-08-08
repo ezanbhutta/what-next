@@ -45,7 +45,14 @@ function rowLine(order) {
     <td class="cell-name">${order.client || safe('<span class="missing">no username</span>')}</td>
     <td class="cell-sub">${order.order_date || safe('<span class="missing">no date</span>')}</td>
     <td class="cell-sub">${order.status || safe('<span class="missing">no status</span>')}</td>
-    <td class="cell-figure">${order.amount ? money(order.amount) : safe('<span class="missing">None</span>')}</td>
+    <td class="cell-figure">${
+      // `money()` already prints MISSING for null/undefined and $0 for a real
+      // zero, which is exactly the distinction this column exists to show. The
+      // old branch printed the word "None" for both, so an order recorded as
+      // genuinely free and an order nobody priced looked identical here, on
+      // the page whose entire job is telling those apart.
+      order.amount === null || order.amount === undefined ? missing() : money(order.amount)
+    }</td>
   </tr>`;
 }
 

@@ -735,6 +735,16 @@ def _dispute_rules(disputes: Sequence[C.Dispute], today: _dt.date,
     return tasks
 
 
+def _money_or_missing(amount: float | None) -> str:
+    """`$1,234` or the word MISSING.
+
+    An open order whose Order Amount cell is empty carries None now. Printed
+    with `${:,.0f}` that is a crash; printed as 0 it is a lie in the one place
+    a reader is deciding what to chase first. House rule 2: absent is MISSING.
+    """
+    return "MISSING" if amount is None else f"${amount:,.0f}"
+
+
 def _recovery_rules(recovery: RecoveryBundle | None,
                     config: dict[str, Any]) -> list[Task]:
     """Money already committed or quoted that is not moving.
@@ -755,7 +765,9 @@ def _recovery_rules(recovery: RecoveryBundle | None,
     # -- stale open orders -------------------------------------------------
     stale = sorted(ob.stale, key=lambda o: -o.age_days)
     if stale:
-        named = [o for o in stale if o.amount > 0][:5]
+        # `is not None` first: an unpriced order has amount None now, and it
+        # must not be named with a fabricated figure beside it.
+        named = [o for o in stale if o.amount is not None and o.amount > 0][:5]
         oldest = stale[0]
         # Recovery here is not "win a new sale" — the buyer already committed.
         # It is closing out work that is owed, so the realistic ceiling is the
@@ -782,7 +794,7 @@ def _recovery_rules(recovery: RecoveryBundle | None,
                 "decides everything else and takes a minute per order.",
                 "Where we owe work — assign it to the designer named on the row "
                 "with a delivery date this week. Oldest first: " + ", ".join(
-                    f"{o.client} ({o.age_days}d, ${o.amount:,.0f})"
+                    f"{o.client} ({o.age_days}d, {_money_or_missing(o.amount)})"
                     for o in named[:3]) + ".",
                 "Where the client is silent — send one message that states what "
                 "was last delivered and asks a single closed question. Do not "
@@ -794,7 +806,7 @@ def _recovery_rules(recovery: RecoveryBundle | None,
             ],
             impact_usd=ob.stale_value * rate, confidence=0.6, effort_hours=3.0,
             priority="P0", urgency=2, playbook="playbooks/stale_orders.md",
-            refs=[f"{o.client}: {o.age_days}d, ${o.amount:,.0f}, {o.status}"
+            refs=[f"{o.client}: {o.age_days}d, {_money_or_missing(o.amount)}, {o.status}"
                   for o in stale[:10]]))
 
     # -- quotes nobody ever chased ----------------------------------------

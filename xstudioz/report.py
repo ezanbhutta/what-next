@@ -123,7 +123,8 @@ def render_markdown(
             out.append("| :-- | --: | :-- | --: | :-- |")
             for o in ob.oldest(8):
                 out.append(f"| {o.client} | {o.age_days}d | {o.status} | "
-                           f"${o.amount:,.0f} | {o.designer or '—'} |")
+                           f"{'MISSING' if o.amount is None else f'${o.amount:,.0f}'} "
+                           f"| {o.designer or '—'} |")
             out.append("")
         if qb.untouched:
             out.append(f"**Quotes with no follow-up ever logged** — "
@@ -281,6 +282,13 @@ def render_markdown(
         out.append(f"- **AOV:** raise AOV to {_fmt_money(ra['required_aov'])} "
                    f"({ra['uplift_vs_current']:+.0%}). This is the route the "
                    f"constraint leaves open.")
+        out.append("")
+    elif gap.get("status") == "no_target":
+        out.append("**No 30-day revenue target is set**, so nothing here can say "
+                   "whether the month is on track. Set "
+                   "`targets.monthly_revenue.t30` in `config/profile.yml`. This "
+                   "line used to read \"On track against the 30-day target\", "
+                   "which a target of zero clears every single day.")
         out.append("")
     else:
         out.append("On track against the 30-day target.")

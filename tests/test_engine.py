@@ -2231,3 +2231,83 @@ def test_publishing_without_a_run_is_an_error_not_a_no_op(tmp_path):
     # No run json. Publishing yesterday's data under today's name is worse than
     # publishing nothing, because the page then dates stale figures as current.
     assert mod.publish(tmp_path, dt.date(2026, 8, 7)) == 2
+
+
+# ---------------------------------------------------------------------------
+# The daily run refuses stale intake rather than reporting it confidently
+# ---------------------------------------------------------------------------
+#
+# Every other guard in daily_run.py catches a malformed input. This one catches
+# a WELL-FORMED input that is simply old, which is the harder case: a run on a
+# 44-hour-old snapshot produces a brief identical in every respect to a live
+# one. On 2026-08-07 the difference between those two was the whole verdict,
+# BREACH at index 26 against HEALTHY at 79, because twelve orders had landed in
+# between and nothing on the page said which snapshot it was looking at.
+
+def test_the_runner_refuses_a_stale_snapshot_and_says_why(tmp_path, monkeypatch):
+    import os, subprocess, sys as _sys, shutil
+    root = Path(__file__).resolve().parent.parent
+
+    env = dict(os.environ)
+    env.pop("XSTUDIOZ_SNAPSHOT_URL", None)
+    env.pop("XSTUDIOZ_SNAPSHOT_TOKEN", None)
+
+    # A snapshot dated well in the past, and nothing newer.
+    work = tmp_path / "repo"
+    shutil.copytree(root, work, ignore=shutil.ignore_patterns(
+        ".git", "__pycache__", "node_modules", "*.pyc", "system"))
+    snaps = work / "data" / "raw" / "snapshots"
+    for p in snaps.glob("*.json"):
+        p.unlink()
+    # Reuse a real snapshot body but stamp it old, so this exercises the age
+    # check rather than a parse failure.
+    src = sorted((root / "data" / "raw" / "snapshots").glob("*.json"))
+    if not src:
+        pytest.skip("no snapshot on disk to age")
+    body = json.loads(src[-1].read_text())
+    body["generated_at"] = "2026-01-01T00:00:00.000Z"
+    (snaps / "2026-01-01.json").write_text(json.dumps(body))
+
+    r = subprocess.run(
+        [_sys.executable, "scripts/daily_run.py", "--date", "2026-08-07",
+         "--dry-run", "--quiet", "--no-fetch"],
+        cwd=work, env=env, capture_output=True, text=True, timeout=300)
+
+    assert r.returncode == 2, (
+        f"a stale snapshot produced exit {r.returncode}. It must be 2: a "
+        f"scheduled job that fails loudly gets fixed, one that succeeds "
+        f"quietly with old numbers never does.\n{r.stderr[-800:]}")
+    assert "refusing to build a brief on stale data" in r.stderr
+    assert "XSTUDIOZ_SNAPSHOT_URL is not set" in r.stderr, (
+        "the message must name the actual cause. 'stale' is the symptom; the "
+        "cause here is that nothing even tried to fetch anything fresher.")
+
+    # And the escape hatch works, because backfills legitimately need it.
+    r2 = subprocess.run(
+        [_sys.executable, "scripts/daily_run.py", "--date", "2026-08-07",
+         "--dry-run", "--quiet", "--no-fetch", "--allow-stale"],
+        cwd=work, env=env, capture_output=True, text=True, timeout=300)
+    assert r2.returncode == 0, f"--allow-stale should still build: {r2.stderr[-500:]}"
+
+
+def test_a_missing_revenue_target_is_never_reported_as_on_track():
+    """The most confident sentence on the brief was the least grounded.
+
+    `config.targets.monthly_revenue` does not exist, so `t30` defaulted to 0,
+    every projection cleared it, and the brief printed "On track against the
+    30-day target." A target of zero is cleared by any revenue at all.
+    """
+    from xstudioz import forecast
+    gap = forecast.gap_analysis(5000.0, 0.0, 137.0, 1.2, days=30)
+    # The arithmetic is not the bug; the CLAIM built on it is.
+    assert gap["status"] == "on_track", "baseline: zero target reads as on track"
+
+    # The pipeline must override that, and the override has to survive the
+    # SECOND gap computation, which is the one that reaches the brief. It was
+    # applied only to the first, and the second silently overwrote it.
+    src = (Path(__file__).resolve().parent.parent / "xstudioz" / "pipeline.py").read_text()
+    assert src.count('gap["status"] = "no_target"') >= 2, (
+        "the missing-target override must be applied to BOTH gap computations. "
+        "Applied to only the first, the recompute at the recommended rate wipes "
+        "it and the run JSON says on_track while the violation beside it says "
+        "no target exists.")

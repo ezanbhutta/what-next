@@ -8,23 +8,23 @@
 
 | Open orders | Count | Value |
 | :-- | --: | --: |
-| 0-7 days | 7 | $770 |
+| 0-7 days | 7 | $910 |
 | 8-30 days | 6 | $1,560 |
 | 31-60 days | 2 | $400 |
 | 60+ days ⚠️ | 14 | $1,905 |
-| **All open** | **29** | **$4,635** |
+| **All open** | **29** | **$4,775** |
 
 **Oldest open orders**
 
 | Client | Age | Status | Value | Designer |
 | :-- | --: | :-- | --: | :-- |
 | osmanbey_35 | 274d | in_progress | $250 | Aashir |
-| faisalkazmi53 | 190d | in_progress | $0 | Shaoor |
+| faisalkazmi53 | 190d | in_progress | MISSING | Shaoor |
 | andrem530 | 165d | revision | $295 | Amin |
 | jordyspikker | 146d | revision | $100 | Ahmed Ashfaq |
 | calumsnell | 144d | revision | $100 | Nime |
 | kuykendalljr | 141d | in_progress | $75 | Saad Sajid |
-| vickizhou318 | 132d | in_progress | $0 | — |
+| vickizhou318 | 132d | in_progress | MISSING | — |
 | paolowhite | 104d | revision | $320 | Zahid |
 
 **Quotes with no follow-up ever logged** — 5 worth $527
@@ -42,7 +42,7 @@
 ### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
 **Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
 
-*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.839 -> 4.837) across 1,606 reviews, and that rating is what every future buyer sorts on. The order is worth ~$94; the rating damage is worth far more.
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0024 (4.839 -> 4.837) across 1,606 reviews, and that rating is what every future buyer sorts on. The order is worth ~$95; the rating damage is worth far more.
 
 - Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
 - Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
@@ -55,7 +55,7 @@
 ### P0 · Close out 14 orders open more than 60 days ($1,905)
 **Owner:** Ezan · **Est. impact:** $762 · **Effort:** 3.0h · **Confidence:** 60%
 
-*Why:* 14 orders worth $1,905 have been open longer than 60 days, out of 29 open orders worth $4,635 in total. The oldest is osmanbey_35 at 274 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.
+*Why:* 14 orders worth $1,905 have been open longer than 60 days, out of 29 open orders worth $4,775 in total. The oldest is osmanbey_35 at 274 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.
 
 - Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.
 - Where we owe work — assign it to the designer named on the row with a delivery date this week. Oldest first: osmanbey_35 (274d, $250), andrem530 (165d, $295), jordyspikker (146d, $100).
@@ -63,12 +63,12 @@
 - Where it is genuinely dead — set the status so it stops appearing here, and note why in the CSR column.
 - Anything still open at this time next week gets escalated, not re-listed.
 - Script: `playbooks/stale_orders.md`
-- Source rows: `osmanbey_35: 274d, $250, in_progress`, `faisalkazmi53: 190d, $0, in_progress`, `andrem530: 165d, $295, revision`, `jordyspikker: 146d, $100, revision`, `calumsnell: 144d, $100, revision`, `kuykendalljr: 141d, $75, in_progress`, `vickizhou318: 132d, $0, in_progress`, `paolowhite: 104d, $320, revision`, `alialbalawi896: 99d, $115, revision`, `elite9921: 98d, $105, in_progress`
+- Source rows: `osmanbey_35: 274d, $250, in_progress`, `faisalkazmi53: 190d, MISSING, in_progress`, `andrem530: 165d, $295, revision`, `jordyspikker: 146d, $100, revision`, `calumsnell: 144d, $100, revision`, `kuykendalljr: 141d, $75, in_progress`, `vickizhou318: 132d, MISSING, in_progress`, `paolowhite: 104d, $320, revision`, `alialbalawi896: 99d, $115, revision`, `elite9921: 98d, $105, in_progress`
 
-### P0 · Fill revenue in the daily ledger (139 days blank)
+### P0 · Fill revenue in the daily ledger (144 days blank)
 **Owner:** Whoever owns the daily ledger · **Est. impact:** $2,000 · **Effort:** 2.0h · **Confidence:** 90%
 
-*Why:* 139 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.
+*Why:* 144 ledger days record orders but $0 revenue. Every revenue forecast, the AOV target and the whole revenue side of the objective are currently inferred from the CRM sheet instead of measured, because this column is empty.
 
 - Fill every revenue column in the ledger for every day that recorded orders.
 - Backfill from 2026-06-11 forward — that is where the ledger starts.
@@ -97,7 +97,7 @@
 ### P2 · Start recording upsells — the column is empty
 **Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
-*Why:* Upsell is marked on 0.0% of the 108 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+*Why:* Upsell is marked on 0.0% of the 117 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
 
 - Fill the Upsell column on every order: TRUE/FALSE, no blanks.
 - Fill 'What did you upsell and how much' whenever TRUE.
@@ -129,7 +129,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #4 — Calum Snell
-**Owner:** Delivery lead · **Est. impact:** $84 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $85 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -140,7 +140,7 @@
 - Source rows: `order_tracker/tracker#b0r3`
 
 ### P3 · Close out approved order #6 — bethanyjademck
-**Owner:** Delivery lead · **Est. impact:** $84 · **Effort:** 1.0h · **Confidence:** 80%
+**Owner:** Delivery lead · **Est. impact:** $85 · **Effort:** 1.0h · **Confidence:** 80%
 
 *Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
 
@@ -203,7 +203,7 @@ Standing duties, every shift:
 ### Nadir · csr · 21:00-09:00 PKT
 *3 task(s), ~2.8h*
 
-- **P0** Fill revenue in the daily ledger (139 days blank)
+- **P0** Fill revenue in the daily ledger (144 days blank)
 - **P2** Upsell andrem530 (order #1)
 - **P3** Upsell bethanyjademck (order #6)
 
@@ -269,11 +269,11 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 
 | Resolve on | Prediction | 80% interval | Confidence |
 |---|---|---|---|
-| 2026-08-14 | Organic orders over the 7 days to 14 Aug will be 11.4 (80% CI 7.0-15.7). | 7.04 – 15.67 | medium |
+| 2026-08-14 | Organic orders over the 7 days to 14 Aug will be 11.3 (80% CI 7.0-15.6). | 7.03 – 15.65 | medium |
 | 2026-08-21 | Organic health index in 14 days will be 79 (80% CI 44-110). | 44.33 – 110.24 | medium |
-| 2026-08-14 | Total orders/day averaged over the next 7 days will be 5.02 (80% CI 3.94-6.11). | 3.94 – 6.11 | medium |
-| 2026-09-06 | Blended AOV in 30 days will be $94 (80% CI $82-$108). | 82.01 – 108.11 | high |
-| 2026-08-14 | Inquiry->order conversion in 7 days will be 18.8% (80% CI 16.2%-21.7%). | 0.16 – 0.22 | high |
+| 2026-08-14 | Total orders/day averaged over the next 7 days will be 5.06 (80% CI 3.98-6.15). | 3.98 – 6.15 | medium |
+| 2026-09-06 | Blended AOV in 30 days will be $95 (80% CI $83-$110). | 83.09 – 109.55 | high |
+| 2026-08-14 | Inquiry->order conversion in 7 days will be 20.0% (80% CI 17.2%-23.1%). | 0.17 – 0.23 | high |
 
 **Track record:** 67 resolved, coverage 57% 
 (target 80%), median absolute error 14%.
@@ -285,32 +285,32 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 
 | Metric | Value | Note |
 |---|---|---|
-| Organic orders/day (7d MA) | 1.43 | vs 0.29 14d ago |
-| Organic, recent vs earlier | 0.84/day | was 0.66/day (+28.0%) |
-| Organic orders, last 7d | 9 | 1.29/day |
-| AOV | $94 | median $80, n=81 priced orders |
-| Lifetime tracked revenue | $7,582 | across 108 order rows |
-| Inquiry conversion | 18.8% | 13/69 |
+| Organic orders/day (7d MA) | 1.43 | vs 0.57 14d ago |
+| Organic, recent vs earlier | 0.85/day | was 0.66/day (+28.9%) |
+| Organic orders, last 7d | 10 | 1.43/day |
+| AOV | $95 | median $80, n=83 priced orders |
+| Lifetime tracked revenue | $7,872 | across 117 order rows |
+| Inquiry conversion | 20.0% | 14/70 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 52.8% | 57/108 orders that could be rated |
+| Review capture | 50.4% | 59/117 orders that could be rated |
 | Gig rating | 4.839 | 1,606 reviews, Level 2 |
 | Orders in queue | 25 | live from the gig page |
 
 ### Revenue path
 
-At 1.43 orders/day and $94 AOV, the next 30 days project **$4,011** (43 orders).
+At 1.43 orders/day and $95 AOV, the next 30 days project **$4,065** (43 orders).
 
-On track against the 30-day target.
+**No 30-day revenue target is set**, so nothing here can say whether the month is on track. Set `targets.monthly_revenue.t30` in `config/profile.yml`. This line used to read "On track against the 30-day target", which a target of zero clears every single day.
 
 ### Funnel leverage
 
 | Segment | n | Conversion | Lower bound |
 |---|---|---|---|
-| Shift: Night | 18 | 33.3% | 16.3% |
+| Shift: Night | 18 | 38.9% | 20.3% |
 | Shift: Evening | 27 | 18.5% | 8.2% |
 | Shift: Morning | 24 | 8.3% | 2.3% |
+| United States | 17 | 29.4% | 13.3% |
 | United Kingdom | 26 | 23.1% | 11.0% |
-| United States | 16 | 25.0% | 10.2% |
 
 Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank large ones.
 
@@ -322,10 +322,10 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 | Feed | State | As of | Age | Where it comes from |
 |---|---|---|---|---|
 | Snapshot credentials | 🟢 live | — | 0h | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
-| Order and inquiry workbooks | 🟢 live | 2026-08-07T20:19:07.850000+00:00 | 0h | Apps Script snapshot endpoint |
-| Impressions sheet (engine) | 🟢 live | 2026-08-06 | 32h | Daily Data Sheet, via the snapshot |
-| Fiverr gig page | 🟢 live | 2026-08-06 | 32h | browser capture into data/raw/gig/ |
-| CSR handoff tracker | 🟢 live | 2026-07-29 | 229h | uploaded into data/raw/order_tracker/ |
+| Order and inquiry workbooks | 🟢 live | 2026-08-08T06:39:02.179000+00:00 | 0h | Apps Script snapshot endpoint |
+| Impressions sheet (engine) | 🟢 live | 2026-08-06 | 43h | Daily Data Sheet, via the snapshot |
+| Fiverr gig page | 🟢 live | 2026-08-06 | 43h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟢 live | 2026-07-29 | 240h | uploaded into data/raw/order_tracker/ |
 
 
 

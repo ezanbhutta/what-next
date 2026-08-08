@@ -246,6 +246,25 @@ def run_daily(
     # every rate current would, applied here, hide the whole point.
     recov = recovery.compute(all_orders, all_leads, today, profile_name)
 
+    # ---- figures that are unknown, not zero ------------------------------
+    #
+    # An open order whose Order Amount cell is empty used to print as "$0" on
+    # the brief and the dashboard, beside real amounts, in the same typeface.
+    # Nothing about it looked wrong and a reader had no way to tell "worth
+    # nothing" from "nobody wrote down what it is worth" — and only the second
+    # is somebody's job today.
+    #
+    # It is MISSING everywhere now, and it lands on /errors as a row with a
+    # name, because the fix is not in this repo: somebody has to open the sheet
+    # and type the number.
+    for o in recov.open_book.unpriced:
+        vrep.add(
+            "warn", "data", "order_amount_missing",
+            f"{o.client} — open {o.age_days} days on \"{o.project or 'no project named'}\" "
+            f"with an empty Order Amount. Every money figure that includes this "
+            f"order is a floor, not a total.",
+            ref=f"{o.client}|{o.order_date.isoformat()}")
+
     # ---- dosing ----------------------------------------------------------
     state_path = root / "data" / "state" / "controller.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
@@ -253,11 +272,33 @@ def run_daily(
                 if state.get("cooldown_until") else None)
 
     current_vvro = bundle.flow_7d.vvro / 7 if bundle.flow_7d.days else 0.0
+    # A TARGET THAT IS NOT CONFIGURED IS NOT A TARGET OF ZERO.
+    #
+    # `config.targets` has no `monthly_revenue` key and never has. This lookup
+    # missed, `t30` defaulted to 0, every projection cleared it, and the brief
+    # printed "On track against the 30-day target." — against a target nobody
+    # had set. It is the most confident sentence on the page and it was the
+    # least grounded.
     targets = config.get("targets", {}).get("monthly_revenue", {})
+    t30 = targets.get("t30")
+    has_target = t30 is not None and float(t30) > 0
     aov = bundle.econ.aov or 137.0
     proj = forecast.revenue_projection(bundle, current_vvro, days=30)
-    gap = forecast.gap_analysis(proj["projected_revenue"], float(targets.get("t30", 0)),
+    gap = forecast.gap_analysis(proj["projected_revenue"], float(t30 or 0),
                                 aov, proj["total_rate"], days=30)
+    if not has_target:
+        # Overwrite the verdict rather than leave a computed one standing. The
+        # arithmetic is fine; it is the CLAIM that is unsupported.
+        gap["status"] = "no_target"
+        gap["target"] = None
+        vrep.add(
+            "warn", "config", "revenue_target_missing",
+            "No 30-day revenue target is configured (config/profile.yml, "
+            "targets.monthly_revenue.t30), so nothing can say whether the "
+            "month is on track. The brief said \"On track against the 30-day "
+            "target\" for as long as this has been missing, because a target "
+            "of zero is cleared by any revenue at all.",
+            ref="config/profile.yml targets.monthly_revenue")
 
     dosing_on = bool(config.get("dosing", {}).get("enabled", True))
     plan = dosing.decide(
@@ -270,9 +311,18 @@ def run_daily(
     if not dosing_on:
         plan = dosing.disabled_plan(today, profile_name)
     # Recompute the projection at the *recommended* rate, not the current one.
+    #
+    # THIS IS THE ONE THAT REACHES THE BRIEF, so the missing-target override has
+    # to be applied here too. It was applied only to the first computation
+    # above, and this line then overwrote it with a fresh "on_track" — the run
+    # JSON kept saying on_track while the violation beside it said no target
+    # existed. Two computations of one figure, and the second one wins silently.
     proj = forecast.revenue_projection(bundle, plan.target_rate, days=30)
-    gap = forecast.gap_analysis(proj["projected_revenue"], float(targets.get("t30", 0)),
+    gap = forecast.gap_analysis(proj["projected_revenue"], float(t30 or 0),
                                 aov, proj["total_rate"], days=30)
+    if not has_target:
+        gap["status"] = "no_target"
+        gap["target"] = None
 
     # ---- ledger ----------------------------------------------------------
     led = L.Ledger(root / "data" / "state" / "predictions.jsonl")
