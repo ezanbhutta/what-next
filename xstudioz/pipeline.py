@@ -221,10 +221,8 @@ def run_daily(
             tolerance=float(obj.get("tolerance", -0.05)),
             max_vvro_share=float(dcfg.get("max_vvro_share", 0.45)),
             vvro_start=vvro_start),
-        flow_7d=metrics.flow_window(data.flow, profile_name,
-                                    today - _dt.timedelta(days=6), today),
-        flow_28d=metrics.flow_window(data.flow, profile_name,
-                                     today - _dt.timedelta(days=27), today),
+        flow_7d=metrics.flow_window_to(data.flow, profile_name, 7, today),
+        flow_28d=metrics.flow_window_to(data.flow, profile_name, 28, today),
         funnel=metrics.funnel_metrics(
             w_leads,
             min_sample=int((win.get("min_sample") or {}).get("conversion", 0)),
@@ -264,6 +262,26 @@ def run_daily(
             f"with an empty Order Amount. Every money figure that includes this "
             f"order is a floor, not a total.",
             ref=f"{o.client}|{o.order_date.isoformat()}")
+
+    # A WINDOW THAT SLID BACKWARDS HAS TO SAY SO.
+    #
+    # flow_7d and flow_28d anchor on the last day the ledger reports rather
+    # than on the run date, so the run and the constraint metric describe the
+    # same days instead of two windows one day apart wearing the same label.
+    # The price of that is a ledger which stops moving slides the window
+    # backwards without changing anything on the page, so the drift is a
+    # violation past the one day that is normal.
+    lag = bundle.flow_7d.lag_days
+    if lag >= 2:
+        vrep.add(
+            "warn", "flow", "flow_ledger_behind",
+            f"The order ledger's newest day is "
+            f"{bundle.flow_7d.end.isoformat()}, {lag} days before this run. "
+            f"Every flow figure describes the 7 days to "
+            f"{bundle.flow_7d.end.isoformat()}, not to {today.isoformat()}. "
+            f"One day behind is Fiverr publishing at midday; {lag} is somebody "
+            f"having stopped filling the sheet in.",
+            ref=f"flow_7d {bundle.flow_7d.start.isoformat()}..{bundle.flow_7d.end.isoformat()}")
 
     # ---- dosing ----------------------------------------------------------
     state_path = root / "data" / "state" / "controller.json"

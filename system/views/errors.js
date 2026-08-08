@@ -46,12 +46,18 @@ function rowLine(order) {
     <td class="cell-sub">${order.order_date || safe('<span class="missing">no date</span>')}</td>
     <td class="cell-sub">${order.status || safe('<span class="missing">no status</span>')}</td>
     <td class="cell-figure">${
-      // `money()` already prints MISSING for null/undefined and $0 for a real
-      // zero, which is exactly the distinction this column exists to show. The
-      // old branch printed the word "None" for both, so an order recorded as
-      // genuinely free and an order nobody priced looked identical here, on
-      // the page whose entire job is telling those apart.
-      order.amount === null || order.amount === undefined ? missing() : money(order.amount)
+      // NO BRANCH HERE. `money()` already prints MISSING for null/undefined
+      // and $0 for a real zero, which is exactly the distinction this column
+      // exists to show: an order recorded as genuinely free and an order
+      // nobody priced are different facts, and the first cut of this printed
+      // the word "None" for both.
+      //
+      // The fix for that was a ternary calling `missing()`, which this file
+      // does not import. Six orders carry a null amount, so /errors was a hard
+      // 500 — on the one page whose entire job is showing those six rows, and
+      // only on the rows it exists for. Every test passed: none of them
+      // rendered a null amount.
+      money(order.amount)
     }</td>
   </tr>`;
 }

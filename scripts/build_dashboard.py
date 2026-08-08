@@ -90,6 +90,17 @@ def plural(n: int, one: str, many: str | None = None) -> str:
     return one if n == 1 else (many or one + "s")
 
 
+def _daymon(iso: str | None) -> str:
+    """'2026-08-07' -> '7 Aug'. Returns the input unchanged if it is not a
+    date, rather than raising inside a card and taking the page with it."""
+    if not iso:
+        return "—"
+    try:
+        return datetime.strptime(str(iso)[:10], "%Y-%m-%d").strftime("%-d %b")
+    except (ValueError, TypeError):
+        return str(iso)
+
+
 # ---------------------------------------------------------------------- FONTS
 # Inter for the interface, JetBrains Mono for anything a reader compares down a
 # column: figures, dates, ids. Both are the latin subset of the variable font,
@@ -810,13 +821,29 @@ def view_orders(run: dict) -> str:
               if breached else "Healthy. No constraint blocking growth.",
               "bad" if breached else "good")]
 
+    # NAME THE SEVEN DAYS. The ledger is a day behind the run because Fiverr
+    # publishes at midday, so "7d" has never meant the seven days ending today
+    # — and when the sheet stops being filled in it slides further without
+    # anything on the card changing.
+    _end, _lag = f7.get("end"), f7.get("lag_days") or 0
+    _win = f"7d to {_daymon(_end)}" if _end else "7d"
+    _note = f"ledger {_lag} days behind this run" if _lag >= 2 else "7-day mean"
+
     o.append('<div class="stats">'
-             + stat("Organic, 7d", num(f7.get("organic")), "orders")
-             + stat("Directed, 7d", num(f7.get("vvro")), "orders")
+             + stat(f"Organic, {_win}", num(f7.get("organic")), "orders")
+             + stat(f"Directed, {_win}", num(f7.get("vvro")), "orders")
              + stat("Directed share", pct(f7.get("vvro_share")), "of all orders",
                     "bad" if (f7.get("vvro_share") or 0) > .6 else "")
-             + stat("Orders/day", num(f7.get("total_per_day"), 1), "7-day mean")
+             + stat("Orders/day", num(f7.get("total_per_day"), 1), _note,
+                    "warn" if _lag >= 2 else "")
              + "</div>")
+    if _lag >= 2:
+        o.append(banner("bad", "!",
+                        f"<b>These figures end {e(_daymon(_end))}, not today.</b> "
+                        f"The order ledger's newest day is {_lag} days before this run. "
+                        "One day behind is Fiverr publishing at midday; more than that "
+                        "means the sheet has stopped being filled in, and every flow "
+                        "number on this page describes a week further back than it looks."))
 
     # The volume controller is switched off as policy. When it is off there is
     # no instruction to give, and printing a zeroed quota would put a retired

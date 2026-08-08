@@ -2311,3 +2311,105 @@ def test_a_missing_revenue_target_is_never_reported_as_on_track():
         "Applied to only the first, the recompute at the recommended rate wipes "
         "it and the run JSON says on_track while the violation beside it says "
         "no target exists.")
+
+
+# =========================================================================
+# The two "last 7 days" figures
+# =========================================================================
+
+def test_the_seven_day_window_is_the_ledgers_seven_days_not_the_calendars():
+    """Fiverr publishes a day's figures around midday the next day, so the run
+    date is never in the ledger. A literal `as_of - 6 .. as_of` window
+    therefore ends on a day that cannot have data yet.
+
+    That is not merely a diluted denominator. `organic_health` has always
+    anchored on the last reported day, so the same run carried two "last 7
+    days" figures four lines apart over two different weeks. Measured on
+    2026-08-08 against a ledger ending 2026-08-07: health said 4.857
+    orders/day at 70.6% directed over 01-07 Aug, flow_7d said 4.571 at 68.8%
+    over 02-08 Aug. Both plausible, both labelled the same, and nothing on the
+    page named either window.
+    """
+    # Ten days of ledger, none for the run date.
+    start = dt.date(2026, 8, 1)
+    rows = _flow([(start + dt.timedelta(days=i), 1.0, 2.0) for i in range(7)])
+    last = start + dt.timedelta(days=6)          # 2026-08-07
+    as_of = last + dt.timedelta(days=1)          # the morning run, 08-08
+
+    w = metrics.flow_window_to(rows, "X", 7, as_of)
+    assert w.end == last, "the window must end on the last day the ledger reports"
+    assert w.start == start
+    assert w.days == 7
+    assert w.lag_days == 1, "one day behind is normal and must still be recorded"
+
+    # And it must now agree with the constraint metric, which is the whole point.
+    h = metrics.organic_health(rows, "X", as_of)
+    assert abs(w.total_per_day - h.total_per_day_7d) < 1e-9, (
+        "flow_7d and health disagree about the last seven days. They are "
+        "printed four lines apart under the same label.")
+    assert abs(w.vvro_share - h.vvro_share_7d) < 1e-9
+
+
+def test_a_ledger_that_stops_moving_does_not_slide_the_window_silently():
+    """Anchoring on the ledger is right, and it buys a new way to be wrong: a
+    sheet nobody fills in slides the window backwards for ever while every
+    figure stays plausible. The lag is on the record so the pipeline can raise
+    it."""
+    start = dt.date(2026, 8, 1)
+    rows = _flow([(start + dt.timedelta(days=i), 1.0, 2.0) for i in range(7)])
+    w = metrics.flow_window_to(rows, "X", 7, dt.date(2026, 8, 20))
+    assert w.end == dt.date(2026, 8, 7)
+    assert w.lag_days == 13
+    src = (ROOT / "xstudioz" / "pipeline.py").read_text()
+    assert "flow_ledger_behind" in src, (
+        "a window that has slid backwards must raise a violation, or a dead "
+        "sheet reads as a quiet week for ever")
+
+
+def test_the_run_json_says_which_seven_days_it_means():
+    """`breach_reasons` once failed to reach the run JSON and the dashboard
+    printed "No breach" under a BREACH badge. Window dates are the same shape
+    of omission: a rate whose window nobody can see cannot be checked against
+    anything."""
+    start = dt.date(2026, 8, 1)
+    rows = _flow([(start + dt.timedelta(days=i), 1.0, 2.0) for i in range(7)])
+    bundle = metrics.compute([], [], rows, "X", dt.date(2026, 8, 8))
+    d = bundle.as_dict()
+    for key in ("flow_7d", "flow_28d"):
+        block = d[key]
+        for field_name in ("start", "end", "days", "asked_end", "lag_days"):
+            assert field_name in block, f"{key} must serialise {field_name}"
+        assert block["end"] == "2026-08-07"
+        assert block["asked_end"] == "2026-08-08"
+        assert block["lag_days"] == 1
+
+
+def test_the_page_names_the_seven_days_it_is_reporting():
+    """"7d" has never meant the seven days ending today. The ledger runs a day
+    behind because Fiverr publishes at midday, and further behind whenever the
+    sheet stops being filled in — and neither shows on a card labelled "7d".
+
+    So the card carries the end date, and the run JSON it was built from has to
+    agree with it. Two places printing a window is how the first version of
+    this went wrong.
+    """
+    import pathlib, json, datetime as _d
+    reports = pathlib.Path(__file__).parent.parent / "reports"
+    html = (reports / "dashboard.html").read_text()
+    runs = sorted(reports.glob("*-run.json"))
+    assert runs, "no run JSON to check the dashboard against"
+    run = json.loads(runs[-1].read_text())
+    f7 = run["metrics"]["flow_7d"]
+
+    end = _d.date.fromisoformat(f7["end"])
+    label = f"7d to {end.day} {end.strftime('%b')}"
+    assert label in html, (
+        f"the flow cards must name their window; expected {label!r}. A bare "
+        f'"7d" reads as the seven days ending today, which is never the seven '
+        f"days the ledger holds.")
+
+    # And a ledger that has slid must shout rather than re-label quietly.
+    if (f7.get("lag_days") or 0) >= 2:
+        assert "not today" in html, (
+            "the ledger is 2+ days behind and the page does not say the "
+            "figures end before today")

@@ -107,7 +107,13 @@ def pct_change(new: float, old: float) -> float | None:
 
 @dataclass
 class FlowWindow:
-    """Order flow for one profile over a contiguous date range."""
+    """Order flow for one profile over a contiguous date range.
+
+    ``end`` is the last day the LEDGER holds, which is not always the day the
+    run was made for — see ``flow_window_to``. ``asked_end`` records the day
+    that was asked for, so the difference is on the record rather than absorbed
+    into a denominator.
+    """
     profile: str
     start: _dt.date
     end: _dt.date
@@ -115,6 +121,21 @@ class FlowWindow:
     organic: float
     vvro: float
     revenue: float
+    #: The date the caller asked for, when it differs from ``end``.
+    asked_end: _dt.date | None = None
+
+    @property
+    def lag_days(self) -> int:
+        """How far behind the requested date the ledger actually reaches.
+
+        One is normal: Fiverr publishes a day's figures around midday the next
+        day, so a morning run is always a day ahead of the ledger. More than
+        that means somebody has stopped filling the sheet in, and the window is
+        describing a period further back than its label suggests.
+        """
+        if self.asked_end is None:
+            return 0
+        return max(0, (self.asked_end - self.end).days)
 
     @property
     def total(self) -> float:
@@ -162,7 +183,8 @@ def flow_series(rows: Iterable[C.DailyFlow], profile: str
 
 
 def flow_window(rows: Iterable[C.DailyFlow], profile: str,
-                start: _dt.date, end: _dt.date) -> FlowWindow:
+                start: _dt.date, end: _dt.date,
+                asked_end: _dt.date | None = None) -> FlowWindow:
     sel = [r for r in rows if r.profile == profile and start <= r.date <= end]
     days = (end - start).days + 1
     return FlowWindow(
@@ -170,7 +192,46 @@ def flow_window(rows: Iterable[C.DailyFlow], profile: str,
         organic=sum(r.organic_orders for r in sel),
         vvro=sum(r.vvro_orders for r in sel),
         revenue=sum(r.total_revenue for r in sel),
+        asked_end=asked_end,
     )
+
+
+def last_flow_day(rows: Iterable[C.DailyFlow], profile: str,
+                  as_of: _dt.date) -> _dt.date | None:
+    """The newest day the ledger holds for this profile, at or before ``as_of``."""
+    days = [r.date for r in rows if r.profile == profile and r.date <= as_of]
+    return max(days) if days else None
+
+
+def flow_window_to(rows: Iterable[C.DailyFlow], profile: str,
+                   span_days: int, as_of: _dt.date) -> FlowWindow:
+    """The last ``span_days`` days the ledger actually reports, ending at or
+    before ``as_of``.
+
+    WHY THIS IS NOT SIMPLY as_of-6 .. as_of
+    ---------------------------------------
+    Fiverr publishes a day's figures around midday the following day, so the
+    ledger is always a day behind and the run date is never in it. A literal
+    calendar window therefore ends on a day that cannot have data yet, and
+    dividing by seven calendar days when only six are reported understates the
+    rate every single morning.
+
+    Worse, it disagreed with the constraint metric while wearing the same
+    label. `organic_health` has always anchored on the last reported day, so on
+    2026-08-08 the same run carried two "last 7 days" figures four lines apart:
+    4.857 orders/day at 70.6% directed from health, and 4.571 at 68.8% from
+    flow_7d, because they covered 01-07 Aug and 02-08 Aug respectively. Nothing
+    on the page said which seven days either meant.
+
+    Anchoring both on the ledger makes them the same seven days by
+    construction rather than by coincidence. The cost is that a ledger which
+    has stopped moving slides the window backwards silently, so the window
+    carries `asked_end` and `lag_days` and the pipeline raises
+    `flow_ledger_behind` past the one day that is normal.
+    """
+    end = last_flow_day(rows, profile, as_of) or as_of
+    start = end - _dt.timedelta(days=span_days - 1)
+    return flow_window(rows, profile, start, end, asked_end=as_of)
 
 
 @dataclass
@@ -876,16 +937,12 @@ class MetricBundle:
                 "structural_post": self.health.structural_post,
                 "components": self.health.components,
             },
-            "flow_7d": {
-                "organic": self.flow_7d.organic, "vvro": self.flow_7d.vvro,
-                "total_per_day": round(self.flow_7d.total_per_day, 3),
-                "vvro_share": round(self.flow_7d.vvro_share, 4),
-            },
-            "flow_28d": {
-                "organic": self.flow_28d.organic, "vvro": self.flow_28d.vvro,
-                "total_per_day": round(self.flow_28d.total_per_day, 3),
-                "vvro_share": round(self.flow_28d.vvro_share, 4),
-            },
+            # The dates go out with the figures. Without them a reader has a
+            # rate and no way to know which seven days it covers, which is how
+            # this block spent every morning disagreeing with `health` above
+            # while both were labelled "7 days".
+            "flow_7d": _flow_dict(self.flow_7d),
+            "flow_28d": _flow_dict(self.flow_28d),
             "funnel": self.funnel.as_dict(),
             "economics": self.econ.as_dict(),
             "gig": self.gig,
@@ -894,6 +951,18 @@ class MetricBundle:
             "disputes": (self.disputes.as_dict()
                          if self.disputes else {"have_data": False}),
         }
+
+
+def _flow_dict(w: FlowWindow) -> dict[str, Any]:
+    return {
+        "organic": w.organic, "vvro": w.vvro,
+        "total_per_day": round(w.total_per_day, 3),
+        "vvro_share": round(w.vvro_share, 4),
+        "start": w.start.isoformat(), "end": w.end.isoformat(),
+        "days": w.days,
+        "asked_end": w.asked_end.isoformat() if w.asked_end else None,
+        "lag_days": w.lag_days,
+    }
 
 
 def compute(orders: Sequence[C.Order], leads: Sequence[C.Lead],
@@ -905,8 +974,8 @@ def compute(orders: Sequence[C.Order], leads: Sequence[C.Lead],
         as_of=as_of,
         profile=profile,
         health=organic_health(flow, profile, as_of, lookback_days, tolerance, max_vvro_share),
-        flow_7d=flow_window(flow, profile, as_of - _dt.timedelta(days=6), as_of),
-        flow_28d=flow_window(flow, profile, as_of - _dt.timedelta(days=27), as_of),
+        flow_7d=flow_window_to(flow, profile, 7, as_of),
+        flow_28d=flow_window_to(flow, profile, 28, as_of),
         funnel=funnel_metrics(leads),
         econ=economics(orders),
         gig=gig or {},

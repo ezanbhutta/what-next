@@ -264,9 +264,16 @@ test('every view module imports and exports render()', async () => {
     } catch (err) {
       assert.fail(`views/${file} does not load: ${err.message}`);
     }
-    // layout.js is the shared toolkit rather than a section, and errors.js
-    // renders failures; neither is reached through the render(ctx) contract.
-    if (file === 'layout.js' || file === 'errors.js') continue;
+    // layout.js is the shared toolkit rather than a section, so it is the one
+    // file here with no render(ctx).
+    //
+    // errors.js used to be exempted alongside it, on the stated grounds that
+    // it "renders failures" and is not reached through the render contract.
+    // Both halves of that were false: it exports render(ctx) and it is a rail
+    // section at /errors. The exemption is why nothing ever imported it in a
+    // test, and it shipped a ReferenceError that made the page a hard 500 on
+    // exactly the rows it exists to show.
+    if (file === 'layout.js') continue;
     assert.equal(
       typeof mod.render,
       'function',

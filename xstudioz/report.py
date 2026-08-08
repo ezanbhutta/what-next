@@ -242,8 +242,14 @@ def render_markdown(
     if h.structural_delta_pct is not None:
         out.append(f"| Organic, recent vs earlier | {h.structural_post:.2f}/day | "
                    f"was {h.structural_pre:.2f}/day ({h.structural_delta_pct:+.1%}) |")
-    out.append(f"| Organic orders, last 7d | {bundle.flow_7d.organic:.0f} | "
-               f"{bundle.flow_7d.organic / 7:.2f}/day |")
+    # The window is named, not just its length. It ends on the last day the
+    # ledger reports, which is a day behind the run and further behind when
+    # nobody has filled the sheet in — and a bare "last 7d" hides both.
+    _w7 = bundle.flow_7d
+    out.append(f"| Organic orders, 7d to {_w7.end:%-d %b} | {_w7.organic:.0f} | "
+               f"{_w7.organic_per_day:.2f}/day"
+               + (f", ledger {_w7.lag_days}d behind this run |" if _w7.lag_days >= 2
+                  else " |"))
     out.append(f"| AOV | {_fmt_money(e.aov)} | median {_fmt_money(e.median)}, "
                f"n={e.n_priced} priced orders |")
     out.append(f"| Lifetime tracked revenue | {_fmt_money(e.revenue)} | "
