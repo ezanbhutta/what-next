@@ -198,9 +198,28 @@ Hostinger auto-deploys `main`. Environment variables live in the Web App's
 
 ```
 DB_HOST  DB_PORT  DB_NAME  DB_USER  DB_PASSWORD
-SESSION_SECRET      long random string
-APP_PASSWORD        what the team types to get in
+SESSION_SECRET            long random string
+APP_PASSWORD              what the team types to get in
+REPORTS_SUPABASE_KEY      anon key, project aeytsgipuuyjlbvebhez
+IMPRESSIONS_SUPABASE_KEY  anon key, project jkigyrnvlfcwloqtrycu
 ```
+
+**All five of those below the DB line are required, including the two Supabase
+keys.** This list omitted them until 2026-08-08, and that omission took both
+external stores down: whoever set the panel followed this runbook, the keys were
+never set, and `/feeds` showed CSR Shift Logger and Impressions board
+unreachable while both Supabase projects were healthy and answering. Nothing
+looked broken from the outside, because a missing key fails in `select()` before
+any request is made, and the two keys went dark together in a way that neither
+an outage nor a rotation could explain.
+
+The two keys are read-only anon keys, already public in those apps' own browser
+bundles; they live in the panel rather than the repo because a key committed to
+git is a key nobody can rotate. Find them in Supabase under Project Settings,
+API, anon public.
+
+`tests/env-documented.test.js` now fails if the hub reads a variable this list
+does not name, so the runbook cannot drift behind the code again.
 
 `.env` is gitignored. If you ever find a credential in a commit here, rotate
 it — do not just delete the line.
