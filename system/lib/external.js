@@ -787,8 +787,104 @@ export async function storeHealth({ today = null, staleAfterHours = 48 } = {}) {
   return [reports, board];
 }
 
+// ------------------------------------------------- configuration, not health
+
+/**
+ * Is each store's key present, and does it belong to the project it is paired
+ * with? Reads only what the environment already holds; makes no request.
+ *
+ * WHY THIS EXISTS
+ *
+ * `storeHealth` above answers "is the data moving". This answers the question
+ * underneath it, "is this thing even wired up", and until now nothing did.
+ *
+ * On 2026-08-08 both stores showed UNREACHABLE on /feeds while both Supabase
+ * projects were perfectly healthy, answering an unauthenticated probe in half a
+ * second. The hub simply had no keys: README's deploy runbook named seven
+ * environment variables and the code read nine, so whoever provisioned the
+ * panel had no reason to know these two existed. It is invisible from every
+ * angle you would normally check, because a missing key throws inside select()
+ * before any request leaves the process. No failed request, no 401 in a log, no
+ * unhealthy service to point at.
+ *
+ * A WRONG key is worse than a missing one, because it fails identically. Both
+ * anon keys are 208 characters and both begin `eyJhbGci`, so swapping them
+ * yields two 401s that render exactly like the absent case. The `ref` claim in
+ * the key's own payload is the only thing that tells them apart, and reading it
+ * costs nothing.
+ *
+ * Nothing here discloses a secret. The project ref is already in this file as a
+ * default URL, and these anon keys are public in those apps' browser bundles.
+ * The key value itself is never returned.
+ */
+export function storeConfig() {
+  const out = {};
+  for (const [name, store] of Object.entries(STORES)) {
+    const urlProject = /^https:\/\/([a-z0-9]+)\.supabase\.co/i.exec(store.url)?.[1] ?? null;
+    const raw = typeof store.key === 'string' ? store.key : '';
+    const row = {
+      label: store.label,
+      configured: Boolean(raw),
+      url_project: urlProject,
+      key_format: 'absent',
+      key_project: null,
+      key_matches_url: null,
+      expired: null,
+      notice: null,
+    };
+
+    if (!raw) {
+      row.notice =
+        `no API key. Set ${name.toUpperCase()}_SUPABASE_KEY in the environment. ` +
+        'Check the spelling: a misspelled name reads as undefined and is ' +
+        'indistinguishable from the key being absent.';
+      out[name] = row;
+      continue;
+    }
+
+    // The newer publishable format. Nothing to decode, and it carries no ref.
+    if (raw.startsWith('sb_publishable_')) {
+      row.key_format = 'publishable';
+      out[name] = row;
+      continue;
+    }
+
+    const parts = raw.split('.');
+    if (parts.length !== 3) {
+      row.key_format = 'unrecognised';
+      row.notice = 'value is neither a legacy anon JWT nor a publishable key.';
+      out[name] = row;
+      continue;
+    }
+
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+      row.key_format = 'legacy_jwt';
+      row.key_project = typeof payload.ref === 'string' ? payload.ref : null;
+      row.key_matches_url =
+        urlProject && row.key_project ? row.key_project === urlProject : null;
+      if (typeof payload.exp === 'number') row.expired = payload.exp * 1000 <= Date.now();
+
+      if (row.key_matches_url === false) {
+        row.notice =
+          `key belongs to project ${row.key_project} but the URL points at ` +
+          `${urlProject}. Both store keys are the same length and both begin ` +
+          'eyJhbGci, so check they have not been swapped.';
+      } else if (row.expired) {
+        row.notice = 'key has expired; issue a new anon key.';
+      }
+    } catch {
+      row.key_format = 'unrecognised';
+      row.notice = 'value looks like a JWT but its payload could not be read.';
+    }
+
+    out[name] = row;
+  }
+  return out;
+}
+
 export default {
-  STORES, PROFILE, PROFILE_ALIASES, ExternalError, storeHealth,
+  STORES, PROFILE, PROFILE_ALIASES, ExternalError, storeHealth, storeConfig,
   select, tryselect, shiftReports, shiftActions, mistakes,
   ACTION_TYPE_TO_RULE_KEY, RULE_KEY_TO_ACTION_TYPE, CHECKLIST_LABEL_TO_ID,
   checklistInHubVocabulary, shiftInHubVocabulary, actionInHubVocabulary,

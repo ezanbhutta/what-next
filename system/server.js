@@ -144,6 +144,7 @@ import {
   reachAsOf,
   boardGigs,
   storeHealth,
+  storeConfig,
   PROFILE as EXTERNAL_PROFILE,
 } from './lib/external.js';
 
@@ -2223,7 +2224,21 @@ app.get(
         // Host and database name are withheld from an unauthenticated caller.
         ...(detailed ? { target: dbTarget() } : {}),
       },
-      auth: { configured: authConfigured(), missing: authConfig().missing },
+      auth: {
+        configured: authConfigured(),
+        missing: authConfig().missing,
+        // Length only, never the value, and only to a caller who is already in.
+        // `configured` was true for a whole morning while every login failed:
+        // APP_PASSWORD held one value and the password everybody was typing had
+        // been set on a neighbouring row that nothing reads. A boolean cannot
+        // separate those two states and the length can.
+        ...(detailed ? { password: passwordShape() } : {}),
+      },
+      // Present and pointed at the right project, from the environment alone.
+      // Deliberately does NOT move `ok` or `status`: the hub renders every page
+      // correctly without these keys, so a bad one is not an outage. /feeds is
+      // where they are judged; this is where you find out why.
+      stores: storeConfig(),
       engine: {
         readable: engineReadable,
         run_date: data.staleness.run_date,

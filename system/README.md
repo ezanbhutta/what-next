@@ -221,6 +221,13 @@ API, anon public.
 `tests/env-documented.test.js` now fails if the hub reads a variable this list
 does not name, so the runbook cannot drift behind the code again.
 
+To check what the running process actually got, `curl -s https://system.xstudioz.com/healthz`.
+It reports `db`, `auth` and a `stores` block naming each Supabase key as
+present or absent and whether it belongs to the project its URL points at.
+That last check exists because both anon keys are 208 characters and begin
+`eyJhbGci`, so a swap produces two 401s indistinguishable from the keys being
+missing. No secret is returned and no request is made to Supabase.
+
 `.env` is gitignored. If you ever find a credential in a commit here, rotate
 it — do not just delete the line.
 
