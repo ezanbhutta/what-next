@@ -1,8 +1,8 @@
 {
-  "orders": 1092,
-  "leads": 340,
-  "flow_rows": 406,
-  "flow_aggregate_rows": 58,
+  "orders": 1094,
+  "leads": 345,
+  "flow_rows": 413,
+  "flow_aggregate_rows": 59,
   "active_orders": 0,
   "impressions": 2664,
   "disputes": 0,
@@ -20,7 +20,7 @@
   },
   "unmapped_rate": 0.0253,
   "coercion_misses": {
-    "order_date": 8
+    "order_date": 3
   },
   "retired_tables_skipped": {
     "impressions": 1
