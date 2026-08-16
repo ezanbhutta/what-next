@@ -37,6 +37,19 @@
 
 ## Do today
 
+### P0 · Rescue at-risk order #5 — Dr. Ali Albalawi
+**Owner:** Ezan (escalate to CEO if refund is formally requested) · **Est. impact:** $400 · **Effort:** 1.5h · **Confidence:** 70%
+
+*Why:* Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0023 (4.841 -> 4.838) across 1,637 reviews, and that rating is what every future buyer sorts on. The order is worth ~$97; the rating damage is worth far more.
+
+- Read the full order history before replying — do not reintroduce any concept the buyer already rejected.
+- Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.
+- Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.
+- If they choose (a), name the designer and give a fixed date.
+- If they choose (b), process it same day — a fast clean exit is cheaper than a slow 1-star.
+- Script: `playbooks/dispute_rescue.md`
+- Source rows: `order_tracker/tracker#b0r4`
+
 ### P0 · Close out 10 orders open more than 60 days ($1,180)
 **Owner:** Ezan · **Est. impact:** $472 · **Effort:** 3.0h · **Confidence:** 60%
 
@@ -79,7 +92,63 @@
 - Revisit in 30 days with the engine's updated per-designer AOV.
 - Script: `playbooks/staffing.md`
 
-### P2 · Follow up the 3 quotes that never got one ($295)
+### P2 · Start recording upsells — the column is empty
+**Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
+
+*Why:* Upsell is marked on 0.0% of the 150 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+
+- Fill the Upsell column on every order: TRUE/FALSE, no blanks.
+- Fill 'What did you upsell and how much' whenever TRUE.
+- Backfill the last 30 completed orders from memory this week.
+- Script: `playbooks/upsell.md`
+
+### P2 · Upsell andrem530 (order #1)
+**Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
+
+*Why:* Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.
+
+- Lead with what they already have, not with a price.
+- Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.
+- Anchor at the $151-$260 band — it is the top quartile of your order book and it lands with buyers who already trust you.
+- Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured.
+- Script: `playbooks/upsell.md`
+- Source rows: `order_tracker/tracker#b0r0`
+
+### P2 · Upsell Calum Snell (order #4)
+**Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
+
+*Why:* Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.
+
+- Lead with what they already have, not with a price.
+- Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.
+- Anchor at the $151-$260 band — it is the top quartile of your order book and it lands with buyers who already trust you.
+- Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured.
+- Script: `playbooks/upsell.md`
+- Source rows: `order_tracker/tracker#b0r3`
+
+### P3 · Close out approved order #4 — Calum Snell
+**Owner:** Delivery lead · **Est. impact:** $87 · **Effort:** 1.0h · **Confidence:** 80%
+
+*Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
+
+- Ship the full final package today: vectors, all formats, variations, fonts, colour values.
+- Deliver via the order (not chat) so it counts toward on-time delivery.
+- Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.
+- Script: `playbooks/review_capture.md`
+- Source rows: `order_tracker/tracker#b0r3`
+
+### P3 · Close out approved order #6 — bethanyjademck
+**Owner:** Delivery lead · **Est. impact:** $87 · **Effort:** 1.0h · **Confidence:** 80%
+
+*Why:* Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.
+
+- Ship the full final package today: vectors, all formats, variations, fonts, colour values.
+- Deliver via the order (not chat) so it counts toward on-time delivery.
+- Attach the review request from playbooks/review_capture.md — only 12.7% of completed orders currently have a review recorded.
+- Script: `playbooks/review_capture.md`
+- Source rows: `order_tracker/tracker#b0r5`
+
+### P3 · Follow up the 3 quotes that never got one ($295)
 **Owner:** Ezan · **Est. impact:** $58 · **Effort:** 1.5h · **Confidence:** 45%
 
 *Why:* 3 buyers were quoted $295 between them and no follow-up was ever logged against any of them — the largest is akhilkpfxx at $160, quoted 164 days ago. That sits inside a total unanswered pipeline of $6,175 across 20 leads. Of the 28 quoted leads anyone did chase, 11 placed (39%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 97%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 3 are the residue of that group, not part of its success.
@@ -91,15 +160,17 @@
 - Script: `playbooks/dead_pipeline.md`
 - Source rows: `akhilkpfxx: $160, 164d, 0 follow-ups`, `zain_qw: $75, 46d, 0 follow-ups`, `Mohamed L: $60, 97d, 0 follow-ups`, `bobzinos: $900, 151d, 1 follow-ups`, `farida_ism: $700, 184d, 1 follow-ups`, `tatiana_1017: $510, 11d, 1 follow-ups`, `ryan_wonders: $350, 110d, 1 follow-ups`, `rztwerk: $250, 20d, 1 follow-ups`, `chupetes: $200, 159d, 1 follow-ups`, `dgtl_depot: $175, 192d, 1 follow-ups`
 
-### P2 · Start recording upsells — the column is empty
-**Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
+### P3 · Upsell bethanyjademck (order #6)
+**Owner:** Salman (highest value-per-lead at $53) · **Est. impact:** $180 · **Effort:** 0.4h · **Confidence:** 35%
 
-*Why:* Upsell is marked on 0.0% of the 150 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+*Why:* Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.
 
-- Fill the Upsell column on every order: TRUE/FALSE, no blanks.
-- Fill 'What did you upsell and how much' whenever TRUE.
-- Backfill the last 30 completed orders from memory this week.
+- Lead with what they already have, not with a price.
+- Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.
+- Anchor at the $151-$260 band — it is the top quartile of your order book and it lands with buyers who already trust you.
+- Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured.
 - Script: `playbooks/upsell.md`
+- Source rows: `order_tracker/tracker#b0r5`
 
 
 ---
@@ -107,8 +178,9 @@
 ## Who does what
 
 ### Ezan · team lead · all hours
-*2 task(s), ~3.5h*
+*3 task(s), ~5.0h*
 
+- **P0** Rescue at-risk order #5 — Dr. Ali Albalawi
 - **P0** Close out 10 orders open more than 60 days ($1,180)
 - **P1** Route high-value briefs to Md Rezaul
 
@@ -127,10 +199,11 @@ Standing duties, every shift:
 - Any order past day 7, or any cancellation, comes to you the same day.
 
 ### Nadir · csr · 21:00-09:00 PKT
-*2 task(s), ~3.5h*
+*3 task(s), ~2.8h*
 
 - **P0** Fill revenue in the daily ledger (183 days blank)
-- **P2** Start recording upsells — the column is empty
+- **P2** Upsell andrem530 (order #1)
+- **P3** Upsell bethanyjademck (order #6)
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -141,9 +214,12 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Hasnain · csr · 17:00-01:00 PKT
-*1 task(s), ~1.0h*
+*4 task(s), ~3.4h*
 
 - **P1** Wire up the 1 promised data source
+- **P2** Upsell Calum Snell (order #4)
+- **P3** Close out approved order #6 — bethanyjademck
+- **P3** Close out approved order #4 — Calum Snell
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -154,9 +230,10 @@ Standing duties, every shift:
 - Never move a pre-order conversation off Fiverr, and never argue.
 
 ### Amrah · csr · 09:00-17:00 PKT
-*1 task(s), ~1.5h*
+*2 task(s), ~3.0h*
 
-- **P2** Follow up the 3 quotes that never got one ($295)
+- **P2** Start recording upsells — the column is empty
+- **P3** Follow up the 3 quotes that never got one ($295)
 
 Standing duties, every shift:
 - Answer every new first-message within 30 minutes. Response rate counts only the first message in a thread, on a 24-hour window, rolling 90 days.
@@ -196,19 +273,6 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | 2026-09-15 | Blended AOV in 30 days will be $97 (80% CI $83-$120). | 82.55 – 119.78 | high |
 | 2026-08-23 | Inquiry->order conversion in 7 days will be 23.9% (80% CI 18.7%-27.5%). | 0.19 – 0.28 | high |
 
-### Resolved since last run
-
-| Made on | Prediction | Predicted | Actual | In interval? |
-|---|---|---|---|---|
-| 2026-07-17 | economics.aov | 128.39 | 97.09 | ❌ |
-| 2026-08-01 | health.index | 45.50 | 79.30 | ❌ |
-| 2026-08-08 | flow_7d.organic | 11.34 | 20.00 | ❌ |
-| 2026-08-08 | flow_7d.total_per_day | 5.06 | 5.71 | ✅ |
-| 2026-08-08 | funnel.conversion | 0.20 | 0.24 | ❌ |
-| 2026-08-09 | flow_7d.organic | 13.22 | 20.00 | ❌ |
-| 2026-08-09 | flow_7d.total_per_day | 5.18 | 5.71 | ✅ |
-| 2026-08-09 | funnel.conversion | 0.21 | 0.24 | ✅ |
-
 **Track record:** 91 resolved, coverage 47% 
 (target 80%), median absolute error 26%.
 
@@ -227,8 +291,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Inquiry conversion | 23.9% | 22/92 |
 | Upsell recorded | 0.0% | column is effectively unused |
 | Review capture | 49.3% | 74/150 orders that could be rated |
-| Gig rating | 4.839 | 1,606 reviews, Level 2 |
-| Orders in queue | 25 | live from the gig page |
+| Gig rating | 4.841 | 1,637 reviews, Level 2 |
+| Orders in queue | 22 | live from the gig page |
 
 ### Revenue path
 
@@ -256,30 +320,31 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 | Feed | State | As of | Age | Where it comes from |
 |---|---|---|---|---|
 | Snapshot credentials | 🟢 live | — | 0h | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
-| Order and inquiry workbooks | 🟢 live | 2026-08-16T08:30:56.462000+00:00 | 0h | Apps Script snapshot endpoint |
+| Order and inquiry workbooks | 🟢 live | 2026-08-16T08:59:25.971000+00:00 | 0h | Apps Script snapshot endpoint |
 | Impressions sheet (engine) | 🟠 stale | 2026-08-06 | 237h | Daily Data Sheet, via the snapshot |
-| Fiverr gig page | 🟠 stale | 2026-08-06 | 237h | browser capture into data/raw/gig/ |
-| CSR handoff tracker | 🟢 live | 2026-08-08 | 192h | uploaded into data/raw/order_tracker/ |
+| Fiverr gig page | 🟢 live | 2026-08-16 | -3h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟠 stale | 2026-07-29 | 434h | uploaded into data/raw/order_tracker/ |
 
 - **Impressions sheet (engine)** — newest row 2026-08-06. Nobody has filled in the Daily Data Sheet since 2026-08-06.
-- **Fiverr gig page** — captured 2026-08-06. Re-capture the gig page. It carries level, review total, the star histogram, queue depth and response time, and the rating maths is built on the histogram.
+- **CSR handoff tracker** — 2026-07-29-XOrder_Tracker.xlsx. Upload a fresh tracker export.
 
 
 ---
 
 ## System integrity
 
-**Self-check score: 100/100** · 0 blocking failure(s)
+**Self-check score: 96/100** · 0 blocking failure(s)
 
 - task_count: 10
 - ownership: 20
-- evidence: 25
+- evidence: 21
 - actionability: 15
 - falsifiability: 20
 - priority_spread: 10
 
 **Checks not passing**
 - `warn` **retired_sources_refused** — 1 table(s) from retired sheets were refused and not counted: impressions (1 tables, 162 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.
+- `warn` **all_tasks_evidenced** — 10/12 tasks cite a number in their rationale
 
 **Data sources still missing**
 - Disputed / dead / conflicted orders sheet — Needed for dispute-risk scoring and refund-exposure forecasting. Run createMissingSourceSheets() in automation/Snapshot.gs to create it with the right headers.

@@ -395,23 +395,23 @@
       ]
     },
     "gig": {
-      "captured_on": "2026-08-06",
+      "captured_on": "2026-08-16",
       "url": "https://www.fiverr.com/x_studioz/design-modern-logo-branding-kit-with-complete-brand-identity",
       "level": "Level 2",
-      "reviews_total": 1606,
+      "reviews_total": 1637,
       "stars": {
-        "5": 1444,
+        "5": 1474,
         "4": 106,
         "3": 29,
-        "2": 14,
+        "2": 15,
         "1": 13
       },
-      "orders_in_queue": 25,
+      "orders_in_queue": 22,
       "avg_response_time_hours": 1,
       "member_since": "2023-06",
       "starting_price": 45,
-      "source": "live gig scrape 06 Aug 2026 via browser fetch",
-      "rating": 4.839352428393524
+      "source": "live gig scrape 16 Aug 2026 via browser fetch",
+      "rating": 4.840562003665242
     },
     "decomposition": {
       "have_data": true,
@@ -473,6 +473,31 @@
     ]
   },
   "tasks": [
+    {
+      "id": "rescue-5",
+      "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+      "category": "dispute_rescue",
+      "owner": "Ezan (escalate to CEO if refund is formally requested)",
+      "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0023 (4.841 -> 4.838) across 1,637 reviews, and that rating is what every future buyer sorts on. The order is worth ~$97; the rating damage is worth far more.",
+      "steps": [
+        "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+        "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+        "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+        "If they choose (a), name the designer and give a fixed date.",
+        "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+      ],
+      "impact_usd": 400,
+      "confidence": 0.7,
+      "effort_hours": 1.5,
+      "priority": "P0",
+      "urgency": 2,
+      "playbook": "playbooks/dispute_rescue.md",
+      "refs": [
+        "order_tracker/tracker#b0r4"
+      ],
+      "due": "2026-08-16",
+      "score": 186.7
+    },
     {
       "id": "stale-open-orders",
       "title": "Close out 10 orders open more than 60 days ($1,180)",
@@ -570,39 +595,6 @@
       "score": 560.0
     },
     {
-      "id": "untouched-quotes",
-      "title": "Follow up the 3 quotes that never got one ($295)",
-      "category": "funnel",
-      "owner": "Ezan",
-      "why": "3 buyers were quoted $295 between them and no follow-up was ever logged against any of them \u2014 the largest is akhilkpfxx at $160, quoted 164 days ago. That sits inside a total unanswered pipeline of $6,175 across 20 leads. Of the 28 quoted leads anyone did chase, 11 placed (39%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 97%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 3 are the residue of that group, not part of its success.",
-      "steps": [
-        "Work the never-followed-up list first, largest first: akhilkpfxx ($160, 164d), zain_qw ($75, 46d), Mohamed L ($60, 97d).",
-        "One message each. State the quote is still open, and ask one question they can answer in a word \u2014 whether the project is still live. Do not re-pitch and do not discount unprompted.",
-        "Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.",
-        "Then work the remainder by value; treat a third unanswered follow-up as a no and stop."
-      ],
-      "impact_usd": 57.95,
-      "confidence": 0.45,
-      "effort_hours": 1.5,
-      "priority": "P2",
-      "urgency": 1,
-      "playbook": "playbooks/dead_pipeline.md",
-      "refs": [
-        "akhilkpfxx: $160, 164d, 0 follow-ups",
-        "zain_qw: $75, 46d, 0 follow-ups",
-        "Mohamed L: $60, 97d, 0 follow-ups",
-        "bobzinos: $900, 151d, 1 follow-ups",
-        "farida_ism: $700, 184d, 1 follow-ups",
-        "tatiana_1017: $510, 11d, 1 follow-ups",
-        "ryan_wonders: $350, 110d, 1 follow-ups",
-        "rztwerk: $250, 20d, 1 follow-ups",
-        "chupetes: $200, 159d, 1 follow-ups",
-        "dgtl_depot: $175, 192d, 1 follow-ups"
-      ],
-      "due": null,
-      "score": 17.4
-    },
-    {
       "id": "upsell-tracking",
       "title": "Start recording upsells \u2014 the column is empty",
       "category": "data_quality",
@@ -622,6 +614,157 @@
       "refs": [],
       "due": null,
       "score": 400.0
+    },
+    {
+      "id": "upsell-1",
+      "title": "Upsell andrem530 (order #1)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r0"
+      ],
+      "due": null,
+      "score": 157.5
+    },
+    {
+      "id": "upsell-4",
+      "title": "Upsell Calum Snell (order #4)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P2",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r3"
+      ],
+      "due": null,
+      "score": 157.5
+    },
+    {
+      "id": "deliver-4",
+      "title": "Close out approved order #4 \u2014 Calum Snell",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 87.38,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r3"
+      ],
+      "due": null,
+      "score": 69.9
+    },
+    {
+      "id": "deliver-6",
+      "title": "Close out approved order #6 \u2014 bethanyjademck",
+      "category": "delivery",
+      "owner": "Delivery lead",
+      "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+      "steps": [
+        "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+        "Deliver via the order (not chat) so it counts toward on-time delivery.",
+        "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+      ],
+      "impact_usd": 87.38,
+      "confidence": 0.8,
+      "effort_hours": 1.0,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/review_capture.md",
+      "refs": [
+        "order_tracker/tracker#b0r5"
+      ],
+      "due": null,
+      "score": 69.9
+    },
+    {
+      "id": "untouched-quotes",
+      "title": "Follow up the 3 quotes that never got one ($295)",
+      "category": "funnel",
+      "owner": "Ezan",
+      "why": "3 buyers were quoted $295 between them and no follow-up was ever logged against any of them \u2014 the largest is akhilkpfxx at $160, quoted 164 days ago. That sits inside a total unanswered pipeline of $6,175 across 20 leads. Of the 28 quoted leads anyone did chase, 11 placed (39%); this is costed at half that, because these are older. Note the raw split is misleading: quoted leads with no follow-up appear to convert at 97%, but that is because a follow-up only gets logged when the buyer did not say yes immediately. These 3 are the residue of that group, not part of its success.",
+      "steps": [
+        "Work the never-followed-up list first, largest first: akhilkpfxx ($160, 164d), zain_qw ($75, 46d), Mohamed L ($60, 97d).",
+        "One message each. State the quote is still open, and ask one question they can answer in a word \u2014 whether the project is still live. Do not re-pitch and do not discount unprompted.",
+        "Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.",
+        "Then work the remainder by value; treat a third unanswered follow-up as a no and stop."
+      ],
+      "impact_usd": 57.95,
+      "confidence": 0.45,
+      "effort_hours": 1.5,
+      "priority": "P3",
+      "urgency": 1,
+      "playbook": "playbooks/dead_pipeline.md",
+      "refs": [
+        "akhilkpfxx: $160, 164d, 0 follow-ups",
+        "zain_qw: $75, 46d, 0 follow-ups",
+        "Mohamed L: $60, 97d, 0 follow-ups",
+        "bobzinos: $900, 151d, 1 follow-ups",
+        "farida_ism: $700, 184d, 1 follow-ups",
+        "tatiana_1017: $510, 11d, 1 follow-ups",
+        "ryan_wonders: $350, 110d, 1 follow-ups",
+        "rztwerk: $250, 20d, 1 follow-ups",
+        "chupetes: $200, 159d, 1 follow-ups",
+        "dgtl_depot: $175, 192d, 1 follow-ups"
+      ],
+      "due": null,
+      "score": 17.4
+    },
+    {
+      "id": "upsell-6",
+      "title": "Upsell bethanyjademck (order #6)",
+      "category": "upsell",
+      "owner": "Salman (highest value-per-lead at $53)",
+      "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+      "steps": [
+        "Lead with what they already have, not with a price.",
+        "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+        "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+        "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+      ],
+      "impact_usd": 180,
+      "confidence": 0.35,
+      "effort_hours": 0.4,
+      "priority": "P3",
+      "urgency": 0,
+      "playbook": "playbooks/upsell.md",
+      "refs": [
+        "order_tracker/tracker#b0r5"
+      ],
+      "due": null,
+      "score": 157.5
     }
   ],
   "predictions": [
@@ -731,182 +874,13 @@
       "note": null
     }
   ],
-  "resolved": [
-    {
-      "id": "88ed8edbf511",
-      "created_on": "2026-07-17",
-      "resolve_on": "2026-08-16",
-      "metric": "economics.aov",
-      "statement": "Blended AOV in 30 days will be $128 (80% CI $113-$144).",
-      "point": 128.39,
-      "lo": 112.98319999999998,
-      "hi": 143.7968,
-      "confidence": "high",
-      "basis": "Lifetime AOV across 713 priced orders. Moves only if the upsell programme lands.",
-      "horizon_days": 30,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 97.09,
-      "abs_error": 31.299999999999983,
-      "pct_error": -0.2437884570449411,
-      "within_interval": false,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "769b550e2227",
-      "created_on": "2026-08-01",
-      "resolve_on": "2026-08-15",
-      "metric": "health.index",
-      "statement": "Organic health index in 14 days will be 46 (80% CI 27-66).",
-      "point": 45.5,
-      "lo": 26.97751875,
-      "hi": 65.72873125,
-      "confidence": "medium",
-      "basis": "No breach; index expected to hold near its current level.",
-      "horizon_days": 14,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 79.3,
-      "abs_error": 33.8,
-      "pct_error": 0.7428571428571428,
-      "within_interval": false,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "aad317eac57a",
-      "created_on": "2026-08-08",
-      "resolve_on": "2026-08-15",
-      "metric": "flow_7d.organic",
-      "statement": "Organic orders over the 7 days to 15 Aug will be 11.3 (80% CI 7.0-15.6).",
-      "point": 11.338461538461539,
-      "lo": 7.0283646271827,
-      "hi": 15.648558449740378,
-      "confidence": "medium",
-      "basis": "14d damped organic rate 1.620/day; Poisson spread. Health HEALTHY (index 79.0).",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 20.0,
-      "abs_error": 8.661538461538461,
-      "pct_error": 0.7639077340569878,
-      "within_interval": false,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "f58afe056518",
-      "created_on": "2026-08-08",
-      "resolve_on": "2026-08-15",
-      "metric": "flow_7d.total_per_day",
-      "statement": "Total orders/day averaged over the next 7 days will be 5.06 (80% CI 3.98-6.15).",
-      "point": 5.0637362637362635,
-      "lo": 3.975065678998983,
-      "hi": 6.152406848473546,
-      "confidence": "medium",
-      "basis": "14d damped total rate; current 7d actual 4.857.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 5.714,
-      "abs_error": 0.6502637362637369,
-      "pct_error": 0.12841579861111124,
-      "within_interval": true,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "e7022e4dc230",
-      "created_on": "2026-08-08",
-      "resolve_on": "2026-08-15",
-      "metric": "funnel.conversion",
-      "statement": "Inquiry->order conversion in 7 days will be 20.0% (80% CI 16.5%-22.8%).",
-      "point": 0.2,
-      "lo": 0.16501567500000003,
-      "hi": 0.228464325,
-      "confidence": "high",
-      "basis": "Lifetime conversion over 70 scored inquiries.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 0.2391,
-      "abs_error": 0.039099999999999996,
-      "pct_error": 0.19549999999999998,
-      "within_interval": false,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "b784237618be",
-      "created_on": "2026-08-09",
-      "resolve_on": "2026-08-16",
-      "metric": "flow_7d.organic",
-      "statement": "Organic orders over the 7 days to 16 Aug will be 13.2 (80% CI 8.6-17.9).",
-      "point": 13.215384615384615,
-      "lo": 8.562204396024296,
-      "hi": 17.868564834744934,
-      "confidence": "medium",
-      "basis": "14d damped organic rate 1.888/day; Poisson spread. Health HEALTHY (index 80.0).",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 20.0,
-      "abs_error": 6.784615384615385,
-      "pct_error": 0.5133876600698487,
-      "within_interval": false,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "d8e6cbeed253",
-      "created_on": "2026-08-09",
-      "resolve_on": "2026-08-16",
-      "metric": "flow_7d.total_per_day",
-      "statement": "Total orders/day averaged over the next 7 days will be 5.18 (80% CI 4.08-6.28).",
-      "point": 5.175824175824176,
-      "lo": 4.075170452564979,
-      "hi": 6.276477899083373,
-      "confidence": "medium",
-      "basis": "14d damped total rate; current 7d actual 5.286.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 5.714,
-      "abs_error": 0.5381758241758243,
-      "pct_error": 0.10397876857749472,
-      "within_interval": true,
-      "resolved_on": "2026-08-16",
-      "note": null
-    },
-    {
-      "id": "7ab5eb6b5592",
-      "created_on": "2026-08-09",
-      "resolve_on": "2026-08-16",
-      "metric": "funnel.conversion",
-      "statement": "Inquiry->order conversion in 7 days will be 21.1% (80% CI 17.4%-24.1%).",
-      "point": 0.2113,
-      "lo": 0.1743390606375,
-      "hi": 0.2413725593625,
-      "confidence": "high",
-      "basis": "Lifetime conversion over 71 scored inquiries.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 0.2391,
-      "abs_error": 0.02780000000000002,
-      "pct_error": 0.13156649313771898,
-      "within_interval": true,
-      "resolved_on": "2026-08-16",
-      "note": null
-    }
-  ],
+  "resolved": [],
   "selfcheck": {
-    "score": 100.0,
+    "score": 95.8,
     "rubric": {
       "task_count": 10.0,
       "ownership": 20.0,
-      "evidence": 25.0,
+      "evidence": 20.8,
       "actionability": 15.0,
       "falsifiability": 20.0,
       "priority_spread": 10.0
@@ -988,28 +962,28 @@
         "name": "task_count_in_range",
         "passed": true,
         "severity": "block",
-        "detail": "6 tasks (allowed 3-12)",
+        "detail": "12 tasks (allowed 3-12)",
         "repaired": false
       },
       {
         "name": "all_tasks_owned",
         "passed": true,
         "severity": "block",
-        "detail": "6/6 tasks have an owner",
+        "detail": "12/12 tasks have an owner",
         "repaired": false
       },
       {
         "name": "all_tasks_evidenced",
-        "passed": true,
+        "passed": false,
         "severity": "warn",
-        "detail": "6/6 tasks cite a number in their rationale",
+        "detail": "10/12 tasks cite a number in their rationale",
         "repaired": false
       },
       {
         "name": "all_tasks_actionable",
         "passed": true,
         "severity": "warn",
-        "detail": "6/6 tasks have >=2 concrete steps",
+        "detail": "12/12 tasks have >=2 concrete steps",
         "repaired": false
       },
       {
@@ -1023,7 +997,7 @@
         "name": "priority_spread_sane",
         "passed": true,
         "severity": "warn",
-        "detail": "2 of 6 tasks are P0",
+        "detail": "3 of 12 tasks are P0",
         "repaired": false
       }
     ]
@@ -1078,10 +1052,36 @@
       "role": "team_lead",
       "window": "all hours",
       "task_ids": [
+        "rescue-5",
         "stale-open-orders",
         "designer-routing"
       ],
       "tasks": [
+        {
+          "id": "rescue-5",
+          "title": "Rescue at-risk order #5 \u2014 Dr. Ali Albalawi",
+          "category": "dispute_rescue",
+          "owner": "Ezan (escalate to CEO if refund is formally requested)",
+          "why": "Buyer has raised refund/dispute language and the order is rev sent. A single 1-star review would move the public rating by 0.0023 (4.841 -> 4.838) across 1,637 reviews, and that rating is what every future buyer sorts on. The order is worth ~$97; the rating damage is worth far more.",
+          "steps": [
+            "Read the full order history before replying \u2014 do not reintroduce any concept the buyer already rejected.",
+            "Reply within 2 hours. Acknowledge the specific frustration in their own words; do not defend the work.",
+            "Offer a concrete choice: (a) one senior designer takes a fresh direction at no cost, or (b) a clean partial refund and a mutual cancellation with no review.",
+            "If they choose (a), name the designer and give a fixed date.",
+            "If they choose (b), process it same day \u2014 a fast clean exit is cheaper than a slow 1-star."
+          ],
+          "impact_usd": 400,
+          "confidence": 0.7,
+          "effort_hours": 1.5,
+          "priority": "P0",
+          "urgency": 2,
+          "playbook": "playbooks/dispute_rescue.md",
+          "refs": [
+            "order_tracker/tracker#b0r4"
+          ],
+          "due": "2026-08-16",
+          "score": 186.7
+        },
         {
           "id": "stale-open-orders",
           "title": "Close out 10 orders open more than 60 days ($1,180)",
@@ -1144,8 +1144,8 @@
         "Take the shift handoff at each changeover \u2014 five lines, no exceptions.",
         "Escalate any cancellation risk before it is filed, never after."
       ],
-      "total_effort_hours": 3.5,
-      "total_impact_usd": 1272.0
+      "total_effort_hours": 5.0,
+      "total_impact_usd": 1672.0
     },
     {
       "person": "CEO",
@@ -1167,7 +1167,8 @@
       "window": "21:00-09:00 PKT",
       "task_ids": [
         "dq-flow-revenue",
-        "upsell-tracking"
+        "upsell-1",
+        "upsell-6"
       ],
       "tasks": [
         {
@@ -1192,25 +1193,52 @@
           "score": 900.0
         },
         {
-          "id": "upsell-tracking",
-          "title": "Start recording upsells \u2014 the column is empty",
-          "category": "data_quality",
-          "owner": "All CSRs",
-          "why": "Upsell is marked on 0.0% of the 150 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "id": "upsell-1",
+          "title": "Upsell andrem530 (order #1)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
           "steps": [
-            "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
-            "Fill 'What did you upsell and how much' whenever TRUE.",
-            "Backfill the last 30 completed orders from memory this week."
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
           ],
-          "impact_usd": 1200,
-          "confidence": 0.5,
-          "effort_hours": 1.5,
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
           "priority": "P2",
           "urgency": 0,
           "playbook": "playbooks/upsell.md",
-          "refs": [],
+          "refs": [
+            "order_tracker/tracker#b0r0"
+          ],
           "due": null,
-          "score": 400.0
+          "score": 157.5
+        },
+        {
+          "id": "upsell-6",
+          "title": "Upsell bethanyjademck (order #6)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+          "steps": [
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+          ],
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
+          "priority": "P3",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
+          "due": null,
+          "score": 157.5
         }
       ],
       "standing": [
@@ -1221,15 +1249,18 @@
         "Log every quoted price into the inquiry sheet the moment it is sent.",
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
-      "total_effort_hours": 3.5,
-      "total_impact_usd": 3200
+      "total_effort_hours": 2.8,
+      "total_impact_usd": 2360
     },
     {
       "person": "Hasnain",
       "role": "csr",
       "window": "17:00-01:00 PKT",
       "task_ids": [
-        "wire-missing-sources"
+        "wire-missing-sources",
+        "upsell-4",
+        "deliver-6",
+        "deliver-4"
       ],
       "tasks": [
         {
@@ -1251,6 +1282,76 @@
           "refs": [],
           "due": null,
           "score": 750.0
+        },
+        {
+          "id": "upsell-4",
+          "title": "Upsell Calum Snell (order #4)",
+          "category": "upsell",
+          "owner": "Salman (highest value-per-lead at $53)",
+          "why": "Buyer left on warm terms, which is the only reliable upsell signal in this dataset. Inquiries where an upsell was attempted converted 54.3% against 30.8% without. Upsell is recorded on 0.2% of orders today, so this is close to untouched revenue.",
+          "steps": [
+            "Lead with what they already have, not with a price.",
+            "Offer the next tier that fits their brand stage: brand guidelines, social kit, stationery, or a sub-brand.",
+            "Anchor at the $151-$260 band \u2014 it is the top quartile of your order book and it lands with buyers who already trust you.",
+            "Log the attempt in the Upsell column either way. The column is empty today, which is why this lever cannot be measured."
+          ],
+          "impact_usd": 180,
+          "confidence": 0.35,
+          "effort_hours": 0.4,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [
+            "order_tracker/tracker#b0r3"
+          ],
+          "due": null,
+          "score": 157.5
+        },
+        {
+          "id": "deliver-6",
+          "title": "Close out approved order #6 \u2014 bethanyjademck",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 87.38,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r5"
+          ],
+          "due": null,
+          "score": 69.9
+        },
+        {
+          "id": "deliver-4",
+          "title": "Close out approved order #4 \u2014 Calum Snell",
+          "category": "delivery",
+          "owner": "Delivery lead",
+          "why": "Concept is approved, so the creative risk is gone and the only thing between this and banked revenue plus a review is asset prep. This is the cheapest revenue on the board.",
+          "steps": [
+            "Ship the full final package today: vectors, all formats, variations, fonts, colour values.",
+            "Deliver via the order (not chat) so it counts toward on-time delivery.",
+            "Attach the review request from playbooks/review_capture.md \u2014 only 12.7% of completed orders currently have a review recorded."
+          ],
+          "impact_usd": 87.38,
+          "confidence": 0.8,
+          "effort_hours": 1.0,
+          "priority": "P3",
+          "urgency": 1,
+          "playbook": "playbooks/review_capture.md",
+          "refs": [
+            "order_tracker/tracker#b0r3"
+          ],
+          "due": null,
+          "score": 69.9
         }
       ],
       "standing": [
@@ -1261,17 +1362,39 @@
         "Log every quoted price into the inquiry sheet the moment it is sent.",
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
-      "total_effort_hours": 1.0,
-      "total_impact_usd": 1500
+      "total_effort_hours": 3.4,
+      "total_impact_usd": 1854.76
     },
     {
       "person": "Amrah",
       "role": "csr",
       "window": "09:00-17:00 PKT",
       "task_ids": [
+        "upsell-tracking",
         "untouched-quotes"
       ],
       "tasks": [
+        {
+          "id": "upsell-tracking",
+          "title": "Start recording upsells \u2014 the column is empty",
+          "category": "data_quality",
+          "owner": "All CSRs",
+          "why": "Upsell is marked on 0.0% of the 150 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "steps": [
+            "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
+            "Fill 'What did you upsell and how much' whenever TRUE.",
+            "Backfill the last 30 completed orders from memory this week."
+          ],
+          "impact_usd": 1200,
+          "confidence": 0.5,
+          "effort_hours": 1.5,
+          "priority": "P2",
+          "urgency": 0,
+          "playbook": "playbooks/upsell.md",
+          "refs": [],
+          "due": null,
+          "score": 400.0
+        },
         {
           "id": "untouched-quotes",
           "title": "Follow up the 3 quotes that never got one ($295)",
@@ -1287,7 +1410,7 @@
           "impact_usd": 57.95,
           "confidence": 0.45,
           "effort_hours": 1.5,
-          "priority": "P2",
+          "priority": "P3",
           "urgency": 1,
           "playbook": "playbooks/dead_pipeline.md",
           "refs": [
@@ -1314,8 +1437,8 @@
         "Log every quoted price into the inquiry sheet the moment it is sent.",
         "Never move a pre-order conversation off Fiverr, and never argue."
       ],
-      "total_effort_hours": 1.5,
-      "total_impact_usd": 57.95
+      "total_effort_hours": 3.0,
+      "total_impact_usd": 1257.95
     }
   ],
   "edge": [
@@ -1340,12 +1463,12 @@
     "leads": 368,
     "flow_rows": 469,
     "flow_aggregate_rows": 67,
-    "active_orders": 0,
+    "active_orders": 8,
     "impressions": 2665,
     "disputes": 0,
     "automation_errors": 334,
-    "blocks_seen": 27,
-    "blocks_used": 24,
+    "blocks_seen": 28,
+    "blocks_used": 25,
     "header_cells_seen": 396,
     "unmapped_columns": {
       "Upsell": 5,
@@ -2011,8 +2134,8 @@
     "endpoint_configured": true,
     "orders_export": null,
     "inquiries_export": null,
-    "gig_capture": "2026-08-06.json",
-    "generated_at": "2026-08-16T08:30:56.462000+00:00",
+    "gig_capture": "2026-08-16.json",
+    "generated_at": "2026-08-16T08:59:25.971000+00:00",
     "generated_by": "apps_script",
     "age_hours": 0.0,
     "tables": 27,
@@ -2036,7 +2159,7 @@
       "label": "Order and inquiry workbooks",
       "source": "Apps Script snapshot endpoint",
       "status": "live",
-      "as_of": "2026-08-16T08:30:56.462000+00:00",
+      "as_of": "2026-08-16T08:59:25.971000+00:00",
       "age_hours": 0.0,
       "detail": "fetched live, 27 tables",
       "fix": ""
@@ -2047,7 +2170,7 @@
       "source": "Daily Data Sheet, via the snapshot",
       "status": "stale",
       "as_of": "2026-08-06",
-      "age_hours": 236.51723324194444,
+      "age_hours": 236.99213255777778,
       "detail": "newest row 2026-08-06",
       "fix": "Nobody has filled in the Daily Data Sheet since 2026-08-06."
     },
@@ -2055,21 +2178,21 @@
       "key": "gig",
       "label": "Fiverr gig page",
       "source": "browser capture into data/raw/gig/",
-      "status": "stale",
-      "as_of": "2026-08-06",
-      "age_hours": 236.51723324194444,
-      "detail": "captured 2026-08-06",
-      "fix": "Re-capture the gig page. It carries level, review total, the star histogram, queue depth and response time, and the rating maths is built on the histogram."
+      "status": "live",
+      "as_of": "2026-08-16",
+      "age_hours": -3.0078674422222225,
+      "detail": "captured 2026-08-16",
+      "fix": ""
     },
     {
       "key": "tracker",
       "label": "CSR handoff tracker",
       "source": "uploaded into data/raw/order_tracker/",
-      "status": "live",
-      "as_of": "2026-08-08",
-      "age_hours": 191.85280897694446,
+      "status": "stale",
+      "as_of": "2026-07-29",
+      "age_hours": 434.0807271475,
       "detail": "2026-07-29-XOrder_Tracker.xlsx",
-      "fix": ""
+      "fix": "Upload a fresh tracker export."
     }
   ]
 }
