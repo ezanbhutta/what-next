@@ -36,7 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from xstudioz import ingest, pipeline, snapshot  # noqa: E402
+from xstudioz import board, ingest, pipeline, snapshot  # noqa: E402
 
 
 def latest_snapshot(directory: Path, on_or_before: _dt.date,
@@ -239,12 +239,37 @@ def main() -> int:
         "gig_capture": gig_p.name if gig_p else None,
     }
 
+    # ---- impressions board ------------------------------------------------
+    # Read here rather than in the pipeline: run_daily is pure with respect to
+    # the network so a morning can be replayed offline against a saved
+    # snapshot, and a live read inside it would end that quietly.
+    #
+    # A failure is a warning, not a stop. Without the board the engine falls
+    # back to the sheet, which is exactly where it was before, and a brief on
+    # slightly older reach data beats no brief at all. But it says so, because
+    # the whole reason this exists is that a stale impressions source went nine
+    # days without anybody noticing.
+    board_rows = None
+    if board.configured():
+        try:
+            board_rows = board.fetch_rows()
+            print(f"[board] read {len(board_rows)} impression row(s) from the "
+                  f"impressions board", file=sys.stderr)
+        except board.BoardError as exc:
+            print(f"[board warn] {exc}", file=sys.stderr)
+            print("[board warn] falling back to the impressions sheet, which "
+                  "stopped on 2026-08-06", file=sys.stderr)
+    else:
+        print(f"[board warn] {board.KEY_ENV} is not set; impressions come from "
+              f"the sheet, which stopped on 2026-08-06", file=sys.stderr)
+
     art = pipeline.run_daily(
         root=root, today=today,
         snap=snap, intake=intake,
         orders_text=orders_p.read_text(encoding="utf-8") if orders_p else "",
         inquiries_text=inq_p.read_text(encoding="utf-8") if inq_p else "",
         tracker_rows=read_tracker(raw / "order_tracker"),
+        board_rows=board_rows,
         gig=gig,
         write=not args.dry_run)
 

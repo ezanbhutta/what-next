@@ -320,12 +320,12 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 | Feed | State | As of | Age | Where it comes from |
 |---|---|---|---|---|
 | Snapshot credentials | 🟢 live | — | 0h | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
-| Order and inquiry workbooks | 🟢 live | 2026-08-16T08:59:25.971000+00:00 | 0h | Apps Script snapshot endpoint |
-| Impressions sheet (engine) | 🟠 stale | 2026-08-06 | 237h | Daily Data Sheet, via the snapshot |
-| Fiverr gig page | 🟢 live | 2026-08-16 | -3h | browser capture into data/raw/gig/ |
-| CSR handoff tracker | 🟠 stale | 2026-07-29 | 434h | uploaded into data/raw/order_tracker/ |
+| Order and inquiry workbooks | 🟢 live | 2026-08-16T09:46:46.651000+00:00 | 0h | Apps Script snapshot endpoint |
+| Impressions source | 🟢 live | 2026-08-15 | 0h | impressions board, via IMPRESSIONS_SUPABASE_KEY |
+| Impressions (engine copy) | 🟢 live | 2026-08-15 | 22h | board, merged over the Daily Data Sheet |
+| Fiverr gig page | 🟢 live | 2026-08-16 | -2h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟠 stale | 2026-07-29 | 435h | uploaded into data/raw/order_tracker/ |
 
-- **Impressions sheet (engine)** — newest row 2026-08-06. Nobody has filled in the Daily Data Sheet since 2026-08-06.
 - **CSR handoff tracker** — 2026-07-29-XOrder_Tracker.xlsx. Upload a fresh tracker export.
 
 

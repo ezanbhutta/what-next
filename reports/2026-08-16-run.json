@@ -416,21 +416,21 @@
     "decomposition": {
       "have_data": true,
       "days": 14,
-      "impressions_now": 53443.0,
-      "impressions_prior": 209145.0,
-      "ctr_now": 0.017607544486649328,
-      "ctr_prior": 0.0150087260034904,
-      "order_rate_now": 0.1647183846971307,
-      "order_rate_prior": 0.048104491876393755,
-      "orders_now": 155.0,
-      "orders_prior": 151.0,
+      "impressions_now": 113398.0,
+      "impressions_prior": 216116.0,
+      "ctr_now": 0.016358313197763628,
+      "ctr_prior": 0.014954931610801607,
+      "order_rate_now": 0.08409703504043127,
+      "order_rate_prior": 0.04733910891089109,
+      "orders_now": 156.0,
+      "orders_prior": 153.0,
       "attribution": {
-        "impressions": -0.4953,
-        "ctr": 0.058,
-        "order_rate": 0.4468
+        "impressions": -0.4926,
+        "ctr": 0.0685,
+        "order_rate": 0.4389
       },
       "verdict": "impressions",
-      "explanation": "Orders moved +2.6% over 14 days (151 -> 155). 50% of that swing is reach, which fell: impressions 209,145 -> 53,443, CTR 1.50% -> 1.76%, close rate 4.8% -> 16.5%. That makes this a ranking problem \u2014 work on review velocity, on-time delivery, response time."
+      "explanation": "Orders moved +2.0% over 14 days (153 -> 156). 49% of that swing is reach, which fell: impressions 216,116 -> 113,398, CTR 1.50% -> 1.64%, close rate 4.7% -> 8.4%. That makes this a ranking problem \u2014 work on review velocity, on-time delivery, response time."
     },
     "disputes": {
       "have_data": false,
@@ -1025,8 +1025,8 @@
         "id": "impressions_4000",
         "label": "Impressions, 7-day average",
         "required": 4000.0,
-        "actual": 92.42857142857143,
-        "met": false,
+        "actual": 5507.714285714285,
+        "met": true,
         "source": ""
       },
       {
@@ -1464,7 +1464,7 @@
     "flow_rows": 469,
     "flow_aggregate_rows": 67,
     "active_orders": 8,
-    "impressions": 2665,
+    "impressions": 2707,
     "disputes": 0,
     "automation_errors": 334,
     "blocks_seen": 28,
@@ -2135,13 +2135,20 @@
     "orders_export": null,
     "inquiries_export": null,
     "gig_capture": "2026-08-16.json",
-    "generated_at": "2026-08-16T08:59:25.971000+00:00",
+    "generated_at": "2026-08-16T09:46:46.651000+00:00",
     "generated_by": "apps_script",
     "age_hours": 0.0,
     "tables": 27,
     "warnings": [
       "source \"disputes\" has no fileId configured"
-    ]
+    ],
+    "impressions": {
+      "source": "board",
+      "board_rows": 361,
+      "sheet_rows": 2665,
+      "merged_rows": 2707,
+      "board_newest": "2026-08-15"
+    }
   },
   "feeds": [
     {
@@ -2159,20 +2166,30 @@
       "label": "Order and inquiry workbooks",
       "source": "Apps Script snapshot endpoint",
       "status": "live",
-      "as_of": "2026-08-16T08:59:25.971000+00:00",
+      "as_of": "2026-08-16T09:46:46.651000+00:00",
       "age_hours": 0.0,
       "detail": "fetched live, 27 tables",
       "fix": ""
     },
     {
+      "key": "impressions_source",
+      "label": "Impressions source",
+      "source": "impressions board, via IMPRESSIONS_SUPABASE_KEY",
+      "status": "live",
+      "as_of": "2026-08-15",
+      "age_hours": 0.0,
+      "detail": "361 row(s) from the board, overriding 2665 from the sheet",
+      "fix": ""
+    },
+    {
       "key": "impressions_sheet",
-      "label": "Impressions sheet (engine)",
-      "source": "Daily Data Sheet, via the snapshot",
-      "status": "stale",
-      "as_of": "2026-08-06",
-      "age_hours": 236.99213255777778,
-      "detail": "newest row 2026-08-06",
-      "fix": "Nobody has filled in the Daily Data Sheet since 2026-08-06."
+      "label": "Impressions (engine copy)",
+      "source": "board, merged over the Daily Data Sheet",
+      "status": "live",
+      "as_of": "2026-08-15",
+      "age_hours": 21.781190900833334,
+      "detail": "newest row 2026-08-15",
+      "fix": ""
     },
     {
       "key": "gig",
@@ -2180,7 +2197,7 @@
       "source": "browser capture into data/raw/gig/",
       "status": "live",
       "as_of": "2026-08-16",
-      "age_hours": -3.0078674422222225,
+      "age_hours": -2.2188090991666667,
       "detail": "captured 2026-08-16",
       "fix": ""
     },
@@ -2190,7 +2207,7 @@
       "source": "uploaded into data/raw/order_tracker/",
       "status": "stale",
       "as_of": "2026-07-29",
-      "age_hours": 434.0807271475,
+      "age_hours": 434.86978549055556,
       "detail": "2026-07-29-XOrder_Tracker.xlsx",
       "fix": "Upload a fresh tracker export."
     }

@@ -337,10 +337,32 @@ Nothing had to change for the third to appear, because `boardGigs()` reads the
 gig list from the board's own `profiles` table rather than keeping a copy.
 Flows add across gigs; levels come from the main gig alone.
 
-The engine still ingests the sheet, for its reach-versus-conversion diagnosis.
-Both appear on `/feeds` as separate rows on purpose: a gap between "Impressions
-sheet (engine)" and "Impressions board" is a real signal that the import has
-stalled, and folding them into one row would hide exactly that.
+**From 2026-08-16 the engine reads the board too** (`xstudioz/board.py`), and
+the sheet is a fallback rather than the source. The gap those two `/feeds` rows
+exist to expose finally opened and was not read: the sheet stopped on
+2026-08-06 because the team moved to entering figures on the board, not because
+anybody forgot. Every board row up to that date carries `entered_by: "Sheet
+import"` and every row after it was typed in directly. The engine went on
+reading the sheet for nine days and went on emitting a P0 asking somebody to
+update a workbook nobody was ever going to touch again.
+
+The lesson is not "check the sheet". It is that an instrument nobody reads is
+not an instrument. `/feeds` was showing this the whole time.
+
+Three things about the reader:
+
+- **Override, not replacement.** The board wins per `(date, profile)`; a day
+  only the sheet has is still counted. The board is the corrected copy — it had
+  the fixed 10,455/256 while the sheet held a duplicated 10,096/262 — but
+  trading history for freshness would be a bad bargain and an invisible one.
+- **The gig list comes from the board's own `profiles` table**, never a copy
+  kept here. Two of the three gigs have a space in the name, which broke the
+  first live run: the filter is a value handed to `urlencode` now, and
+  `test_a_gig_name_with_a_space_does_not_break_the_url` pins it.
+- **`IMPRESSIONS_SUPABASE_KEY` must be set wherever the engine runs.** Without
+  it the run still works, falls back to the sheet, and says so on stderr and in
+  the "Impressions source" row on `/feeds`. It does not fail silently, because
+  failing silently is the whole reason this module exists.
 
 ## The impressions sheet, and how it parses
 

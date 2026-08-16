@@ -120,7 +120,38 @@ def sheets_feed(intake: dict[str, Any] | None, now: _dt.datetime) -> Feed:
     return f
 
 
-def impressions_feed(root: Path, now: _dt.datetime, profile: str = "X Studioz") -> Feed:
+def impressions_source_feed(intake: dict[str, Any] | None, now: _dt.datetime) -> Feed:
+    """Which source today's impressions actually came from.
+
+    Separate from the freshness row below, because "the numbers are old" and
+    "the engine is reading the wrong place" are different sentences with
+    different fixes, and for nine days in August the second one was the true
+    one while only the first was on the page.
+
+    The sheet stopped on 2026-08-06 when the team moved to the board. Reading
+    the sheet after that is not a stale feed, it is the wrong feed, and it will
+    never come right no matter who is asked to fill something in.
+    """
+    f = Feed(key="impressions_source", label="Impressions source",
+             source="impressions board, via IMPRESSIONS_SUPABASE_KEY")
+    note = ((intake or {}).get("impressions") or {})
+    if note.get("source") == "board":
+        f.status = "live"
+        f.age_hours = 0.0
+        f.as_of = note.get("board_newest")
+        f.detail = (f"{note.get('board_rows', '?')} row(s) from the board, "
+                    f"overriding {note.get('sheet_rows', '?')} from the sheet")
+        return f
+    f.status = "unreachable"
+    f.detail = "impressions came from the sheet, which stopped on 2026-08-06"
+    f.fix = ("Set IMPRESSIONS_SUPABASE_KEY where the engine runs. It is the "
+             "anon key of the project the hub already reads. Without it the "
+             "engine reads a sheet nobody fills in any more.")
+    return f
+
+
+def impressions_feed(root: Path, now: _dt.datetime, profile: str = "X Studioz",
+                     records: list[Any] | None = None) -> Feed:
     """The Daily Data Sheet, via the same snapshot as the workbooks.
 
     Its own row rather than folded into `sheets`, because it is a different tab
@@ -135,8 +166,46 @@ def impressions_feed(root: Path, now: _dt.datetime, profile: str = "X Studioz") 
     diagnosis, so both rows appear on /feeds and a gap between them is a real
     signal rather than a duplicate.
     """
-    f = Feed(key="impressions_sheet", label="Impressions sheet (engine)",
-             source="Daily Data Sheet, via the snapshot")
+    f = Feed(key="impressions_sheet", label="Impressions (engine copy)",
+             source="board, merged over the Daily Data Sheet")
+
+    # IN-MEMORY FIRST, AND WHY IT MATTERS.
+    #
+    # This read the normalized file off disk, and `collect()` runs BEFORE
+    # `write_normalized`, so it was reporting the PREVIOUS run's impressions
+    # every morning -- always exactly one run behind. Harmless while the sheet
+    # moved a day at a time and invisible for the same reason. It stopped being
+    # harmless the morning the board arrived nine days fresher than the sheet:
+    # the row went on saying 2026-08-06 while the file it names had just been
+    # rebuilt to 2026-08-15.
+    #
+    # Passing the records the run actually computed removes the ordering
+    # dependency rather than reordering two calls and hoping nobody swaps them
+    # back. Disk stays as the fallback for callers that have no run in hand.
+    if records is not None:
+        newest_day = None
+        for rec in records:
+            if str(getattr(rec, "profile", "") or "") != profile:
+                continue
+            day = getattr(rec, "date", None)
+            day = day.isoformat() if hasattr(day, "isoformat") else str(day or "")[:10]
+            if day and (newest_day is None or day > newest_day):
+                newest_day = day
+        if not newest_day:
+            f.detail = f"no row for {profile} in this run"
+            f.fix = "The board and the sheet both hold nothing for this profile."
+            return f
+        f.as_of = newest_day
+        when = _dt.datetime.fromisoformat(f"{newest_day}T12:00:00+00:00")
+        f.age_hours = _age_hours(when, now)
+        _classify(f, THRESHOLDS_H["sheets"] + 24)
+        f.detail = f"newest row {newest_day}"
+        if f.status != "live":
+            f.fix = (f"Nothing has been entered on the impressions board since "
+                     f"{newest_day}. The sheet behind it stopped on 2026-08-06 "
+                     f"and is not coming back.")
+        return f
+
     path = root / "data" / "normalized" / "impressions.jsonl"
     if not path.exists():
         f.detail = "the last run produced no impressions file"
@@ -257,13 +326,15 @@ def snapshot_endpoint_feed(now: _dt.datetime) -> Feed:
 
 
 def collect(root: Path, intake: dict[str, Any] | None = None,
-            now: _dt.datetime | None = None) -> list[dict[str, Any]]:
+            now: _dt.datetime | None = None,
+            impressions: list[Any] | None = None) -> list[dict[str, Any]]:
     """Every feed the engine can check for itself."""
     now = now or _dt.datetime.now(_dt.timezone.utc)
     feeds = [
         snapshot_endpoint_feed(now),
         sheets_feed(intake, now),
-        impressions_feed(root, now),
+        impressions_source_feed(intake, now),
+        impressions_feed(root, now, records=impressions),
         gig_feed(root, now),
         tracker_feed(root, now),
     ]

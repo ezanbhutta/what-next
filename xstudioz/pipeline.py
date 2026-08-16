@@ -99,6 +99,7 @@ def run_daily(
     orders_text: str = "",
     inquiries_text: str = "",
     tracker_rows: Sequence[dict[str, Any]] | None = None,
+    board_rows: Sequence[dict[str, Any]] | None = None,
     gig: dict[str, Any] | None = None,
     snap: "snapshot.Snapshot | None" = None,
     intake: dict[str, Any] | None = None,
@@ -151,6 +152,43 @@ def run_daily(
     if tracker_rows:
         parts.append(ingest.ingest_tracker_rows(list(tracker_rows)))
     data = ingest.merge(*parts) if parts else ingest.IngestResult()
+
+    # ---- impressions: the board overrides the sheet -----------------------
+    # The sheet stopped on 2026-08-06 because the team moved to entering these
+    # on the board, not because anybody forgot: every board row up to that date
+    # carries `entered_by: "Sheet import"` and every row after it was typed in
+    # directly. The engine went on reading the sheet and went on asking at P0
+    # for somebody to update it, while nine days of real reach data sat in a
+    # table the hub was already reading on another page.
+    #
+    # An override rather than a replacement. The board is authoritative because
+    # it is the corrected copy -- when the sheet held a duplicated 5-Aug of
+    # 10,096/262 the board already carried the fixed 10,455/256 -- but a day the
+    # sheet has and the board does not is still counted. Trading history for
+    # freshness would be a bad bargain and an invisible one.
+    #
+    # Fetching stays with the caller. This module is pure with respect to the
+    # network so a run can be replayed offline against a saved snapshot, and a
+    # live read in here would quietly end that.
+    if board_rows is not None:
+        from . import board as _board
+        b = _board.to_impressions(list(board_rows))
+        before = len(data.impressions)
+        data.impressions = _board.merge_over_sheet(data.impressions, b)
+        # `profile_name` already, NOT the board's spelling: to_impressions runs
+        # every name through normalise_profile, which folds the board's
+        # "XStudioz" onto the engine's canonical "X Studioz". Matching on the
+        # raw spelling here would find nothing and report the board as empty.
+        newest = _board.newest_date(b, profile_name)
+        intake_note["impressions"] = {
+            "source": "board",
+            "board_rows": len(b),
+            "sheet_rows": before,
+            "merged_rows": len(data.impressions),
+            "board_newest": newest.isoformat() if newest else None,
+        }
+    else:
+        intake_note.setdefault("impressions", {"source": "sheet"})
 
     # ---- scope to this profile -------------------------------------------
     # Both workbooks keep one TAB per seller profile. Without this filter the
@@ -408,7 +446,7 @@ def run_daily(
         predictions=preds, resolved=resolved, ledger=led, check=check,
         config=config, revenue_projection=proj, gap=gap, missing_sources=missing,
         recovery=recov, intake=intake_note,
-        feeds=_feeds.collect(root, intake_note))
+        feeds=_feeds.collect(root, intake_note, impressions=data.impressions))
 
     art = RunArtifacts(
         phase=state,
@@ -420,7 +458,7 @@ def run_daily(
         boards=_roles.route(config, task_list), edge=_roles.edge(config),
         recovery=recov,
         intake=intake_note,
-        feeds=_feeds.collect(root, intake_note),
+        feeds=_feeds.collect(root, intake_note, impressions=data.impressions),
         window={"start": win_start.isoformat() if win_start else None,
                 "label": win.get("label") or "",
                 "orders_in_window": len(w_orders),
