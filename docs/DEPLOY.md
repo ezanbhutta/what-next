@@ -11,66 +11,84 @@ is a loop and does not.
 
 | Piece | State |
 |---|---|
-| Engine (`xstudioz/`, 187 tests) | Running, gate passing |
-| Daily Routine `trig_012hMr9MJEmXYWyRDakBY1Pv` | Fires 02:13 UTC (07:13 PKT) daily |
+| Engine (`xstudioz/`, 259 tests) | Running, gate passing |
+| Daily Routine `trig_01RW4AVCbNjhmZzQzwSGUz9g` | Fires 02:13 UTC (07:13 PKT) daily |
+| Apps Script snapshot | Deployed; runs land at `intake.path: "live"`, age ~0h |
+| Hub `system.xstudioz.com` | Hostinger Web App, auto-deploys `main` |
 | Dashboard artifact | Republishes to the same URL every morning |
-| Brief `reports/latest.md` + per-person boards | Generated each run |
 | Git history | Every run committed and pushed |
 
-### What is not, and the three steps that finish it
+Deployment is finished. It runs unattended end to end: build the brief, publish
+to the hub, rebuild the dashboard, push, auto-deploy. Verified on 2026-08-10 and
+2026-08-11, both clean.
 
-**1. Deploy the Apps Script — 15 minutes, once.**
-`automation/README.md` walks it. This is the only step that matters: until it
-runs, the engine reads snapshots that a human put there. After it runs, data
-arrives on its own from your own Google account, with no connector grant and no
-upload.
+### The four things that had to be true, and how to check each
 
-**2. Set two environment variables** wherever the engine runs (Claude
-environment settings, and your shell if you run it by hand):
+Each of these was broken at some point and each failed silently, so they are
+listed with the command that answers them rather than as prose to trust.
 
-```
-XSTUDIOZ_SNAPSHOT_URL=https://script.google.com/macros/s/.../exec
-XSTUDIOZ_SNAPSHOT_TOKEN=<from generateToken>
-```
+**1. The snapshot credentials must be present where the engine runs.** They live
+in the daily Routine's prompt. A run started any other way does not have them
+and falls back to whatever snapshot is on disk **without failing** — on
+2026-08-08 that produced a correct-looking brief built on a stale export.
 
-**3. Bring the impressions sheet current.** It stops on 2025-12-12. Everything
-about *why* organic moved is blocked behind it, and the engine will keep saying
-so at P0 until it is fixed.
+    python3 -c "import json,datetime;print(json.load(open('reports/'+datetime.date.today().isoformat()+'-run.json'))['intake'])"
 
-That is the whole deployment. There is no server to run and nothing to host.
+`path` must be `live`. `disk` means the credentials were missing.
 
-### Where the dashboard should live
+**2. Hostinger's build configuration must point at the app.** The Node app is in
+`system/`, not the repo root. Framework preset **Express**, root directory
+`system`, entry file `server.js`. It was once set to the **Astro** preset at root
+`./`, which fails on every build — while the last good deployment kept serving,
+so the site looked healthy and was days stale.
 
-Right now it is a Claude artifact — private, one URL, republished daily. That is
-correct for you and Ezan. It is not correct for the team.
+**3. Every environment variable the hub reads must be in the Hostinger panel.**
+`system/README.md` lists them and `system/tests/env-documented.test.js` fails if
+that list falls behind the code. Both Supabase keys were absent for days because
+the runbook never named them.
 
-When you want the team in it, the page is a **single self-contained HTML file
-with no external requests**, so it drops into the same Vercel setup as CSR Pulse
-with nothing to build:
+    curl -s https://system.xstudioz.com/healthz | python3 -m json.tool
 
-```bash
-mkdir -p xstudioz-brief/public
-cp reports/dashboard.html xstudioz-brief/public/index.html
-cd xstudioz-brief && vercel --prod
-```
+`auth.configured`, `db.reachable`, and every entry under `stores` showing
+`configured: true` with `key_matches_url: true`.
 
-Add the same password gate CSR Pulse uses (`api/auth.js`) and it behaves like the
-rest of the suite. Better still, add a step to the daily Routine that copies the
-file into the repo and pushes — Vercel redeploys on push and the page is current
-by 07:15 PKT with nobody touching it.
+**4. The unattended run must be allowed to run its own pipeline.**
+`.claude/settings.json` pre-approves the engine scripts and the git commands.
+Without it the Routine builds the brief and is then refused at
+`publish_hub.py`, which overwrites files — so the repo gets the new brief and
+the hub does not. That is not visible from the brief; it shows up as
+`engine.run_date` on `/healthz` lagging a day behind `reports/`.
 
-### The UI now matches
+There is no server to run and nothing else to host.
 
-The dashboard is styled from `ezanbhutta/csr-pulse` `src/CSRPulse.jsx` — the same
-`const C` token object, the same violet-tinted off-white canvas, the same Inter /
-Space Grotesk / JetBrains Mono roles, the same wide-tracked uppercase micro-labels
-and pill vocabulary.
+### Where the dashboard lives, and where it must not
 
-One honest gap: **csr-pulse loads its fonts from Google Fonts and the Artifact CSP
-blocks external hosts.** The same families are declared, so they resolve for
-anyone who has them installed and fall back to system equivalents otherwise. The
-moment the page moves to Vercel that constraint disappears — add the same
-`<link>` tag csr-pulse uses and it is pixel-identical.
+Two surfaces, and only two: the **Claude artifact** (private, one stable URL,
+republished every morning) for Ezan, and **system.xstudioz.com** for the team.
+
+**Do not publish the brief to a third place.** This section used to give
+copy-paste instructions for pushing `reports/dashboard.html` to Vercel, and
+suggested wiring it into the daily Routine so it happened every morning. That
+surface was retired on 2026-08-05 and the instructions outlived it by six days.
+
+It is retired because it leaked. The gate rendered the entire brief inside a
+hidden `<div>` and served it to anyone: `curl` returned every client name and
+every revenue figure with no password. A second copy of these numbers on a
+second domain is also one more thing to keep in sync and one more password to
+hand out.
+
+The code cannot come back — `test_the_published_site_stays_retired` fails if
+`site/` or `scripts/publish_site.py` reappears. The *instructions* had no such
+guard, which is why they sat here recommending the exact thing the test forbids.
+`tests/test_engine.py::test_docs_do_not_teach_the_retired_publish_path` now
+covers the docs too. Do not delete either test to make something pass. If that
+surface is ever genuinely wanted again, restore the gate tests with it.
+
+### Fonts
+
+Inter and JetBrains Mono are base64-embedded from `assets/fonts/` rather than
+linked. The artifact's CSP blocks every external host, so a `<link>` to Google
+Fonts fails there silently while looking correct everywhere else.
 
 ---
 

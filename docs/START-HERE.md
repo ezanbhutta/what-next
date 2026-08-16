@@ -166,57 +166,64 @@ Worth doing, but not urgent, and nothing breaks while it waits.
 **How you will know it worked:** tomorrow's brief says `[snapshot] fetched live`
 instead of `[snapshot] using disk`.
 
-# Job 3 — Put the dashboard where your team can see it
+# Job 3 — Already done. Do not redo it.
 
-**Time: 5 minutes. Optional — skip it if only you and Ezan need the page.**
+**Nothing to do here.** The team reads **system.xstudioz.com**, the hub on
+Hostinger. It is live, password-gated, and it redeploys itself every time the
+daily run pushes to `main` — measured at 41 seconds from push to live.
 
-This puts the daily brief on a web address with a password, exactly like
-CSR Pulse.
+This section used to walk you through putting a second copy of the brief on
+Vercel behind its own password. **Do not do that, and do not follow those steps
+if you find them in an older copy of this file.**
 
-1. Open a terminal in the repo
-2. Run:
+Two reasons, in order:
 
-```bash
-cd site
-vercel link
-```
+1. **It leaked.** The password gate rendered the whole brief inside a hidden
+   `<div>` and served it to anyone who asked. `curl` returned every client name
+   and every revenue figure without ever logging in. The site was retired on
+   2026-08-05 and `site/` was deleted, so the first command in those steps
+   (`cd site`) now fails anyway.
+2. **Two copies of the same numbers is worse than one**, even when both work.
+   Two things to keep in sync, two passwords to hand out, two places to leak
+   from.
 
-Follow the prompts (pick your account, create a new project, call it
-`xstudioz-brief`).
+`test_the_published_site_stays_retired` fails if the code comes back, and
+`test_docs_do_not_teach_the_retired_publish_path` fails if any document starts
+handing out the command again. That second test exists because these
+instructions outlived the thing they described by six days — the guard was on
+the filesystem while the recommendation sat here in prose, and nobody reads a
+passing test suite for permission.
 
-3. Set the password your team will type:
-
-```bash
-vercel env add APP_PASSWORD production
-```
-
-Type the password when it asks.
-
-4. Set a security key (any long random text — mash the keyboard):
-
-```bash
-vercel env add SESSION_SECRET production
-```
-
-5. Deploy once:
-
-```bash
-vercel --prod
-```
-
-Done. From now on the page updates itself every morning — the system rewrites
-the file and pushes it, and Vercel republishes automatically.
+**Where the brief lives now:** system.xstudioz.com for the team, and the Claude
+artifact (one private URL, republished each morning) for you and Ezan.
 
 ---
 
 # One more thing, and it matters most
 
-**The engine has no impressions at all.**
+**Impressions are the number that decides what to fix.**
 
-The impressions sheet stopped on 12 December 2025 and was retired on 5 August
-2026. Those numbers are typed into the hub's Daily entry now. Nothing reads
-that table back into the engine yet, so the brief says "no impression data"
-and will keep saying it until someone builds the reader.
+The engine has them: today's run holds 2,657 impression rows. This section used
+to say it had none, which was wrong, and the mistake is worth keeping on the
+page because it cost two days.
+
+**The impressions workbook has two tabs and only one is dead.** `Impressions
+Daily Data Sheet Profiles` stops on 13 December 2025. `Daily Data Sheet
+Profiles` is current — thousands of rows, September 2025 to now. Only the first
+was looked at, so the whole source was declared dead and refused every morning
+while the live tab sat right beside it.
+
+So there are two faces of one source, and both are wanted:
+
+- **The board** (impressions-hmi) is what `/entry` shows the team, on Ezan's
+  instruction from 2026-08-07. It is the corrected copy — when the sheet held a
+  duplicated 5-Aug of 10,096/262, the board already had 10,455/256.
+- **The sheet** is what the engine ingests, for the reach-versus-conversion
+  diagnosis below.
+
+Both appear on `/feeds` as separate rows deliberately. A gap between
+"Impressions sheet (engine)" and "Impressions board" means the import has
+stalled, and one merged row would hide exactly that.
 
 Impressions are the single most important number in the system: they say
 whether Fiverr is showing your gig to people again. Without them the system can
@@ -228,10 +235,22 @@ tell you organic orders fell. It **cannot** tell you whether that's because:
 
 Those three need completely opposite fixes. Guessing between them wastes weeks.
 
-**What to do:** type the daily numbers into the hub's Daily entry, one row per
-profile per day from Fiverr Analytics. Do not reopen the old sheet. The engine
-refuses its tables now, and two places holding the same number is the problem
-the hub was built to end.
+**What to do:** keep the Daily Data Sheet filled in, one row per profile per day
+from Fiverr Analytics. The board is fed from it, so filling the sheet updates
+both.
+
+As of 2026-08-11 its newest row is **2026-08-06** — five days behind, and
+`/feeds` reports it STALE. That is the only thing on the whole board that needs
+a person rather than a fix, and the P0 organic task is blocked behind it.
+
+**Do not retire the sheet again.** Deleting a source from `config/sources.yml`
+does not stop it being read: tables are matched by header fingerprint, so an
+unclaimed sheet falls through to the next rule that fits. This one carries its
+own organic and directed order columns, so unclaimed it is read as the daily
+ledger and **doubles every order in it**. `RETIRED_FINGERPRINTS` in
+`xstudioz/ingest.py` route it rather than refuse it, and
+`test_impressions_table_does_not_double_count_as_flow` caught exactly that hole
+being reopened.
 
 Once 28 days in a row exist and the engine can read them, every morning's brief
 will tell you which of those three it is, automatically, in plain English.

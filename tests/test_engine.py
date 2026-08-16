@@ -1710,6 +1710,51 @@ def test_the_published_site_stays_retired():
         "publish_site.py is back without the site it publishes to"
 
 
+def test_docs_do_not_teach_the_retired_publish_path():
+    """The instructions have to be retired too, not just the code.
+
+    The test above has guarded `site/` since 2026-08-05. `docs/DEPLOY.md` went
+    on carrying copy-paste instructions for the same thing until 2026-08-11 —
+    `cp reports/dashboard.html … && vercel --prod`, under a heading saying that
+    is where the dashboard *should* live, plus a suggestion to wire it into the
+    daily Routine so it happened every morning without anyone watching.
+
+    Nobody reads a passing test suite for permission. Somebody following the
+    deploy doc would have rebuilt the leak by hand and hit no guard at all,
+    because the guard was on the filesystem and the recommendation was in prose.
+
+    So: no document may hand somebody the command. Scanned as words, not
+    substrings — `vercel` appears legitimately in this repo's history notes and
+    in the retirement explanation itself, and banning the string outright would
+    forbid explaining WHY the surface is retired, which is the one thing the
+    docs most need to say.
+    """
+    import re
+
+    docs = sorted((ROOT / "docs").glob("*.md"))
+    docs += [ROOT / "README.md", ROOT / "CLAUDE.md"]
+    # The deploy command, in the shapes a person could actually copy.
+    forbidden = re.compile(r"vercel\s+--prod|npx\s+vercel|vercel\s+deploy", re.I)
+
+    offenders = []
+    for doc in docs:
+        if not doc.exists():
+            continue
+        for n, line in enumerate(doc.read_text(encoding="utf-8").splitlines(), 1):
+            if forbidden.search(line):
+                offenders.append(f"{doc.relative_to(ROOT)}:{n}: {line.strip()}")
+
+    assert not offenders, (
+        "a document is teaching the retired publish path:\n  "
+        + "\n  ".join(offenders)
+        + "\n\nThat surface leaked the entire brief once: the gate rendered it "
+          "inside a hidden <div> and curl returned every client name and "
+          "revenue figure without a password. system.xstudioz.com is the only "
+          "place the team reads. Explaining why it is retired is fine; handing "
+          "somebody the command is not."
+    )
+
+
 # --------------------------------------------------------------------------
 # Padding rows and recovery
 # --------------------------------------------------------------------------

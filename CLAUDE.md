@@ -214,16 +214,27 @@ morning and defaults to `haseeb53810@gmail.com`, which is not attached to the
 GitHub account. An unattributable commit author has already cost one silent
 failed deploy, and it is two seconds to set.
 
-**Pushing does not deploy the hub.** system.xstudioz.com runs on Hostinger, not
-on a build triggered by this push. Nothing in this repo is a deploy hook. If a
-change needs to reach the team today, confirm it is actually live rather than
-assuming the push did it — hit a route that only exists in the new code and
-check for a redirect rather than a 404:
+**Pushing DOES deploy the hub, and did not always.** Hostinger auto-deploys
+`main`; measured 2026-08-09, a push was live in 41 seconds. This paragraph used
+to say the opposite and was right when it was written, which is the part worth
+remembering: the auto-deploy had been silently broken for days by a build
+configuration that pointed Hostinger's **Astro** preset at the repo root, where
+there is no `package.json`. Every build failed, the last good deployment kept
+serving, and the site looked fine while being days behind. The fix was the
+Express preset with root directory `system` and entry `server.js`.
 
-    curl -s -o /dev/null -w "%{http_code} %{redirect_url}" https://system.xstudioz.com/<new-route>
+So do not take deployment on trust in either direction. Confirm:
 
-A route that 404s is old code; a route that redirects to /login is deployed and
-gated, which is the healthy answer for anything behind auth.
+    curl -s https://system.xstudioz.com/healthz | python3 -m json.tool
+
+`engine.run_date` is the run the team is actually looking at. If it is not
+today's, the push has not landed no matter what git says. `/healthz` also
+reports `auth`, `db` and a `stores` block naming each Supabase key as present
+and matching its project — see `system/lib/external.js` `storeConfig`.
+
+Checking a route for 404-versus-redirect also works and is weaker: unknown
+routes 404 before the auth gate, so a 302 to `/login` proves the route exists
+but tells you nothing about which commit is serving it.
 
 The container is ephemeral. Uncommitted state is lost. Commit every run.
 
