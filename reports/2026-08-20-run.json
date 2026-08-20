@@ -64,15 +64,6 @@
       "pipeline_value": 3882.0,
       "by_csr": [
         {
-          "key": "Nadir",
-          "n": 24,
-          "placed": 5,
-          "conv": 0.2083,
-          "conv_lb": 0.0924,
-          "value": 965.0,
-          "value_per_lead": 40.21
-        },
-        {
           "key": "Hasnain",
           "n": 26,
           "placed": 5,
@@ -80,6 +71,15 @@
           "conv_lb": 0.0851,
           "value": 715.0,
           "value_per_lead": 27.5
+        },
+        {
+          "key": "Nadir",
+          "n": 26,
+          "placed": 5,
+          "conv": 0.1923,
+          "conv_lb": 0.0851,
+          "value": 965.0,
+          "value_per_lead": 37.12
         },
         {
           "key": "Iqra",
@@ -94,12 +94,12 @@
       "by_shift": [
         {
           "key": "Night",
-          "n": 31,
+          "n": 32,
           "placed": 10,
-          "conv": 0.3226,
-          "conv_lb": 0.1857,
+          "conv": 0.3125,
+          "conv_lb": 0.1795,
           "value": 1615.0,
-          "value_per_lead": 52.1
+          "value_per_lead": 50.47
         },
         {
           "key": "Evening",
@@ -132,32 +132,32 @@
         },
         {
           "key": "United States",
-          "n": 28,
+          "n": 27,
           "placed": 6,
-          "conv": 0.2143,
-          "conv_lb": 0.1021,
+          "conv": 0.2222,
+          "conv_lb": 0.1061,
           "value": 1120.0,
-          "value_per_lead": 40.0
+          "value_per_lead": 41.48
         }
       ],
       "by_followup_depth": [
         {
           "key": "F0",
-          "n": 42,
+          "n": 40,
           "placed": 19,
-          "conv": 0.4524,
-          "conv_lb": 0.3122,
+          "conv": 0.475,
+          "conv_lb": 0.3294,
           "value": 3182.0,
-          "value_per_lead": 75.76
+          "value_per_lead": 79.55
         },
         {
           "key": "F1",
-          "n": 37,
+          "n": 35,
           "placed": 3,
-          "conv": 0.0811,
-          "conv_lb": 0.028,
+          "conv": 0.0857,
+          "conv_lb": 0.0296,
           "value": 630.0,
-          "value_per_lead": 17.03
+          "value_per_lead": 18.0
         },
         {
           "key": "F3",
@@ -170,7 +170,7 @@
         },
         {
           "key": "F2",
-          "n": 15,
+          "n": 19,
           "placed": 0,
           "conv": 0.0,
           "conv_lb": 0.0,
@@ -185,9 +185,9 @@
           "conv": 0.0
         },
         "without_upsell": {
-          "n": 117,
+          "n": 119,
           "placed": 23,
-          "conv": 0.1966
+          "conv": 0.1933
         },
         "relative_lift": -1.0,
         "z": -0.49,
@@ -196,30 +196,30 @@
       }
     },
     "economics": {
-      "n_orders": 172,
-      "n_priced": 135,
-      "revenue": 13192.0,
-      "aov": 97.72,
+      "n_orders": 174,
+      "n_priced": 137,
+      "revenue": 13407.0,
+      "aov": 97.86,
       "median": 80.0,
       "q1": 45.0,
       "q3": 115.0,
-      "tip_rate": 0.0174,
-      "tip_total": 28.5,
+      "tip_rate": 0.023,
+      "tip_total": 33.5,
       "upsell_rate": 0.0,
-      "upsell_denominator": 172,
-      "review_capture_rate": 0.4709,
-      "review_denominator": 172,
+      "upsell_denominator": 174,
+      "review_capture_rate": 0.4655,
+      "review_denominator": 174,
       "mean_rating": 4.97,
       "by_type": {
         "organic": {
-          "n": 44,
-          "revenue": 6067.0,
-          "aov": 137.89
+          "n": 45,
+          "revenue": 6167.0,
+          "aov": 137.04
         },
         "vvro": {
-          "n": 91,
-          "revenue": 7125.0,
-          "aov": 78.3
+          "n": 92,
+          "revenue": 7240.0,
+          "aov": 78.7
         },
         "unknown": {
           "n": 0,
@@ -248,9 +248,9 @@
         },
         {
           "name": "Zahid",
-          "n": 16,
-          "aov": 86.88,
-          "revenue": 1390.0
+          "n": 17,
+          "aov": 88.53,
+          "revenue": 1505.0
         },
         {
           "name": "Rashdul",
@@ -416,21 +416,21 @@
     "decomposition": {
       "have_data": true,
       "days": 14,
-      "impressions_now": 6612.0,
-      "impressions_prior": 190784.0,
-      "ctr_now": 0.01603145795523291,
-      "ctr_prior": 0.01470249077490775,
-      "order_rate_now": 0.07547169811320754,
-      "order_rate_prior": 0.08591800356506239,
+      "impressions_now": 87381.0,
+      "impressions_prior": 197662.0,
+      "ctr_now": 0.01601034549844932,
+      "ctr_prior": 0.014656332527243476,
+      "order_rate_now": 0.005718370264474625,
+      "order_rate_prior": 0.08387987573351743,
       "orders_now": 8.0,
-      "orders_prior": 241.0,
+      "orders_prior": 243.0,
       "attribution": {
-        "impressions": -0.9396,
-        "ctr": 0.0242,
-        "order_rate": -0.0362
+        "impressions": -0.2274,
+        "ctr": 0.0246,
+        "order_rate": -0.748
       },
-      "verdict": "impressions",
-      "explanation": "Orders moved -96.7% over 14 days (241 -> 8). 94% of that swing is reach, which fell: impressions 190,784 -> 6,612, CTR 1.47% -> 1.60%, close rate 8.6% -> 7.5%. That makes this a ranking problem \u2014 work on review velocity, on-time delivery, response time."
+      "verdict": "order_rate",
+      "explanation": "Orders moved -96.7% over 14 days (243 -> 8). 75% of that swing is closing rate, which fell: impressions 197,662 -> 87,381, CTR 1.47% -> 1.60%, close rate 8.4% -> 0.6%. That makes this a gig page and handling problem \u2014 work on gig copy, packages, response speed, CSR quality."
     },
     "disputes": {
       "have_data": false,
@@ -478,7 +478,7 @@
       "title": "Close out 5 orders open more than 60 days ($535)",
       "category": "delivery",
       "owner": "Ezan",
-      "why": "5 orders worth $535 have been open longer than 60 days, out of 22 open orders worth $3,640 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
+      "why": "5 orders worth $535 have been open longer than 60 days, out of 27 open orders worth $4,005 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
       "steps": [
         "Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.",
         "Where we owe work \u2014 assign it to the designer named on the row with a delivery date this week. Oldest first: jordyspikker (159d, $100), calumsnell (157d, $100), elite9921 (111d, $105).",
@@ -503,26 +503,25 @@
       "score": 42.8
     },
     {
-      "id": "diagnose-impressions",
-      "title": "Organic decline is a ranking problem \u2014 act accordingly",
+      "id": "diagnose-order_rate",
+      "title": "Organic decline is a gig page and handling problem \u2014 act accordingly",
       "category": "diagnosis",
       "owner": "CEO",
-      "why": "Orders moved -96.7% over 14 days (241 -> 8). 94% of that swing is reach, which fell: impressions 190,784 -> 6,612, CTR 1.47% -> 1.60%, close rate 8.6% -> 7.5%. That makes this a ranking problem \u2014 work on review velocity, on-time delivery, response time.",
+      "why": "Orders moved -96.7% over 14 days (243 -> 8). 75% of that swing is closing rate, which fell: impressions 197,662 -> 87,381, CTR 1.47% -> 1.60%, close rate 8.4% -> 0.6%. That makes this a gig page and handling problem \u2014 work on gig copy, packages, response speed, CSR quality.",
       "steps": [
-        "Treat this as a ranking problem, not a gig-page problem \u2014 the page is converting exactly as well as before.",
-        "Push review capture on every delivery; review velocity is the strongest ranking input you control.",
-        "Audit on-time delivery and response time over the same window \u2014 both feed the success score that drives impressions.",
-        "List every change made to how the profile was run in the same window \u2014 pricing, order mix, delivery times, gig edits \u2014 and line them up against the impression series by date. Impressions are the one metric that can date a ranking change."
+        "Treat this as a page-and-handling problem \u2014 reach and clicks are holding, buyers are arriving and not ordering.",
+        "Check first-response time on inbound inquiries over this window. Slow first replies show up here before anywhere else.",
+        "Re-read the gig packages against the last 10 lost inquiries: are buyers asking for something the packages do not describe?"
       ],
-      "impact_usd": 22768.41,
+      "impact_usd": 22997.41,
       "confidence": 0.75,
       "effort_hours": 2.0,
       "priority": "P0",
       "urgency": 1,
-      "playbook": "playbooks/review_capture.md",
+      "playbook": "playbooks/upsell.md",
       "refs": [],
       "due": null,
-      "score": 8538.2
+      "score": 8624.0
     },
     {
       "id": "dq-flow-revenue",
@@ -591,9 +590,9 @@
         "farida_ism: $700, 188d, 1 follow-ups",
         "tatiana_1017: $510, 15d, 1 follow-ups",
         "ryan_wonders: $350, 114d, 1 follow-ups",
-        "josh_mcmillian: $300, 3d, 1 follow-ups",
         "rztwerk: $250, 24d, 1 follow-ups",
-        "chupetes: $200, 163d, 1 follow-ups"
+        "chupetes: $200, 163d, 1 follow-ups",
+        "dgtl_depot: $175, 196d, 1 follow-ups"
       ],
       "due": null,
       "score": 18.3
@@ -624,7 +623,7 @@
       "title": "Start recording upsells \u2014 the column is empty",
       "category": "data_quality",
       "owner": "All CSRs",
-      "why": "Upsell is marked on 0.0% of the 172 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+      "why": "Upsell is marked on 0.0% of the 174 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
       "steps": [
         "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
         "Fill 'What did you upsell and how much' whenever TRUE.",
@@ -710,12 +709,12 @@
       "created_on": "2026-08-20",
       "resolve_on": "2026-09-19",
       "metric": "economics.aov",
-      "statement": "Blended AOV in 30 days will be $98 (80% CI $82-$122).",
-      "point": 97.72,
-      "lo": 82.46114493175999,
-      "hi": 122.35020306823999,
+      "statement": "Blended AOV in 30 days will be $98 (80% CI $83-$123).",
+      "point": 97.86,
+      "lo": 82.57928410787999,
+      "hi": 122.52548989212,
       "confidence": "high",
-      "basis": "Lifetime AOV across 135 priced orders. Moves only if the upsell programme lands.",
+      "basis": "Lifetime AOV across 137 priced orders. Moves only if the upsell programme lands.",
       "horizon_days": 30,
       "profile": "X Studioz",
       "status": "open",
@@ -748,113 +747,7 @@
       "note": null
     }
   ],
-  "resolved": [
-    {
-      "id": "790a551b94ba",
-      "created_on": "2026-07-21",
-      "resolve_on": "2026-08-20",
-      "metric": "economics.aov",
-      "statement": "Blended AOV in 30 days will be $128 (80% CI $115-$141).",
-      "point": 128.39,
-      "lo": 115.29422,
-      "hi": 141.48578,
-      "confidence": "high",
-      "basis": "Lifetime AOV across 713 priced orders. Moves only if the upsell programme lands.",
-      "horizon_days": 30,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 97.72,
-      "abs_error": 30.669999999999987,
-      "pct_error": -0.23888153282965957,
-      "within_interval": false,
-      "resolved_on": "2026-08-20",
-      "note": null
-    },
-    {
-      "id": "374aec717bcd",
-      "created_on": "2026-08-06",
-      "resolve_on": "2026-08-20",
-      "metric": "health.index",
-      "statement": "Organic health index in 14 days will be 34 (80% CI 21-45).",
-      "point": 33.9,
-      "lo": 21.210339162239997,
-      "hi": 45.11840083776,
-      "confidence": "low",
-      "basis": "Breach with the signal-repair tasks in force; if review capture, response time and on-time delivery are the binding inputs, the index should recover ~8 points in 14 days. If it does not, those tasks are not the constraint and the diagnosis needs to change.",
-      "horizon_days": 14,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 61.6,
-      "abs_error": 27.700000000000003,
-      "pct_error": 0.817109144542773,
-      "within_interval": false,
-      "resolved_on": "2026-08-20",
-      "note": null
-    },
-    {
-      "id": "4cd56a7707f6",
-      "created_on": "2026-08-13",
-      "resolve_on": "2026-08-20",
-      "metric": "flow_7d.organic",
-      "statement": "Organic orders over the 7 days to 20 Aug will be 25.3 (80% CI 18.9-31.7).",
-      "point": 25.292307692307688,
-      "lo": 18.85500104099171,
-      "hi": 31.729614343623666,
-      "confidence": "medium",
-      "basis": "14d damped organic rate 3.613/day; Poisson spread. Health HEALTHY (index 83.3).",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 12.0,
-      "abs_error": 13.292307692307688,
-      "pct_error": -0.5255474452554744,
-      "within_interval": false,
-      "resolved_on": "2026-08-20",
-      "note": null
-    },
-    {
-      "id": "9724fef13c83",
-      "created_on": "2026-08-13",
-      "resolve_on": "2026-08-20",
-      "metric": "flow_7d.total_per_day",
-      "statement": "Total orders/day averaged over the next 7 days will be 7.15 (80% CI 5.85-8.44).",
-      "point": 7.147252747252747,
-      "lo": 5.853859706719497,
-      "hi": 8.440645787785995,
-      "confidence": "medium",
-      "basis": "14d damped total rate; current 7d actual 6.857.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 4.286,
-      "abs_error": 2.861252747252747,
-      "pct_error": -0.40032902829028294,
-      "within_interval": false,
-      "resolved_on": "2026-08-20",
-      "note": null
-    },
-    {
-      "id": "10f488633ddc",
-      "created_on": "2026-08-13",
-      "resolve_on": "2026-08-20",
-      "metric": "funnel.conversion",
-      "statement": "Inquiry->order conversion in 7 days will be 20.9% (80% CI 16.5%-24.2%).",
-      "point": 0.2093,
-      "lo": 0.16503035149510004,
-      "hi": 0.24161861850490002,
-      "confidence": "high",
-      "basis": "Lifetime conversion over 86 scored inquiries.",
-      "horizon_days": 7,
-      "profile": "X Studioz",
-      "status": "resolved",
-      "actual": 0.213,
-      "abs_error": 0.003699999999999981,
-      "pct_error": 0.017677974199713238,
-      "within_interval": true,
-      "resolved_on": "2026-08-20",
-      "note": null
-    }
-  ],
+  "resolved": [],
   "selfcheck": {
     "score": 90.0,
     "rubric": {
@@ -879,7 +772,7 @@
         "name": "ledger_vs_crm_orders",
         "passed": true,
         "severity": "warn",
-        "detail": "daily ledger says 134 orders in window, CRM sheet says 120 (10% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.",
+        "detail": "daily ledger says 134 orders in window, CRM sheet says 122 (9% apart). The two sources are maintained separately and disagree; treat the ledger as authoritative for flow and the CRM for economics.",
         "repaired": false
       },
       {
@@ -893,7 +786,7 @@
         "name": "aov_recompute",
         "passed": true,
         "severity": "block",
-        "detail": "aov=97.718519 but revenue/n_priced=97.718519",
+        "detail": "aov=97.861314 but revenue/n_priced=97.861314",
         "repaired": false
       },
       {
@@ -911,13 +804,6 @@
         "repaired": false
       },
       {
-        "name": "kill_impressions_flat_at_gate",
-        "passed": false,
-        "severity": "warn",
-        "detail": "KILL CRITERION FIRED \u2014 On 2026-08-20, impressions 7d average is 405, below the 2,000 floor. The cause is outside the control set. Stop spending effort here, shift volume weighting to Dygram and Storm, treat XStudioz as a rebuild.",
-        "repaired": false
-      },
-      {
         "name": "data_freshness",
         "passed": true,
         "severity": "warn",
@@ -928,7 +814,7 @@
         "name": "window_retains_data",
         "passed": true,
         "severity": "block",
-        "detail": "172 of 1139 orders fall on or after 2026-06-01 (floor 10)",
+        "detail": "174 of 1141 orders fall on or after 2026-06-01 (floor 10)",
         "repaired": false
       },
       {
@@ -1012,8 +898,8 @@
         "id": "impressions_4000",
         "label": "Impressions, 7-day average",
         "required": 4000.0,
-        "actual": 404.85714285714283,
-        "met": false,
+        "actual": 4904.857142857143,
+        "met": true,
         "source": ""
       },
       {
@@ -1025,15 +911,7 @@
         "source": ""
       }
     ],
-    "kills_fired": [
-      {
-        "id": "impressions_flat_at_gate",
-        "fired": true,
-        "condition": "impressions_7d_ma < 2000 on 2026-08-20 with Phase 1 actions at 100%",
-        "response": "The cause is outside the control set. Stop spending effort here, shift volume weighting to Dygram and Storm, treat XStudioz as a rebuild.\n",
-        "detail": "On 2026-08-20, impressions 7d average is 405, below the 2,000 floor."
-      }
-    ],
+    "kills_fired": [],
     "forbidden": [
       "fiverr_ads",
       "new_gig_launch",
@@ -1048,7 +926,7 @@
       "window": "all hours",
       "task_ids": [
         "stale-open-orders",
-        "diagnose-impressions"
+        "diagnose-order_rate"
       ],
       "tasks": [
         {
@@ -1056,7 +934,7 @@
           "title": "Close out 5 orders open more than 60 days ($535)",
           "category": "delivery",
           "owner": "Ezan",
-          "why": "5 orders worth $535 have been open longer than 60 days, out of 22 open orders worth $3,640 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
+          "why": "5 orders worth $535 have been open longer than 60 days, out of 27 open orders worth $4,005 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win \u2014 it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.",
           "steps": [
             "Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.",
             "Where we owe work \u2014 assign it to the designer named on the row with a delivery date this week. Oldest first: jordyspikker (159d, $100), calumsnell (157d, $100), elite9921 (111d, $105).",
@@ -1081,26 +959,25 @@
           "score": 42.8
         },
         {
-          "id": "diagnose-impressions",
-          "title": "Organic decline is a ranking problem \u2014 act accordingly",
+          "id": "diagnose-order_rate",
+          "title": "Organic decline is a gig page and handling problem \u2014 act accordingly",
           "category": "diagnosis",
           "owner": "CEO",
-          "why": "Orders moved -96.7% over 14 days (241 -> 8). 94% of that swing is reach, which fell: impressions 190,784 -> 6,612, CTR 1.47% -> 1.60%, close rate 8.6% -> 7.5%. That makes this a ranking problem \u2014 work on review velocity, on-time delivery, response time.",
+          "why": "Orders moved -96.7% over 14 days (243 -> 8). 75% of that swing is closing rate, which fell: impressions 197,662 -> 87,381, CTR 1.47% -> 1.60%, close rate 8.4% -> 0.6%. That makes this a gig page and handling problem \u2014 work on gig copy, packages, response speed, CSR quality.",
           "steps": [
-            "Treat this as a ranking problem, not a gig-page problem \u2014 the page is converting exactly as well as before.",
-            "Push review capture on every delivery; review velocity is the strongest ranking input you control.",
-            "Audit on-time delivery and response time over the same window \u2014 both feed the success score that drives impressions.",
-            "List every change made to how the profile was run in the same window \u2014 pricing, order mix, delivery times, gig edits \u2014 and line them up against the impression series by date. Impressions are the one metric that can date a ranking change."
+            "Treat this as a page-and-handling problem \u2014 reach and clicks are holding, buyers are arriving and not ordering.",
+            "Check first-response time on inbound inquiries over this window. Slow first replies show up here before anywhere else.",
+            "Re-read the gig packages against the last 10 lost inquiries: are buyers asking for something the packages do not describe?"
           ],
-          "impact_usd": 22768.41,
+          "impact_usd": 22997.41,
           "confidence": 0.75,
           "effort_hours": 2.0,
           "priority": "P0",
           "urgency": 1,
-          "playbook": "playbooks/review_capture.md",
+          "playbook": "playbooks/upsell.md",
           "refs": [],
           "due": null,
-          "score": 8538.2
+          "score": 8624.0
         }
       ],
       "standing": [
@@ -1110,7 +987,7 @@
         "Escalate any cancellation risk before it is filed, never after."
       ],
       "total_effort_hours": 5.0,
-      "total_impact_usd": 22982.41
+      "total_impact_usd": 23211.41
     },
     {
       "person": "CEO",
@@ -1161,7 +1038,7 @@
           "title": "Start recording upsells \u2014 the column is empty",
           "category": "data_quality",
           "owner": "All CSRs",
-          "why": "Upsell is marked on 0.0% of the 172 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
+          "why": "Upsell is marked on 0.0% of the 174 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.",
           "steps": [
             "Fill the Upsell column on every order: TRUE/FALSE, no blanks.",
             "Fill 'What did you upsell and how much' whenever TRUE.",
@@ -1285,9 +1162,9 @@
             "farida_ism: $700, 188d, 1 follow-ups",
             "tatiana_1017: $510, 15d, 1 follow-ups",
             "ryan_wonders: $350, 114d, 1 follow-ups",
-            "josh_mcmillian: $300, 3d, 1 follow-ups",
             "rztwerk: $250, 24d, 1 follow-ups",
-            "chupetes: $200, 163d, 1 follow-ups"
+            "chupetes: $200, 163d, 1 follow-ups",
+            "dgtl_depot: $175, 196d, 1 follow-ups"
           ],
           "due": null,
           "score": 18.3
@@ -1323,12 +1200,12 @@
     }
   ],
   "ingest": {
-    "orders": 1139,
-    "leads": 382,
+    "orders": 1141,
+    "leads": 384,
     "flow_rows": 497,
     "flow_aggregate_rows": 71,
     "active_orders": 0,
-    "impressions": 2666,
+    "impressions": 2714,
     "disputes": 0,
     "automation_errors": 334,
     "blocks_seen": 27,
@@ -1380,7 +1257,7 @@
     ]
   },
   "validation": {
-    "checked": 2018,
+    "checked": 2022,
     "blocking": 0,
     "errors": 22,
     "warnings": 199,
@@ -1399,8 +1276,8 @@
     "directed_rate": 0.0,
     "total_rate": 1.714,
     "projected_orders": 51.4,
-    "aov": 97.72,
-    "projected_revenue": 5025.6,
+    "aov": 97.86,
+    "projected_revenue": 5032.8,
     "note": "Assumes AOV holds. Volume is capped by organic flow, which this engine cannot raise on demand, so the only lever that moves this number materially inside 30 days is AOV."
   },
   "gap": {
@@ -1411,8 +1288,8 @@
   "recovery": {
     "open_orders": {
       "as_of": "2026-08-20",
-      "open_count": 22,
-      "open_value": 3640.0,
+      "open_count": 27,
+      "open_value": 4005.0,
       "open_unpriced": 0,
       "stale_count": 5,
       "stale_value": 535.0,
@@ -1420,8 +1297,8 @@
       "stale_after_days": 60,
       "bands": {
         "0-7": {
-          "count": 8,
-          "value": 890.0,
+          "count": 13,
+          "value": 1255.0,
           "unpriced": 0
         },
         "8-30": {
@@ -1670,18 +1547,6 @@
           "stale": false
         },
         {
-          "client": "kyvrontech",
-          "age_days": 2,
-          "band": "0-7",
-          "status": "in_progress",
-          "amount": 115.0,
-          "order_date": "2026-08-18",
-          "project": "Heritage Collection Group",
-          "designer": "Zahid",
-          "csr": "Zaheen",
-          "stale": false
-        },
-        {
           "client": "eannalohan1",
           "age_days": 2,
           "band": "0-7",
@@ -1702,6 +1567,78 @@
           "order_date": "2026-08-19",
           "project": "The 1851",
           "designer": "Amin",
+          "csr": "Amrah",
+          "stale": false
+        },
+        {
+          "client": "lauradustin2",
+          "age_days": 1,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 80.0,
+          "order_date": "2026-08-19",
+          "project": "Stratum",
+          "designer": "Asad",
+          "csr": "Zaheen",
+          "stale": false
+        },
+        {
+          "client": "cloudyflop",
+          "age_days": 1,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 115.0,
+          "order_date": "2026-08-19",
+          "project": "Storagecity",
+          "designer": "Ahmad Fawad",
+          "csr": "Zaheen",
+          "stale": false
+        },
+        {
+          "client": "mandalesoftware",
+          "age_days": 1,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 80.0,
+          "order_date": "2026-08-19",
+          "project": "Mandale Software",
+          "designer": "Md Rezaul",
+          "csr": "Hasnain",
+          "stale": false
+        },
+        {
+          "client": "steinhartglass",
+          "age_days": 1,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 45.0,
+          "order_date": "2026-08-19",
+          "project": "Steinhart",
+          "designer": "Zahid",
+          "csr": "Nadir",
+          "stale": false
+        },
+        {
+          "client": "vickizhou318",
+          "age_days": 1,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 115.0,
+          "order_date": "2026-08-19",
+          "project": "Belmare Tower",
+          "designer": "Asad",
+          "csr": "Nadir",
+          "stale": false
+        },
+        {
+          "client": "josiahpersie",
+          "age_days": 0,
+          "band": "0-7",
+          "status": "in_progress",
+          "amount": 45.0,
+          "order_date": "2026-08-20",
+          "project": null,
+          "designer": "Zahid",
           "csr": "Amrah",
           "stale": false
         }
@@ -1790,17 +1727,6 @@
           "csr": "Amrah",
           "note": "Waiting response",
           "date": "2026-04-28"
-        },
-        {
-          "client": "josh_mcmillian",
-          "quoted": 300.0,
-          "age_days": 3,
-          "followups": 1,
-          "untouched": false,
-          "country": "United States",
-          "csr": "Ezan",
-          "note": null,
-          "date": "2026-08-17"
         },
         {
           "client": "rztwerk",
@@ -1913,6 +1839,17 @@
           "date": "2026-04-28"
         },
         {
+          "client": "josh_mcmillian",
+          "quoted": 300.0,
+          "age_days": 3,
+          "followups": 2,
+          "untouched": false,
+          "country": "United States",
+          "csr": "Ezan",
+          "note": null,
+          "date": "2026-08-17"
+        },
+        {
           "client": "alisa_kruhle1",
           "quoted": 180.0,
           "age_days": 76,
@@ -1949,8 +1886,8 @@
   "window": {
     "start": "2026-06-01",
     "label": "since 1 June 2026",
-    "orders_in_window": 172,
-    "orders_all_time": 1139,
+    "orders_in_window": 174,
+    "orders_all_time": 1141,
     "exempt": [
       "health",
       "recovery"
@@ -1962,7 +1899,7 @@
     "orders_export": null,
     "inquiries_export": null,
     "gig_capture": "2026-08-16.json",
-    "generated_at": "2026-08-20T02:14:41.391000+00:00",
+    "generated_at": "2026-08-20T08:42:51.696000+00:00",
     "generated_by": "apps_script",
     "age_hours": 0.0,
     "tables": 27,
@@ -1970,7 +1907,11 @@
       "source \"disputes\" has no fileId configured"
     ],
     "impressions": {
-      "source": "sheet"
+      "source": "board",
+      "board_rows": 367,
+      "sheet_rows": 2666,
+      "merged_rows": 2714,
+      "board_newest": "2026-08-18"
     }
   },
   "feeds": [
@@ -1989,7 +1930,7 @@
       "label": "Order and inquiry workbooks",
       "source": "Apps Script snapshot endpoint",
       "status": "live",
-      "as_of": "2026-08-20T02:14:41.391000+00:00",
+      "as_of": "2026-08-20T08:42:51.696000+00:00",
       "age_hours": 0.0,
       "detail": "fetched live, 27 tables",
       "fix": ""
@@ -1998,21 +1939,21 @@
       "key": "impressions_source",
       "label": "Impressions source",
       "source": "impressions board, via IMPRESSIONS_SUPABASE_KEY",
-      "status": "unreachable",
-      "as_of": null,
-      "age_hours": null,
-      "detail": "impressions came from the sheet, which stopped on 2026-08-06",
-      "fix": "Set IMPRESSIONS_SUPABASE_KEY where the engine runs. It is the anon key of the project the hub already reads. Without it the engine reads a sheet nobody fills in any more."
+      "status": "live",
+      "as_of": "2026-08-18",
+      "age_hours": 0.0,
+      "detail": "367 row(s) from the board, overriding 2666 from the sheet",
+      "fix": ""
     },
     {
       "key": "impressions_sheet",
       "label": "Impressions (engine copy)",
       "source": "board, merged over the Daily Data Sheet",
-      "status": "stale",
-      "as_of": "2026-08-06",
-      "age_hours": 326.2468336197222,
-      "detail": "newest row 2026-08-06",
-      "fix": "Nothing has been entered on the impressions board since 2026-08-06. The sheet behind it stopped on 2026-08-06 and is not coming back."
+      "status": "live",
+      "as_of": "2026-08-18",
+      "age_hours": 44.716825979444444,
+      "detail": "newest row 2026-08-18",
+      "fix": ""
     },
     {
       "key": "gig",
@@ -2020,7 +1961,7 @@
       "source": "browser capture into data/raw/gig/",
       "status": "live",
       "as_of": "2026-08-16",
-      "age_hours": 86.24683361972222,
+      "age_hours": 92.71682597944445,
       "detail": "captured 2026-08-16",
       "fix": ""
     },
@@ -2030,7 +1971,7 @@
       "source": "uploaded into data/raw/order_tracker/",
       "status": "live",
       "as_of": "2026-08-08",
-      "age_hours": 281.58240935472224,
+      "age_hours": 288.05240171444444,
       "detail": "2026-07-29-XOrder_Tracker.xlsx",
       "fix": ""
     }

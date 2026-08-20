@@ -8,11 +8,11 @@
 
 | Open orders | Count | Value |
 | :-- | --: | --: |
-| 0-7 days | 8 | $890 |
+| 0-7 days | 13 | $1,255 |
 | 8-30 days | 7 | $1,945 |
 | 31-60 days | 2 | $270 |
 | 60+ days ⚠️ | 5 | $535 |
-| **All open** | **22** | **$3,640** |
+| **All open** | **27** | **$4,005** |
 
 **Oldest open orders**
 
@@ -40,7 +40,7 @@
 ### P0 · Close out 5 orders open more than 60 days ($535)
 **Owner:** Ezan · **Est. impact:** $214 · **Effort:** 3.0h · **Confidence:** 60%
 
-*Why:* 5 orders worth $535 have been open longer than 60 days, out of 22 open orders worth $3,640 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.
+*Why:* 5 orders worth $535 have been open longer than 60 days, out of 27 open orders worth $4,005 in total. The oldest is jordyspikker at 159 days. Every one of these buyers has already paid or committed, so this is not new business to win — it is delivered-or-owed work nobody closed. It is also the largest single block of recoverable money in the dataset, and unlike the funnel it needs no new traffic.
 
 - Open each order and establish one thing: is the client waiting on us, are we waiting on the client, or is it dead. That answer decides everything else and takes a minute per order.
 - Where we owe work — assign it to the designer named on the row with a delivery date this week. Oldest first: jordyspikker (159d, $100), calumsnell (157d, $100), elite9921 (111d, $105).
@@ -50,16 +50,15 @@
 - Script: `playbooks/stale_orders.md`
 - Source rows: `jordyspikker: 159d, $100, revision`, `calumsnell: 157d, $100, revision`, `elite9921: 111d, $105, in_progress`, `institutoibt: 84d, $115, revision`, `moni_rotanak: 84d, $115, revision`
 
-### P0 · Organic decline is a ranking problem — act accordingly
-**Owner:** CEO · **Est. impact:** $22,768 · **Effort:** 2.0h · **Confidence:** 75%
+### P0 · Organic decline is a gig page and handling problem — act accordingly
+**Owner:** CEO · **Est. impact:** $22,997 · **Effort:** 2.0h · **Confidence:** 75%
 
-*Why:* Orders moved -96.7% over 14 days (241 -> 8). 94% of that swing is reach, which fell: impressions 190,784 -> 6,612, CTR 1.47% -> 1.60%, close rate 8.6% -> 7.5%. That makes this a ranking problem — work on review velocity, on-time delivery, response time.
+*Why:* Orders moved -96.7% over 14 days (243 -> 8). 75% of that swing is closing rate, which fell: impressions 197,662 -> 87,381, CTR 1.47% -> 1.60%, close rate 8.4% -> 0.6%. That makes this a gig page and handling problem — work on gig copy, packages, response speed, CSR quality.
 
-- Treat this as a ranking problem, not a gig-page problem — the page is converting exactly as well as before.
-- Push review capture on every delivery; review velocity is the strongest ranking input you control.
-- Audit on-time delivery and response time over the same window — both feed the success score that drives impressions.
-- List every change made to how the profile was run in the same window — pricing, order mix, delivery times, gig edits — and line them up against the impression series by date. Impressions are the one metric that can date a ranking change.
-- Script: `playbooks/review_capture.md`
+- Treat this as a page-and-handling problem — reach and clicks are holding, buyers are arriving and not ordering.
+- Check first-response time on inbound inquiries over this window. Slow first replies show up here before anywhere else.
+- Re-read the gig packages against the last 10 lost inquiries: are buyers asking for something the packages do not describe?
+- Script: `playbooks/upsell.md`
 
 ### P0 · Fill revenue in the daily ledger (197 days blank)
 **Owner:** Whoever owns the daily ledger · **Est. impact:** $2,000 · **Effort:** 2.0h · **Confidence:** 90%
@@ -90,7 +89,7 @@
 - Log the touch in the FollowUp column the same day, or the next run will tell you to send it again.
 - Then work the remainder by value; treat a third unanswered follow-up as a no and stop.
 - Script: `playbooks/dead_pipeline.md`
-- Source rows: `akhilkpfxx: $160, 168d, 0 follow-ups`, `zain_qw: $75, 50d, 0 follow-ups`, `Mohamed L: $60, 101d, 0 follow-ups`, `bobzinos: $900, 155d, 1 follow-ups`, `farida_ism: $700, 188d, 1 follow-ups`, `tatiana_1017: $510, 15d, 1 follow-ups`, `ryan_wonders: $350, 114d, 1 follow-ups`, `josh_mcmillian: $300, 3d, 1 follow-ups`, `rztwerk: $250, 24d, 1 follow-ups`, `chupetes: $200, 163d, 1 follow-ups`
+- Source rows: `akhilkpfxx: $160, 168d, 0 follow-ups`, `zain_qw: $75, 50d, 0 follow-ups`, `Mohamed L: $60, 101d, 0 follow-ups`, `bobzinos: $900, 155d, 1 follow-ups`, `farida_ism: $700, 188d, 1 follow-ups`, `tatiana_1017: $510, 15d, 1 follow-ups`, `ryan_wonders: $350, 114d, 1 follow-ups`, `rztwerk: $250, 24d, 1 follow-ups`, `chupetes: $200, 163d, 1 follow-ups`, `dgtl_depot: $175, 196d, 1 follow-ups`
 
 ### P2 · Route high-value briefs to Md Rezaul
 **Owner:** CEO · **Est. impact:** $800 · **Effort:** 0.5h · **Confidence:** 35%
@@ -105,7 +104,7 @@
 ### P2 · Start recording upsells — the column is empty
 **Owner:** All CSRs · **Est. impact:** $1,200 · **Effort:** 1.5h · **Confidence:** 50%
 
-*Why:* Upsell is marked on 0.0% of the 172 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
+*Why:* Upsell is marked on 0.0% of the 174 orders whose tab has an Upsell column. That is not a low upsell rate, it is an unused column. The highest-value lever in the funnel currently cannot be measured, which means it cannot be improved or defended.
 
 - Fill the Upsell column on every order: TRUE/FALSE, no blanks.
 - Fill 'What did you upsell and how much' whenever TRUE.
@@ -121,7 +120,7 @@
 *2 task(s), ~5.0h*
 
 - **P0** Close out 5 orders open more than 60 days ($535)
-- **P0** Organic decline is a ranking problem — act accordingly
+- **P0** Organic decline is a gig page and handling problem — act accordingly
 
 Standing duties, every shift:
 - QA gate: nothing ships without a check against the question-11 deliverable list. Watermarks removed, fonts noted, vectors included.
@@ -205,18 +204,8 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | 2026-08-27 | Organic orders over the 7 days to 27 Aug will be 16.9 (80% CI 11.7-22.2). | 11.66 – 22.19 | medium |
 | 2026-09-03 | Organic health index in 14 days will be 62 (80% CI 29-77). | 28.77 – 76.74 | medium |
 | 2026-08-27 | Total orders/day averaged over the next 7 days will be 5.22 (80% CI 4.11-6.32). | 4.11 – 6.32 | medium |
-| 2026-09-19 | Blended AOV in 30 days will be $98 (80% CI $82-$122). | 82.46 – 122.35 | high |
+| 2026-09-19 | Blended AOV in 30 days will be $98 (80% CI $83-$123). | 82.58 – 122.53 | high |
 | 2026-08-27 | Inquiry->order conversion in 7 days will be 21.3% (80% CI 17.0%-24.4%). | 0.17 – 0.24 | high |
-
-### Resolved since last run
-
-| Made on | Prediction | Predicted | Actual | In interval? |
-|---|---|---|---|---|
-| 2026-07-21 | economics.aov | 128.39 | 97.72 | ❌ |
-| 2026-08-06 | health.index | 33.90 | 61.60 | ❌ |
-| 2026-08-13 | flow_7d.organic | 25.29 | 12.00 | ❌ |
-| 2026-08-13 | flow_7d.total_per_day | 7.15 | 4.29 | ❌ |
-| 2026-08-13 | funnel.conversion | 0.21 | 0.21 | ✅ |
 
 **Track record:** 106 resolved, coverage 44% 
 (target 80%), median absolute error 29%.
@@ -231,17 +220,17 @@ Each is scored automatically on its resolution date and feeds interval calibrati
 | Organic orders/day (7d MA) | 1.71 | vs 1.43 14d ago |
 | Organic, recent vs earlier | 1.45/day | was 0.66/day (+120.6%) |
 | Organic orders, 7d to 19 Aug | 12 | 1.71/day |
-| AOV | $98 | median $80, n=135 priced orders |
-| Lifetime tracked revenue | $13,192 | across 172 order rows |
+| AOV | $98 | median $80, n=137 priced orders |
+| Lifetime tracked revenue | $13,407 | across 174 order rows |
 | Inquiry conversion | 21.3% | 23/108 |
 | Upsell recorded | 0.0% | column is effectively unused |
-| Review capture | 47.1% | 81/172 orders that could be rated |
+| Review capture | 46.6% | 81/174 orders that could be rated |
 | Gig rating | 4.841 | 1,637 reviews, Level 2 |
 | Orders in queue | 22 | live from the gig page |
 
 ### Revenue path
 
-At 1.71 orders/day and $98 AOV, the next 30 days project **$5,026** (51 orders).
+At 1.71 orders/day and $98 AOV, the next 30 days project **$5,033** (51 orders).
 
 **No 30-day revenue target is set**, so nothing here can say whether the month is on track. Set `targets.monthly_revenue.t30` in `config/profile.yml`. This line used to read "On track against the 30-day target", which a target of zero clears every single day.
 
@@ -249,11 +238,11 @@ At 1.71 orders/day and $98 AOV, the next 30 days project **$5,026** (51 orders).
 
 | Segment | n | Conversion | Lower bound |
 |---|---|---|---|
-| Shift: Night | 31 | 32.3% | 18.6% |
+| Shift: Night | 32 | 31.2% | 18.0% |
 | Shift: Evening | 37 | 21.6% | 11.4% |
 | Shift: Morning | 36 | 13.9% | 6.1% |
 | United Kingdom | 34 | 35.3% | 21.5% |
-| United States | 28 | 21.4% | 10.2% |
+| United States | 27 | 22.2% | 10.6% |
 
 Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank large ones.
 
@@ -265,14 +254,12 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 | Feed | State | As of | Age | Where it comes from |
 |---|---|---|---|---|
 | Snapshot credentials | 🟢 live | — | 0h | XSTUDIOZ_SNAPSHOT_URL / _TOKEN in the environment |
-| Order and inquiry workbooks | 🟢 live | 2026-08-20T02:14:41.391000+00:00 | 0h | Apps Script snapshot endpoint |
-| Impressions source | 🔴 unreachable | — | — | impressions board, via IMPRESSIONS_SUPABASE_KEY |
-| Impressions (engine copy) | 🟠 stale | 2026-08-06 | 326h | board, merged over the Daily Data Sheet |
-| Fiverr gig page | 🟢 live | 2026-08-16 | 86h | browser capture into data/raw/gig/ |
-| CSR handoff tracker | 🟢 live | 2026-08-08 | 282h | uploaded into data/raw/order_tracker/ |
+| Order and inquiry workbooks | 🟢 live | 2026-08-20T08:42:51.696000+00:00 | 0h | Apps Script snapshot endpoint |
+| Impressions source | 🟢 live | 2026-08-18 | 0h | impressions board, via IMPRESSIONS_SUPABASE_KEY |
+| Impressions (engine copy) | 🟢 live | 2026-08-18 | 45h | board, merged over the Daily Data Sheet |
+| Fiverr gig page | 🟢 live | 2026-08-16 | 93h | browser capture into data/raw/gig/ |
+| CSR handoff tracker | 🟢 live | 2026-08-08 | 288h | uploaded into data/raw/order_tracker/ |
 
-- **Impressions source** — impressions came from the sheet, which stopped on 2026-08-06. Set IMPRESSIONS_SUPABASE_KEY where the engine runs. It is the anon key of the project the hub already reads. Without it the engine reads a sheet nobody fills in any more.
-- **Impressions (engine copy)** — newest row 2026-08-06. Nothing has been entered on the impressions board since 2026-08-06. The sheet behind it stopped on 2026-08-06 and is not coming back.
 
 
 ---
@@ -289,7 +276,6 @@ Ranked on the Wilson lower bound, not raw rate, so small samples cannot outrank 
 - priority_spread: 0
 
 **Checks not passing**
-- `warn` **kill_impressions_flat_at_gate** — KILL CRITERION FIRED — On 2026-08-20, impressions 7d average is 405, below the 2,000 floor. The cause is outside the control set. Stop spending effort here, shift volume weighting to Dygram and Storm, treat XStudioz as a rebuild.
 - `warn` **retired_sources_refused** — 1 table(s) from retired sheets were refused and not counted: impressions (1 tables, 162 rows). That data is typed into the hub now. Stop serving the sheet or the same fact lives in two places.
 - `warn` **priority_spread_sane** — 3 of 7 tasks are P0
 
