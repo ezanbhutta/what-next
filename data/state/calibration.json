@@ -8,10 +8,10 @@
       "enough_data": true
     },
     "health.index": {
-      "n": 19,
-      "coverage": 0.2105,
-      "mape": 0.6657,
-      "bias": 0.2568,
+      "n": 20,
+      "coverage": 0.25,
+      "mape": 0.6439,
+      "bias": 0.2326,
       "enough_data": true
     },
     "flow_7d.total_per_day": {
@@ -38,9 +38,9 @@
   },
   "by_confidence": {
     "medium": {
-      "n": 61,
+      "n": 62,
       "nominal": 0.7,
-      "realised": 0.3443
+      "realised": 0.3548
     },
     "low": {
       "n": 10,
@@ -53,6 +53,6 @@
       "realised": 0.6923
     }
   },
-  "overall_coverage": 0.4455,
-  "n_resolved": 110
+  "overall_coverage": 0.4505,
+  "n_resolved": 111
 }
