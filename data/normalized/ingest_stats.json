@@ -1,24 +1,24 @@
 {
-  "orders": 1148,
-  "leads": 386,
-  "flow_rows": 511,
-  "flow_aggregate_rows": 73,
+  "orders": 1150,
+  "leads": 389,
+  "flow_rows": 518,
+  "flow_aggregate_rows": 74,
   "active_orders": 0,
-  "impressions": 2718,
+  "impressions": 2721,
   "disputes": 0,
   "automation_errors": 334,
   "blocks_seen": 27,
   "blocks_used": 24,
-  "header_cells_seen": 396,
+  "header_cells_seen": 394,
   "unmapped_columns": {
-    "Upsell": 5,
+    "Upsell": 4,
     "Public Review": 1,
     "Order type": 1,
     "Public review": 1,
     "Service Demand": 1,
     "Reply": 1
   },
-  "unmapped_rate": 0.0253,
+  "unmapped_rate": 0.0228,
   "coercion_misses": {
     "order_date": 3
   },
