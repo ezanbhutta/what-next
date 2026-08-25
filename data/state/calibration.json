@@ -1,24 +1,24 @@
 {
   "by_metric": {
     "flow_7d.organic": {
-      "n": 28,
-      "coverage": 0.5357,
-      "mape": 0.7268,
-      "bias": 0.2642,
+      "n": 29,
+      "coverage": 0.5517,
+      "mape": 0.7056,
+      "bias": 0.2512,
       "enough_data": true
     },
     "health.index": {
-      "n": 22,
-      "coverage": 0.3182,
-      "mape": 0.6215,
-      "bias": 0.1753,
+      "n": 23,
+      "coverage": 0.3043,
+      "mape": 0.6243,
+      "bias": 0.1378,
       "enough_data": true
     },
     "flow_7d.total_per_day": {
-      "n": 28,
-      "coverage": 0.25,
-      "mape": 0.4919,
-      "bias": -0.259,
+      "n": 29,
+      "coverage": 0.2759,
+      "mape": 0.4799,
+      "bias": -0.2551,
       "enough_data": true
     },
     "economics.aov": {
@@ -29,18 +29,18 @@
       "enough_data": true
     },
     "funnel.conversion": {
-      "n": 28,
-      "coverage": 0.7857,
-      "mape": 0.1082,
-      "bias": 0.0415,
+      "n": 29,
+      "coverage": 0.7931,
+      "mape": 0.1056,
+      "bias": 0.0389,
       "enough_data": true
     }
   },
   "by_confidence": {
     "medium": {
-      "n": 68,
+      "n": 71,
       "nominal": 0.7,
-      "realised": 0.4118
+      "realised": 0.4225
     },
     "low": {
       "n": 10,
@@ -48,11 +48,11 @@
       "realised": 0.1
     },
     "high": {
-      "n": 42,
+      "n": 43,
       "nominal": 0.85,
-      "realised": 0.6905
+      "realised": 0.6977
     }
   },
-  "overall_coverage": 0.4833,
-  "n_resolved": 120
+  "overall_coverage": 0.4919,
+  "n_resolved": 124
 }
